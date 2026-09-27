@@ -2,12 +2,19 @@
 
 | | |
 |---|---|
-| **Version** | 0.1 (first draft) |
+| **Version** | 0.2 (draft) |
 | **Date** | 2026-09-27 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
-| **Genre** | Round-based, movement-first arena FPS with a card draft between rounds |
+| **Genre** | Round-based, movement-first arena FPS with weapon pickups |
 | **Platform** | PC (Windows / Linux, Steam Deck compatible), mouse & keyboard first |
 | **Players** | 1v1 core; 2v2 and 3–4 player FFA later |
+
+### Revision history
+
+| Version | Changes |
+|---|---|
+| 0.1 | Initial draft (ROUNDS-style card draft) |
+| 0.2 | "Rounds" means round-based play, not the game ROUNDS. Replaced the card draft with STRAFTAT-style weapon pickups and a weapon roster. Maps now rotate every round. Added Smashdown as a base move and the Heartshot mechanic. Removed Block and the ability slot. |
 
 ---
 
@@ -18,45 +25,47 @@
 3. [Core loops](#3-core-loops)
 4. [Movement](#4-movement)
 5. [Combat](#5-combat)
-6. [Match structure](#6-match-structure)
-7. [Cards (Partials)](#7-cards-partials)
-8. [Arenas](#8-arenas)
-9. [Game feel and flow](#9-game-feel-and-flow)
-10. [Art direction](#10-art-direction)
-11. [Audio](#11-audio)
-12. [UI / UX](#12-ui--ux)
-13. [Modes](#13-modes)
-14. [Technical design](#14-technical-design)
-15. [Scope and milestones](#15-scope-and-milestones)
-16. [Open questions](#16-open-questions)
+6. [Heartshot](#6-heartshot)
+7. [Weapons](#7-weapons)
+8. [Match structure](#8-match-structure)
+9. [Maps](#9-maps)
+10. [Game feel and flow](#10-game-feel-and-flow)
+11. [Art direction](#11-art-direction)
+12. [Audio](#12-audio)
+13. [UI / UX](#13-ui--ux)
+14. [Modes](#14-modes)
+15. [Technical design](#15-technical-design)
+16. [Scope and milestones](#16-scope-and-milestones)
+17. [Open questions](#17-open-questions)
 
 ---
 
 ## 1. Vision
 
-**Elevator pitch:** *ROUNDS as a first-person shooter set in an early-2000s fever dream.* Two players duel in small, surreal arenas across short, fast rounds. Whoever loses a round drafts a card that changes how they shoot, move, or survive. By the late rounds, both players are running strange builds that neither could have planned, and they are still bound by one movement system that rewards flow over everything.
+**Elevator pitch:** a round-based arena FPS where every round drops you into a new small, surreal map with a new spread of weapons, and the player who moves best gets to the good guns first. One life per round, rounds last seconds, and a perfect shot to the heart ends it instantly.
 
-**The fantasy:** you are a blank, glossy figure pouring through a dreamlike space at 15 m/s, sliding under a floating water cooler, kicking off a wall of bathroom tile, and landing a bouncing shot around a corner that you set up three rounds ago.
+**The fantasy:** you are a glossy, blank figure with a glowing heart, pouring through a dreamlike space at 15 m/s. You slide under a floating water cooler, wall-jump off bathroom tile, smash down onto a rocket launcher before your opponent reaches it, and throw your empty revolver at their face on the way.
 
 **What xtrapartial is:**
-- Short rounds (20–45 s) and fast matches (8–15 min).
+- Short rounds (15–40 s) on a large rotation of small maps, and quick matches (5–10 min).
 - A movement system with a high skill ceiling that still feels good in the first minute.
-- A build-crafting layer where the player who is behind is the one who gets stronger.
+- Weapons found on the map. Many types, each with a clear identity. Map control means weapon control.
+- A precision mechanic, the **Heartshot**, that gives skilled aim a rare, dramatic instant kill.
 - A distinctive look: surreal, low-poly, early-2000s realtime 3D.
 
 **What xtrapartial is not:**
-- Not a loadout or class shooter. Everyone starts every match identical.
-- Not a tactical shooter. No aim-down-sights, no movement inaccuracy, no economy.
-- Not a hero shooter. Abilities come from the draft, not from a character pick.
+- Not a loadout or class shooter. Everyone spawns identical. Power comes from the map.
+- Not a tactical shooter. No aim-down-sights (except scoped weapons), no movement inaccuracy, no economy.
+- Not a hero shooter. No abilities beyond movement and what you pick up.
 
 ### Comparable titles
 
 | Title | What we take |
 |---|---|
-| ROUNDS | Loser-picks card draft, stacking modifiers, block as a core verb, short rounds |
+| STRAFTAT | Round-based duels, many small maps in rotation, weapons picked up from the map, wide weapon variety |
 | Titanfall 2 | Wall ride, slide-hop, momentum preservation |
-| ULTRAKILL | Dash charges, chaining movement into combat, "no dead frames" feel |
-| Quake / Source bhop | Air strafing, friction model, skill ceiling from input mastery |
+| ULTRAKILL | Dash charges, ground slam with slam bounce, "no dead frames" feel |
+| Quake / Unreal Tournament | Air strafing, glowing floating weapon pickups, map control |
 | Endocopia-style surreal games | Dreamlike, uncanny, early-2000s 3D aesthetic |
 
 ---
@@ -66,40 +75,40 @@
 Every feature is weighed against these. If something violates a pillar, it needs a strong reason to exist.
 
 ### P1. Momentum is sacred
-Movement is the main skill. Every verb either preserves speed or adds to it. Nothing silently eats momentum. Shooting, reloading, and blocking never slow you down.
+Movement is the main skill. Every verb either preserves speed or adds to it. Nothing silently eats momentum. Shooting, switching, picking up, and throwing never slow you down.
 
 ### P2. Smooth over everything
 Input-to-screen latency, frame pacing, netcode, animation, and camera all serve one goal: the game should feel frictionless under your hands. When a feature costs frame time or adds input delay, the feature loses.
 
-### P3. Every round tells a story
-The draft makes each match unique. Builds diverge and synergies emerge. Because the loser picks, matches stay close and comebacks happen.
+### P3. Every round is new
+A new map and a new weapon spread each round. Players read the layout during the countdown, plan a route, and race for it. No two rounds play the same.
 
 ### P4. Dreamlike, but readable
-The world is strange, but the opponent, their projectiles, and their build must always be instantly legible. The surreal never gets in the way of combat clarity.
+The world is strange, but the opponent, their weapon, their projectiles, and their heart must always be instantly legible. The surreal never gets in the way of combat clarity.
 
 ---
 
 ## 3. Core loops
 
 ```
- MOMENT (seconds)            ROUND (20–45 s)               MATCH (8–15 min)
- ┌──────────────────┐       ┌──────────────────────┐      ┌─────────────────────┐
- │ move → position  │       │ spawn → hunt → duel  │      │ round → draft →     │
- │ → shoot / block  │ ───▶  │ → one player falls   │ ───▶ │ round → draft → ... │
- │ → reposition     │       │ → loser drafts card  │      │ → first to 5 wins   │
- └──────────────────┘       └──────────────────────┘      └─────────────────────┘
+ MOMENT (seconds)              ROUND (15–40 s)                MATCH (5–10 min)
+ ┌────────────────────┐       ┌────────────────────────┐     ┌──────────────────────┐
+ │ move → grab weapon │       │ new map → read spawns  │     │ round → round → ...  │
+ │ → fight → throw    │ ───▶  │ → race to weapons →    │ ──▶ │ first to 7 wins      │
+ │ empty → grab next  │       │ duel → one player falls│     │                      │
+ └────────────────────┘       └────────────────────────┘     └──────────────────────┘
 ```
 
-- **Moment-to-moment:** chain movement verbs to control distance and angles, land shots on a moving target, block their shots, stay out of their lines.
-- **Round:** one life each. Last player standing wins the round.
-- **Match:** the loser of each round drafts one card. First player to win 5 rounds wins the match.
-- **Meta (post-MVP):** cosmetics, card unlocks or collection, ranked play, movement time trials.
+- **Moment-to-moment:** chain movement to reach weapons and angles, fight with what you hold, throw it when it runs dry, and route to the next pickup.
+- **Round:** a new map. One life each. Last player standing wins the round.
+- **Match:** first player to win 7 rounds wins.
+- **Meta (post-MVP):** cosmetics, ranked play, movement time trials.
 
 ---
 
 ## 4. Movement
 
-Movement is the heart of the game and gets the most tuning time. The first playable milestone is movement alone (see [§15](#15-scope-and-milestones)).
+Movement is the heart of the game and gets the most tuning time. The first playable milestone is movement alone (see [§16](#16-scope-and-milestones)).
 
 ### 4.1 Player body
 
@@ -113,16 +122,17 @@ Movement is the heart of the game and gets the most tuning time. The first playa
 
 ### 4.2 Base verbs
 
-Every player has these from the start of every match. Cards can add more (double jump, grapple, slam).
+Every player has all of these at all times.
 
 | Verb | Input | Summary |
 |---|---|---|
 | **Run** | WASD | Source-style acceleration and friction. Snappy but with weight. |
 | **Jump** | Space | Fixed height, with coyote time and input buffer. |
 | **Air strafe** | A/D + mouse | Quake-style air control. Steering plus modest speed gain. |
-| **Slide** | Ctrl (or C) | Low-friction slide with an entry boost. Gains speed on slopes. |
+| **Slide** | Ctrl (or C) on the ground | Low-friction slide with an entry boost. Gains speed on slopes. |
 | **Slide-hop** | Jump during slide | Keeps all horizontal speed. The core chaining move. |
 | **Dash** | Shift | Short burst in the input direction. 2 charges. |
+| **Smashdown** | Ctrl (or C) in the air | Slam straight down, shockwave on impact, then bounce or slide out. |
 | **Wall ride** | Automatic (airborne, moving along a wall) | Brief run along a wall with reduced gravity. |
 | **Wall jump** | Space on or near a wall | Kick off the wall. 3 per airtime. |
 | **Mantle** | Automatic (forward into a ledge) | Fast vault onto ledges, keeps most speed. |
@@ -190,14 +200,50 @@ Tune these in the M1 movement prototype with a live tweak panel. They are a star
 | Mantle trigger | Ledge top 0.5–2.0 m above feet, within 0.6 m, moving forward | |
 | Mantle | 0.2 s, exits with 80% of prior horizontal speed | |
 
-### 4.4 Movement rules
+### 4.4 Smashdown
 
-1. **Deterministic and pure.** Movement is a pure function of `(state, input, dt)`. That is needed for client prediction ([§14](#14-technical-design)).
+The smashdown is a vertical move that is also an attack and a chain starter. It turns height into speed, damage, or more height.
+
+**Input.** Pressing crouch in the air triggers a smashdown if there is at least 1.5 m of clearance below. On a shorter drop, the same press is buffered as a landing slide instead, so slide-landings still work. Players who prefer a dedicated key can bind smashdown separately and turn off crouch-to-slam.
+
+**Sequence**
+
+| Phase | Value | Notes |
+|---|---|---|
+| Windup | 0.06 s hang, vertical velocity zeroed | A tiny readable commit |
+| Descent | 40 m/s straight down | Horizontal speed is **banked**, not lost. No air control during descent. |
+| Limit | Once per airtime, no cooldown | Refills on landing |
+
+**Impact**
+
+| Effect | Value |
+|---|---|
+| Shockwave radius | 3.5 m |
+| Shockwave damage | 15 + 1.5 per meter fallen (max 45) at center, 50% at the edge |
+| Shockwave knockup | Players hit are launched 9 m/s up and 4 m/s outward |
+| Direct stomp | Landing on a player deals 70 damage |
+| Self-damage | None |
+
+**Exits (the chain)**
+
+| Exit | Input | Result |
+|---|---|---|
+| Slam bounce | Jump within 0.2 s of impact | Vertical velocity = min(7 + 0.5 × drop height, 16) m/s. Banked horizontal speed restored. |
+| Slam slide | Hold crouch through impact | Slide at banked speed + 4 m/s. Ignores the normal slide boost cooldown. |
+| Plain landing | Neither | Banked horizontal speed restored |
+
+**Tells.** A rising whistle during the descent, a bright trail, and a ring projected on the ground where you will land, visible to both players. A smashdown is a commitment, and the opponent can read and punish it.
+
+**Why the knockup matters.** A knocked-up opponent follows a predictable arc, which sets up an aimed follow-up shot. Smashdown → airborne opponent → Heartshot is the high-skill combo.
+
+### 4.5 Movement rules
+
+1. **Deterministic and pure.** Movement is a pure function of `(state, input, dt)`. That is needed for client prediction ([§15](#15-technical-design)).
 2. **Fixed timestep.** Movement simulates at the fixed network tick. The camera and rendering interpolate between ticks.
-3. **Momentum is never silently removed.** Only friction, drag above the soft cap, collisions, and explicit card effects (such as Vsync) reduce speed.
+3. **Momentum is never silently removed.** Only friction, drag above the soft cap, collisions, and explicit weapon effects (knockback, the Buffering slow field) reduce speed.
 4. **Collision slides, not stops.** Glancing a wall or corner deflects velocity along the surface. Small ledges are stepped over or mantled.
 5. **Every chain is legal.** Any verb can follow any other verb. There is no "recovery" state.
-6. **Skill ceiling, skill floor.** Buffers and coyote windows make basic chaining easy. Air strafing and slope slides give experts more.
+6. **Skill ceiling, skill floor.** Buffers and coyote windows make basic chaining easy. Air strafing, slope slides, and slam bounces give experts more.
 
 ---
 
@@ -208,312 +254,328 @@ Tune these in the M1 movement prototype with a live tweak panel. They are a star
 | Property | Value |
 |---|---|
 | Max health | 100 |
-| Regeneration | None by default (cards can add it) |
-| Headshot multiplier | ×1.5 |
-| Pickups | None. The draft is the only source of power. |
+| Regeneration | None. Rounds are too short to need it. |
+| Armor / health pickups | None in MVP. Weapons are the only pickups. |
 
-### 5.2 Base weapon: "The Pointer"
+### 5.2 Damage zones
 
-Everyone starts every match with the same projectile pistol. Cards modify it.
-
-| Stat | Value | Notes |
+| Zone | Size | Effect |
 |---|---|---|
-| Damage | 25 (37.5 on headshot) | 4 body or 3 head to kill |
-| Fire interval | 0.22 s | Hold to fire automatically at the same rate |
-| Magazine | 6 | |
-| Reload | 1.2 s | Automatic when empty, manual with R |
-| Reload cancel | Firing cancels a reload if at least 1 round is loaded | |
-| Projectile speed | 150 m/s | Visible, fast, needs slight lead at range |
-| Projectile drop | None | |
-| Projectile radius | 0.1 m | Small forgiveness on hit tests |
-| Max range | 150 m, then despawns | |
-| Spread | 0 | No movement inaccuracy |
-| Recoil | Visual kick only | The camera stays where you aim |
+| Body | Capsule | Base damage |
+| Head | Sphere, 0.13 m radius | ×1.5 by default (set per weapon) |
+| **Heart** | Sphere, 0.07 m radius, inside the chest | **Instant kill** with eligible weapons. See [§6](#6-heartshot). |
 
-**TTK:** about 0.66 s (4 body shots) or 0.44 s (3 headshots). That is fast enough to be lethal and slow enough that movement and block can decide a duel.
+### 5.3 Loadout
 
-### 5.3 Block
-
-The core defensive verb, taken from ROUNDS. Many cards trigger on block.
-
-| Property | Value |
+| Slot | Contents |
 |---|---|
-| Input | Right mouse (there is no ADS) |
-| Active window | 0.3 s |
-| Effect | Negates all incoming damage and destroys incoming projectiles |
-| Cooldown | 4.0 s from activation |
-| Movement | No effect on movement. You can block mid-slide, mid-dash, mid-wall-ride. |
-| Tell | Bright shell effect and sound, clearly visible to the opponent |
+| Sidearm | The Pointer. Always carried, infinite reserve ammo. |
+| Primary | One weapon picked up from the map. Empty at spawn. |
+| Throwable | One throwable type, up to 2 charges, picked up from the map |
 
-### 5.4 Ability slot
+### 5.4 Combat rules
 
-- One ability slot (E). It is empty at match start.
-- ABILITY cards fill it (grapple, slam, and so on). Drafting a second ability replaces the first; the draft UI warns you.
+- **No dead states.** Firing, switching, picking up, and throwing never lock or slow movement.
+- **No ADS.** Right mouse is each weapon's alt-fire. Scoped weapons zoom as their alt-fire.
+- **No movement inaccuracy.** Spread is a property of the weapon, never of your speed.
+- **Self-damage** exists only from explosives, at 40%, and comes with knockback (explosive jumps are allowed).
+- **Mixed hitscan and projectile.** Each weapon picks whichever suits its identity. Most weapons are projectiles, so shots are visible.
 
-### 5.5 Combat rules
-
-- **No dead states.** Firing, reloading, and blocking never lock or slow movement.
-- **No ADS.** Right mouse is block. Zoom may exist as a card.
-- **Projectiles, not hitscan.** Projectiles let the card system visibly transform your gun (bouncing, homing, splitting, exploding).
-- **Self-damage** exists only from explosive cards, at 50%, and comes with knockback (explosive jumps are allowed).
-
-### 5.6 Default controls (keyboard and mouse)
+### 5.5 Default controls (keyboard and mouse)
 
 | Action | Key |
 |---|---|
 | Move | WASD |
 | Look | Mouse (raw input) |
 | Fire | Left mouse |
-| Block | Right mouse |
+| Alt-fire | Right mouse |
 | Jump | Space (also mouse wheel down, for hop timing) |
-| Slide / crouch | Left Ctrl or C |
+| Slide / crouch (smashdown in the air) | Left Ctrl or C |
 | Dash | Left Shift |
-| Reload | R |
-| Ability | E |
-| Scoreboard / builds | Tab |
+| Pick up / swap | E |
+| Throw primary | Q |
+| Use throwable | G |
+| Switch primary / sidearm | 1 / 2, mouse wheel up |
+| Reload (sidearm) | R |
+| Scoreboard | Tab |
 
 Everything is rebindable. Crouch supports hold or toggle.
 
 ---
 
-## 6. Match structure
+## 6. Heartshot
 
-### 6.1 Flow
+> **The rule:** every player has a small heart in their chest. A shot from an eligible weapon that passes through it kills instantly, whatever the target's health.
+
+### 6.1 Will it work?
+
+It can, if a few conditions hold. Instant-kill zones work when they feel **earned**, and they fail when they feel **random**. These rules exist to keep it earned:
+
+1. **Only precision weapons can heartshot.** No pellets, explosions, beams, flames, bouncing projectiles, melee, or thrown weapons, and nothing that fires faster than one shot every 0.3 s. If an SMG could heartshot, spraying center mass would sometimes "win the lottery," and that would ruin the mechanic.
+2. **The heart is visible.** It glows through a translucent chest on the character model. It is a target you choose to aim at, not a hidden bonus.
+3. **Small, but not microscopic.** With a 0.07 m radius, the heart is about 11 px wide at 10 m, 6 px at 20 m, and 3 px at 40 m (1080p, 100° FOV). For comparison, the head is about 10 px wide at 20 m. That is very hard on a moving target, but possible on a predictable one (a wall ride, the arc after a knockup, a player who stops moving).
+4. **Hitboxes agree everywhere.** The heart is attached to the simulated capsule, not to client-side animated bones, so the server and every client agree exactly on where it is. A heartshot that looks clean on your screen must register.
+5. **It is a highlight, not the main way to win.** The target is **3–8% of kills**. Telemetry decides the final size.
+
+Rounds are one life and 15–40 s long, so an instant death costs little. It is a lost round, not a lost match. That makes a dramatic mechanic like this more acceptable than it would be in a longer-life shooter.
+
+### 6.2 Rules
+
+| Rule | Value |
+|---|---|
+| Location | Chest, 1.35 m above the feet, 0.08 m left of the center line. Moves with crouch and slide poses. |
+| Hit test | The shot's path must intersect the heart sphere. It counts from the front, back, or side. |
+| Walls | No heartshots through geometry, even with piercing weapons |
+| Eligible weapons | Marked ♥ in the weapon tables ([§7](#7-weapons)) |
+| Headshot interaction | None. Heart and head are separate zones. |
+
+### 6.3 Feedback
+
+- **Shooter:** a unique sound (a heartbeat that stops on a glass chime), a distinct hitmarker, a short white flash on the crosshair.
+- **Victim:** the heart visibly shatters. The death camera shows the shooter and the shot's path, so the kill reads as skill, not luck.
+- **Everyone:** a Heartshot icon in the killfeed, and a stat on the match recap screen.
+
+### 6.4 Tuning levers
+
+In order of preference, if heartshots land too often or not often enough:
+
+1. Heart radius.
+2. Which weapons are eligible.
+3. A max range for heartshots.
+4. *(Experimental)* The heart shrinks as its owner's speed rises. This rewards staying in motion and ties the mechanic to Pillar 1. Test it in M2 and keep it only if it reads clearly.
+
+---
+
+## 7. Weapons
+
+### 7.1 Pickup system
+
+| Rule | Value |
+|---|---|
+| Weapon pads | Maps place weapon pads at fixed spots. Each pad has a tier (Standard, Heavy, Power) and a curated weapon pool. |
+| Rolling | At round start, each pad rolls one weapon from its pool. Mirrored pads roll the same weapon, so 1v1 stays fair. |
+| Reveal | Rolled weapons are visible during the countdown, so players can plan a route |
+| Respawn | Standard pads respawn 20 s after pickup, with a visible timer. Heavy and Power pads don't respawn within a round. |
+| Auto-pickup | Moving over a weapon while your primary slot is empty (or holds an empty weapon) picks it up instantly, even mid-slide or in the air. Pickup radius is 1.5 m. |
+| Swap | Press E near a weapon to swap it for your current primary. The old one drops with its remaining ammo. |
+| Top-up | Moving over the same weapon type you hold adds its ammo to yours |
+| Ready time | 0.15 s after a pickup or a switch |
+
+### 7.2 Ammo and throwing
+
+- **Map weapons have no reserve ammo and don't reload.** What's in the gun is what you get. When it runs dry, throw it and find the next one. This keeps players moving around the map.
+- **Throw (Q):** throws your primary at any ammo count. A thrown weapon deals 25 damage and 6 m/s knockback on hit, then lands and can be picked up again with whatever ammo it has left.
+- **Switching after a throw:** throwing switches to the sidearm instantly.
+- **When empty:** you switch to the sidearm automatically after 0.2 s, unless you throw first.
+- **Empty weapons** dissolve 3 s after landing.
+- Only the Pointer reloads.
+
+### 7.3 Sidearm
+
+| Weapon | Type | Damage | Fire interval | Ammo | Projectile | ♥ | Notes |
+|---|---|---|---|---|---|---|---|
+| **Pointer** | Pistol | 20 | 0.3 s | 8 per mag, 1.0 s reload, infinite reserve | 150 m/s | ♥ | Weak, but never useless. A heartshot with the Pointer is the ultimate comeback. |
+
+### 7.4 Primary weapons (MVP roster)
+
+Names are placeholders, but they follow one theme: **early-2000s computing jargon.** ♥ = can heartshot.
+
+**Precision**
+
+| Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
+|---|---|---|---|---|---|---|---|
+| Hotkey | Standard | 45 | 0.5 s | 6 | Projectile 250 m/s | ♥ | Alt: fan the hammer (remaining rounds at 0.1 s, +3° spread, no ♥) |
+| Magnifier | Standard | 40 | 0.35 s | 10 | Hitscan | ♥ | Alt: 1.5× zoom |
+| Stylus | Standard | 70 | 0.9 s | 5 | Bolt 90 m/s, with drop | ♥ | Crossbow. Bolts stick in walls. |
+| Ping | Heavy | 85 (head kills) | 1.2 s | 4 | Hitscan | ♥ | Sniper. Alt: 3× zoom. |
+
+**Automatic**
+
+| Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
+|---|---|---|---|---|---|---|---|
+| Popup | Standard | 11 | 0.07 s | 60 | Projectile 180 m/s | — | SMG. Spread blooms 1° → 4°. |
+| Keystroke | Standard | 16 | 0.11 s | 40 | Projectile 200 m/s | — | Rifle. 0.5° spread. |
+| Spam | Standard | 14 | 0.09 s | 50 | Nail 90 m/s, slight drop | — | Nailgun. Nails bounce once. |
+| Scroll Wheel | Heavy | 9 | 0.04 s after 0.5 s spin-up | 200 | Projectile 160 m/s | — | Minigun. 2.5° spread. Alt: keep spun up without firing. |
+
+**Close range**
+
+| Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
+|---|---|---|---|---|---|---|---|
+| Scatter Plot | Standard | 10 × 9 pellets | 0.8 s | 8 | Pellets, 5° spread | — | Pump shotgun |
+| Double Click | Heavy | 12 × 9 pellets per barrel | 0.25 s | 10 | Pellets, 6° spread | — | Alt: both barrels at once, with 5 m/s self-knockback (shotgun jump) |
+| Firewall | Heavy | 120 DPS + 15 burn over 3 s | Continuous | 5 s of fuel | 8 m cone | — | Flamethrower |
+
+**Explosive**
+
+| Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
+|---|---|---|---|---|---|---|---|
+| Overdraw | Heavy | 90 direct, up to 55 splash (3 m) | 0.9 s | 5 | Rocket 35 m/s | — | Rocket launcher. 12 m/s knockback enables rocket jumps. |
+| Zip Bomb | Heavy | 60 (3 m) + 3 bomblets × 20 (1.5 m) | 0.7 s | 6 | Bouncing grenade | — | Explodes after 1 s or on contact with a player |
+
+**Strange**
+
+| Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
+|---|---|---|---|---|---|---|---|
+| Screensaver | Standard | 35, +10% per bounce | 0.5 s | 8 | Disc 40 m/s | — | Discs bounce off walls up to 4 times |
+| Scanline | Standard | 80 DPS | Continuous | 5 s of charge | Hitscan beam, 25 m | — | Perfectly accurate, low burst |
+| Defrag | **Power** | 100 | 0.5 s charge | 3 | Hitscan | — | Railgun. Pierces players and up to 1 m of wall. One per map, at a hard-to-reach spot. |
+
+**Utility and melee**
+
+| Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
+|---|---|---|---|---|---|---|---|
+| Hyperlink | Standard | 15 | 2.5 s cooldown | Unlimited | Hook, 35 m | — | Grapple gun. Pulls you at 22 m/s, release keeps velocity. Hooking a player pulls them toward you. |
+| Backspace | Standard | 50 | 0.5 s | Unlimited | Melee | — | Bat. 12 m/s knockback. The start of each swing (0.2 s) deflects projectiles back at their shooter. |
+| Ctrl+X | Standard | 55 | 0.4 s | Unlimited | Melee | — | Katana. Alt: 8 m lunge (2 s cooldown) that chains like a dash. |
+
+### 7.5 Throwables
+
+| Throwable | Effect |
+|---|---|
+| Packet | Frag grenade. 1.5 s fuse. 90 damage at center down to 20 at 4 m. |
+| Buffering | Slow field. A 5 m sphere for 3 s. Players **and projectiles** inside move at 40% speed. |
+
+### 7.6 Weapon design rules
+
+- **One clear identity each.** A player should know what a weapon does from its silhouette and its first shot.
+- **Distinct silhouettes.** Weapons are chunky and readable at 30 m in an opponent's hands.
+- **Movement interactions are a feature.** Rocket jumps, shotgun jumps, the grapple, and the katana lunge all feed the movement system.
+- **Power weapons are placed to reward movement.** The fastest route to them should need movement tech (a wall-ride chain, a slam bounce, a slope slide).
+
+### 7.7 Future directions
+- More weapons each update. The weapon definition system should make adding one mostly data work.
+- Dual-wielding pistols.
+- Map-specific weapons tied to a map's theme.
+- Rare "cursed" variants of existing weapons, with a twist and a drawback.
+
+---
+
+## 8. Match structure
+
+### 8.1 Flow
 
 ```
-Lobby → Warmup → [ Round → Round end → Draft ] × N → Match end → Rematch / Lobby
+Lobby → Warmup → [ Countdown → Round → Round end → Next map ] × N → Match end → Rematch / Lobby
 ```
 
-### 6.2 Warmup
-- Free movement, weapons active, instant respawn, no cards.
+### 8.2 Warmup
+- Free movement on a warmup map. Every weapon is available on racks. Instant respawn.
 - Ends when both players ready up, or after 60 s.
 
-### 6.3 Round
+### 8.3 Round
 
 | Phase | Duration | Rules |
 |---|---|---|
-| Countdown | 3 s | Camera and movement active. Weapons off. Spawns are walled off by a translucent barrier that dissolves at 0. |
-| Live | Up to 75 s | One life each. Last player standing wins. |
-| Unloading (sudden death) | Starts at 45 s | The arena "unloads" from the edges inward: geometry dissolves into wireframe, then into void. Standing in the unloaded zone deals 10 HP/s, rising to 25 HP/s. By 75 s only a small central platform remains. |
-| Round end | 2 s | Slow-motion freeze frame on the killing blow (presentation only), then the scoreboard. |
+| Map load | ≤ 1 s | The next map is preloaded during the previous round. A title card shows the map name. |
+| Countdown | 3 s | Camera and movement active. Weapons off. Spawns are walled off by a translucent barrier that dissolves at 0. Rolled weapons are visible so players can plan a route. |
+| Live | Up to 70 s | One life each. Last player standing wins. |
+| Unloading (sudden death) | Starts at 40 s | The map "unloads" from the edges inward: geometry dissolves into wireframe, then into void. Standing in the unloaded zone deals 10 HP/s, rising to 25 HP/s. By 70 s only a small central platform remains. |
+| Round end | 2 s | Slow-motion freeze frame on the killing blow (presentation only), then the score |
 
-**Draw:** if both players die on the same tick, nobody scores and both draft.
+**Draw:** if both players die on the same tick, nobody scores and play moves to the next map.
 
-**Target average round length:** 20–45 s.
+**Target average round length:** 15–40 s. **Downtime between rounds:** 6 s or less in total.
 
-### 6.4 Draft (after every round)
-
-- Each player who **lost** the round is dealt **5 cards** and picks **1**.
-- Draft timer: 15 s. On timeout, a random card from the hand is picked.
-- The winner watches the loser's hand and pick live. It builds drama, and you always know what you are facing.
-- Before the next round, a matchup screen briefly shows both players' full builds with the new card highlighted.
-
-### 6.5 Winning
-- First to **5 round wins** by default (configurable 3–9 in custom games).
-- A match is at most 9 decisive rounds (draws add rounds).
-
-### 6.6 Why loser-picks
-The losing player gets stronger every round they lose, so the match pulls itself back toward 50/50. A 4–0 lead is never safe against a player with four cards. Winning the match means beating an opponent whose build is designed around beating *you*.
+### 8.4 Winning
+- First to **7 round wins** by default (configurable 3–15 in custom games).
+- Maps rotate every round. A match draws from the map pool without repeats until the pool runs out.
+- There is no comeback mechanic by default. Rounds are short and every map resets the weapon race.
 
 ---
 
-## 7. Cards (Partials)
+## 9. Maps
 
-> **Naming proposal:** in-world, cards are called **Partials**, fragments that attach to your blank figure. Each Partial you draft adds a visible accretion to your character (a floating shape, a halo, an extra limb), so your build can be read at a glance. The game's name comes from this: you become *extra partial*.
+### 9.1 Design rules
 
-### 7.1 Card rules
+1. **Small and vertical.** Playable footprint between 25 × 25 m and 45 × 45 m, with at least 2 height layers. Spawns are about 3 s of travel apart at run speed.
+2. **Built for lines.** Every map has at least one continuous "flow loop": a route you can run at speed using slides, wall rides, and hops without breaking momentum.
+3. **Weapon routes.** Weapon pads sit on the flow loop. Standard pads are close to spawns. Heavy pads are contested in the middle. The Power pad needs movement tech to reach quickly.
+4. **No dead ends.** Every area has at least two exits, one of them vertical.
+5. **Controlled sightlines.** The longest open sightline is about 40 m. Long lanes have cover breaks.
+6. **Readable surfaces.** Wall-rideable surfaces share one consistent visual language across all maps (for example, a distinct tile or panel pattern). Players should never guess.
+7. **Symmetrical for 1v1**, rotational or mirrored, including weapon pads. Asymmetry only in visual dressing.
+8. **Unloading-ready.** Each map defines its collapse rings for sudden death ([§8.3](#83-round)).
+9. **Cheap to build.** Rotation needs many maps, so each should be buildable from a shared modular kit plus a few signature props.
 
-- Cards are permanent for the rest of the match.
-- A hand of 5 never contains duplicates. You can draft the same card again in a later round, and it stacks, unless the card is marked **Unique**.
-- **Rarity weights:** Common 60%, Uncommon 30%, Rare 10%.
-- **Design rule:** commons are small upgrades, usually with no drawback. Uncommons are strong or situational. Rares are build-defining and always carry a real drawback.
-- **Tags:** `GUN`, `BODY`, `MOVE`, `BLOCK`, `FLOW`, `ABILITY` (later: `CURSE`, which affects the opponent).
+### 9.2 Map concepts
 
-### 7.2 Stat stacking
-
-```
-final = (base + Σ additive) × Π (multipliers)
-```
-
-Hard limits apply after stacking:
-
-| Stat | Limit |
-|---|---|
-| Fire interval | ≥ 0.05 s |
-| Reload | ≥ 0.2 s |
-| Projectile speed | 20–600 m/s |
-| Max health | ≥ 25 |
-| Move speed | ≤ 2× base |
-
-### 7.3 Card behaviors
-
-Cards are data-driven and combine three building blocks:
-
-1. **Stat modifiers:** additive or multiplicative changes to player and weapon stats.
-2. **Event hooks:** `on_fire`, `on_hit`, `on_kill`, `on_block`, `on_block_success`, `on_dash`, `on_slide_start`, `on_land`, `on_wall_jump`, `on_reload`, `on_take_damage`, `on_round_start`.
-3. **Projectile behaviors:** components attached to projectiles (bounce, home, split, pierce, explode, apply status).
-
-### 7.4 Starter pool (MVP, about 35 cards)
-
-Names are placeholders, but they follow one theme: **early-2000s computing and rendering jargon.**
-
-**GUN**
-
-| Card | Rarity | Effect | Drawback |
-|---|---|---|---|
-| Polygon Budget | Common | +40% damage, +50% projectile size | −20% fire rate |
-| Frame Skip | Common | +60% fire rate | −25% damage |
-| Broadband | Common | +80% projectile speed | — |
-| Swap File | Common | +4 magazine | +0.3 s reload |
-| Quick Load | Common | −35% reload time | — |
-| Physics Object | Common | Hits knock the target back 5 m/s | — |
-| Scatter Plot | Uncommon | Fires 5 pellets per shot, 30% damage each, 6° spread | +0.3 s reload |
-| Normal Map | Uncommon | Projectiles bounce twice, +15% damage per bounce | −15% projectile speed |
-| Screensaver | Uncommon | Projectiles home gently toward the nearest visible enemy (90°/s) | −30% projectile speed |
-| Clipping | Uncommon | Projectiles pass through walls up to 1 m thick | −20% damage |
-| Corrupted Texture | Uncommon | Hits apply 18 damage over 3 s (stacks ×3) | −20% direct damage |
-| Vsync | Uncommon | Hits slow the target's movement by 20% for 1 s | −10% damage |
-| Overdraw | Rare | Projectiles explode on impact: 2.5 m radius, 20 splash damage, knockback | −2 magazine, −20% fire rate |
-| Mipmap | Rare | After 10 m, each projectile splits into 3 at 40% damage | Split projectiles −25% speed |
-
-**BODY**
-
-| Card | Rarity | Effect | Drawback |
-|---|---|---|---|
-| High Poly | Common | +40 max health | −5% run speed |
-| Low Poly | Common | Model and hitbox 15% smaller | −20 max health |
-| Idle Animation | Uncommon | After 3 s without taking damage, regenerate 10 HP/s | — |
-| Parasite Process | Uncommon | Heal 25% of damage dealt | −10 max health |
-| Save State | Rare, Unique | Once per round, lethal damage instead rewinds you to where you were 2 s ago, with 40 HP | −20 max health |
-
-**MOVE**
-
-| Card | Rarity | Effect | Drawback |
-|---|---|---|---|
-| Overclock | Common | +1 dash charge | — |
-| Frictionless | Common | −60% slide friction | −15% ground acceleration |
-| Screen Tear | Common | +100% wall ride duration, +1 wall jump | — |
-| Refresh Rate | Common | +12% run speed, +2 m/s to the speed soft cap | −10 max health |
-| Double Buffer | Uncommon | +1 air jump | — |
-
-**BLOCK**
-
-| Card | Rarity | Effect | Drawback |
-|---|---|---|---|
-| Cache Hit | Common | −35% block cooldown | — |
-| Ctrl+Z | Common | A block that absorbs damage instantly reloads and refunds a dash charge | — |
-| Alt+Tab | Uncommon | Blocking teleports you 5 m in your movement direction | — |
-| Reflection Map | Rare | Blocked projectiles reflect back at their shooter at full damage | +1 s block cooldown |
-
-**FLOW** (these tie movement and combat together)
-
-| Card | Rarity | Effect | Drawback |
-|---|---|---|---|
-| Hot Swap | Common | While sliding, reload 1 round every 0.15 s | — |
-| Kinetic Energy | Uncommon | +5% damage per m/s of horizontal speed above 8 m/s (max +40%, reached at 16 m/s) | — |
-| Momentum Loan | Uncommon | Each hit refunds 25% of a dash charge | — |
-| Recoil Engine | Uncommon | Each shot pushes you 3 m/s away from where you aim (shoot down to climb) | — |
-
-**ABILITY** (fills the E slot)
-
-| Card | Rarity | Effect | Cooldown |
-|---|---|---|---|
-| Hard Drop | Uncommon | In the air: slam down at 35 m/s. Impact deals 30 damage in a 3 m radius. Jumping within 0.2 s of impact launches you 1.5× higher. | 5 s |
-| Bookmark | Uncommon | Place a beacon. Reactivate to teleport back to it. | 8 s |
-| Hyperlink | Rare | Grapple: 30 m range, pulls you at 22 m/s. Releasing keeps your velocity. | 6 s |
-
-### 7.5 Future card directions
-- **CURSE cards:** your pick also weakens the opponent (for example, "Packet Loss": the opponent's projectiles randomly vanish 10% of the time, and yours lose 10% damage).
-- **Transformations:** rare cards that replace the Pointer's fire mode (beam, charge shot, railgun).
-- **Synergy "sets":** holding 3 cards of one theme unlocks a hidden bonus.
-
----
-
-## 8. Arenas
-
-### 8.1 Design rules
-
-1. **Small and vertical.** Playable footprint around 40 × 40 m, with at least 3 height layers. Spawns are about 3–4 s of travel apart at run speed.
-2. **Built for lines.** Every arena has at least one continuous "flow loop": a route you can run at speed using slides, wall rides, and hops without breaking momentum.
-3. **No dead ends.** Every area has at least two exits, one of them vertical.
-4. **Controlled sightlines.** The longest open sightline is about 40 m. Long lanes have cover breaks.
-5. **Readable surfaces.** Wall-rideable surfaces share one consistent visual language across all arenas (for example, a distinct tile or panel pattern). Players should never guess.
-6. **Symmetrical for 1v1**, rotational or mirrored. Asymmetry only in visual dressing.
-7. **Unloading-ready.** Each arena defines its collapse rings for sudden death ([§6.3](#63-round)).
-
-### 8.2 Arena concepts
-
-| Arena | Concept | Movement feature |
+| Map | Concept | Movement feature |
 |---|---|---|
 | **Waiting Room** | An endless beige waiting room. Floating plastic chairs, a monolithic water cooler, a TV showing a looping weather channel. | Chair "stepping stones", long carpeted slide lanes |
 | **Food Court Eclipse** | An empty mall food court under a black sun. Dry fountains, escalators, neon signs for restaurants that never existed. | Escalators as slide ramps, fountain bowls as half-pipes |
 | **Aquarium Server** | Server racks on a sea floor. Caustic light, drifting bubbles, a whale made of cables. | Tall rack corridors for wall ride chains |
-| **Birthday.exe** | A giant low-poly birthday cake island floating in a cloud skybox. Party hats the size of houses. | Cake tiers as layers, candles as grapple anchors |
+| **Birthday.exe** | A giant low-poly birthday cake floating in a cloud skybox. Party hats the size of houses. | Cake tiers as layers, candles as grapple anchors |
 | **Hotel Pool Nocturne** | An indoor hotel pool at 3 a.m. Tiled slides, chlorine glow, too many doors. | Empty pool as a slope bowl, tiled water slides |
+| **Desktop** | A giant CRT desktop. Icons as platforms, a start menu that folds out as stairs. | Window edges to wall-ride, icon hopping |
+| **Parking Structure Dream** | A spiral parking garage that never reaches the top, lit by sodium lamps. | Continuous ramp for slope slides |
+| **Bedroom at 4 a.m.** | A child's bedroom at giant scale. Glow-in-the-dark stars, a lava lamp tower. | Smashdown onto the bed to bounce high |
 
-**MVP:** 3 greybox arenas, 1 of them art-complete for the vertical slice.
+**MVP:** 8 greybox maps, 1 of them art-complete for the vertical slice. The long-term goal is a rotation of 20+ maps.
 
-### 8.3 Movement sandbox
-A dedicated training map with a speedometer, a ghost replay of your last run, movement challenges, and target dummies. For a movement-first game this is a core feature, not a menu extra.
+### 9.3 Movement sandbox
+A dedicated training map with a speedometer, a ghost replay of your last run, movement challenges, a weapon range with every weapon, and target dummies that can move on rails (for heartshot practice). For a movement-first game this is a core feature, not a menu extra.
 
 ---
 
-## 9. Game feel and flow
+## 10. Game feel and flow
 
 Flow is the promise of the game. These rules make it concrete.
 
-### 9.1 No dead frames
-- No landing recovery, no sprint-to-fire delay, no reload slowdown, no ADS transition.
-- Reload is cancelled by firing (if ammo > 0) and never blocks movement.
-- Every input is buffered for 120 ms: jump, dash, slide, block, ability.
+### 10.1 No dead frames
+- No landing recovery, no sprint-to-fire delay, no ADS transition, no pickup animation lock.
+- Switching weapons takes 0.15 s and never slows you down.
+- Every input is buffered for 120 ms: jump, dash, slide, smashdown, fire, pickup.
 
-### 9.2 Chains
+### 10.2 Chains
 Any verb can flow into any other. The system is designed around chains like these:
 - **Slide → hop → air strafe → wall ride → wall jump → dash → land in slide.**
-- **Dash → dash-jump → mantle → slide**
-- **Block mid-slide → Ctrl+Z refund → dash out**
+- **Wall jump → smashdown → slam bounce → air strafe.** Height becomes more height.
+- **Dash off a ledge → smashdown → slam slide.** Height becomes speed.
+- **Slide over a pickup → fire before the slide ends → throw the empty gun → dash to the next pad.**
+- **Smashdown knockup → shot at the airborne opponent → Heartshot.**
+- **Rocket jump or shotgun jump → wall ride → mantle.**
 
-Flow cards (Hot Swap, Momentum Loan, Kinetic Energy) turn good movement into combat rewards, so good movement *is* good combat.
-
-### 9.3 Camera
+### 10.3 Camera
 
 | Setting | Default | Range |
 |---|---|---|
 | FOV (horizontal, 16:9) | 100° | 80–120° |
 | Speed FOV kick | +5° at 16 m/s | toggle, 0–10° |
 | Wall ride tilt | 6° | toggle |
+| Smashdown impact shake | Short, low | 0–100% |
 | View bob | Off | toggle |
 | Landing dip | Subtle, 40 ms | toggle |
 | Screen shake | Low | 0–100% |
 
 The camera is **never** driven by the fixed tick directly. Mouse look is applied every rendered frame; position is interpolated between ticks.
 
-### 9.4 Feedback
-- **Hits:** hitmarker plus a distinct sound. Headshots get their own sound and marker. Kill confirm gets a short, sharp accent.
+### 10.4 Feedback
+- **Hits:** hitmarker plus a distinct sound. Headshots and heartshots each get their own sound and marker. Kill confirm gets a short, sharp accent.
 - **Being hit:** a directional damage indicator and a brief vignette. It must never obscure aim.
-- **Viewmodel:** procedural sway that reacts to velocity, slides, wall rides, and landing, so the gun "breathes" with your movement.
+- **Viewmodel:** procedural sway that reacts to velocity, slides, wall rides, smashdowns, and landing, so the gun "breathes" with your movement.
 - **Speed:** optional speedometer. At high speed, subtle wind audio and speed-line particles at the screen edges.
 - **No hitstop** (online multiplayer can't pause time). Weight comes from sound and camera micro-kicks instead.
 
-### 9.5 Accessibility
+### 10.5 Accessibility
 - Sensitivity shown in cm/360 as well as a raw value. Raw input is always on.
 - Every camera motion effect can be toggled off.
-- Colorblind-safe enemy highlight presets.
-- Hold/toggle options for crouch and block.
+- Colorblind-safe enemy highlight and heart color presets.
+- Hold/toggle options for crouch. Smashdown can have its own key.
 - Full key rebinding.
 
 ---
 
-## 10. Art direction
+## 11. Art direction
 
-### 10.1 Target
-**Surreal, early-2000s realtime 3D.** The look of PS2, Dreamcast, and early-2000s PC games, used to build dream spaces: mundane places (waiting rooms, malls, hotel pools, offices) made uncanny through scale, emptiness, repetition, and wrong details.
+### 11.1 Target
+**Surreal, early-2000s realtime 3D.** The look of PS2, Dreamcast, and early-2000s PC games, used to build dream spaces: mundane places (waiting rooms, malls, hotel pools, bedrooms) made uncanny through scale, emptiness, repetition, and wrong details.
 
-### 10.2 Visual rules
+### 11.2 Visual rules
 
 | Element | Direction |
 |---|---|
-| Geometry | Low-poly. Characters 1.5–3k triangles, props a few hundred. Faceted silhouettes are welcome. |
+| Geometry | Low-poly. Characters 1.5–3k triangles, weapons 500–1.5k, props a few hundred. Faceted silhouettes are welcome. |
 | Textures | Low resolution (64–256 px), bilinear filtering. Visible texel density is part of the look. |
 | Lighting | Baked lightmaps plus vertex color. Strong ambient gradients. No realtime GI. |
 | Materials | "Wet plastic" specular highlights, chrome environment-mapped reflections, emissive signs. These are signatures of the era. |
@@ -522,109 +584,117 @@ The camera is **never** driven by the fixed tick directly. Mouse look is applied
 | Post-processing | Bloom, LUT color grading, optional subtle dithering. **No motion blur** (it fights readability and flow). |
 | Surreal devices | Impossible scale (giant mundane objects), liminal emptiness, repeating architecture, floating props, looping TVs, skies that aren't skies. |
 
-### 10.3 Readability rules (Pillar 4)
+### 11.3 Readability rules (Pillar 4)
 - **Players:** glossy, featureless figures with a strong rim light and emissive player color. They must separate from any background at any distance.
+- **The heart:** glows through a translucent chest, in the player's color. It is visible from front and back, and never hidden by cosmetics.
+- **Weapons in hand:** chunky silhouettes, identifiable at 30 m.
+- **Weapon pickups:** float and rotate above glowing pads, arena-shooter style. Pad color shows the tier (Standard, Heavy, Power). Respawn timers are shown on the pad.
 - **Projectiles:** bright emissive cores with short trails. Enemy projectiles use the enemy's color.
-- **Card accretions:** Partials attach to the player model in consistent slots (head, back, orbit), so builds are readable at combat range.
-- **Gameplay surfaces:** wall-rideable surfaces, hazards, and unloading zones each have one consistent visual language across all arenas.
+- **Gameplay surfaces:** wall-rideable surfaces, hazards, and unloading zones each have one consistent visual language across all maps.
 - **Fog** never hides a player inside the maximum sightline.
 
-### 10.4 Characters
-- Base figure: a blank, glossy mannequin-like body with a simple primitive head (sphere, cube, or CRT monitor). It is uncanny but friendly.
-- Cosmetics (post-MVP): head primitives, surface materials (chrome, marble, carpet, TV static), idle animations, accretion styles.
+### 11.4 Characters
+- Base figure: a blank, glossy mannequin-like body with a translucent chest and a glowing heart, and a simple primitive head (sphere, cube, or CRT monitor). It is uncanny but friendly.
+- Cosmetics (post-MVP): head primitives, surface materials (chrome, marble, carpet, TV static), heart styles, weapon skins. Cosmetics can never change hitboxes or hide the heart.
 
 ---
 
-## 11. Audio
+## 12. Audio
 
-### 11.1 Music
+### 12.1 Music
 - Early-2000s electronic: breakbeat, trip-hop, chopped vocals, glossy synth pads, reverb-drenched lounge.
 - Dynamic intensity: low layer during the countdown, full track once live, a filtered and warped layer during Unloading.
-- Each arena has a signature track. The draft screen has calm "menu music" that stays in the arena's key.
+- Each map has a short signature loop. Rounds are short, so music carries across rounds and shifts key or layer with each map.
 
-### 11.2 Sound effects
-- **Clarity first.** Footsteps, slides, dashes, wall rides, and enemy fire are fully spatialized and audible, so you can track the opponent by ear.
-- Each card with a visible effect has a distinct sound signature (bounce, explode, homing hum).
-- Movement sounds are satisfying on their own: slide scrape, dash whoosh, wall kick thud, a landing sound that changes with impact speed.
+### 12.2 Sound effects
+- **Clarity first.** Footsteps, slides, dashes, wall rides, smashdowns, pickups, and enemy fire are fully spatialized and audible, so you can track the opponent by ear.
+- **Every weapon sounds unique**, and its sound is recognizable from across the map. You should know what your opponent just picked up from the sound alone.
+- Movement sounds are satisfying on their own: slide scrape, dash whoosh, wall kick thud, smashdown whistle and impact, a landing sound that changes with impact speed.
+- The Heartshot has the most distinctive sound in the game.
 - The world's sound is surreal, too: distant muzak, HVAC hum, looping TV audio, all mixed below gameplay.
 
 ---
 
-## 12. UI / UX
+## 13. UI / UX
 
-### 12.1 Style
-The UI draws on early-2000s interfaces: beveled chrome, translucent panels, pixel fonts mixed with glossy display type, installer-wizard and media-player-skin energy. Cards can be presented as CD-ROM jewel cases or installer dialogs.
+### 13.1 Style
+The UI draws on early-2000s interfaces: beveled chrome, translucent panels, pixel fonts mixed with glossy display type, installer-wizard and media-player-skin energy. The between-round map title card can look like a very fast "installer" screen.
 
-### 12.2 HUD (minimal)
+### 13.2 HUD (minimal)
 - Crosshair (customizable)
 - Health
-- Ammo and reload progress
+- Primary weapon name and ammo left; sidearm magazine
 - Dash charges
-- Block cooldown
-- Ability cooldown (if any)
-- Round timer and score
-- Both players' card icons (compact strip)
+- Throwable count
+- Round score and map name
+- Killfeed, with a Heartshot icon
 - Optional: speedometer, FPS / ping
 
-### 12.3 Key screens
+### 13.3 Pickups
+- When you are near a weapon, a small label shows its name and ammo. It never covers the crosshair.
+- Auto-pickups show only a brief name flash.
+
+### 13.4 Key screens
 - Main menu, settings, lobby (invite / join code)
-- Draft screen (5 cards, timer, the opponent's build visible on the side)
-- Matchup screen (both builds, new card highlighted)
-- Match end (round-by-round recap with the card picked each round)
+- Map title card between rounds
+- Match end (round-by-round recap: map, winner, killing weapon, heartshots)
 - Movement sandbox menus
 
 ---
 
-## 13. Modes
+## 14. Modes
 
 | Mode | Phase | Notes |
 |---|---|---|
 | 1v1 online (private lobby) | MVP | Invite or join code |
-| Movement sandbox | MVP | See [§8.3](#83-movement-sandbox) |
-| Custom rules | MVP (basic) | Rounds to win, card pool on/off, round timer |
-| 2v2 | Post-MVP | Losing team members each draft |
-| FFA (3–4) | Post-MVP | Everyone except the winner drafts |
+| Movement sandbox | MVP | See [§9.3](#93-movement-sandbox) |
+| Custom rules | MVP (basic) | Rounds to win, weapon pool filters ("precision only", "melee only", "random roulette"), Heartshot on/off, round timer |
+| 2v2 | Post-MVP | Needs team-symmetric maps |
+| FFA (3–4) | Post-MVP | |
 | Ranked 1v1 | Post-MVP | Needs dedicated servers |
 | Time trials | Post-MVP | Movement courses, ghosts, leaderboards |
 
 ---
 
-## 14. Technical design
+## 15. Technical design
 
-### 14.1 Engine (decision needed)
+### 15.1 Engine (decision needed)
 
 | Option | For | Against |
 |---|---|---|
-| **Godot 4** (recommended) | Lightweight and fast to iterate. Custom shaders for the retro look are easy. Open source, no licensing risk. A small binary and fast load times suit short rounds. | The high-level multiplayer API is basic, so prediction and lag compensation are ours to build. (We need custom movement prediction in any engine anyway.) |
+| **Godot 4** (recommended) | Lightweight and fast to iterate. Custom shaders for the retro look are easy. Open source, no licensing risk. Small scenes load fast, which suits rotating maps every round. | The high-level multiplayer API is basic, so prediction and lag compensation are ours to build. (We need custom movement prediction in any engine anyway.) |
 | Unity | Mature ecosystem, several netcode libraries with prediction (Fish-Net, Photon Fusion) | Heavier. A history of licensing changes. |
 | Unreal 5 | Best built-in networking and prediction | Heavy. Fights the low-fi pipeline. Custom movement in CharacterMovementComponent is painful. Slow iteration. |
 
-**Recommendation:** Godot 4 with a custom kinematic character controller and our own prediction and reconciliation layer. Language choice (GDScript vs C#) is part of this decision. See [§16](#16-open-questions).
+**Recommendation:** Godot 4 with a custom kinematic character controller and our own prediction and reconciliation layer. Language choice (GDScript vs C#) is part of this decision. See [§17](#17-open-questions).
 
-### 14.2 Simulation and netcode
+### 15.2 Simulation and netcode
 
 | Topic | Plan |
 |---|---|
 | Authority | Server-authoritative. MVP uses a listen server (host) over a relay (such as Steam Networking Sockets). The server code stays headless-capable for future dedicated servers. |
 | Tick rate | 60 Hz fixed simulation and send rate (configurable to 120 Hz) |
-| Local player | Client-side prediction of movement, weapon, and block, with server reconciliation (rewind and replay unacknowledged inputs) |
+| Local player | Client-side prediction of movement, firing, pickups, and throws, with server reconciliation (rewind and replay unacknowledged inputs) |
 | Remote players | Interpolated about 2 ticks behind, with extrapolation capped at 100 ms on packet loss |
-| Projectile hits | The server spawns the authoritative projectile fast-forwarded by the shooter's latency (capped at 100 ms) and tests that segment against lag-compensated (rewound) hitboxes. After that, the projectile simulates in present time. The client shows its own predicted projectile immediately. |
+| Hitscan hits | Server-side lag compensation: rewind hitboxes to what the shooter saw, capped at 150 ms |
+| Projectile hits | The server spawns the authoritative projectile fast-forwarded by the shooter's latency (capped at 100 ms) and tests that segment against rewound hitboxes. After that, the projectile simulates in present time. The client shows its own predicted projectile immediately. |
+| Hitboxes | Body, head, and heart are attached to the simulated capsule and pose state, not to client-side animation. This keeps the tiny heart consistent between server and clients. |
+| Pickups | Predicted on the client, confirmed by the server. If both players grab the same weapon on the same tick, the earlier input timestamp wins and the loser's prediction rolls back cleanly. |
 | Input | Commands carry full-precision view angles and buttons. Input is sampled every rendered frame and aggregated per tick. |
-| Validation | The server checks movement against the sim (speed and teleport checks) and card-derived stats |
+| Validation | The server checks movement against the sim (speed and teleport checks), fire rates, and ammo |
 | Test matrix | 0 / 50 / 100 / 150 ms RTT, with ±20 ms jitter and 0–3% packet loss, from M3 onward |
 
-### 14.3 Performance targets
+### 15.3 Performance targets
 
 | Target | Value |
 |---|---|
 | Frame rate | 144+ fps at 1080p on a GTX 1060 / RX 580-class GPU; 240+ fps on high-end |
 | Frame pacing | No spikes over 2 ms above the average frame time during a round |
 | Input latency | Mouse look applied on the rendered frame. No input smoothing. Support for the vendor low-latency modes where available. |
-| Allocations | No per-frame garbage in gameplay. Projectiles, VFX, and decals are pooled. |
-| Load times | Under 2 s between rounds (arenas stay loaded for the whole match) |
+| Allocations | No per-frame garbage in gameplay. Projectiles, VFX, decals, and dropped weapons are pooled. |
+| Map transitions | Next map preloaded during the current round. Swap in 1 s or less. |
 
-### 14.4 Architecture outline
+### 15.4 Architecture outline
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -632,59 +702,65 @@ The UI draws on early-2000s interfaces: beveled chrome, translucent panels, pixe
 │  camera · viewmodel · VFX · audio · HUD · menus             │
 ├─────────────────────────────────────────────────────────────┤
 │ Simulation (shared client/server, fixed tick, pure logic)   │
-│  movement · weapon · projectiles · block · abilities        │
-│  health/damage · card effects (stats, hooks, behaviors)     │
+│  movement · smashdown · weapons · projectiles · pickups ·   │
+│  throws · health/damage zones · heartshot                   │
 ├─────────────────────────────────────────────────────────────┤
 │ Match layer (server-authoritative)                          │
-│  match state machine · round phases · draft · unloading     │
+│  match state machine · round phases · map rotation ·        │
+│  pad rolling/respawn · unloading                            │
 ├─────────────────────────────────────────────────────────────┤
 │ Net layer                                                   │
 │  transport · input commands · snapshots · prediction ·      │
 │  reconciliation · interpolation · lag compensation          │
 ├─────────────────────────────────────────────────────────────┤
 │ Data                                                        │
-│  card definitions · tuning tables · arena metadata          │
+│  weapon definitions · tuning tables · map metadata          │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 - **Simulation never reads presentation state.** Presentation only reads sim state and events.
 - **All tuning values live in data files** and can be hot-reloaded in dev builds.
-- **Cards are data**: a definition file declares stat modifiers, hooks, and projectile behaviors. New cards should rarely need new code.
+- **Weapons are data.** A definition file declares the fire mode, damage, zone multipliers, heartshot eligibility, ammo, alt-fire, and projectile behaviors (bounce, stick, split, pierce, explode, knockback). New weapons should rarely need new code.
+- **Maps carry metadata:** weapon pads (tier and pool), mirror pairs, spawn points, flow-loop markup, and collapse rings.
 
-### 14.5 Telemetry (playtests)
-Round length, match length, card pick rates, win rate after picking each card, speed distribution, kill distance, block success rate, and movement verb usage.
+### 15.5 Telemetry (playtests)
+Round length, match length, heartshot share of kills (target 3–8%), kill share and pickup rate per weapon, time to first pickup, sidearm kill share, smashdown usage and hit rate, speed distribution, kill distance, movement verb usage.
 
 ---
 
-## 15. Scope and milestones
+## 16. Scope and milestones
 
 Each milestone has a **gate question**. We don't move on until the answer is yes.
 
 | # | Milestone | Contents | Gate question |
 |---|---|---|---|
-| M0 | Pre-production | Engine decision, repo setup, coding conventions, greybox kit | Can we greybox an arena in an afternoon? |
-| M1 | **Movement prototype** (offline) | Full base movement kit, live tweak panel, speedometer, one greybox test course | Is running around alone fun for 10 minutes? |
-| M2 | Combat prototype (offline) | Pointer, projectiles, block, health, target dummies, hit feedback | Does shooting while moving feel fluid and fair? |
-| M3 | Networked 1v1 | Prediction, reconciliation, interpolation, lag compensation, round state machine, sudden death | Does a 100 ms match feel as good as LAN? |
-| M4 | Cards | Card system (stats, hooks, behaviors), draft flow, 15 cards | Do matches produce different builds and close scores? |
-| M5 | Vertical slice | 1 art-complete arena in the target style, 3 greybox arenas, ~35 cards, audio pass, core menus, movement sandbox | Would a stranger play a second match? |
-| M6 | Alpha | Closed playtests, telemetry, balance passes, remaining arena art | — |
+| M0 | Pre-production | Engine decision, repo setup, coding conventions, greybox kit | Can we greybox a map in an afternoon? |
+| M1 | **Movement prototype** (offline) | Full base movement kit including smashdown, live tweak panel, speedometer, one greybox test course | Is running around alone fun for 10 minutes? |
+| M2 | Combat prototype (offline) | Pointer plus 3 pickups (Hotkey, Scatter Plot, Overdraw), pickup and throw, damage zones and heartshot, moving target dummies, hit feedback | Does shooting while moving feel fluid? Does a heartshot feel earned? |
+| M3 | Networked 1v1 | Prediction, reconciliation, interpolation, lag compensation, round loop with map rotation on 3 greybox maps, sudden death | Does a 100 ms match feel as good as LAN? Do heartshots register as seen? |
+| M4 | Weapons and maps | Data-driven weapon system, 12 weapons plus throwables, pad rolling and respawn, 6 greybox maps | Do rounds feel different from each other? |
+| M5 | Vertical slice | ~20 weapons, 8 maps (1 art-complete in the target style), audio pass, core menus, movement sandbox | Would a stranger play a second match? |
+| M6 | Alpha | Closed playtests, telemetry, balance passes, more map art | — |
 
-**MVP = M5 vertical slice:** 1v1 online, 3 arenas (1 fully arted), about 35 cards, movement sandbox, basic custom rules.
+**MVP = M5 vertical slice:** 1v1 online, 8 maps (1 fully arted), about 20 weapons plus 2 throwables, movement sandbox, basic custom rules.
 
 ---
 
-## 16. Open questions
+## 17. Open questions
 
 | # | Question | Default assumption in this draft |
 |---|---|---|
 | 1 | Engine: Godot 4, Unity, or Unreal? If Godot, GDScript or C#? | Godot 4 |
-| 2 | Should dash and block merge into one "phase dash" with i-frames (fewer verbs, tighter flow), or stay separate (more card hooks, closer to ROUNDS)? | Separate |
-| 3 | Headshots: keep ×1.5, lower it, or remove them to put more weight on movement? | ×1.5 |
-| 4 | Should air strafing gain speed at all, or only steer? (Skill ceiling vs. accessibility) | Gain, soft-capped at 16 m/s |
-| 5 | Opening draft: does everyone pick 1 card before round 1? | No; round 1 is vanilla |
-| 6 | Does the winner get anything (such as a smaller "winner's pick" every few rounds)? | Nothing |
-| 7 | Does "Partials" hold up as the name for cards, with visible body accretions? | Yes, as a proposal |
-| 8 | Networking: listen server via Steam relay for MVP, or dedicated servers from day one? | Listen server |
-| 9 | Controller support: in the MVP, or post-MVP with aim assist tuning? | Post-MVP |
-| 10 | Monetization model (premium, or premium plus cosmetics)? | Premium, TBD |
+| 2 | Spawn with the Pointer sidearm, or spawn unarmed and race for weapons? | Spawn with the sidearm |
+| 3 | Heartshot: which weapons are eligible, how big is the heart, and can the sidearm do it? | Precision weapons only, 0.07 m radius, sidearm yes |
+| 4 | Keep headshots (×1.5) alongside the heart, or remove them so the heart is the only precision target? | Keep both |
+| 5 | Carry one primary or two? | One |
+| 6 | Weapon pads: roll from curated pools each round, or a fixed layout per map? | Rolled, with mirrored pads matching |
+| 7 | Do Standard pads respawn within a round? | Yes, after 20 s. Heavy and Power never. |
+| 8 | Smashdown input: context-sensitive crouch in the air, or a dedicated key by default? | Context-sensitive, with an optional dedicated key |
+| 9 | Should air strafing gain speed at all, or only steer? (Skill ceiling vs. accessibility) | Gain, soft-capped at 16 m/s |
+| 10 | Do we want a defensive verb (block or parry)? It was removed with the card draft. | No. The Backspace bat's deflect covers it. |
+| 11 | Rounds to win | 7 |
+| 12 | Networking: listen server via Steam relay for MVP, or dedicated servers from day one? | Listen server |
+| 13 | Controller support: in the MVP, or post-MVP with aim assist tuning? | Post-MVP |
+| 14 | Monetization model (premium, or premium plus cosmetics)? | Premium, TBD |
