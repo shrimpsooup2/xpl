@@ -1,5 +1,7 @@
 # xtrapartial
 
+![xtrapartial](assets/ui/logo.png)
+
 A round-based, movement-first arena FPS. Two players duel through short rounds on a rotation of small, surreal, early-2000s-styled maps, spawning with only their fists and racing for weapons scattered around each one. A precise shot to the heart kills instantly.
 
 **Status:** pre-production. Milestone M1 (movement prototype) is playable.
@@ -34,13 +36,17 @@ Wall ride and mantle are automatic: jump along a wall to ride it, and move into 
 
 Press **F1** in-game to edit every movement value live. **Save** writes them to `data/movement_params.tres` and `data/view_settings.tres` when you run from the editor, so tuned values can be committed.
 
+The **View → Look** section of the panel controls the render: `pixel height` is the internal 3D resolution (360 by default, 0 for native), and `color levels` turns on an optional 16-bit color and dither mode (off by default).
+
 ## Project layout
 
 | Path | Contents |
 |---|---|
 | `src/movement/` | The movement simulation: `MovementSim` (one fixed tick), `MovementState`, `MovementParams`, `InputCommand` |
 | `src/player/` | `Player` (input, camera interpolated between ticks) and `ViewSettings` |
-| `src/world/` | `GreyBox` blocks and the grid shader |
+| `src/world/` | `GreyBox` blocks (size and surface kind) |
+| `src/render/` | Surface, sky, and screen shaders, and `RetroScreen` (low-res rendering) |
+| `assets/` | Pixel textures, the reflection map, and the logo |
 | `src/debug/` | Debug HUD and the live tuning panel |
 | `data/` | Tuning resources |
 | `scenes/` | `test_course.tscn` (main scene) and `player.tscn` |
@@ -55,4 +61,4 @@ tools/run_tests.sh
 
 This runs the headless movement tests. It uses `$GODOT` or `godot` on your PATH; on Linux x86_64 it downloads Godot 4.7.2 into `.tools/` if neither is found.
 
-`tools/build_scenes.gd` regenerates the input map, `player.tscn`, and the greybox test course. Once you edit the course by hand in the editor, stop regenerating it (pass `-- --skip-course`).
+`tools/build_scenes.gd` regenerates the input map, `player.tscn`, and the greybox test course. Once you edit the course by hand in the editor, stop regenerating it (pass `-- --skip-course`). `tools/gen_textures.gd` and `tools/gen_logo.gd` regenerate the placeholder textures and the logo; paint over the PNGs freely instead.

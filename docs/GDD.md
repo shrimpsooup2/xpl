@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.3 (draft) |
+| **Version** | 0.4 (draft) |
 | **Date** | 2026-09-27 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -16,6 +16,7 @@
 | 0.1 | Initial draft (ROUNDS-style card draft) |
 | 0.2 | "Rounds" means round-based play, not the game ROUNDS. Replaced the card draft with STRAFTAT-style weapon pickups and a weapon roster. Maps now rotate every round. Added Smashdown as a base move and the Heartshot mechanic. Removed Block and the ability slot. |
 | 0.3 | Players spawn with fists only; the Pointer becomes a map pickup. Engine decided: Godot 4.7 with GDScript. |
+| 0.4 | Art direction moves toward ULTRAKILL: point-filtered pixel textures, low internal resolution, glossy surfaces, deliberately "bad" lighting. Added the logo. |
 
 ---
 
@@ -578,19 +579,20 @@ The camera is **never** driven by the fixed tick directly. Mouse look is applied
 ## 11. Art direction
 
 ### 11.1 Target
-**Surreal, early-2000s realtime 3D.** The look of PS2, Dreamcast, and early-2000s PC games, used to build dream spaces: mundane places (waiting rooms, malls, hotel pools, bedrooms) made uncanny through scale, emptiness, repetition, and wrong details.
+**Surreal, early-2000s realtime 3D, rendered crunchy.** The look of PS2, Dreamcast, and early-2000s PC games, pushed toward ULTRAKILL: chunky pixel textures, a low internal resolution with hard pixels, glossy surfaces, and lighting that is flat and harsh on purpose. It builds dream spaces: mundane places (waiting rooms, malls, hotel pools, bedrooms) made uncanny through scale, emptiness, repetition, and wrong details.
 
 ### 11.2 Visual rules
 
 | Element | Direction |
 |---|---|
 | Geometry | Low-poly. Characters 1.5–3k triangles, weapons 500–1.5k, props a few hundred. Faceted silhouettes are welcome. |
-| Textures | Low resolution (64–256 px), bilinear filtering. Visible texel density is part of the look. |
-| Lighting | Baked lightmaps plus vertex color. Strong ambient gradients. No realtime GI. |
-| Materials | "Wet plastic" specular highlights, chrome environment-mapped reflections, emissive signs. These are signatures of the era. |
+| Resolution | 3D renders at a low internal resolution (360 lines by default, adjustable, or native) and is upscaled with hard pixels. The HUD stays sharp. |
+| Textures | Low resolution (64–128 px), point-filtered (no smoothing), with mipmaps to limit shimmer. Hand-pixel style: bevels, grout, rivets, grime. Visible texel density is part of the look. |
+| Lighting | Deliberately "bad": flat colored ambient, hard low-res shadows, harsh unshadowed colored point lights, no GI or bounce. Lightmaps plus vertex color later for final maps. |
+| Materials | Glossy. Sharp specular highlights plus a fake sphere-map environment reflection ("chrome"/"wet plastic"), stronger at grazing angles. Emissive signs. These are signatures of the era. |
 | Atmosphere | Heavy distance fog in dreamy colors, gradient skyboxes, lens flares, soft bloom. |
 | Color | Pastels and beige for the world, saturated emissive for gameplay-relevant elements. |
-| Post-processing | Bloom, LUT color grading, optional subtle dithering. **No motion blur** (it fights readability and flow). |
+| Post-processing | Bloom. Colors are **not** altered by post-processing by default; an optional 16-bit color and dither mode exists as a setting. **No motion blur** (it fights readability and flow). |
 | Surreal devices | Impossible scale (giant mundane objects), liminal emptiness, repeating architecture, floating props, looping TVs, skies that aren't skies. |
 
 ### 11.3 Readability rules (Pillar 4)
@@ -629,7 +631,12 @@ The camera is **never** driven by the fixed tick directly. Mouse look is applied
 ### 13.1 Style
 The UI draws on early-2000s interfaces: beveled chrome, translucent panels, pixel fonts mixed with glossy display type, installer-wizard and media-player-skin energy. The between-round map title card can look like a very fast "installer" screen.
 
-### 13.2 HUD (minimal)
+### 13.2 Logo
+- The wordmark is plain lowercase **xtrapartial** in Arial, rendered tiny, framed by a thin black box, then blown up blurry and slightly warped. Black on white.
+- It deliberately looks default and unfinished, which plays against the glossy world.
+- Files: `assets/ui/logo.png` (also the boot splash) and `assets/ui/logo_small.png` (the tiny original, for upscaling live in menus). `tools/gen_logo.gd` regenerates both.
+
+### 13.3 HUD (minimal)
 - Crosshair (customizable)
 - Health
 - Primary weapon name and ammo left (fist icon when empty-handed)
@@ -639,11 +646,11 @@ The UI draws on early-2000s interfaces: beveled chrome, translucent panels, pixe
 - Killfeed, with a Heartshot icon
 - Optional: speedometer, FPS / ping
 
-### 13.3 Pickups
+### 13.4 Pickups
 - When you are near a weapon, a small label shows its name and ammo. It never covers the crosshair.
 - Auto-pickups show only a brief name flash.
 
-### 13.4 Key screens
+### 13.5 Key screens
 - Main menu, settings, lobby (invite / join code)
 - Map title card between rounds
 - Match end (round-by-round recap: map, winner, killing weapon, heartshots)

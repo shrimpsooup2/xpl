@@ -6,15 +6,17 @@ extends StaticBody3D
 
 enum Kind { FLOOR, WALL, RAMP, LEDGE, RIDE, TOWER, MARKER }
 
-const COLORS := {
-	Kind.FLOOR: [Color(0.66, 0.62, 0.60), Color(0.44, 0.40, 0.50)],
-	Kind.WALL: [Color(0.68, 0.66, 0.84), Color(0.45, 0.42, 0.62)],
-	Kind.RAMP: [Color(0.64, 0.84, 0.76), Color(0.38, 0.56, 0.52)],
-	Kind.LEDGE: [Color(0.95, 0.74, 0.62), Color(0.66, 0.46, 0.42)],
-	Kind.RIDE: [Color(0.56, 0.82, 0.92), Color(0.30, 0.52, 0.66)],
-	Kind.TOWER: [Color(0.92, 0.64, 0.78), Color(0.62, 0.40, 0.56)],
-	Kind.MARKER: [Color(0.32, 0.30, 0.42), Color(0.20, 0.18, 0.28)],
+## texture, meters per repeat, gloss head-on, gloss at grazing angles, roughness
+const SURFACES := {
+	Kind.FLOOR: ["floor_tiles", 4.0, 0.20, 0.55, 0.30],
+	Kind.WALL: ["wall_panels", 4.0, 0.12, 0.40, 0.45],
+	Kind.RAMP: ["tread_plate", 2.0, 0.20, 0.50, 0.35],
+	Kind.LEDGE: ["bricks", 2.0, 0.04, 0.20, 0.80],
+	Kind.RIDE: ["ride_tiles", 2.0, 0.30, 0.70, 0.20],
+	Kind.TOWER: ["bathroom_tiles", 2.0, 0.30, 0.70, 0.20],
+	Kind.MARKER: ["hazard", 1.0, 0.10, 0.30, 0.50],
 }
+const TEXTURE_DIR := "res://assets/textures/"
 
 static var _materials: Dictionary = {}
 
@@ -55,9 +57,14 @@ func _rebuild() -> void:
 
 static func material_for(k: Kind) -> ShaderMaterial:
 	if not _materials.has(k):
+		var s: Array = SURFACES[k]
 		var mat := ShaderMaterial.new()
-		mat.shader = preload("res://src/world/greybox_grid.gdshader")
-		mat.set_shader_parameter(&"base_color", COLORS[k][0])
-		mat.set_shader_parameter(&"line_color", COLORS[k][1])
+		mat.shader = preload("res://src/render/retro_surface.gdshader")
+		mat.set_shader_parameter(&"albedo_texture", load(TEXTURE_DIR + s[0] + ".png"))
+		mat.set_shader_parameter(&"reflection_map", preload("res://assets/textures/reflection_map.png"))
+		mat.set_shader_parameter(&"meters_per_repeat", s[1])
+		mat.set_shader_parameter(&"gloss", s[2])
+		mat.set_shader_parameter(&"gloss_grazing", s[3])
+		mat.set_shader_parameter(&"roughness_value", s[4])
 		_materials[k] = mat
 	return _materials[k]

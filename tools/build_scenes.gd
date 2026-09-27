@@ -42,6 +42,7 @@ var _labels: Node3D
 
 
 func _initialize() -> void:
+	_configure_rendering()
 	_build_input_map()
 	_ensure_resource("res://data/movement_params.tres", MovementParams.new())
 	_ensure_resource("res://data/view_settings.tres", ViewSettings.new())
@@ -49,6 +50,22 @@ func _initialize() -> void:
 	if not "--skip-course" in OS.get_cmdline_user_args():
 		_save_scene(_build_test_course(), "res://scenes/test_course.tscn")
 	quit()
+
+
+# --- Project settings ---------------------------------------------------------
+
+## Crunchy on purpose: no anti-aliasing, hard shadow edges. Also the splash.
+func _configure_rendering() -> void:
+	ProjectSettings.set_setting("rendering/anti_aliasing/quality/msaa_3d", 0)
+	ProjectSettings.set_setting("rendering/anti_aliasing/quality/screen_space_aa", 0)
+	ProjectSettings.set_setting("rendering/lights_and_shadows/directional_shadow/soft_shadow_filter_quality", 0)
+	ProjectSettings.set_setting("rendering/lights_and_shadows/positional_shadow/soft_shadow_filter_quality", 0)
+	ProjectSettings.set_setting("rendering/lights_and_shadows/directional_shadow/size", 2048)
+	# Boot splash: the logo at its own size on white.
+	ProjectSettings.set_setting("application/boot_splash/image", "res://assets/ui/logo.png")
+	ProjectSettings.set_setting("application/boot_splash/bg_color", Color.WHITE)
+	ProjectSettings.set_setting("application/boot_splash/stretch_mode", 0)
+	ProjectSettings.set_setting("application/boot_splash/use_filter", true)
 
 
 # --- Input ------------------------------------------------------------------
@@ -136,11 +153,32 @@ func _build_test_course() -> Node:
 
 	var sun := DirectionalLight3D.new()
 	sun.name = "Sun"
-	sun.rotation_degrees = Vector3(-52, 35, 0)
-	sun.light_color = Color(1.0, 0.93, 0.86)
-	sun.light_energy = 0.9
+	sun.rotation_degrees = Vector3(-38, 35, 0)
+	sun.light_color = Color(1.0, 0.84, 0.70)
+	sun.light_energy = 1.15
 	sun.shadow_enabled = true
+	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
+	sun.directional_shadow_max_distance = 80.0
 	_root.add_child(sun)
+
+	# Coloured pools of light: harsh, unshadowed, period-accurate "bad" lighting.
+	var lights_node := Node3D.new()
+	lights_node.name = "Lights"
+	_root.add_child(lights_node)
+	for l: Array in [
+			["PinkLamp", Vector3(0, 4, 18), Color(1.0, 0.35, 0.65), 16.0],
+			["CyanLamp", Vector3(38.5, 5, -18), Color(0.3, 0.9, 1.0), 20.0],
+			["AmberLamp", Vector3(-28, 4, 17), Color(1.0, 0.7, 0.25), 16.0],
+			["VioletLamp", Vector3(-18, 3, -10), Color(0.6, 0.4, 1.0), 14.0]]:
+		var omni := OmniLight3D.new()
+		omni.name = l[0]
+		omni.position = l[1]
+		omni.light_color = l[2]
+		omni.omni_range = l[3]
+		omni.light_energy = 2.2
+		omni.omni_attenuation = 0.6
+		lights_node.add_child(omni)
+
 
 	_geometry = Node3D.new()
 	_geometry.name = "Geometry"
@@ -165,6 +203,11 @@ func _build_test_course() -> Node:
 	player.name = "Player"
 	_root.add_child(player)
 
+	var retro := CanvasLayer.new()
+	retro.name = "RetroScreen"
+	retro.set_script(load("res://src/render/retro_screen.gd"))
+	_root.add_child(retro)
+
 	var hud := CanvasLayer.new()
 	hud.name = "DebugHUD"
 	hud.set_script(load("res://src/debug/debug_hud.gd"))
@@ -184,28 +227,30 @@ func _build_test_course() -> Node:
 	return r
 
 
+## Flat coloured ambient, no sky reflections (surfaces fake their own),
+## linear tonemapping for saturated early-2000s colour, thick coloured fog.
 func _make_environment() -> Environment:
-	var sky_mat := ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color(0.42, 0.40, 0.74)
-	sky_mat.sky_horizon_color = Color(0.96, 0.76, 0.72)
-	sky_mat.ground_horizon_color = Color(0.96, 0.76, 0.72)
-	sky_mat.ground_bottom_color = Color(0.30, 0.24, 0.36)
+	var sky_mat := ShaderMaterial.new()
+	sky_mat.shader = load("res://src/render/retro_sky.gdshader")
 	var sky := Sky.new()
 	sky.sky_material = sky_mat
+	sky.radiance_size = Sky.RADIANCE_SIZE_32
 
 	var e := Environment.new()
 	e.background_mode = Environment.BG_SKY
 	e.sky = sky
-	e.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	e.ambient_light_energy = 0.55
-	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	e.ambient_light_color = Color(0.50, 0.40, 0.62)
+	e.ambient_light_energy = 0.75
+	e.reflected_light_source = Environment.REFLECTION_SOURCE_DISABLED
+	e.tonemap_mode = Environment.TONE_MAPPER_LINEAR
 	e.glow_enabled = true
-	e.glow_intensity = 0.4
-	e.glow_bloom = 0.02
+	e.glow_intensity = 0.5
+	e.glow_bloom = 0.0
 	e.fog_enabled = true
-	e.fog_light_color = Color(0.90, 0.78, 0.82)
-	e.fog_density = 0.005
-	e.fog_sky_affect = 0.4
+	e.fog_light_color = Color(0.70, 0.44, 0.58)
+	e.fog_density = 0.01
+	e.fog_sky_affect = 0.25
 	return e
 
 
@@ -238,6 +283,7 @@ func _label(text: String, pos: Vector3) -> void:
 	l.outline_size = 16
 	l.modulate = Color(1, 1, 1)
 	l.outline_modulate = Color(0.15, 0.1, 0.25)
+	l.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
 	_labels.add_child(l)
 
 

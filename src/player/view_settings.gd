@@ -13,3 +13,11 @@ extends Resource
 @export var landing_dip: bool = true
 @export_range(0.0, 1.0, 0.05) var screen_shake: float = 0.3
 @export var invert_y: bool = false
+
+@export_group("Look")
+## Height of the internal 3D resolution in pixels, upscaled with hard pixels.
+## 0 renders at native resolution.
+@export_range(0, 1080, 1) var pixel_height: int = 360
+## Optional colour-depth cut with ordered dither (32 ≈ 16-bit colour). 0 is off.
+@export_range(0, 256, 1) var color_levels: int = 0
+@export_range(0.0, 1.0, 0.05) var dither: float = 1.0
