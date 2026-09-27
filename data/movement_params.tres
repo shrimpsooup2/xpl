@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="MovementParams" format=3]
+
+[ext_resource type="Script" path="res://src/movement/movement_params.gd" id="1_84a65"]
+
+[resource]
+script = ExtResource("1_84a65")

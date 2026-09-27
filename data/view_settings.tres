@@ -1,0 +1,6 @@
+[gd_resource type="Resource" script_class="ViewSettings" format=3]
+
+[ext_resource type="Script" path="res://src/player/view_settings.gd" id="1_ijgnn"]
+
+[resource]
+script = ExtResource("1_ijgnn")

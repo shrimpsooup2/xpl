@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.2 (draft) |
+| **Version** | 0.3 (draft) |
 | **Date** | 2026-09-27 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -15,6 +15,7 @@
 |---|---|
 | 0.1 | Initial draft (ROUNDS-style card draft) |
 | 0.2 | "Rounds" means round-based play, not the game ROUNDS. Replaced the card draft with STRAFTAT-style weapon pickups and a weapon roster. Maps now rotate every round. Added Smashdown as a base move and the Heartshot mechanic. Removed Block and the ability slot. |
+| 0.3 | Players spawn with fists only; the Pointer becomes a map pickup. Engine decided: Godot 4.7 with GDScript. |
 
 ---
 
@@ -44,7 +45,7 @@
 
 **Elevator pitch:** a round-based arena FPS where every round drops you into a new small, surreal map with a new spread of weapons, and the player who moves best gets to the good guns first. One life per round, rounds last seconds, and a perfect shot to the heart ends it instantly.
 
-**The fantasy:** you are a glossy, blank figure with a glowing heart, pouring through a dreamlike space at 15 m/s. You slide under a floating water cooler, wall-jump off bathroom tile, smash down onto a rocket launcher before your opponent reaches it, and throw your empty revolver at their face on the way.
+**The fantasy:** you are a glossy, blank figure with a glowing heart and nothing but your fists, pouring through a dreamlike space at 15 m/s. You slide under a floating water cooler, wall-jump off bathroom tile, smash down onto a rocket launcher before your opponent reaches it, and throw your empty revolver at their face on the way.
 
 **What xtrapartial is:**
 - Short rounds (15–40 s) on a large rotation of small maps, and quick matches (5–10 min).
@@ -54,7 +55,7 @@
 - A distinctive look: surreal, low-poly, early-2000s realtime 3D.
 
 **What xtrapartial is not:**
-- Not a loadout or class shooter. Everyone spawns identical. Power comes from the map.
+- Not a loadout or class shooter. Everyone spawns with only their fists. Power comes from the map.
 - Not a tactical shooter. No aim-down-sights (except scoped weapons), no movement inaccuracy, no economy.
 - Not a hero shooter. No abilities beyond movement and what you pick up.
 
@@ -93,14 +94,14 @@ The world is strange, but the opponent, their weapon, their projectiles, and the
 ```
  MOMENT (seconds)              ROUND (15–40 s)                MATCH (5–10 min)
  ┌────────────────────┐       ┌────────────────────────┐     ┌──────────────────────┐
- │ move → grab weapon │       │ new map → read spawns  │     │ round → round → ...  │
+ │ move → grab weapon │       │ new map → read pads    │     │ round → round → ...  │
  │ → fight → throw    │ ───▶  │ → race to weapons →    │ ──▶ │ first to 7 wins      │
  │ empty → grab next  │       │ duel → one player falls│     │                      │
  └────────────────────┘       └────────────────────────┘     └──────────────────────┘
 ```
 
 - **Moment-to-moment:** chain movement to reach weapons and angles, fight with what you hold, throw it when it runs dry, and route to the next pickup.
-- **Round:** a new map. One life each. Last player standing wins the round.
+- **Round:** a new map. Everyone spawns with fists. One life each. Last player standing wins the round.
 - **Match:** first player to win 7 rounds wins.
 - **Meta (post-MVP):** cosmetics, ranked play, movement time trials.
 
@@ -193,7 +194,7 @@ Tune these in the M1 movement prototype with a live tweak panel. They are a star
 | Parameter | Value | Notes |
 |---|---|---|
 | Wall ride attach | Airborne, touching a wall, speed along the wall ≥ 5 m/s | |
-| Wall ride duration | 1.2 s | Gravity starts at 25% and ramps back to 100% |
+| Wall ride duration | 1.2 s | Gravity eases from 0% back to 100% on a squared curve: a ride holds height early and sinks late (about 2.4 m over a full ride that starts level) |
 | Wall ride reuse | Once per wall surface until you land or touch a different wall | Prevents climbing a single wall forever |
 | Wall jump | Normal × 6 m/s + up 6.5 m/s, keeps speed along the wall | 3 per airtime, refilled on landing |
 | Wall jump window | 150 ms after leaving the wall | "Coyote" for walls |
@@ -269,7 +270,7 @@ The smashdown is a vertical move that is also an attack and a chain starter. It 
 
 | Slot | Contents |
 |---|---|
-| Sidearm | The Pointer. Always carried, infinite reserve ammo. |
+| Fists | Always available. The only thing you spawn with. |
 | Primary | One weapon picked up from the map. Empty at spawn. |
 | Throwable | One throwable type, up to 2 charges, picked up from the map |
 
@@ -295,8 +296,7 @@ The smashdown is a vertical move that is also an attack and a chain starter. It 
 | Pick up / swap | E |
 | Throw primary | Q |
 | Use throwable | G |
-| Switch primary / sidearm | 1 / 2, mouse wheel up |
-| Reload (sidearm) | R |
+| Switch primary / fists | 1 / 2, mouse wheel up |
 | Scoreboard | Tab |
 
 Everything is rebindable. Crouch supports hold or toggle.
@@ -326,7 +326,7 @@ Rounds are one life and 15–40 s long, so an instant death costs little. It is 
 | Location | Chest, 1.35 m above the feet, 0.08 m left of the center line. Moves with crouch and slide poses. |
 | Hit test | The shot's path must intersect the heart sphere. It counts from the front, back, or side. |
 | Walls | No heartshots through geometry, even with piercing weapons |
-| Eligible weapons | Marked ♥ in the weapon tables ([§7](#7-weapons)) |
+| Eligible weapons | Marked ♥ in the weapon tables ([§7](#7-weapons)). Fists never. |
 | Headshot interaction | None. Heart and head are separate zones. |
 
 ### 6.3 Feedback
@@ -365,16 +365,24 @@ In order of preference, if heartshots land too often or not often enough:
 
 - **Map weapons have no reserve ammo and don't reload.** What's in the gun is what you get. When it runs dry, throw it and find the next one. This keeps players moving around the map.
 - **Throw (Q):** throws your primary at any ammo count. A thrown weapon deals 25 damage and 6 m/s knockback on hit, then lands and can be picked up again with whatever ammo it has left.
-- **Switching after a throw:** throwing switches to the sidearm instantly.
-- **When empty:** you switch to the sidearm automatically after 0.2 s, unless you throw first.
+- **Switching after a throw:** throwing switches to fists instantly.
+- **When empty:** you switch to fists automatically after 0.2 s, unless you throw first.
 - **Empty weapons** dissolve 3 s after landing.
-- Only the Pointer reloads.
+- No weapon reloads.
 
-### 7.3 Sidearm
+### 7.3 Fists
 
-| Weapon | Type | Damage | Fire interval | Ammo | Projectile | ♥ | Notes |
-|---|---|---|---|---|---|---|---|
-| **Pointer** | Pistol | 20 | 0.3 s | 8 per mag, 1.0 s reload, infinite reserve | 150 m/s | ♥ | Weak, but never useless. A heartshot with the Pointer is the ultimate comeback. |
+Everyone spawns with fists and nothing else. The opening seconds of every round are a race to the nearest pad ([§9.1](#91-design-rules) keeps that race short).
+
+| Property | Value | Notes |
+|---|---|---|
+| Damage | 25 | +1 per m/s of your speed above run speed (max +15). A punch at full flow hits hard. |
+| Swing interval | 0.4 s | |
+| Reach | 2.2 m | Slight aim assist toward the target's capsule, melee only |
+| Knockback | 5 m/s | |
+| Alt-fire | Shove: no damage, 10 m/s knockback, 1.5 s cooldown | Knocks an opponent off a ledge or a weapon pad |
+| Heartshot | Never | |
+| Movement | Punching never slows you. A punch during a smashdown descent adds to the stomp. | |
 
 ### 7.4 Primary weapons (MVP roster)
 
@@ -384,6 +392,7 @@ Names are placeholders, but they follow one theme: **early-2000s computing jargo
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
+| Pointer | Standard | 20 | 0.3 s | 12 | Projectile 150 m/s | ♥ | Common pistol, found near spawns |
 | Hotkey | Standard | 45 | 0.5 s | 6 | Projectile 250 m/s | ♥ | Alt: fan the hammer (remaining rounds at 0.1 s, +3° spread, no ♥) |
 | Magnifier | Standard | 40 | 0.35 s | 10 | Hitscan | ♥ | Alt: 1.5× zoom |
 | Stylus | Standard | 70 | 0.9 s | 5 | Bolt 90 m/s, with drop | ♥ | Crossbow. Bolts stick in walls. |
@@ -460,7 +469,7 @@ Lobby → Warmup → [ Countdown → Round → Round end → Next map ] × N →
 ```
 
 ### 8.2 Warmup
-- Free movement on a warmup map. Every weapon is available on racks. Instant respawn.
+- Free movement on a warmup map. Every weapon is available on racks. Instant respawn with fists.
 - Ends when both players ready up, or after 60 s.
 
 ### 8.3 Round
@@ -490,7 +499,7 @@ Lobby → Warmup → [ Countdown → Round → Round end → Next map ] × N →
 
 1. **Small and vertical.** Playable footprint between 25 × 25 m and 45 × 45 m, with at least 2 height layers. Spawns are about 3 s of travel apart at run speed.
 2. **Built for lines.** Every map has at least one continuous "flow loop": a route you can run at speed using slides, wall rides, and hops without breaking momentum.
-3. **Weapon routes.** Weapon pads sit on the flow loop. Standard pads are close to spawns. Heavy pads are contested in the middle. The Power pad needs movement tech to reach quickly.
+3. **Weapon routes.** Weapon pads sit on the flow loop. Every spawn has a Standard pad within about 1.5 s of travel, so the fists-only opening is a short race, not a brawl. Heavy pads are contested in the middle. The Power pad needs movement tech to reach quickly.
 4. **No dead ends.** Every area has at least two exits, one of them vertical.
 5. **Controlled sightlines.** The longest open sightline is about 40 m. Long lanes have cover breaks.
 6. **Readable surfaces.** Wall-rideable surfaces share one consistent visual language across all maps (for example, a distinct tile or panel pattern). Players should never guess.
@@ -623,7 +632,7 @@ The UI draws on early-2000s interfaces: beveled chrome, translucent panels, pixe
 ### 13.2 HUD (minimal)
 - Crosshair (customizable)
 - Health
-- Primary weapon name and ammo left; sidearm magazine
+- Primary weapon name and ammo left (fist icon when empty-handed)
 - Dash charges
 - Throwable count
 - Round score and map name
@@ -658,7 +667,11 @@ The UI draws on early-2000s interfaces: beveled chrome, translucent panels, pixe
 
 ## 15. Technical design
 
-### 15.1 Engine (decision needed)
+### 15.1 Engine
+
+**Decided: Godot 4.7 (standard build, not .NET), GDScript with static typing everywhere.** GDScript needs no .NET toolchain, so anyone can open the project with a single download, and iteration is fastest. If profiling ever shows a hot path (for example, prediction replays), that piece moves to a C++ GDExtension. Physics uses Jolt, which ships inside Godot.
+
+Alternatives considered:
 
 | Option | For | Against |
 |---|---|---|
@@ -666,7 +679,7 @@ The UI draws on early-2000s interfaces: beveled chrome, translucent panels, pixe
 | Unity | Mature ecosystem, several netcode libraries with prediction (Fish-Net, Photon Fusion) | Heavier. A history of licensing changes. |
 | Unreal 5 | Best built-in networking and prediction | Heavy. Fights the low-fi pipeline. Custom movement in CharacterMovementComponent is painful. Slow iteration. |
 
-**Recommendation:** Godot 4 with a custom kinematic character controller and our own prediction and reconciliation layer. Language choice (GDScript vs C#) is part of this decision. See [§17](#17-open-questions).
+Movement is a custom kinematic controller on top of `CharacterBody3D`, with our own prediction and reconciliation layer.
 
 ### 15.2 Simulation and netcode
 
@@ -724,7 +737,7 @@ The UI draws on early-2000s interfaces: beveled chrome, translucent panels, pixe
 - **Maps carry metadata:** weapon pads (tier and pool), mirror pairs, spawn points, flow-loop markup, and collapse rings.
 
 ### 15.5 Telemetry (playtests)
-Round length, match length, heartshot share of kills (target 3–8%), kill share and pickup rate per weapon, time to first pickup, sidearm kill share, smashdown usage and hit rate, speed distribution, kill distance, movement verb usage.
+Round length, match length, heartshot share of kills (target 3–8%), kill share and pickup rate per weapon, time to first pickup, fist kill share, smashdown usage and hit rate, speed distribution, kill distance, movement verb usage.
 
 ---
 
@@ -734,9 +747,9 @@ Each milestone has a **gate question**. We don't move on until the answer is yes
 
 | # | Milestone | Contents | Gate question |
 |---|---|---|---|
-| M0 | Pre-production | Engine decision, repo setup, coding conventions, greybox kit | Can we greybox a map in an afternoon? |
+| M0 | Pre-production | Engine decision (done: Godot 4.7), repo setup, coding conventions, greybox kit | Can we greybox a map in an afternoon? |
 | M1 | **Movement prototype** (offline) | Full base movement kit including smashdown, live tweak panel, speedometer, one greybox test course | Is running around alone fun for 10 minutes? |
-| M2 | Combat prototype (offline) | Pointer plus 3 pickups (Hotkey, Scatter Plot, Overdraw), pickup and throw, damage zones and heartshot, moving target dummies, hit feedback | Does shooting while moving feel fluid? Does a heartshot feel earned? |
+| M2 | Combat prototype (offline) | Fists plus 4 pickups (Pointer, Hotkey, Scatter Plot, Overdraw), pickup and throw, damage zones and heartshot, moving target dummies, hit feedback | Does shooting while moving feel fluid? Does a heartshot feel earned? |
 | M3 | Networked 1v1 | Prediction, reconciliation, interpolation, lag compensation, round loop with map rotation on 3 greybox maps, sudden death | Does a 100 ms match feel as good as LAN? Do heartshots register as seen? |
 | M4 | Weapons and maps | Data-driven weapon system, 12 weapons plus throwables, pad rolling and respawn, 6 greybox maps | Do rounds feel different from each other? |
 | M5 | Vertical slice | ~20 weapons, 8 maps (1 art-complete in the target style), audio pass, core menus, movement sandbox | Would a stranger play a second match? |
@@ -750,9 +763,9 @@ Each milestone has a **gate question**. We don't move on until the answer is yes
 
 | # | Question | Default assumption in this draft |
 |---|---|---|
-| 1 | Engine: Godot 4, Unity, or Unreal? If Godot, GDScript or C#? | Godot 4 |
-| 2 | Spawn with the Pointer sidearm, or spawn unarmed and race for weapons? | Spawn with the sidearm |
-| 3 | Heartshot: which weapons are eligible, how big is the heart, and can the sidearm do it? | Precision weapons only, 0.07 m radius, sidearm yes |
+| 1 | ~~Engine~~ | **Decided:** Godot 4.7, GDScript |
+| 2 | ~~Spawn loadout~~ | **Decided:** fists only |
+| 3 | Heartshot: which weapons are eligible, and how big is the heart? | Precision weapons only, 0.07 m radius |
 | 4 | Keep headshots (×1.5) alongside the heart, or remove them so the heart is the only precision target? | Keep both |
 | 5 | Carry one primary or two? | One |
 | 6 | Weapon pads: roll from curated pools each round, or a fixed layout per map? | Rolled, with mirrored pads matching |

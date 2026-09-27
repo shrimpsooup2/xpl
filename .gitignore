@@ -1,0 +1,11 @@
+# Godot 4
+.godot/
+/android/
+
+# Local tool downloads (tools/run_tests.sh)
+/.tools/
+
+# OS / editor noise
+.DS_Store
+Thumbs.db
+*.tmp
