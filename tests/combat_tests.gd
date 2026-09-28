@@ -362,3 +362,15 @@ func test_hits_add_up_in_one_number() -> void:
 	check(DamageNumber.over(dummy) == null, "gone after a pause")
 	hit.call(20.0, &"body")
 	check(DamageNumber.over(dummy) != null and DamageNumber.over(dummy).total == 20.0, "the next hit starts a new one")
+
+
+func test_through_the_heart_without_a_heartshot_is_a_body_hit() -> void:
+	player.weapons.give(Weapons.get_def(Weapons.SMG))
+	await run(cmd(), 12)
+	var results: Array[Dictionary] = []
+	player.weapons.hit_confirmed.connect(func(r: Dictionary) -> void: results.append(r))
+	aim_at(heart_point())
+	await fire_once()
+	await settle_shots()
+	check(results.size() == 1 and results[0].zone == &"body" and not results[0].heartshot, "an SMG round through the heart counts as body")
+	check(DamageNumber.over(dummy) != null and DamageNumber.over(dummy).zone == &"body", "and its number isn't pink")

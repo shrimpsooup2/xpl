@@ -170,6 +170,8 @@ func _land(hit: Dictionary, holder: WeaponHolder, def: WeaponDef, damage: float,
 		return {}
 	var zone: StringName = hit.zone
 	var heartshot := zone == &"heart" and can_heartshot
+	if zone == &"heart" and not heartshot:
+		zone = &"body"  # Through the heart with a gun that can't heartshot: a body hit.
 	var amount := damage * (def.head_multiplier if zone == &"head" else 1.0)
 	var info := {
 		"damage": amount,
