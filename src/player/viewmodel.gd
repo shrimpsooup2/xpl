@@ -26,7 +26,7 @@ const RIG_SCALE := 0.8
 ## they can go anywhere that looks right): low, so the upper arms stay out
 ## of view. Empty-handed they come up and forward into a guard.
 const SHOULDERS := Vector3(0.0, -0.36, -0.1)
-const FISTS_SHOULDERS := Vector3(0.0, -0.25, -0.24)
+const FISTS_SHOULDERS := Vector3(0.0, -0.17, -0.2)
 ## Hand targets sit this far back from the grip, so the round arm tip
 ## wraps it instead of swallowing the gun.
 const GRIP_BACK := 0.045
@@ -130,7 +130,10 @@ func follow(camera: Camera3D, delta: float) -> void:
 	var motion := player.view_settings.camera_motion if player else 1.0
 	_step(delta, smooth, motion)
 	global_transform = camera.global_transform
-	_root.transform = _offset(motion)
+	# Scoping in drops the arms out of the way; fully in, only the scope shows.
+	var scoped := clampf((player.zoom_amount() - 1.0) / 0.6, 0.0, 1.0) if player else 0.0
+	_root.transform = Transform3D(Basis(Vector3.RIGHT, deg_to_rad(-25.0) * scoped), Vector3(0.0, -0.3, 0.1) * scoped) * _offset(motion)
+	_root.visible = scoped < 0.95
 	_place_gun(delta)
 	_set_projection(camera)
 
@@ -295,7 +298,7 @@ func _step(delta: float, smooth: float, _motion: float) -> void:
 		_last_look = look
 		_has_look = true
 		var local := Basis(Vector3.UP, player.yaw).inverse() * player.velocity
-		move_target += Vector3(-local.x * 0.0025, clampf(-player.velocity.y * 0.003, -0.05, 0.05), clampf(local.z * 0.0015, -0.02, 0.03))
+		move_target += Vector3(-local.x * 0.0025, clampf(-player.velocity.y * 0.002, -0.03, 0.025), clampf(local.z * 0.0015, -0.02, 0.03))
 		turn_target.z += clampf(local.x * 0.006, -0.08, 0.08)
 		# Sliding: tucked in low, rolled over.
 		var sliding := player.state.mode == MovementState.Mode.SLIDE
@@ -303,12 +306,14 @@ func _step(delta: float, smooth: float, _motion: float) -> void:
 		move_target += Vector3(-0.04, -0.035, 0.02) * _slide
 		turn_target += Vector3(deg_to_rad(4.0), deg_to_rad(6.0), deg_to_rad(18.0)) * _slide
 		match player.state.mode:
+			# Braced for the slam: pulled in during the hang, pushed out and
+			# down on the way down (the fall itself lifts it a little).
 			MovementState.Mode.SMASH_WINDUP:
-				move_target += Vector3(0.0, 0.06, 0.04)
-				turn_target.x += deg_to_rad(18.0)
+				move_target += Vector3(0.0, 0.01, 0.04)
+				turn_target.x += deg_to_rad(5.0)
 			MovementState.Mode.SMASH:
-				move_target += Vector3(0.0, 0.08, 0.06)
-				turn_target.x += deg_to_rad(28.0)
+				move_target += Vector3(0.0, -0.035, -0.02)
+				turn_target.x += deg_to_rad(-4.0)
 			MovementState.Mode.WALLRIDE:
 				var right := Basis(Vector3.UP, player.yaw) * Vector3.RIGHT
 				turn_target.z += signf(player.state.wallride_normal.dot(right)) * deg_to_rad(10.0)

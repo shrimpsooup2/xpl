@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 1.1 (draft) |
+| **Version** | 1.2 (draft) |
 | **Date** | 2026-09-28 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -24,6 +24,7 @@
 | 0.9 | Experimental impact frames on kills and hard smashdowns, with a camera punch the HUD rides too, off by default (§10.4). Pop-ups land letter by letter and shatter (§13.5). |
 | 1.0 | Movement feel pass: constant slide friction (slides carry, hills speed you up), heavier smashdown (0.1 s hang, shockwave ring, landing tell), stronger slam bounce (9 + 0.75 × drop, max 22, plus a 3 m/s kick). A camera that reacts to every movement (§10.3), speed lines (§10.4). |
 | 1.1 | Camera and HUD reactions are fast and jerky by default (snap in, drop off, stepped jitter, flickering speed lines); new *camera smoothing* setting for the smooth feel. |
+| 1.2 | First six guns built, each modelled on a real kind of gun (§7.4), with first-person arms, third-person holds and animated actions (§11.5). Hit zones ride the animated body; dummies react to the part you hit (§5.2, §9.3). Ammo shown as a column sized by capacity and a ring around the crosshair (§13.3). Magazine sizes moved toward the real guns'. |
 
 ---
 
@@ -272,9 +273,23 @@ The smashdown is a vertical move that is also an attack and a chain starter. It 
 
 | Zone | Size | Effect |
 |---|---|---|
-| Body | Capsule | Base damage |
-| Head | Sphere, 0.13 m radius | ×1.5 by default (set per weapon) |
+| Body | Capsules on the body's bones: neck, chest and gut (two each, the slab's rounded sides), upper arms, forearms, thighs, shins | Base damage |
+| Head | Sphere matching the drawn head, 0.165 m radius | ×1.5 by default (set per weapon) |
 | **Heart** | Sphere, 0.07 m radius, inside the chest | **Instant kill** with eligible weapons. See [§6](#6-heartshot). |
+
+The shapes ride the animated skeleton, so a shot hits what you see, and each one names a part (head, neck, chest, gut, left/right arm, left/right leg) that the body reacts with:
+
+| Part hit | Reaction |
+|---|---|
+| Head / neck | The head-hit clip over the upper body; the head and neck snap back away from the shot. |
+| Chest | The chest-hit clip; the upper spine is knocked back. |
+| Gut | A lighter chest clip; the lower spine folds and the hips dip. |
+| Arm | That arm is flung back along the shot, the shoulders twist a little. |
+| Leg | That leg is kicked back and the knee buckles; the hips drop. |
+
+Knocks land partly on the frame and swing out the rest of the way on springs, wobble once and settle, bigger for bigger hits. Code: `src/combat/hit_shapes.gd`, `PlayerModel.react_to_hit()`.
+
+*Prototype note:* the zones follow the rendered pose. That is exact locally, but for netcode the server and every client must agree on the pose (rule 4 of §6.1): see open question 15.
 
 ### 5.3 Loadout
 
@@ -368,7 +383,7 @@ In order of preference, if heartshots land too often or not often enough:
 | Respawn | Standard pads respawn 20 s after pickup, with a visible timer. Heavy and Power pads don't respawn within a round. |
 | Auto-pickup | Moving over a weapon while your primary slot is empty (or holds an empty weapon) picks it up instantly, even mid-slide or in the air. Pickup radius is 1.5 m. |
 | Swap | Press E near a weapon to swap it for your current primary. The old one drops with its remaining ammo. |
-| Top-up | Moving over the same weapon type you hold adds its ammo to yours |
+| Top-up | Moving over the same weapon type you hold adds its ammo to yours, up to a full gun; the rest stays in the pickup |
 | Ready time | 0.15 s after a pickup or a switch |
 
 ### 7.2 Ammo and throwing
@@ -398,22 +413,35 @@ Everyone spawns with fists and nothing else. The opening seconds of every round 
 
 Names are placeholders, but they follow one theme: **early-2000s computing jargon.** ♥ = can heartshot.
 
+Every gun is modelled on a real kind of gun, abstracted: chunky blocks in beige plastic, gunmetal and chrome, with one part in a candy colour like the translucent computers of the time. Its mechanism works the way the real one does (a pistol's slide, a revolver's cylinder and hammer, a pump, a bolt). Magazine sizes stay close to the real guns', so the ammo column (§13.3) tells you what you're holding.
+
+**Built so far** (`src/combat/weapons.gd`):
+
+| Weapon | Modelled on | Rounds | Accent | Its animation |
+|---|---|---|---|---|
+| Pointer | 9 mm semi-automatic pistol | 12 | Bondi blue slide | Slide snaps back; one-handed |
+| Hotkey | .357 revolver | 6 | Tangerine cylinder | Hammer falls, cylinder turns a sixth; alt fans the hammer with the left hand |
+| Popup | 9 mm submachine gun | 50 | Grape magazine | Bolt carrier chatters; two hands |
+| Keystroke | Assault rifle | 30 | Lime magazine | Bolt carrier; carry handle, banana mag |
+| Scatter Plot | Pump-action shotgun | 8 | Strawberry pump | The left hand racks the pump; red shells fly |
+| Ping | Bolt-action sniper rifle | 5 | Blueberry scope | The right hand leaves the grip to work the bolt; alt zooms 3× into a scope |
+
 **Precision**
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
-| Pointer | Standard | 20 | 0.3 s | 12 | Projectile 150 m/s | ♥ | Common pistol, found near spawns |
-| Hotkey | Standard | 45 | 0.5 s | 6 | Projectile 250 m/s | ♥ | Alt: fan the hammer (remaining rounds at 0.1 s, +3° spread, no ♥) |
+| Pointer | Standard | 20 | 0.3 s | 12 | Projectile 150 m/s | ♥ | 9 mm pistol. Common, found near spawns. |
+| Hotkey | Standard | 45 | 0.5 s | 6 | Projectile 250 m/s | ♥ | .357 revolver. Alt: fan the hammer (remaining rounds at 0.1 s, +3° spread, no ♥) |
 | Magnifier | Standard | 40 | 0.35 s | 10 | Hitscan | ♥ | Alt: 1.5× zoom |
 | Stylus | Standard | 70 | 0.9 s | 5 | Bolt 90 m/s, with drop | ♥ | Crossbow. Bolts stick in walls. |
-| Ping | Heavy | 85 (head kills) | 1.2 s | 4 | Hitscan | ♥ | Sniper. Alt: 3× zoom. |
+| Ping | Heavy | 85 (head kills) | 1.2 s | 5 | Hitscan | ♥ | Bolt-action sniper. Alt: 3× zoom. |
 
 **Automatic**
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
-| Popup | Standard | 11 | 0.07 s | 60 | Projectile 180 m/s | — | SMG. Spread blooms 1° → 4°. |
-| Keystroke | Standard | 16 | 0.11 s | 40 | Projectile 200 m/s | — | Rifle. 0.5° spread. |
+| Popup | Standard | 11 | 0.07 s | 50 | Projectile 180 m/s | — | SMG. Spread blooms 1° → 4°. |
+| Keystroke | Standard | 16 | 0.11 s | 30 | Projectile 200 m/s | — | Assault rifle. 0.5° spread, blooming to 1.5°. |
 | Spam | Standard | 14 | 0.09 s | 50 | Nail 90 m/s, slight drop | — | Nailgun. Nails bounce once. |
 | Scroll Wheel | Heavy | 9 | 0.04 s after 0.5 s spin-up | 200 | Projectile 160 m/s | — | Minigun. 2.5° spread. Alt: keep spun up without firing. |
 
@@ -421,7 +449,7 @@ Names are placeholders, but they follow one theme: **early-2000s computing jargo
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
-| Scatter Plot | Standard | 10 × 9 pellets | 0.8 s | 8 | Pellets, 5° spread | — | Pump shotgun |
+| Scatter Plot | Standard | 10 × 9 pellets | 0.8 s | 8 | Pellets, 5° spread | — | Pump shotgun. Pellets land in a readable pattern: one in the middle, a tight inner ring, an outer ring. |
 | Double Click | Heavy | 12 × 9 pellets per barrel | 0.25 s | 10 | Pellets, 6° spread | — | Alt: both barrels at once, with 5 m/s self-knockback (shotgun jump) |
 | Firewall | Heavy | 120 DPS + 15 burn over 3 s | Continuous | 5 s of fuel | 8 m cone | — | Flamethrower |
 
@@ -534,6 +562,8 @@ Lobby → Warmup → [ Countdown → Round → Round end → Next map ] × N →
 
 ### 9.3 Movement sandbox
 A dedicated training map with a speedometer, a ghost replay of your last run, movement challenges, a weapon range with every weapon, and target dummies that can move on rails (for heartshot practice). For a movement-first game this is a core feature, not a menu extra.
+
+**In the prototype** the test course has it started: an armory of weapon pads (one per gun, back in 3 s) next to spawn, and a shooting range of dummies at 7, 12, 22 and 42 m, one up on a block, one walking and one jogging across. Dummies are the player's own body on a little stand: they take hits by zone (§5.2), show damage numbers and a health bar, fall apart like a player on a kill, pull themselves back together 2.5 s later, and heal after 2 s untouched. Code: `src/combat/target_dummy.gd`.
 
 ---
 
@@ -654,6 +684,29 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 - It must never read as lumpy. Nothing is glued on: the legs are the bottom of the torso slab split by a slit, each arm is one tapered tube, and every join is a wide C2 blend. The mesh is built in an A-pose (arms 45° down, where they spend most of their time), so skinning never bends a shoulder far.
 - Animation comes from Quaternius's Universal Animation Library (CC0). Its human rig is reshaped at load time to the body's proportions (shorter legs, longer spine, A-pose rest), and the hips motion is scaled to match.
 - Cosmetics (post-MVP): head primitives, surface materials (chrome, marble, carpet, TV static), heart styles, weapon skins. Cosmetics can never change hitboxes or hide the heart.
+- **Layered animation** (`src/player/body_layers.gd`): on top of the locomotion clip, clips can be laid over some bones (the arms aim while the legs run), played once over some bones (a hit, a punch), arms reach for targets by two-bone IK, and bones can be knocked on springs.
+
+### 11.5 Weapons in hand
+
+**First person.** Your own arms: the body's mesh cut down to the arms, a little smaller, posed by the same rig and drawn over the world with a steady 62° field of view (it follows 30% of the camera's FOV swings), so it never clips into walls. Only the arms are drawn, so the shoulders sit wherever reads best: low, so the thick upper arms stay out of view.
+
+| Action | Animation |
+|---|---|
+| Holding a gun | Both hands on it by IK: the right on the grip, the left on the foregrip or pump (one-handed guns leave the left arm down). |
+| Firing | The gun kicks around the grip (pitch, a random twist, a shove back) on a snappy spring, its mechanism cycles, a muzzle flash, a light pops on the world, casings fly out to the right. |
+| Pump / bolt | The left hand rides the pump; the right hand leaves the grip to work the bolt and comes back. |
+| Fanning (Hotkey alt) | The left hand swipes over the hammer on every shot. |
+| Drawing | The gun comes up from below, turned, and eases past its place. |
+| Top-up | The left arm plays the rig's pistol reload: down to the belt, back up to slap the rounds in; the gun tilts. |
+| Throwing | The throwing arm (the rig's cross punch) flings it. |
+| Fists | The rig's guard; jabs and crosses alternate, timed so the hit lands as the arm is out. |
+| Scoped | The arms drop out of view; a scope with fine lines, the rest of the screen dimmed. |
+
+Like the camera, it only moves in answer to you: looking drags it, strafing leans it, landing drops it, sliding tucks it in and rolls it over, dashes swing it, wall rides tilt it away from the wall, smashdowns brace it and slam it down.
+
+**Third person.** Other players hold the same model, drawn 25% bigger so it reads across a map. Pistols use the rig's two-handed pistol aim, blended between its up, level and down poses with the view pitch; two-handed guns are shouldered, both hands on them by IK. Shots play the pistol-shoot clip over the arms. Fists hold the rig's guard and punch with its jab and cross clips.
+
+Code: `src/player/viewmodel.gd`, `src/combat/weapon_model.gd`, `PlayerModel.hold()`.
 
 ---
 
@@ -701,14 +754,20 @@ Code: `src/ui/lofi_ui.gd` (style kit), `src/ui/lofi_layer.gd` (the low-res canva
 |---|---|
 | Top centre | Your score · round timer (inverted) · their score. Map name in a ghost box below. Alerts (e.g. *the map is unloading*) in red below that. |
 | Top right | Killfeed: `killer [weapon] victim`, newest on top, five at most, five seconds each. A heartshot kill shows a pink ♥ instead of the weapon. |
-| Centre | The sharp crosshair. Hit markers: white (hit), yellow (head), red (kill), big pink (heartshot). |
+| Centre | The sharp crosshair. Hit markers: white (hit), yellow (head), red (kill), big pink (heartshot). Around it, a ring of the gun's rounds (below). |
 | Above the crosshair | Pop-ups: *heartshot* (pink), later *double kill* etc. |
 | Below the crosshair | Pickup prompt: `e  swap for overdraw (5)`. Never covers the crosshair. Auto-pickups only flash the name. |
 | Bottom left | `hp` + health. Turns red and shakes at 30 or below. |
 | Bottom centre | Speed meter: a row of cells that get taller left to right (volume-meter style), lit black up to your speed, a grey cell marking the recent peak, jittering past the soft cap. Your speed in a box to its left, inverted above run speed. Dash charges underneath as small boxes: black when ready, filling grey while recharging; a used charge flashes, a recharged one pops. |
-| Bottom right | Throwable (ghost box) above weapon name + ammo left. Ammo box turns red at 0. `fists` when empty-handed. |
+| Bottom right | Throwable (ghost box) above the weapon name and the ammo column (below). `fists` when empty-handed, with no column. |
 
 The HUD hides during your death sequence and springs back in on respawn. Code: `src/ui/game_hud.gd`, `src/ui/crosshair.gd`.
+
+**Ammo is shown, not counted.** Map weapons never reload (§7.2), so what matters is how much the gun holds and how much is left:
+
+- **The column** (`src/ui/ammo_meter.gd`) stands next to the weapon name. Its height is set by the gun's capacity (9 px × √rounds on the 270 px canvas: 22 px for the Hotkey's 6, 64 px for the Popup's 50), so a glance tells you what you're carrying. Guns that hold a dozen or fewer are cut into one cell per round; bigger ones get a notch every ten. It fills black from the bottom; a small tag rides the top of the fill with the exact count. Each shot pops its cell off the top; a new gun grows its column in; a top-up rolls the fill back up. At a quarter or less it turns red, empty it blinks.
+- **The ring** around the crosshair says the same where you're looking: one arc per round for small guns, one notched arc for big ones, spent rounds dimming from the end, the one just fired flicking outward. Red when low, blinking when empty, a red blink on a dry click.
+- **The cycle arc**, a thin arc inside the ring, fills while a slow gun (0.45 s or more between shots) gets its next round ready.
 
 ### 13.4 Overlays and screens
 
@@ -834,7 +893,7 @@ Movement is a custom kinematic controller on top of `CharacterBody3D`, with our 
 
 - **Simulation never reads presentation state.** Presentation only reads sim state and events.
 - **All tuning values live in data files** and can be hot-reloaded in dev builds.
-- **Weapons are data.** A definition file declares the fire mode, damage, zone multipliers, heartshot eligibility, ammo, alt-fire, and projectile behaviors (bounce, stick, split, pierce, explode, knockback). New weapons should rarely need new code.
+- **Weapons are data.** A definition file declares the fire mode, damage, zone multipliers, heartshot eligibility, ammo, alt-fire, and projectile behaviors (bounce, stick, split, pierce, explode, knockback). New weapons should rarely need new code. In the prototype that's `WeaponDef` (`src/combat/weapon_def.gd`): stats, feel (recoil, cycle), and the model as a list of parts with its moving parts tagged.
 - **Maps carry metadata:** weapon pads (tier and pool), mirror pairs, spawn points, flow-loop markup, and collapse rings.
 
 ### 15.5 Telemetry (playtests)
@@ -878,3 +937,4 @@ Each milestone has a **gate question**. We don't move on until the answer is yes
 | 12 | Networking: listen server via Steam relay for MVP, or dedicated servers from day one? | Listen server |
 | 13 | Controller support: in the MVP, or post-MVP with aim assist tuning? | Post-MVP |
 | 14 | Monetization model (premium, or premium plus cosmetics)? | Premium, TBD |
+| 15 | Hit shapes follow the animated pose, which is exact locally. Online, do we sync a deterministic pose (the sim's movement state drives the upper body's aim, so the server can rebuild it), or fall back to capsules on the simulated body? | Rebuild the pose from sim state; keep the heart on the chest bone |

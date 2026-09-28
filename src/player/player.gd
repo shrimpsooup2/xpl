@@ -279,6 +279,11 @@ func muzzle_position() -> Vector3:
 	return weapons.eye_position()
 
 
+## How far the camera is zoomed in (1 = not at all).
+func zoom_amount() -> float:
+	return _zoom
+
+
 ## 0..1: how far into the slide look the camera is.
 func slide_look() -> float:
 	return _slide_look

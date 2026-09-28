@@ -52,6 +52,9 @@ const KNOCK_LEG := 0.75
 ## Where a two-handed gun's grip sits from the right shoulder, in aim space
 ## (x right, y up, -z forward): the stock tucked into the shoulder.
 const SHOULDERED := Vector3(0.02, -0.1, -0.26)
+## Guns in other players' hands are drawn a bit big, so you can tell what
+## someone's carrying across the map (GDD §7.6).
+const HELD_SCALE := 1.25
 const WALK_CLIP_SPEED := 1.1
 const JOG_CLIP_SPEED := 2.9
 const SPRINT_CLIP_SPEED := 5.0
@@ -253,6 +256,7 @@ func hold(def: WeaponDef) -> void:
 		held = WeaponModel.new(def)
 		held.top_level = true
 		add_child(held)
+		held.scale = Vector3.ONE * HELD_SCALE
 
 
 ## Aims the arms (and the held gun) at `pitch` radians; call every frame.
@@ -318,7 +322,7 @@ func _place_held() -> void:
 		return
 	var hand := skeleton.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone("DEF-hand.R"))
 	var tip := hand.origin + (hand.basis.y.normalized() * BodyShape.ARM_TIP * 0.5)
-	held.global_transform = Transform3D(_aim_basis(), tip)
+	held.global_transform = Transform3D(_aim_basis().scaled(Vector3.ONE * HELD_SCALE), tip)
 
 
 # --- Falling apart ------------------------------------------------------------

@@ -337,3 +337,39 @@ func test_camera_smoothing_snaps_or_eases() -> void:
 	var smooth_later := player.camera.fov - rest
 	check(smooth_first < snappy_first * 0.6, "smooth: it starts small (+%.1f)" % smooth_first)
 	check(smooth_later > smooth_first, "and builds (+%.1f)" % smooth_later)
+
+
+# --- Weapons ----------------------------------------------------------------
+
+func test_ammo_column_follows_the_gun_in_hand() -> void:
+	var meter: AmmoMeter = ui.hud._ammo
+	check(not meter.visible, "no column for fists")
+	check(ui.crosshair.capacity == 0, "no ring for fists")
+	player.weapons.give(Weapons.get_def(Weapons.HOTKEY))
+	await frames(30)
+	check(meter.visible and meter.capacity == 6 and meter.ammo == 6, "a six-shooter's column")
+	near(meter._height, AmmoMeter.height_for(6), 0.5, "grown to its size")
+	check(ui.crosshair.capacity == 6 and ui.crosshair.ammo == 6, "and its ring")
+	var short := meter._height
+	player.weapons.give(Weapons.get_def(Weapons.POPUP))
+	await frames(30)
+	check(meter._height > short * 2.0, "an SMG's column is far taller (%.0f vs %.0f px)" % [meter._height, short])
+	player.weapons.primary_ammo = 3
+	player.weapons.ammo_changed.emit(3, 50)
+	await frames(2)
+	check(meter.ammo == 3 and meter.is_low(), "low ammo shows")
+	check(ui.crosshair.ammo == 3, "the ring follows")
+	player.weapons.reset()
+	await frames(2)
+	check(not meter.visible and ui.crosshair.capacity == 0, "gone again with fists")
+
+
+func test_hits_and_kills_reach_the_crosshair_and_killfeed() -> void:
+	var w := player.weapons
+	w.hit_confirmed.emit({"zone": &"head", "killed": false})
+	check(ui.crosshair._mark_time > 0.0 and ui.crosshair._mark_color == Color(1.0, 0.9, 0.3), "a headshot marker")
+	w.hit_confirmed.emit({"zone": &"heart", "killed": true, "heartshot": true, "name": "dummy",
+			"weapon": Weapons.get_def(Weapons.POINTER)})
+	await frames(2)
+	check(ui.crosshair._mark_color == LofiUI.HEART, "a heartshot marker")
+	check(ui.hud._killfeed.get_child_count() == 1, "and a killfeed line")
