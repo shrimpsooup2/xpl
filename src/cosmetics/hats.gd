@@ -87,7 +87,7 @@ static func build(id: StringName, team: Team) -> Node3D:
 	return hat
 
 
-## An upward-pointing triangle over the head in the team colour, with a
+## A downward-pointing triangle over the head in the team colour, with a
 ## dark outline so it reads on any background. Turn it to face the viewer
 ## with face_marker().
 static func build_marker(team: Team) -> Node3D:
@@ -98,14 +98,15 @@ static func build_marker(team: Team) -> Node3D:
 		var prism := PrismMesh.new()
 		prism.size = Vector3(0.2, 0.18, 0.02) * (1.3 if outline else 1.0)
 		mi.mesh = prism
+		mi.rotation.z = PI  # Point down, at the head.
 		var m := StandardMaterial3D.new()
 		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		m.albedo_color = Color(0.05, 0.05, 0.08) if outline else team_color(team)
 		mi.material_override = m
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-		# The outline sits behind, raised so the border comes out even (the
+		# The outline sits behind, lowered so the border comes out even (the
 		# prism scales about its box, not the triangle's centre).
-		mi.position = Vector3(0, 0.009, -0.02) if outline else Vector3.ZERO
+		mi.position = Vector3(0, -0.009, -0.02) if outline else Vector3.ZERO
 		marker.add_child(mi)
 	return marker
 
