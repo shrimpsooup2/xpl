@@ -1,5 +1,5 @@
 extends CanvasLayer
-## Prototype HUD: crosshair, speedometer, movement state readout, and a ticker
+## Developer overlay: speedometer, movement state readout, and a ticker
 ## of recent movement events so chains are easy to see while testing.
 ## Also owns the debug hotkeys: F2 respawn, F3 vsync, F4 toggle this readout,
 ## F6 third-person camera, F7 die.
@@ -109,14 +109,6 @@ func _build() -> void:
 	add_child(root)
 	_root = root
 
-	var crosshair := ColorRect.new()
-	crosshair.color = Color(1, 1, 1, 0.9)
-	crosshair.size = Vector2(4, 4)
-	crosshair.set_anchors_preset(Control.PRESET_CENTER)
-	crosshair.position = -crosshair.size * 0.5
-	crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(crosshair)
-
 	_speed_label = _label(root, 30, HORIZONTAL_ALIGNMENT_CENTER)
 	_speed_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
 	_speed_label.offset_top = -130
@@ -136,7 +128,7 @@ func _build() -> void:
 	help.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	help.offset_top = -34
 	help.offset_left = 16
-	help.text = "F1 tuning   F2 respawn   F3 vsync   F4 readout   F6 third person   F7 die   Esc release mouse"
+	help.text = "F1 tuning   F2 respawn   F3 vsync   F4 readout   F6 third person   F7 die   F8 preview ui   Tab scores   Esc menu"
 
 
 func _label(parent: Control, font_size: int, align: HorizontalAlignment) -> Label:

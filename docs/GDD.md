@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.5 (draft) |
+| **Version** | 0.6 (draft) |
 | **Date** | 2026-09-27 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -18,6 +18,7 @@
 | 0.3 | Players spawn with fists only; the Pointer becomes a map pickup. Engine decided: Godot 4.7 with GDScript. |
 | 0.4 | Art direction moves toward ULTRAKILL: point-filtered pixel textures, low internal resolution, glossy surfaces, deliberately "bad" lighting. Added the logo. |
 | 0.5 | Player body defined (smooth, joint-free, gingerbread-person proportions). Added the death sequence: blackout, spotlight, and the body crumbling into diced pieces. |
+| 0.6 | UI direction set: everything in the logo's style (tiny Arial in framed boxes, blown up soft), replacing the chrome/bevel idea. HUD, overlays, pause and main menu defined and built. |
 
 ---
 
@@ -650,32 +651,55 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 ## 13. UI / UX
 
 ### 13.1 Style
-The UI draws on early-2000s interfaces: beveled chrome, translucent panels, pixel fonts mixed with glossy display type, installer-wizard and media-player-skin energy. The between-round map title card can look like a very fast "installer" screen.
+The interface follows the logo: it looks **default and unfinished** on purpose, which plays against the glossy world.
+
+| Element | Rule |
+|---|---|
+| Canvas | All UI is laid out on a small canvas (about 270 px tall) and scaled up with smooth filtering, so it is soft and blurry like the logo. |
+| Type | Liberation Sans (Arial metrics), lowercase copy everywhere. Sizes on the canvas: 8 small, 10 normal, 16 big, 36 huge. |
+| Boxes | Every piece of text sits in a white box with a thin black frame and black text. |
+| Emphasis | Inverted boxes (black, white text) for emphasis, hover, and the current value. Ghost boxes (translucent, grey) for secondary labels. |
+| Color | Monochrome. The only accents: **heart pink** (heartshots, the heart) and **red** (low health, alerts). |
+| Motion | Things pop in with a quick overshoot; hits and damage shake. No slow fades. |
+| Exceptions | The crosshair and hit markers are drawn at full resolution, sharp, because aiming needs to be exact. Developer tools (F1 tuning, debug readout) stay crisp too. |
+
+Code: `src/ui/lofi_ui.gd` (style kit), `src/ui/lofi_layer.gd` (the low-res canvas).
 
 ### 13.2 Logo
 - The wordmark is plain lowercase **xtrapartial** in Arial, rendered tiny, framed by a thin black box, then blown up blurry and slightly warped. Black on white.
 - It deliberately looks default and unfinished, which plays against the glossy world.
 - Files: `assets/ui/logo.png` (also the boot splash) and `assets/ui/logo_small.png` (the tiny original, for upscaling live in menus). `tools/gen_logo.gd` regenerates both.
 
-### 13.3 HUD (minimal)
-- Crosshair (customizable)
-- Health
-- Primary weapon name and ammo left (fist icon when empty-handed)
-- Dash charges
-- Throwable count
-- Round score and map name
-- Killfeed, with a Heartshot icon
-- Optional: speedometer, FPS / ping
+### 13.3 HUD
 
-### 13.4 Pickups
-- When you are near a weapon, a small label shows its name and ammo. It never covers the crosshair.
-- Auto-pickups show only a brief name flash.
+| Position | Contents |
+|---|---|
+| Top centre | Your score · round timer (inverted) · their score. Map name in a ghost box below. Alerts (e.g. *the map is unloading*) in red below that. |
+| Top right | Killfeed: `killer [weapon] victim`, newest on top, five at most, five seconds each. A heartshot kill shows a pink ♥ instead of the weapon. |
+| Centre | The sharp crosshair. Hit markers: white (hit), yellow (head), red (kill), big pink (heartshot). |
+| Above the crosshair | Pop-ups: *heartshot* (pink), later *double kill* etc. |
+| Below the crosshair | Pickup prompt: `e  swap for overdraw (5)`. Never covers the crosshair. Auto-pickups only flash the name. |
+| Bottom left | `hp` + health. Turns red and shakes at 30 or below. |
+| Bottom centre | Dash charges as small boxes: black when ready, filling grey while recharging. |
+| Bottom right | Throwable (ghost box) above weapon name + ammo left. Ammo box turns red at 0. `fists` when empty-handed. |
 
-### 13.5 Key screens
-- Main menu, settings, lobby (invite / join code)
-- Map title card between rounds
-- Match end (round-by-round recap: map, winner, killing weapon, heartshots)
-- Movement sandbox menus
+The HUD hides during your death sequence. Code: `src/ui/game_hud.gd`, `src/ui/crosshair.gd`.
+
+### 13.4 Overlays and screens
+
+| Screen | Status | Description |
+|---|---|---|
+| Main menu | Built | Your blob idles (and sometimes dances) under a spotlight on a dark stage. Logo top left, boxed menu below (*play*, *settings (soon)*, *quit*), version in a ghost box. |
+| Pause (Esc) | Built | Dim + boxed list: *resume*, *respawn*, *tuning*, *main menu*, *quit*. The game keeps running underneath (it's multiplayer). |
+| Map card + countdown | Built (preview) | *round 3* over the map name, a fake loading bar of boxes, then *3 · 2 · 1 · go*. |
+| Round result | Built (preview) | Huge *round won* (inverted) or *round lost* banner over the score. |
+| Scoreboard (hold Tab) | Built (preview) | One boxed table: rounds, kills, ♥ heartshots, ping. |
+| Match end | Built (preview) | *you won* / *you lost*, final score, and a list of every round: map, winner, and how. |
+| Death | Built | See §10.5. Caption in the same boxed style. |
+| Settings | Planned | Video (pixel height, FOV), mouse, audio, key binds. |
+| Lobby | Planned (M3) | Invite / join code, ready-up. |
+
+"Preview" screens run on made-up data (press **F8** in the test course to cycle them) until rounds exist in M3. Code: `src/ui/overlays.gd`, `src/ui/pause_menu.gd`, `src/ui/main_menu.gd`, wired together by `src/ui/game_ui.gd`.
 
 ---
 

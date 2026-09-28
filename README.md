@@ -12,7 +12,7 @@ A round-based, movement-first arena FPS. Two players duel through short rounds o
 
 1. Install **Godot 4.7.2**, the standard build (not .NET): <https://godotengine.org/download>
 2. Clone this repo, open Godot, choose **Import**, and select `project.godot`.
-3. Press **F5** to play. You spawn in the movement test course.
+3. Press **F5** to play. The main menu opens; choose **play** to enter the movement test course.
 
 ### Controls
 
@@ -30,7 +30,9 @@ A round-based, movement-first arena FPS. Two players duel through short rounds o
 | Toggle debug readout | F4 |
 | Third-person camera (debug) | F6 |
 | Die (debug, to see the death sequence) | F7 |
-| Release mouse | Esc (click to recapture) |
+| Preview UI overlays (debug) | F8 |
+| Scoreboard | Hold Tab |
+| Pause menu | Esc |
 
 Wall ride and mantle are automatic: jump along a wall to ride it, and move into a ledge to climb it.
 
@@ -46,13 +48,13 @@ The **View → Look** section of the panel controls the render: `pixel height` i
 |---|---|
 | `src/movement/` | The movement simulation: `MovementSim` (one fixed tick), `MovementState`, `MovementParams`, `InputCommand` |
 | `src/player/` | `Player` (input, camera interpolated between ticks), `PlayerModel` (the body and its crumble), `BodyShape` (proportions and shape), `DeathSequence` (the death cinematic), `ViewSettings` |
-| `src/ui/` | `LofiLabel`: text in the logo's style |
+| `src/ui/` | The UI: style kit (`LofiUI`), low-res canvas (`LofiLayer`), HUD, crosshair, overlays, pause and main menus |
 | `src/world/` | `GreyBox` blocks (size and surface kind) |
 | `src/render/` | Surface, sky, and screen shaders, and `RetroScreen` (low-res rendering) |
 | `assets/` | Pixel textures, the reflection map, the logo, the generated body and chunk meshes, and third-party assets |
 | `src/debug/` | Debug HUD and the live tuning panel |
 | `data/` | Tuning resources |
-| `scenes/` | `test_course.tscn` (main scene) and `player.tscn` |
+| `scenes/` | `main_menu.tscn` (main scene), `test_course.tscn`, and `player.tscn` |
 | `tests/` | Headless movement tests |
 | `tools/` | Test runner and the scene generator |
 

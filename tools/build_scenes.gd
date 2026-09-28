@@ -28,6 +28,7 @@ const KEY_ACTIONS := {
 	&"debug_hud": [KEY_F4],
 	&"debug_third_person": [KEY_F6],
 	&"debug_die": [KEY_F7],
+	&"debug_preview_ui": [KEY_F8],
 }
 const MOUSE_ACTIONS := {
 	&"fire": [MOUSE_BUTTON_LEFT],
@@ -51,6 +52,9 @@ func _initialize() -> void:
 	_save_scene(_build_player(), "res://scenes/player.tscn")
 	if not "--skip-course" in OS.get_cmdline_user_args():
 		_save_scene(_build_test_course(), "res://scenes/test_course.tscn")
+	_save_scene(_build_main_menu(), "res://scenes/main_menu.tscn")
+	ProjectSettings.set_setting("application/run/main_scene", "res://scenes/main_menu.tscn")
+	ProjectSettings.save()
 	quit()
 
 
@@ -149,6 +153,15 @@ func _build_player() -> Node:
 	return player
 
 
+# --- Main menu ----------------------------------------------------------------
+
+func _build_main_menu() -> Node:
+	var menu := Node3D.new()
+	menu.name = "MainMenu"
+	menu.set_script(load("res://src/ui/main_menu.gd"))
+	return menu
+
+
 # --- Test course --------------------------------------------------------------
 
 func _build_test_course() -> Node:
@@ -211,6 +224,11 @@ func _build_test_course() -> Node:
 	var player: Node3D = load("res://scenes/player.tscn").instantiate()
 	player.name = "Player"
 	_root.add_child(player)
+
+	var game_ui := Node.new()
+	game_ui.name = "GameUI"
+	game_ui.set_script(load("res://src/ui/game_ui.gd"))
+	_root.add_child(game_ui)
 
 	var retro := CanvasLayer.new()
 	retro.name = "RetroScreen"
