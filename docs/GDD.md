@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| **Version** | 0.6 (draft) |
-| **Date** | 2026-09-27 |
+| **Version** | 0.7 (draft) |
+| **Date** | 2026-09-28 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
 | **Platform** | PC (Windows / Linux, Steam Deck compatible), mouse & keyboard first |
@@ -19,6 +19,7 @@
 | 0.4 | Art direction moves toward ULTRAKILL: point-filtered pixel textures, low internal resolution, glossy surfaces, deliberately "bad" lighting. Added the logo. |
 | 0.5 | Player body defined (smooth, joint-free, gingerbread-person proportions). Added the death sequence: blackout, spotlight, and the body crumbling into diced pieces. |
 | 0.6 | UI direction set: everything in the logo's style (tiny Arial in framed boxes, blown up soft), replacing the chrome/bevel idea. HUD, overlays, pause and main menu defined and built. |
+| 0.7 | Body smoothed out (§11.4): legs split from the torso slab instead of glued on, one-piece tapered arms, C2 blends, A-pose rest. |
 
 ---
 
@@ -627,7 +628,8 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 ### 11.4 Characters
 - Base figure: a blank, glossy white blob of a person, in the spirit of Meccha Chameleon's figures. One seamless smooth shape with **no visible joints**: a big ball head on a short neck, one flat slab of a torso, long tube arms with no hands, and short stubby legs (crotch at about a third of the height) with no feet. A glowing heart sits on the chest. Uncanny but friendly.
 - The body is one skinned mesh generated from a smooth signed-distance shape (`src/player/body_shape.gd`, `tools/gen_body.gd`), so proportions are tuned in code, not in a modeling tool.
-- Animation comes from Quaternius's Universal Animation Library (CC0). Its human rig is reshaped at load time to the body's proportions (shorter legs, longer spine), and the hips motion is scaled to match.
+- It must never read as lumpy. Nothing is glued on: the legs are the bottom of the torso slab split by a slit, each arm is one tapered tube, and every join is a wide C2 blend. The mesh is built in an A-pose (arms 45° down, where they spend most of their time), so skinning never bends a shoulder far.
+- Animation comes from Quaternius's Universal Animation Library (CC0). Its human rig is reshaped at load time to the body's proportions (shorter legs, longer spine, A-pose rest), and the hips motion is scaled to match.
 - Cosmetics (post-MVP): head primitives, surface materials (chrome, marble, carpet, TV static), heart styles, weapon skins. Cosmetics can never change hitboxes or hide the heart.
 
 ---

@@ -11,10 +11,11 @@ extends SceneTree
 ##    assets/characters/player_chunks_<n>.res (used by the death crumble).
 ##
 ## CSG needs a frame to update, so dicing runs across frames. Takes a while.
+## Add `-- --body-only` to skip it while tuning the shape.
 
 const OUT_DIR := "res://assets/characters/"
-const CELL := 0.022  # Surface-net resolution (meters).
-const BOUNDS := AABB(Vector3(-0.98, -0.04, -0.26), Vector3(1.96, 1.92, 0.5))
+const CELL := 0.02  # Surface-net resolution (meters).
+const BOUNDS := AABB(Vector3(-0.84, -0.04, -0.26), Vector3(1.68, 1.84, 0.5))
 const CHUNK_SIZE := 0.2
 const VARIANTS := 3
 const INNER_COLOR := Color(0.86, 0.84, 0.88)
@@ -49,6 +50,8 @@ func _initialize() -> void:
 	var err := ResourceSaver.save(_body_mesh, OUT_DIR + "player_body.res")
 	print("saved player_body.res: ", error_string(err))
 	rig.free()
+	if "--body-only" in OS.get_cmdline_user_args():
+		quit()
 
 
 func _process(_delta: float) -> bool:
@@ -152,7 +155,7 @@ func _surface_nets() -> ArrayMesh:
 	var bones := PackedInt32Array()
 	var weights := PackedFloat32Array()
 	for p in positions:
-		for pair: Array in BodyShape.skin(p, _groups):
+		for pair: Array in BodyShape.skin(p, _groups, _prims):
 			bones.append(pair[0])
 			weights.append(pair[1])
 
@@ -277,7 +280,7 @@ func _finish_chunk(baked: ArrayMesh, cell_center: Vector3) -> Dictionary:
 		var bones := PackedInt32Array()
 		var weights := PackedFloat32Array()
 		for p in positions:
-			for pair: Array in BodyShape.skin(p, _groups):
+			for pair: Array in BodyShape.skin(p, _groups, _prims):
 				bones.append(pair[0])
 				weights.append(pair[1])
 		var surf := []

@@ -4,10 +4,20 @@ extends RefCounted
 ## generator (tools/gen_body.gd).
 ##
 ## Proportions: a blank, blobby, gingerbread-person figure. A big ball head,
-## one flat slab of a torso, long tube arms, short stubby legs, no hands or
-## feet, everything melted together with no visible joints. The Universal
-## Animation Library rig is human-proportioned, so reshape_skeleton() moves
-## its bones to fit before anything is built or animated.
+## one flat slab of a torso that splits into stubby legs, long tube arms, no
+## hands or feet, everything melted together with no visible joints. The
+## Universal Animation Library rig is human-proportioned, so
+## reshape_skeleton() moves its bones to fit before anything is built or
+## animated.
+##
+## Smoothness rules the shape follows (anything else reads as lumps):
+## - No two shapes run side by side where they meet, because a smooth union
+##   swells wherever two surfaces nearly coincide. The legs aren't tubes
+##   glued under the torso but the bottom of the torso slab, split by a slit.
+## - Each arm is one tapered tube, so there is no elbow ring.
+## - The body is modelled in an A-pose with the arms halfway down, where they
+##   spend most of their time, so skinning never has to bend a shoulder far.
+## - Blends are C2 (cubic), so highlights slide over joins without kinks.
 ##
 ## Rig space: the rig faces +Z and its left is +X.
 
@@ -20,26 +30,46 @@ const SPINE_SCALE := 1.40
 const THIGH_SCALE := 0.625
 const SHIN_SCALE := 0.583
 ## Leg centres sit this far either side of the middle.
-const LEG_SPREAD := 0.125
+const LEG_SPREAD := 0.12
+## The arms' rest pose points this far below horizontal (the rig's is a
+## T-pose). Animations set bone rotations outright, so this only changes the
+## pose the mesh is built and bound in.
+const ARM_DROP := deg_to_rad(45.0)
 
 # Shape (meters, rig space after reshaping).
 const HEAD_RADIUS := 0.165
 const HEAD_OFFSET := Vector3(0.0, 0.095, 0.01)
 const NECK_RADIUS := 0.115
-const TORSO_CENTER := Vector3(0.0, 1.005, -0.02)
-const TORSO_HALF := Vector3(0.215, 0.395, 0.12)
-const TORSO_ROUNDING := 0.1
-const UPPER_ARM_RADIUS := 0.118
-const FOREARM_RADIUS := 0.11
+## The slab: torso on top, legs underneath, one cross-section morphing into
+## the other around the crotch.
+const SLAB_Z := 0.0
+const TORSO_HALF := Vector2(0.215, 0.12)  # Half width (x) and depth (z).
+const TORSO_ROUNDING := 0.12  # Equal to the half depth: round sides.
+const LEG_HALF := Vector2(0.095, 0.12)
+const LEG_ROUNDING := 0.095
+const CROTCH_Y := 0.64
+const CROTCH_BLEND := 0.11
+const SOLE_Y := 0.0
+const SOLE_ROUNDING := 0.085
+const SHOULDER_Y := 1.40
+const SHOULDER_ROUNDING := 0.13
+const ARM_RADIUS := 0.118  # At the shoulder.
+const ARM_TIP_RADIUS := 0.1
 ## How far the rounded arm tip reaches past the hand bone.
 const ARM_TIP := 0.07
-const LEG_RADIUS := 0.103
 # Smooth-union blend widths: how soft the joins are.
-const BLEND_NECK := 0.05
-const BLEND_HEAD := 0.04
-const BLEND_ARM := 0.03
-const BLEND_ARMS_TO_BODY := 0.08
-const BLEND_LEGS_TO_BODY := 0.05
+const BLEND_NECK := 0.08
+const BLEND_HEAD := 0.07
+const BLEND_ARMS_TO_BODY := 0.12
+
+# Skinning.
+## Field-distance band over which the shoulder hands over from body to arm.
+const ARM_SKIN_BAND := 0.09
+## Height band over which the hips hand over to the legs.
+const LEG_SKIN_FROM := 0.46
+const LEG_SKIN_TO := 0.76
+## Half-width of the left/right leg handover across the crotch.
+const LEG_SKIN_SPLIT := 0.035
 
 ## The heart: chest front, a little to the character's left (GDD §6.2).
 const HEART_RADIUS := 0.05
@@ -66,6 +96,12 @@ static func reshape_skeleton(sk: Skeleton3D) -> void:
 		_scale_rest(sk, "DEF-shin." + side, THIGH_SCALE)
 		_scale_rest(sk, "DEF-foot." + side, SHIN_SCALE)
 		_scale_rest(sk, "DEF-toe." + side, 0.5)
+		# Swing the arm down around the shoulder joint (rig forward is +Z).
+		var arm := sk.find_bone("DEF-upper_arm." + side)
+		var parent := sk.get_bone_global_rest(sk.get_bone_parent(arm))
+		var global := sk.get_bone_global_rest(arm)
+		var drop := Basis(Vector3.BACK, -ARM_DROP if side == "L" else ARM_DROP)
+		sk.set_bone_rest(arm, parent.affine_inverse() * Transform3D(drop * global.basis, global.origin))
 	sk.reset_bone_poses()
 
 
@@ -105,28 +141,29 @@ static func primitives(sk: Skeleton3D) -> Dictionary:
 		var elbow: Vector3 = at.call("DEF-forearm." + side)
 		var hand: Vector3 = at.call("DEF-hand." + side)
 		prims["arm_a_" + side] = shoulder
-		prims["arm_b_" + side] = elbow
-		prims["arm_c_" + side] = hand + (hand - elbow).normalized() * ARM_TIP
-		prims["leg_a_" + side] = at.call("DEF-thigh." + side)
-		prims["leg_b_" + side] = at.call("DEF-foot." + side)
+		prims["arm_b_" + side] = hand + (hand - elbow).normalized() * ARM_TIP
 	return prims
 
 
 static func sdf(p: Vector3, prims: Dictionary) -> float:
-	var torso := _round_box(p - TORSO_CENTER, TORSO_HALF, TORSO_ROUNDING)
-	var upper := _smin(torso, _capsule(p, prims.neck_a, prims.neck_b, NECK_RADIUS), BLEND_NECK)
-	upper = _smin(upper, p.distance_to(prims.head) - HEAD_RADIUS, BLEND_HEAD)
-	var arms := INF
-	var legs := INF
-	for side: String in ["L", "R"]:
-		var arm := _smin(
-				_capsule(p, prims["arm_a_" + side], prims["arm_b_" + side], UPPER_ARM_RADIUS),
-				_capsule(p, prims["arm_b_" + side], prims["arm_c_" + side], FOREARM_RADIUS), BLEND_ARM)
-		arms = minf(arms, arm)
-		# Legs join with a hard min so the slit between them stays open.
-		legs = minf(legs, _capsule(p, prims["leg_a_" + side], prims["leg_b_" + side], LEG_RADIUS))
-	var body := _smin(upper, arms, BLEND_ARMS_TO_BODY)
-	return _smin(body, legs, BLEND_LEGS_TO_BODY)
+	return _smin(_core(p, prims), minf(_arm(p, prims, "L"), _arm(p, prims, "R")), BLEND_ARMS_TO_BODY)
+
+
+## Slab, neck, and head: everything the arms blend into.
+static func _core(p: Vector3, prims: Dictionary) -> float:
+	var q := Vector2(p.x, p.z - SLAB_Z)
+	var torso := _round_rect(q, TORSO_HALF, TORSO_ROUNDING)
+	# abs(x): the nearer leg.
+	var legs := _round_rect(Vector2(absf(q.x) - LEG_SPREAD, q.y), LEG_HALF, LEG_ROUNDING)
+	var section := lerpf(legs, torso, _smootherstep(CROTCH_Y - CROTCH_BLEND, CROTCH_Y + CROTCH_BLEND, p.y))
+	var slab := maxf(_rounded_cap(section, SOLE_Y - p.y, SOLE_ROUNDING),
+			_rounded_cap(section, p.y - SHOULDER_Y, SHOULDER_ROUNDING))
+	var core := _smin(slab, _capsule(p, prims.neck_a, prims.neck_b, NECK_RADIUS), BLEND_NECK)
+	return _smin(core, p.distance_to(prims.head) - HEAD_RADIUS, BLEND_HEAD)
+
+
+static func _arm(p: Vector3, prims: Dictionary, side: String) -> float:
+	return _round_cone(p, prims["arm_a_" + side], prims["arm_b_" + side], ARM_RADIUS, ARM_TIP_RADIUS)
 
 
 static func gradient(p: Vector3, prims: Dictionary, eps := 0.004) -> Vector3:
@@ -136,9 +173,15 @@ static func gradient(p: Vector3, prims: Dictionary, eps := 0.004) -> Vector3:
 	return Vector3(dx, dy, dz).normalized()
 
 
+## Cubic smooth minimum: C2, so the blend has no visible highlight seam.
 static func _smin(a: float, b: float, k: float) -> float:
 	var h := maxf(k - absf(a - b), 0.0) / k
-	return minf(a, b) - h * h * k * 0.25
+	return minf(a, b) - h * h * h * k / 6.0
+
+
+static func _smootherstep(from: float, to: float, x: float) -> float:
+	var t := clampf((x - from) / (to - from), 0.0, 1.0)
+	return t * t * t * (t * (t * 6.0 - 15.0) + 10.0)
 
 
 static func _capsule(p: Vector3, a: Vector3, b: Vector3, r: float) -> float:
@@ -148,9 +191,37 @@ static func _capsule(p: Vector3, a: Vector3, b: Vector3, r: float) -> float:
 	return (pa - ba * h).length() - r
 
 
-static func _round_box(p: Vector3, half: Vector3, r: float) -> float:
-	var q := p.abs() - (half - Vector3(r, r, r))
-	return q.max(Vector3.ZERO).length() + minf(maxf(q.x, maxf(q.y, q.z)), 0.0) - r
+## A capsule whose radius tapers from ra at a to rb at b.
+static func _round_cone(p: Vector3, a: Vector3, b: Vector3, ra: float, rb: float) -> float:
+	var ba := b - a
+	var l2 := ba.dot(ba)
+	var rr := ra - rb
+	var a2 := l2 - rr * rr
+	var il2 := 1.0 / l2
+	var pa := p - a
+	var y := pa.dot(ba)
+	var z := y - l2
+	var x2 := (pa * l2 - ba * y).length_squared()
+	var y2 := y * y * l2
+	var z2 := z * z * l2
+	var k := signf(rr) * rr * rr * x2
+	if signf(z) * a2 * z2 > k:
+		return sqrt(x2 + z2) * il2 - rb
+	if signf(y) * a2 * y2 < k:
+		return sqrt(x2 + y2) * il2 - ra
+	return (sqrt(x2 * a2 * il2) + y * rr) * il2 - ra
+
+
+static func _round_rect(q: Vector2, half: Vector2, r: float) -> float:
+	var d := q.abs() - half + Vector2(r, r)
+	return d.max(Vector2.ZERO).length() + minf(maxf(d.x, d.y), 0.0) - r
+
+
+## Closes a vertical extrusion of a 2D section with a rounded edge. h is the
+## signed distance past the cap's plane.
+static func _rounded_cap(section: float, h: float, r: float) -> float:
+	var w := Vector2(section + r, h + r)
+	return minf(maxf(w.x, w.y), 0.0) + w.max(Vector2.ZERO).length() - r
 
 
 # --- Skin weights -------------------------------------------------------------
@@ -181,18 +252,22 @@ static func bone_segments(sk: Skeleton3D) -> Dictionary:
 	return groups
 
 
-## Up to four (bone, weight) pairs for a rest-space point. Arms and legs
-## fade in over a band so the blob bends smoothly where limbs meet the body.
-static func skin(p: Vector3, groups: Dictionary) -> Array:
+## Up to four (bone, weight) pairs for a rest-space point. The arm's share
+## follows how much closer the point is to the arm than to the body, so it
+## fades across the blend at the shoulder; the legs fade in below the crotch
+## and split left/right gradually, so the crotch stretches instead of tearing.
+static func skin(p: Vector3, groups: Dictionary, prims: Dictionary) -> Array:
 	var arm_side := "L" if p.x > 0.0 else "R"
-	var arm := smoothstep(0.17, 0.27, absf(p.x)) * smoothstep(0.95, 1.12, p.y)
-	var leg := 1.0 - smoothstep(0.52, 0.7, p.y)
-	leg *= 1.0 - arm
+	var core := _core(p, prims)
+	var arm := smoothstep(-ARM_SKIN_BAND, ARM_SKIN_BAND, core - _arm(p, prims, arm_side))
+	var leg := (1.0 - smoothstep(LEG_SKIN_FROM, LEG_SKIN_TO, p.y)) * (1.0 - arm)
+	var left := smoothstep(-LEG_SKIN_SPLIT, LEG_SKIN_SPLIT, p.x)
 	var torso := maxf(1.0 - arm - leg, 0.0)
 	var weights := {}
 	_distribute(p, groups.torso, torso, weights)
 	_distribute(p, groups["arm_" + arm_side], arm, weights)
-	_distribute(p, groups["leg_" + ("L" if p.x > 0.0 else "R")], leg, weights)
+	_distribute(p, groups.leg_L, leg * left, weights)
+	_distribute(p, groups.leg_R, leg * (1.0 - left), weights)
 	var pairs: Array = []
 	for bone: int in weights:
 		pairs.append([bone, weights[bone]])
