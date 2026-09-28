@@ -373,3 +373,28 @@ func test_hits_and_kills_reach_the_crosshair_and_killfeed() -> void:
 	await frames(2)
 	check(ui.crosshair._mark_color == LofiUI.HEART, "a heartshot marker")
 	check(ui.hud._killfeed.get_child_count() == 1, "and a killfeed line")
+
+
+func test_boxes_are_drawn_like_the_logo() -> void:
+	var a := LofiUI.box("hi")
+	var style := a.get_theme_stylebox(&"panel") as PaperBox
+	check(style != null, "boxes are paper cards")
+	check(style.paper == Color.WHITE and style.frame == Color.BLACK, "a white card with a black frame")
+	check(style.content_margin_left > style.margin * 1.4 + 1.0 and style.content_margin_top > style.margin * 1.4 + 1.0,
+			"the text sits inside the frame, which sits inside the card")
+	LofiUI.restyle(a, LofiUI.Style.INVERTED)
+	var inverted := a.get_theme_stylebox(&"panel") as PaperBox
+	check(inverted.fill == LofiUI.BLACK and inverted.paper == Color.WHITE, "inverted: black inside the frame, the card still white around it")
+	check(inverted.hand == style.hand, "restyling keeps the box's shape")
+	var b := LofiUI.box("hi")
+	check((b.get_theme_stylebox(&"panel") as PaperBox).hand != style.hand, "each box is a little off in its own way")
+	var big := LofiUI.box("x", LofiUI.HUGE)
+	check((big.get_theme_stylebox(&"panel") as PaperBox).margin > style.margin, "bigger text, more card around the frame")
+	var button := LofiUI.button("go", func() -> void: pass)
+	var hover := button.get_theme_stylebox(&"hover") as PaperBox
+	var normal := button.get_theme_stylebox(&"normal") as PaperBox
+	check(hover.hand == normal.hand and hover.fill == LofiUI.BLACK and hover.shadow > 0.0, "a hovered button inverts and lifts, same shape")
+	check(is_equal_approx(hover.content_margin_left + hover.content_margin_right, normal.content_margin_left + normal.content_margin_right),
+			"and doesn't change size")
+	for n: Node in [a, b, big, button]:
+		n.free()

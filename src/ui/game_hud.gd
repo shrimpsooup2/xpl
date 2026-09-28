@@ -117,24 +117,25 @@ class Pips extends Control:
 		progress = new_progress
 		queue_redraw()
 
+	var _hand := randi()  # Their cards' imperfections (PaperBox).
+
 	func _draw() -> void:
 		var w := 9.0
-		var gap := 3.0
+		var gap := 5.0
 		var total := count * w + (count - 1) * gap
 		var x := (size.x - total) * 0.5
 		for i in count:
 			var r := Rect2(x + i * (w + gap), 0, w, 5)
 			var grow := (_bump[i] if i < _bump.size() else 0.0) * 2.0
 			r = r.grow(grow)
-			draw_rect(Rect2(r.position + LofiUI.SHADOW * 0.5, r.size), Color(LofiUI.BLACK, 0.6))
-			draw_rect(r, LofiUI.WHITE)
+			PaperBox.draw_card(self, r, _hand + i * 3, 1.5)
 			if i < charged:
 				draw_rect(r, LofiUI.BLACK)
 			elif i == charged:
 				draw_rect(Rect2(r.position, Vector2(r.size.x * progress, r.size.y)), LofiUI.GREY)
 			if i < _flash.size() and _flash[i] > 0.0:
 				draw_rect(r.grow(_flash[i] * 2.0), Color(LofiUI.WHITE, _flash[i]))
-			draw_rect(r, LofiUI.BLACK, false, 1.0)
+			PaperBox.draw_frame(self, r, _hand + i * 3)
 
 
 ## Speed as a row of cells that get taller left to right, like a volume

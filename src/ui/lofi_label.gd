@@ -1,10 +1,11 @@
 class_name LofiLabel
 extends TextureRect
-## Text in the logo's style: plain Arial-style type rendered tiny inside a
-## thin black frame, then shown blown up and blurry (GDD §13.2).
+## Text in the logo's style: plain Arial-style type rendered tiny on a white
+## card inside a thin, slightly crooked black frame (PaperBox), then shown
+## blown up and blurry (GDD §13.2).
 
 const FONT := preload("res://assets/fonts/LiberationSans-Regular.ttf")
-const PADDING := Vector2i(7, 3)
+const PADDING := Vector2i(9, 6)
 
 @export var text := "":
 	set(value):
@@ -33,15 +34,15 @@ func _ready() -> void:
 
 	_viewport = SubViewport.new()
 	_viewport.disable_3d = true
-	_viewport.transparent_bg = false
+	_viewport.transparent_bg = true
 	_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 	add_child(_viewport)
 
 	_frame = Panel.new()
-	var style := StyleBoxFlat.new()
-	style.bg_color = Color.WHITE
-	style.border_color = Color.BLACK
-	style.set_border_width_all(1)
+	var style := PaperBox.new()
+	style.margin = 3.0
+	style.wobble = 0.8
+	style.hand = randi()
 	_frame.add_theme_stylebox_override(&"panel", style)
 	_viewport.add_child(_frame)
 

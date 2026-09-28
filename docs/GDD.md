@@ -26,7 +26,7 @@
 | 1.1 | Camera and HUD reactions are fast and jerky by default (snap in, drop off, stepped jitter, flickering speed lines); new *camera smoothing* setting for the smooth feel. |
 | 1.2 | First six guns built, each modelled on a real kind of gun (§7.4), with first-person arms, third-person holds and animated actions (§11.5). Hit zones ride the animated body; dummies react to the part you hit (§5.2, §9.3). Ammo shown as a column sized by capacity and a ring around the crosshair (§13.3). Magazine sizes moved toward the real guns'. |
 | 1.3 | Weapons renamed from computing jargon to realistic-sounding model names (SP-12, Marshal .357, SX-50, TR-30, Warden 12, Heron .308…). Damage numbers merge: one number per target that adds up and grows (§10.4). |
-| 1.4 | Hats: the first cosmetic, and how teams are told apart. Sixteen hats in red or blue, or no hat and a team triangle over the head; picked on the title screen (§11.4, §13.4). Dash charges recharge slower (1.75 → 2.25 s). First-person arms end in clean round caps. |
+| 1.4 | Hats: the first cosmetic, and how teams are told apart. Sixteen hats in red or blue, or no hat and a team triangle over the head; picked on the title screen (§11.4, §13.4). Dash charges recharge slower (1.75 → 2.25 s). First-person arms end in clean round caps, then carry on out of view as sleeves. UI boxes drawn like the logo: a crooked black frame set in from a white card. |
 
 ---
 
@@ -740,8 +740,8 @@ The interface follows the logo: it looks **default and unfinished** on purpose, 
 |---|---|
 | Canvas | All UI is laid out on a small canvas (about 270 px tall) and scaled up with smooth filtering, so it is soft and blurry like the logo. |
 | Type | Liberation Sans (Arial metrics), lowercase copy everywhere. Sizes on the canvas: 8 small, 10 normal, 16 big, 36 huge. |
-| Boxes | Every piece of text sits in a white box with a thin black frame and black text. Solid boxes cast a hard black drop shadow, so they read as cut-outs and their motion reads. |
-| Emphasis | Inverted boxes (black, white text) for emphasis, hover, and the current value. Ghost boxes (translucent, grey) for secondary labels. |
+| Boxes | Every piece of text sits on a white card like the logo's: a thin black frame set in from the card's edge, so white shows all round it, and black text. Drawn by hand, not ruled: each box's margins, corners and frame lines are a touch off, differently for every box, and the same every frame (`src/ui/paper_box.gd`). No drop shadows; only a hovered button lifts off one. |
+| Emphasis | Inverted boxes (black inside the frame, white text, the white card still around it) for emphasis, hover, and the current value. Ghost boxes (translucent, grey) for secondary labels. |
 | Color | Monochrome. The only accents: **heart pink** (heartshots, the heart) and **red** (low health, alerts). |
 | Motion | Nothing just appears or vanishes: boxes spring, stamp, type, roll, and flick (§13.5). No slow fades. |
 | Exceptions | The crosshair and hit markers are drawn at full resolution, sharp, because aiming needs to be exact. Developer tools (F1 tuning, debug readout) stay crisp too. |
@@ -806,7 +806,7 @@ The boxes are plain, so the motion carries the energy. The UI should feel as ali
 | Alerts | Stamp in, then blink red/black. |
 | Map card | The map name types itself into a box that flips open; the load cells pop as they fill. Countdown numbers stamp down, *go* bursts. |
 | Banners | *round won*, *you won* land one letter tile at a time, then kick; the winner's score rolls up. |
-| Menus | Buttons slide in one after another, lift off their shadow on hover, press in on click. The pause menu snaps open (fast dim, stamped title). |
+| Menus | Buttons slide in one after another, invert and lift off a shadow on hover, press in on click. The pause menu snaps open (fast dim, stamped title). |
 | Main menu | The logo stamps down, then wobbles gently. The blob reacts to what you hover (a jab for *play*, a flinch for *quit*) and the spotlight pumps. The camera leans toward the mouse. A news ticker crawls along the bottom. |
 | Scene changes | A wipe: black boxes pop in across the screen in a diagonal sweep, the scene changes behind them, and they clear the same way. |
 

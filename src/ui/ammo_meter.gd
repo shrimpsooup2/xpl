@@ -31,6 +31,7 @@ var _pops: Array[Vector2] = []  # (round index, age)
 var _blink := 0.0
 var _grow: Tween
 var _roll: Tween
+var _hand := randi()  # Its cards' imperfections (PaperBox).
 
 
 static func height_for(rounds: int) -> float:
@@ -44,7 +45,7 @@ static func is_segmented(rounds: int) -> bool:
 func _init() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	size_flags_vertical = Control.SIZE_SHRINK_END
-	custom_minimum_size = Vector2(TAG_WIDTH + TAG_GAP + BAR_WIDTH + LofiUI.SHADOW.x, 0)
+	custom_minimum_size = Vector2(TAG_WIDTH + TAG_GAP + BAR_WIDTH + LofiUI.CARD_MARGIN, 0)
 
 
 ## A new gun: the column grows to its size and fills.
@@ -57,7 +58,7 @@ func set_weapon(new_capacity: int, rounds: int) -> void:
 		_roll.kill()
 	_shown = float(rounds)
 	var target := height_for(capacity)
-	custom_minimum_size.y = target + LofiUI.SHADOW.y
+	custom_minimum_size.y = target + LofiUI.CARD_MARGIN * 2.0
 	if _grow:
 		_grow.kill()
 	_height = 0.0
@@ -106,16 +107,15 @@ func _process(delta: float) -> void:
 func _draw() -> void:
 	if capacity <= 0 or _height < 1.0:
 		return
-	var bar := Rect2(TAG_WIDTH + TAG_GAP, size.y - LofiUI.SHADOW.y - _height, BAR_WIDTH, _height)
+	var bar := Rect2(TAG_WIDTH + TAG_GAP, size.y - LofiUI.CARD_MARGIN - _height, BAR_WIDTH, _height)
 	var inner := bar.grow(-0.5)
 	var low := is_low()
 	var empty := ammo == 0
 	var flashing := empty and fmod(Time.get_ticks_msec() / 1000.0, 0.5) < 0.25
 	var frame := LofiUI.ALERT if flashing or _blink > 0.5 else LofiUI.BLACK
 	var fill := LofiUI.ALERT if low else LofiUI.BLACK
-	# Shadow, box, fill from the bottom.
-	draw_rect(Rect2(bar.position + LofiUI.SHADOW, bar.size), Color(LofiUI.BLACK, 0.6))
-	draw_rect(bar, LofiUI.WHITE)
+	# A card like the logo's, the fill from the bottom, the frame over it.
+	PaperBox.draw_card(self, bar, _hand, LofiUI.CARD_MARGIN)
 	var level := _level(inner, _shown)
 	draw_rect(Rect2(inner.position.x, level, inner.size.x, inner.end.y - level), fill)
 	# Cells or notches.
@@ -128,7 +128,7 @@ func _draw() -> void:
 			var y := _level(inner, i)
 			draw_line(Vector2(inner.position.x, y), Vector2(inner.position.x + 2.0, y), LofiUI.GREY, 1.0)
 			draw_line(Vector2(inner.end.x - 2.0, y), Vector2(inner.end.x, y), LofiUI.GREY, 1.0)
-	draw_rect(bar, frame, false, 1.0)
+	PaperBox.draw_frame(self, bar, _hand, frame)
 	# Spent rounds pop off the top and fall away.
 	for p in _pops:
 		var t := p.y / POP_TIME
@@ -141,9 +141,10 @@ func _draw() -> void:
 	var text := str(ammo)
 	var font := LofiUI.FONT
 	var tag := Rect2(0, clampf(level - 5.0, bar.position.y - 2.0, bar.end.y - 11.0), TAG_WIDTH, 11)
-	draw_rect(Rect2(tag.position + Vector2(1, 1), tag.size), Color(LofiUI.BLACK, 0.5))
-	draw_rect(tag, LofiUI.ALERT if low else LofiUI.WHITE)
-	draw_rect(tag, LofiUI.BLACK, false, 1.0)
+	PaperBox.draw_card(self, tag, _hand + 2, 1.5)
+	if low:
+		draw_rect(tag, LofiUI.ALERT)
+	PaperBox.draw_frame(self, tag, _hand + 2)
 	var width := font.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, LofiUI.SMALL).x
 	draw_string(font, Vector2(tag.position.x + (tag.size.x - width) * 0.5, tag.position.y + 8.5), text,
 			HORIZONTAL_ALIGNMENT_LEFT, -1, LofiUI.SMALL, LofiUI.WHITE if low else LofiUI.BLACK)

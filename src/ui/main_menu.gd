@@ -198,7 +198,7 @@ func _build_menu() -> void:
 func _build_hat_picker() -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override(&"separation", 1)
-	var ghost := LofiUI.stylebox(LofiUI.Style.GHOST)
+	var ghost := LofiUI.stylebox(LofiUI.Style.GHOST, LofiUI.SMALL, randi())
 	for by in [-1, 1]:
 		var arrow := LofiUI.button("<" if by < 0 else ">", cycle_hat.bind(by))
 		arrow.add_theme_font_size_override(&"font_size", LofiUI.SMALL)

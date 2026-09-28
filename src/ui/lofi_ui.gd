@@ -1,9 +1,11 @@
 class_name LofiUI
 extends RefCounted
-## The UI style kit (GDD §13.1): plain lowercase Arial-style text in white
-## boxes with thin black frames and hard shadows, drawn on a small canvas and
-## blown up soft, like the logo. Inverted black boxes mark emphasis, hover,
-## and alerts. The only accents are heart pink and low-health red.
+## The UI style kit (GDD §13.1): plain lowercase Arial-style text on white
+## cards like the logo's, a thin black frame set in from the card's edge so
+## white shows all round it, drawn a little off by hand (PaperBox), on a small
+## canvas blown up soft. Inverted boxes (black inside the frame) mark
+## emphasis, hover, and alerts. The only accents are heart pink and
+## low-health red.
 ##
 ## The motion kit (GDD §13.5) lives here too: nothing just appears or
 ## vanishes. Boxes spring in, stamp down, type out, roll their numbers, and
@@ -25,8 +27,10 @@ const NORMAL := 10
 const BIG := 16
 const HUGE := 36
 
-## Hard drop shadow under every solid box, in canvas pixels.
+## Hard shadow under a lifted (hovered) button, and the custom-drawn HUD
+## parts' card margin, in canvas pixels.
 const SHADOW := Vector2(2, 2)
+const CARD_MARGIN := 2.0
 
 ## How much the UI moves on its own: sway, shakes, kicks, and the idle
 ## wobble all scale with this (ViewSettings.ui_motion). Things still come
@@ -48,12 +52,9 @@ static func theme() -> Theme:
 	t.default_font_size = NORMAL
 	t.set_color(&"font_color", &"Label", BLACK)
 	t.set_stylebox(&"panel", &"PanelContainer", stylebox(Style.NORMAL))
-	t.set_stylebox(&"normal", &"Button", stylebox(Style.NORMAL))
-	t.set_stylebox(&"hover", &"Button", _button_box(-1, 3))
-	t.set_stylebox(&"pressed", &"Button", _button_box(2, 0))
-	t.set_stylebox(&"hover_pressed", &"Button", _button_box(2, 0))
+	for state: StringName in [&"normal", &"hover", &"pressed", &"hover_pressed", &"disabled"]:
+		t.set_stylebox(state, &"Button", _button_box(state, 0))
 	t.set_stylebox(&"focus", &"Button", StyleBoxEmpty.new())
-	t.set_stylebox(&"disabled", &"Button", stylebox(Style.GHOST))
 	t.set_color(&"font_color", &"Button", BLACK)
 	t.set_color(&"font_hover_color", &"Button", WHITE)
 	t.set_color(&"font_pressed_color", &"Button", WHITE)
@@ -64,54 +65,44 @@ static func theme() -> Theme:
 	return t
 
 
-static func stylebox(style: Style) -> StyleBoxFlat:
-	var box := StyleBoxFlat.new()
-	box.set_border_width_all(1)
-	box.content_margin_left = 4
-	box.content_margin_right = 4
-	box.content_margin_top = 1
-	box.content_margin_bottom = 1
+## A card in `style` for text of `size`, drawn by `hand` (see PaperBox): the
+## same hand draws the same imperfections. White card, black frame; the
+## inside of the frame is black when inverted, pink or red for the heart and
+## alerts. Ghost boxes are a faint card with a grey frame.
+static func stylebox(style: Style, size := NORMAL, hand := 0, nudge := Vector2.ZERO) -> PaperBox:
+	var box := PaperBox.make(size, Vector2(3, 1), nudge)
+	box.hand = hand
 	match style:
-		Style.NORMAL:
-			box.bg_color = WHITE
-			box.border_color = BLACK
 		Style.INVERTED:
-			box.bg_color = BLACK
-			box.border_color = BLACK
+			box.fill = BLACK
 		Style.HEART:
-			box.bg_color = HEART
-			box.border_color = BLACK
+			box.fill = HEART
 		Style.ALERT:
-			box.bg_color = ALERT
-			box.border_color = BLACK
+			box.fill = ALERT
 		Style.GHOST:
-			box.bg_color = Color(1, 1, 1, 0.55)
-			box.border_color = GREY
-	if style != Style.GHOST:
-		box.shadow_color = Color(BLACK, 0.85)
-		box.shadow_size = 1
-		box.shadow_offset = SHADOW
+			box.paper = Color(1, 1, 1, 0.55)
+			box.fill = box.paper
+			box.frame = GREY
 	return box
 
 
-## Inverted button box moved by `shift` canvas pixels (negative lifts it off
-## its shadow, positive presses it in), text riding along. The hover box
-## also nudges the text right. Margins add up to the normal box's, so the
-## button never changes size.
-static func _button_box(shift: int, shadow: int) -> StyleBoxFlat:
-	var box := stylebox(Style.INVERTED)
-	box.expand_margin_left = -shift
-	box.expand_margin_top = -shift
-	box.expand_margin_right = shift
-	box.expand_margin_bottom = shift
-	var nudge := 3 if shift < 0 else shift
-	box.content_margin_left = 4 + nudge
-	box.content_margin_right = 4 - nudge
-	box.content_margin_top = 1 + clampi(shift, 0, 1)
-	box.content_margin_bottom = 1 - clampi(shift, 0, 1)
-	box.shadow_offset = Vector2(shadow, shadow)
-	box.shadow_size = 1 if shadow > 0 else 0
-	return box
+## A button's box in `state`, drawn by `hand`. Hovered it inverts and lifts
+## off a shadow, its text sliding right; pressed it sinks in. The margins
+## always add up to the normal box's, so the button never changes size.
+static func _button_box(state: StringName, hand: int) -> PaperBox:
+	match state:
+		&"hover":
+			var box := stylebox(Style.INVERTED, NORMAL, hand, Vector2(3, 0))
+			box.shift = -Vector2.ONE
+			box.shadow = SHADOW.x + 1.0
+			return box
+		&"pressed", &"hover_pressed":
+			var box := stylebox(Style.INVERTED, NORMAL, hand, Vector2(2, 1))
+			box.shift = Vector2.ONE
+			return box
+		&"disabled":
+			return stylebox(Style.GHOST, NORMAL, hand)
+	return stylebox(Style.NORMAL, NORMAL, hand)
 
 
 static func text_color(style: Style) -> Color:
@@ -128,6 +119,7 @@ static func box(text: String, size := NORMAL, style := Style.NORMAL) -> PanelCon
 	# Typing out text keeps the box at its full size.
 	label.visible_characters_behavior = TextServer.VC_CHARS_AFTER_SHAPING
 	panel.add_child(label)
+	panel.set_meta(&"size", size)
 	restyle(panel, style)
 	return panel
 
@@ -140,9 +132,12 @@ static func set_text(panel: PanelContainer, text: String) -> void:
 	label_of(panel).text = text
 
 
+## Puts a box in `style`. The box keeps its hand, so it stays the same shape.
 static func restyle(panel: PanelContainer, style: Style) -> void:
 	panel.set_meta(&"style", style)
-	panel.add_theme_stylebox_override(&"panel", stylebox(style))
+	if not panel.has_meta(&"hand"):
+		panel.set_meta(&"hand", randi())
+	panel.add_theme_stylebox_override(&"panel", stylebox(style, panel.get_meta(&"size", NORMAL), panel.get_meta(&"hand")))
 	label_of(panel).add_theme_color_override(&"font_color", text_color(style))
 
 
@@ -150,12 +145,15 @@ static func style_of(panel: PanelContainer) -> Style:
 	return panel.get_meta(&"style", Style.NORMAL) as Style
 
 
-## A text button in the house style: lifts off its shadow on hover, presses
-## in on click.
+## A text button in the house style, drawn by its own hand: inverts and
+## lifts off a shadow on hover, presses in on click.
 static func button(text: String, on_pressed: Callable) -> Button:
 	var b := Button.new()
 	b.text = text
 	b.alignment = HORIZONTAL_ALIGNMENT_LEFT
+	var hand := randi()
+	for state: StringName in [&"normal", &"hover", &"pressed", &"hover_pressed", &"disabled"]:
+		b.add_theme_stylebox_override(state, _button_box(state, hand))
 	b.pressed.connect(on_pressed)
 	b.mouse_entered.connect(func() -> void:
 		if not b.disabled:
