@@ -24,13 +24,13 @@ const LEG_SPREAD := 0.125
 
 # Shape (meters, rig space after reshaping).
 const HEAD_RADIUS := 0.165
-const HEAD_OFFSET := Vector3(0.0, 0.15, 0.01)
-const NECK_RADIUS := 0.085
+const HEAD_OFFSET := Vector3(0.0, 0.095, 0.01)
+const NECK_RADIUS := 0.115
 const TORSO_CENTER := Vector3(0.0, 1.005, -0.02)
 const TORSO_HALF := Vector3(0.215, 0.395, 0.12)
 const TORSO_ROUNDING := 0.1
-const UPPER_ARM_RADIUS := 0.092
-const FOREARM_RADIUS := 0.086
+const UPPER_ARM_RADIUS := 0.118
+const FOREARM_RADIUS := 0.11
 ## How far the rounded arm tip reaches past the hand bone.
 const ARM_TIP := 0.07
 const LEG_RADIUS := 0.103
@@ -38,7 +38,7 @@ const LEG_RADIUS := 0.103
 const BLEND_NECK := 0.05
 const BLEND_HEAD := 0.04
 const BLEND_ARM := 0.03
-const BLEND_ARMS_TO_BODY := 0.07
+const BLEND_ARMS_TO_BODY := 0.08
 const BLEND_LEGS_TO_BODY := 0.05
 
 ## The heart: chest front, a little to the character's left (GDD §6.2).
