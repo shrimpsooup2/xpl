@@ -551,3 +551,59 @@ func test_stays_crouched_under_low_ceiling() -> void:
 	await run(c, 180)
 	check(player.global_position.z < -12.5, "came out the other side (z %.2f)" % player.global_position.z)
 	check(not player.state.crouched, "stood up after the tunnel")
+
+
+# --- Death --------------------------------------------------------------------
+
+## Enough pieces to read as "diced", not just a few limbs.
+const MIN_PIECES := 40
+
+
+func _wait_for_pieces(max_frames := 240) -> void:
+	for i in max_frames:
+		await get_tree().physics_frame
+		if player.model.fragments().size() >= MIN_PIECES:
+			return
+
+
+func test_death_stops_player_and_body_falls_apart() -> void:
+	place(Vector3.ZERO)
+	await settle()
+	player.die()
+	check(player.is_dead, "dead after die()")
+	var start := player.global_position
+	await run(cmd(Vector2(0, 1)), 10)
+	check(player.global_position.is_equal_approx(start), "no movement while dead")
+	await _wait_for_pieces()
+	check(player.model.fragments().size() >= MIN_PIECES,
+			"diced into lots of pieces: %d" % player.model.fragments().size())
+	check(not player.model.body.visible, "the whole body was swapped for pieces")
+	for i in 150:
+		await get_tree().physics_frame
+	var resting := 0
+	for f in player.model.fragments():
+		if f.global_position.y > -0.2 and f.global_position.y < 2.5:
+			resting += 1
+	check(resting == player.model.fragments().size(), "pieces landed on the floor (%d resting)" % resting)
+
+
+func test_respawn_mid_collapse_reassembles_cleanly() -> void:
+	place(Vector3.ZERO)
+	await settle()
+	player.die()
+	for i in 12:
+		await get_tree().physics_frame
+	player.respawn()
+	for i in 120:
+		await get_tree().physics_frame  # Long enough for any leftover pops.
+	check(not player.is_dead, "alive after respawn")
+	check(player.model.fragments().is_empty(), "no fragments after respawn (%d)" % player.model.fragments().size())
+	check(player.model.body.visible and player.model.heart.visible, "body and heart back")
+	await run(cmd(Vector2(0, 1)), 30)
+	check(hspeed() > 5.0, "can move again after respawn")
+
+
+func test_falling_out_of_the_world_kills() -> void:
+	place(Vector3(0, Player.KILL_Y + 1.0, 0) + Vector3(300, 0, 0))
+	await run(cmd(), 30)
+	check(player.is_dead, "died below the kill height")

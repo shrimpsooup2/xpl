@@ -26,6 +26,8 @@ const KEY_ACTIONS := {
 	&"debug_respawn": [KEY_F2],
 	&"debug_vsync": [KEY_F3],
 	&"debug_hud": [KEY_F4],
+	&"debug_third_person": [KEY_F6],
+	&"debug_die": [KEY_F7],
 }
 const MOUSE_ACTIONS := {
 	&"fire": [MOUSE_BUTTON_LEFT],
@@ -61,6 +63,8 @@ func _configure_rendering() -> void:
 	ProjectSettings.set_setting("rendering/lights_and_shadows/directional_shadow/soft_shadow_filter_quality", 0)
 	ProjectSettings.set_setting("rendering/lights_and_shadows/positional_shadow/soft_shadow_filter_quality", 0)
 	ProjectSettings.set_setting("rendering/lights_and_shadows/directional_shadow/size", 2048)
+	# 1 normally; the death sequence drops it to 0 to black out the world.
+	ProjectSettings.set_setting("shader_globals/world_light", {"type": "float", "value": 1.0})
 	# Boot splash: the logo at its own size on white.
 	ProjectSettings.set_setting("application/boot_splash/image", "res://assets/ui/logo.png")
 	ProjectSettings.set_setting("application/boot_splash/bg_color", Color.WHITE)
@@ -134,6 +138,11 @@ func _build_player() -> Node:
 	cam.near = 0.05
 	cam.far = 500.0
 	player.add_child(cam)
+
+	var model := Node3D.new()
+	model.name = "Model"
+	model.set_script(load("res://src/player/player_model.gd"))
+	player.add_child(model)
 
 	for child in player.get_children():
 		child.owner = player
@@ -284,6 +293,7 @@ func _label(text: String, pos: Vector3) -> void:
 	l.modulate = Color(1, 1, 1)
 	l.outline_modulate = Color(0.15, 0.1, 0.25)
 	l.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+	l.add_to_group(&"debug_labels", true)
 	_labels.add_child(l)
 
 

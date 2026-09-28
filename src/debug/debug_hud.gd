@@ -1,7 +1,8 @@
 extends CanvasLayer
 ## Prototype HUD: crosshair, speedometer, movement state readout, and a ticker
 ## of recent movement events so chains are easy to see while testing.
-## Also owns the debug hotkeys: F2 respawn, F3 vsync, F4 toggle this readout.
+## Also owns the debug hotkeys: F2 respawn, F3 vsync, F4 toggle this readout,
+## F6 third-person camera, F7 die.
 
 const TICKER_SIZE := 7
 const TICKER_LIFETIME := 2.5
@@ -13,6 +14,7 @@ const EVENT_LABELS := {
 }
 
 var _player: Player
+var _root: Control
 var _speed_label: Label
 var _info_label: Label
 var _ticker_label: Label
@@ -28,6 +30,8 @@ func _ready() -> void:
 	_player = get_tree().get_first_node_in_group(&"local_player") as Player
 	if _player:
 		_player.movement_event.connect(_on_movement_event)
+		_player.died.connect(func() -> void: _root.visible = false)
+		_player.respawned.connect(func() -> void: _root.visible = true)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -36,6 +40,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed(&"debug_vsync"):
 		var on := DisplayServer.window_get_vsync_mode() != DisplayServer.VSYNC_DISABLED
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED if on else DisplayServer.VSYNC_ENABLED)
+	elif event.is_action_pressed(&"debug_third_person") and _player:
+		_player.set_third_person(not _player.third_person)
+	elif event.is_action_pressed(&"debug_die") and _player:
+		_player.die()
 	elif event.is_action_pressed(&"debug_hud"):
 		_show_info = not _show_info
 		_info_label.visible = _show_info
@@ -99,6 +107,7 @@ func _build() -> void:
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
+	_root = root
 
 	var crosshair := ColorRect.new()
 	crosshair.color = Color(1, 1, 1, 0.9)
@@ -127,7 +136,7 @@ func _build() -> void:
 	help.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	help.offset_top = -34
 	help.offset_left = 16
-	help.text = "F1 tuning   F2 respawn   F3 vsync   F4 readout   Esc release mouse"
+	help.text = "F1 tuning   F2 respawn   F3 vsync   F4 readout   F6 third person   F7 die   Esc release mouse"
 
 
 func _label(parent: Control, font_size: int, align: HorizontalAlignment) -> Label:

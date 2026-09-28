@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.4 (draft) |
+| **Version** | 0.5 (draft) |
 | **Date** | 2026-09-27 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -17,6 +17,7 @@
 | 0.2 | "Rounds" means round-based play, not the game ROUNDS. Replaced the card draft with STRAFTAT-style weapon pickups and a weapon roster. Maps now rotate every round. Added Smashdown as a base move and the Heartshot mechanic. Removed Block and the ability slot. |
 | 0.3 | Players spawn with fists only; the Pointer becomes a map pickup. Engine decided: Godot 4.7 with GDScript. |
 | 0.4 | Art direction moves toward ULTRAKILL: point-filtered pixel textures, low internal resolution, glossy surfaces, deliberately "bad" lighting. Added the logo. |
+| 0.5 | Player body defined (smooth, joint-free, gingerbread-person proportions). Added the death sequence: blackout, spotlight, and the body crumbling into diced pieces. |
 
 ---
 
@@ -313,7 +314,7 @@ Everything is rebindable. Crouch supports hold or toggle.
 It can, if a few conditions hold. Instant-kill zones work when they feel **earned**, and they fail when they feel **random**. These rules exist to keep it earned:
 
 1. **Only precision weapons can heartshot.** No pellets, explosions, beams, flames, bouncing projectiles, melee, or thrown weapons, and nothing that fires faster than one shot every 0.3 s. If an SMG could heartshot, spraying center mass would sometimes "win the lottery," and that would ruin the mechanic.
-2. **The heart is visible.** It glows through a translucent chest on the character model. It is a target you choose to aim at, not a hidden bonus.
+2. **The heart is visible.** It glows on the character's chest. It is a target you choose to aim at, not a hidden bonus.
 3. **Small, but not microscopic.** With a 0.07 m radius, the heart is about 11 px wide at 10 m, 6 px at 20 m, and 3 px at 40 m (1080p, 100° FOV). For comparison, the head is about 10 px wide at 20 m. That is very hard on a moving target, but possible on a predictable one (a wall ride, the arc after a knockup, a player who stops moving).
 4. **Hitboxes agree everywhere.** The heart is attached to the simulated capsule, not to client-side animated bones, so the server and every client agree exactly on where it is. A heartshot that looks clean on your screen must register.
 5. **It is a highlight, not the main way to win.** The target is **3–8% of kills**. Telemetry decides the final size.
@@ -324,7 +325,7 @@ Rounds are one life and 15–40 s long, so an instant death costs little. It is 
 
 | Rule | Value |
 |---|---|
-| Location | Chest, 1.35 m above the feet, 0.08 m left of the center line. Moves with crouch and slide poses. |
+| Location | Chest, about 1.3 m above the feet, 0.085 m left of the center line. Moves with the body's pose. |
 | Hit test | The shot's path must intersect the heart sphere. It counts from the front, back, or side. |
 | Walls | No heartshots through geometry, even with piercing weapons |
 | Eligible weapons | Marked ♥ in the weapon tables ([§7](#7-weapons)). Fists never. |
@@ -567,7 +568,25 @@ The camera is **never** driven by the fixed tick directly. Mouse look is applied
 - **Speed:** optional speedometer. At high speed, subtle wind audio and speed-line particles at the screen edges.
 - **No hitstop** (online multiplayer can't pause time). Weight comes from sound and camera micro-kicks instead.
 
-### 10.5 Accessibility
+### 10.5 Death
+
+Dying is slightly over the top and silly on purpose. The body turns out to have been diced all along.
+
+**What everyone sees:** the body takes the hit, freezes, hairline cuts open up across it, and it crumbles into a heap of chunks (about 90–100 pieces, pre-cut along a randomly rotated grid, with flat pale cut faces). The heart pops out and bounces.
+
+**What the dead player sees** (about 5 s):
+
+| Beat | Time | What happens |
+|---|---|---|
+| Blackout | 0.15 s | The screen cuts to black. The world goes dark: sky, ambient light, lamps, fog, and fake reflections all off. |
+| Spotlight | about 1 s | The camera now faces you from the front. A spotlight clunks on beside you with a stagey flicker, then swings over and settles on you with an overshoot. |
+| Performance | about 1.2 s | You do a little dance, freeze mid-move, and shiver. |
+| Crumble | about 1.8 s | Cuts open, you crumble, the heart pops out toward the camera, and the camera tilts down to the heap. |
+| Caption | 1.8 s | A logo-style boxed caption: *you fell apart*. Then fade out. |
+
+Every timing lives as a constant in `src/player/death_sequence.gd` and `src/player/player_model.gd`. Later: a skip button, audio stings, and the killer's name and weapon in the caption.
+
+### 10.6 Accessibility
 - Sensitivity shown in cm/360 as well as a raw value. Raw input is always on.
 - Every camera motion effect can be toggled off.
 - Colorblind-safe enemy highlight and heart color presets.
@@ -597,7 +616,7 @@ The camera is **never** driven by the fixed tick directly. Mouse look is applied
 
 ### 11.3 Readability rules (Pillar 4)
 - **Players:** glossy, featureless figures with a strong rim light and emissive player color. They must separate from any background at any distance.
-- **The heart:** glows through a translucent chest, in the player's color. It is visible from front and back, and never hidden by cosmetics.
+- **The heart:** glows on the chest, in the player's color. It is never hidden by cosmetics.
 - **Weapons in hand:** chunky silhouettes, identifiable at 30 m.
 - **Weapon pickups:** float and rotate above glowing pads, arena-shooter style. Pad color shows the tier (Standard, Heavy, Power). Respawn timers are shown on the pad.
 - **Projectiles:** bright emissive cores with short trails. Enemy projectiles use the enemy's color.
@@ -605,7 +624,9 @@ The camera is **never** driven by the fixed tick directly. Mouse look is applied
 - **Fog** never hides a player inside the maximum sightline.
 
 ### 11.4 Characters
-- Base figure: a blank, glossy mannequin-like body with a translucent chest and a glowing heart, and a simple primitive head (sphere, cube, or CRT monitor). It is uncanny but friendly.
+- Base figure: a blank, glossy white blob of a person, in the spirit of Meccha Chameleon's figures. One seamless smooth shape with **no visible joints**: a big ball head on a short neck, one flat slab of a torso, long tube arms with no hands, and short stubby legs (crotch at about a third of the height) with no feet. A glowing heart sits on the chest. Uncanny but friendly.
+- The body is one skinned mesh generated from a smooth signed-distance shape (`src/player/body_shape.gd`, `tools/gen_body.gd`), so proportions are tuned in code, not in a modeling tool.
+- Animation comes from Quaternius's Universal Animation Library (CC0). Its human rig is reshaped at load time to the body's proportions (shorter legs, longer spine), and the hips motion is scaled to match.
 - Cosmetics (post-MVP): head primitives, surface materials (chrome, marble, carpet, TV static), heart styles, weapon skins. Cosmetics can never change hitboxes or hide the heart.
 
 ---

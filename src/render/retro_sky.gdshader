@@ -2,6 +2,8 @@ shader_type sky;
 // Gradient sky with a flat sun disc. `bands` above 0 steps the gradient into
 // hard bands; 0 keeps it smooth.
 
+global uniform float world_light;
+
 uniform vec3 top_color : source_color = vec3(0.24, 0.16, 0.42);
 uniform vec3 upper_color : source_color = vec3(0.56, 0.38, 0.72);
 uniform vec3 horizon_color : source_color = vec3(1.0, 0.56, 0.48);
@@ -25,5 +27,5 @@ void sky() {
 	if (LIGHT0_ENABLED && distance(EYEDIR, LIGHT0_DIRECTION) < sun_size) {
 		c = sun_color * 2.0;
 	}
-	COLOR = c;
+	COLOR = c * world_light;
 }

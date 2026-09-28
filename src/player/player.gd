@@ -7,6 +7,8 @@ extends CharacterBody3D
 ## never waits for physics (GDD §10.3).
 
 signal movement_event(event: Dictionary)
+signal died
+signal respawned
 
 const DEGREES_PER_COUNT := 0.022
 const MAX_PITCH := 1.5533430342749532  # 89 degrees
@@ -14,6 +16,11 @@ const EYE_HEIGHT_SPEED := 6.0  # m/s the camera moves when crouching
 const DIP_PER_IMPACT := 0.006  # meters of landing dip per m/s of fall speed
 const DIP_MAX := 0.12
 const DIP_RECOVER := 1.2  # m/s
+## Falling below this height kills you.
+const KILL_Y := -40.0
+## Debug third-person camera (F6): distance behind and height above the eyes.
+const THIRD_PERSON_DISTANCE := 3.4
+const THIRD_PERSON_HEIGHT := 0.5
 
 @export var movement_params: MovementParams
 @export var view_settings: ViewSettings
@@ -24,6 +31,10 @@ var state := MovementState.new()
 var sim: MovementSim
 var yaw: float = 0.0
 var pitch: float = 0.0
+var is_dead := false
+var third_person := false
+## The local player's death cinematic; null for bots, remote players and tests.
+var death: DeathSequence
 
 var _command := InputCommand.new()
 var _pending_jump := false
@@ -38,6 +49,8 @@ var _roll := 0.0
 var _shake := 0.0
 
 @onready var camera: Camera3D = $Camera
+@onready var model: PlayerModel = $Model
+@onready var _collision: CollisionShape3D = $Collision
 
 
 func _ready() -> void:
@@ -63,8 +76,14 @@ func _ready() -> void:
 	if human_controlled:
 		add_to_group(&"local_player")
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
+		death = DeathSequence.new()
+		death.player = self
+		add_child(death)
+		death.finished.connect(respawn)
 	else:
 		set_physics_process(false)
+	_update_model_visibility()
+	model.follow(global_position, yaw)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -94,20 +113,62 @@ func _physics_process(delta: float) -> void:
 
 ## Runs one simulation tick with the given command.
 func tick(cmd: InputCommand, delta: float) -> void:
+	if is_dead:
+		return
 	_prev_position = global_position
 	sim.step(self, state, cmd, delta)
 	_curr_position = global_position
 	for e in state.events:
 		_react(e)
 		movement_event.emit(e)
+	model.follow(global_position, yaw)
+	if global_position.y < KILL_Y:
+		die()
+
+
+## Stops the player and falls apart. The local player gets the full death
+## cinematic; everyone else just sees the body crumble.
+func die() -> void:
+	if is_dead:
+		return
+	is_dead = true
+	velocity = Vector3.ZERO
+	_collision.set_deferred(&"disabled", true)
+	model.visible = true
+	died.emit()
+	if death:
+		death.play()
+	else:
+		var forward := Basis(Vector3.UP, yaw) * Vector3.FORWARD
+		model.fall_apart(false, global_position + forward * 3.0)
 
 
 func respawn() -> void:
+	if death:
+		death.stop()
+	model.reassemble()
+	var was_dead := is_dead
+	is_dead = false
+	_collision.set_deferred(&"disabled", false)
 	global_transform = _spawn
 	velocity = Vector3.ZERO
 	state.reset(movement_params)
 	_prev_position = global_position
 	_curr_position = global_position
+	model.follow(global_position, yaw)
+	_update_model_visibility()
+	if was_dead:
+		respawned.emit()
+
+
+func set_third_person(on: bool) -> void:
+	third_person = on
+	_update_model_visibility()
+
+
+## Your own body is hidden in first person; others always see it.
+func _update_model_visibility() -> void:
+	model.visible = is_dead or third_person or not human_controlled
 
 
 func horizontal_speed() -> float:
@@ -143,10 +204,14 @@ func _sample_command() -> InputCommand:
 # --- Camera -----------------------------------------------------------------
 
 func _process(delta: float) -> void:
+	if is_dead:
+		return  # The death sequence has the camera.
 	var p := movement_params
 	var v := view_settings
 	var f := Engine.get_physics_interpolation_fraction()
 	var pos := _prev_position.lerp(_curr_position, f)
+	model.follow(pos, yaw)
+	model.animate_movement(state, velocity)
 
 	var target_eye := p.crouch_eye_height if state.crouched else p.stand_eye_height
 	_eye_height = move_toward(_eye_height, target_eye, EYE_HEIGHT_SPEED * delta)
@@ -169,7 +234,10 @@ func _process(delta: float) -> void:
 	camera.fov = lerpf(camera.fov, vfov_from_hfov_16_9(hfov), 1.0 - exp(-8.0 * delta))
 
 	var basis := Basis.from_euler(Vector3(pitch, yaw, _roll))
-	camera.global_transform = Transform3D(basis, pos + Vector3.UP * (_eye_height - _dip) + basis * shake_offset)
+	var eye := pos + Vector3.UP * (_eye_height - _dip)
+	if third_person:
+		eye += basis * Vector3(0.0, THIRD_PERSON_HEIGHT, THIRD_PERSON_DISTANCE)
+	camera.global_transform = Transform3D(basis, eye + basis * shake_offset)
 
 
 func _react(e: Dictionary) -> void:

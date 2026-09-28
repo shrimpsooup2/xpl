@@ -4,6 +4,9 @@ render_mode diffuse_lambert, specular_schlick_ggx;
 // box-projected so any box tiles cleanly, plus a fake env-map reflection
 // for that glossy early-2000s look.
 
+// 1 normally; the death sequence fades it to 0 so only real lights remain.
+global uniform float world_light;
+
 uniform sampler2D albedo_texture : source_color, filter_nearest_mipmap, repeat_enable;
 uniform sampler2D reflection_map : source_color, filter_nearest, repeat_disable;
 uniform vec3 tint : source_color = vec3(1.0);
@@ -49,5 +52,5 @@ void fragment() {
 	ALBEDO = albedo;
 	ROUGHNESS = roughness_value;
 	SPECULAR = specular_value;
-	EMISSION = env * albedo * mix(gloss, gloss_grazing, fresnel);
+	EMISSION = env * albedo * mix(gloss, gloss_grazing, fresnel) * world_light;
 }
