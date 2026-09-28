@@ -3,7 +3,7 @@ extends "res://tests/test_suite.gd"
 ## on the head, no hat means a team triangle over it, the hat flies off when
 ## the body falls apart and is back on respawn, the pick is saved, and the
 ## title screen's picker steps through them. Also: the first-person arms
-## are a closed mesh (no open rims at the cut).
+## are a closed mesh (no open rims at the cut) that carries on out of view.
 
 const TEST_PATH := "user://test_cosmetics.cfg"
 
@@ -259,6 +259,56 @@ func test_the_title_screen_blob_is_red_or_blue_at_random() -> void:
 		menu.queue_free()
 		await frames(1)
 	check(teams.has(Hats.Team.RED) and teams.has(Hats.Team.BLUE), "both teams come up (%s)" % [teams.keys()])
+
+
+## Sleeve vertices in the eye's space, this frame.
+func sleeve_points(player: Player) -> PackedVector3Array:
+	var vm := player.viewmodel
+	var mesh: ArrayMesh = vm.get(&"_sleeve_mesh")
+	var out := PackedVector3Array()
+	if mesh.get_surface_count() == 0:
+		return out
+	var to_eye := vm.global_transform.affine_inverse() * vm.skeleton.global_transform
+	for v: Vector3 in mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+		out.append(to_eye * v)
+	return out
+
+
+## Checks the sleeves this frame: they're there, their tails are out of view,
+## and nothing reaches the eye's plane near the line of sight (the viewmodel's
+## depth doesn't clip there, so that would smear across the screen).
+func check_sleeves(player: Player, what: String) -> void:
+	var points := sleeve_points(player)
+	check(points.size() > 100, "%s: the arms carry on as sleeves" % what)
+	var closest := INF
+	var tails_in_view := 0
+	var slope := tan(deg_to_rad(Viewmodel.FOV * 0.5))
+	for p in points:
+		if p.z > -0.03:
+			closest = minf(closest, Vector2(p.x, p.y).length())
+		if -p.z < 0.15 and absf(p.y) < -p.z * slope and absf(p.x) < -p.z * slope * 16.0 / 9.0:
+			tails_in_view += 1
+	check(closest > 0.2, "%s: nothing at the eye's plane near the line of sight (%.2f m off it)" % [what, closest])
+	check(tails_in_view == 0, "%s: no sleeve end in view (%d points)" % [what, tails_in_view])
+
+
+func test_first_person_arms_carry_on_out_of_view() -> void:
+	var player: Player = load("res://scenes/player.tscn").instantiate()
+	player.movement_params = MovementParams.new()
+	player.view_settings = ViewSettings.new()
+	world.add_child(player)
+	await frames(4)
+	check_sleeves(player, "fists")
+	player.viewmodel.layers.play(&"Punch_Jab", BodyLayers.UPPER_BODY, 1.4, 0.1, 0.75, 0.02, 0.12)
+	await frames(8)
+	check_sleeves(player, "jab")
+	player.weapons.give(Weapons.get_def(Weapons.RIFLE), -1)
+	await frames(12)
+	check_sleeves(player, "rifle")
+	player.viewmodel.layers.play(&"Pistol_Reload", BodyLayers.ARMS["L"], 1.8, 0.1, 1.0, 0.05, 0.12)
+	await frames(15)
+	check_sleeves(player, "top-up")
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 func test_first_person_arms_are_a_closed_mesh() -> void:

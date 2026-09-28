@@ -17,6 +17,19 @@ extends Node3D
 
 ## Each arm is cut off this far down the upper arm from the shoulder joint.
 const ARM_CUT_DEPTH := 0.1
+## From the cut, each arm carries on as a sleeve (first person only): straight
+## on up the upper arm (SLEEVE_HANDLE, rig meters), then curving down and back,
+## narrowing to SLEEVE_TIP of its width, to end SLEEVE_DROP below the shoulder
+## and SLEEVE_END in front of the eye, well out of view, so no end of an arm
+## ever shows, whichever way the arm points. It ends in front of the eye and
+## well below the line of sight: the squeezed depth (viewmodel.gdshaderinc)
+## doesn't clip at the near plane, so anything reaching behind the eye near
+## the line of sight would smear across the screen.
+const SLEEVE_HANDLE := 0.15
+const SLEEVE_DROP := 0.12
+const SLEEVE_END := 0.15
+const SLEEVE_TIP := 0.4
+const SLEEVE_RINGS := 8
 ## Vertical field of view it's drawn with, and how much of the camera's FOV
 ## swings (speed, slides, punches) it still follows.
 const FOV := 62.0
@@ -58,6 +71,8 @@ var def: WeaponDef
 var _root := Node3D.new()
 var _rig: Node3D
 var _arms: MeshInstance3D
+var _sleeves: MeshInstance3D
+var _sleeve_mesh := ArrayMesh.new()
 var _last_look := Vector2.ZERO
 var _has_look := false
 # Springs: position (m) and rotation (rad), each with a velocity.
@@ -78,6 +93,10 @@ var _slide := 0.0
 var _shoulder_rest := Vector3.ZERO  # Shoulders' midpoint, rig space turned and scaled.
 
 static var _arms_mesh: ArrayMesh
+## Where each arm is cut, for the sleeves: [{bone (the upper arm), along
+## (shoulder to elbow, rest), points, normals (the cut's rim, in order),
+## bones, weights, per (weights per vertex)}].
+static var _arm_ends: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -105,15 +124,21 @@ func _ready() -> void:
 	skeleton.add_child(_arms)
 	_arms.skin = skeleton.create_skin_from_rest_transforms()
 	_arms.skeleton = _arms.get_path_to(skeleton)
-	_arms.material_override = WeaponModel.material(true)
-	_arms.set_instance_shader_parameter(&"color", PlayerModel.BODY_COLOR)
-	_arms.set_instance_shader_parameter(&"gloss", 0.25)
-	_arms.set_instance_shader_parameter(&"rim_amount", 0.3)
-	_arms.set_instance_shader_parameter(&"roughness_amount", 0.2)
-	_arms.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+	_sleeves = MeshInstance3D.new()
+	_sleeves.name = "Sleeves"
+	_sleeves.mesh = _sleeve_mesh
+	skeleton.add_child(_sleeves)
+	for mi: MeshInstance3D in [_arms, _sleeves]:
+		mi.material_override = WeaponModel.material(true)
+		mi.set_instance_shader_parameter(&"color", PlayerModel.BODY_COLOR)
+		mi.set_instance_shader_parameter(&"gloss", 0.25)
+		mi.set_instance_shader_parameter(&"rim_amount", 0.3)
+		mi.set_instance_shader_parameter(&"roughness_amount", 0.2)
+		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	layers = BodyLayers.new()
 	layers.name = "Layers"
 	skeleton.add_child(layers)
+	layers.modification_processed.connect(_update_sleeves)
 	if holder:
 		holder.equipped.connect(_on_equipped)
 		holder.fired.connect(_on_fired)
@@ -393,6 +418,7 @@ func _fov_scale(camera: Camera3D) -> float:
 static func arms_only(sk: Skeleton3D) -> ArrayMesh:
 	if _arms_mesh:
 		return _arms_mesh
+	_arm_ends.clear()
 	var arm_bones := {}
 	var cuts := {}  # Side -> [origin, direction] of the upper arm, rest pose.
 	for side: String in ["L", "R"]:
@@ -460,7 +486,8 @@ static func arms_only(sk: Skeleton3D) -> ArrayMesh:
 						poly.append(_split_edge(arrays, past, split, a, b))
 				for k in range(1, poly.size() - 1):
 					kept.append_array([poly[0], poly[k], poly[k + 1]])
-		_cap_holes(arrays, kept)
+		for loop in _cap_holes(arrays, kept):
+			_remember_end(arrays, loop, cuts, upper_arm, per)
 		arrays[Mesh.ARRAY_INDEX] = kept
 		_arms_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {}, source.surface_get_format(s) & Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS)
 	return _arms_mesh
@@ -492,10 +519,39 @@ static func _split_edge(arrays: Array, past: PackedFloat32Array, split: Dictiona
 	return index
 
 
+## Keeps the rim of an arm's cut (`loop`, in the order the triangles run it)
+## for its sleeve.
+static func _remember_end(arrays: Array, loop: Array, cuts: Dictionary, upper_arm: Dictionary, per: int) -> void:
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	var bones: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
+	var weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
+	var center := Vector3.ZERO
+	for v: int in loop:
+		center += verts[v]
+	center /= loop.size()
+	var side := "L" if center.x > 0.0 else "R"
+	var cut: Array = cuts[side]
+	if absf((center - (cut[0] as Vector3)).dot(cut[1]) - ARM_CUT_DEPTH) > 0.03:
+		return  # Not the cut.
+	var end := {"bone": upper_arm[side], "along": cut[1], "per": per,
+			"points": PackedVector3Array(), "normals": PackedVector3Array(),
+			"bones": PackedInt32Array(), "weights": PackedFloat32Array()}
+	for v: int in loop:
+		end.points.append(verts[v])
+		end.normals.append(normals[v])
+		for k in per:
+			end.bones.append(bones[v * per + k])
+			end.weights.append(weights[v * per + k])
+	_arm_ends.append(end)
+
+
 ## Closes every hole in the triangle list `indices` (appending to it and to
 ## the vertex arrays) with a fan around the hole's centre. The fan runs
 ## against the boundary edges' direction, so it faces outward like the rest.
-static func _cap_holes(arrays: Array, indices: PackedInt32Array) -> void:
+## Returns the holes' rims, each in the order the triangles run it.
+static func _cap_holes(arrays: Array, indices: PackedInt32Array) -> Array[Array]:
+	var loops: Array[Array] = []
 	var count := {}
 	for i in range(0, indices.size(), 3):
 		for k in 3:
@@ -523,6 +579,7 @@ static func _cap_holes(arrays: Array, indices: PackedInt32Array) -> void:
 			v = n
 		if loop.size() < 3:
 			continue
+		loops.append(loop)
 		var center := Vector3.ZERO
 		for i in loop:
 			center += verts[i]
@@ -547,3 +604,85 @@ static func _cap_holes(arrays: Array, indices: PackedInt32Array) -> void:
 			arrays[slot] = values
 	arrays[Mesh.ARRAY_VERTEX] = verts
 	arrays[Mesh.ARRAY_NORMAL] = normals
+	return loops
+
+
+## Rebuilds the sleeves on this frame's pose (see SLEEVE_HANDLE). Each starts
+## on the cut's rim exactly where the skinned arm puts it, and the rim is
+## carried along the curve, turning with it.
+func _update_sleeves() -> void:
+	_sleeve_mesh.clear_surfaces()
+	if _arm_ends.is_empty() or not _root.visible:
+		return
+	var skin := {}  # Bone -> its pose from rest, this frame.
+	var to_view := global_transform.affine_inverse() * skeleton.global_transform
+	var from_view := to_view.affine_inverse()
+	var verts := PackedVector3Array()
+	var normals := PackedVector3Array()
+	for end: Dictionary in _arm_ends:
+		var points: PackedVector3Array = end.points
+		var count := points.size()
+		var per: int = end.per
+		var rim := PackedVector3Array()
+		var rim_normals := PackedVector3Array()
+		var center := Vector3.ZERO
+		for i in count:
+			var p := Vector3.ZERO
+			var n := Vector3.ZERO
+			for k in per:
+				var w: float = end.weights[i * per + k]
+				if w <= 0.0:
+					continue
+				var b: int = end.bones[i * per + k]
+				if not skin.has(b):
+					skin[b] = skeleton.get_bone_global_pose(b) * skeleton.get_bone_global_rest(b).affine_inverse()
+				var m: Transform3D = skin[b]
+				p += (m * points[i]) * w
+				n += (m.basis * (end.normals[i] as Vector3)) * w
+			rim.append(p)
+			rim_normals.append(n.normalized())
+			center += p
+		center /= count
+		var bone: int = end.bone
+		var shoulder := skeleton.get_bone_global_pose(bone)
+		var from_rest := shoulder.basis * skeleton.get_bone_global_rest(bone).basis.inverse()
+		var back := -(from_rest * (end.along as Vector3)).normalized()
+		# A curve from the cut (heading back up the arm) to under the shoulder,
+		# just in front of the eye. Every point stays in front of the eye.
+		var p0 := center
+		var p1_view := to_view * (center + back * SLEEVE_HANDLE)
+		p1_view.z = minf(p1_view.z, -SLEEVE_END)
+		var p1 := from_view * p1_view
+		var shoulder_view := to_view * shoulder.origin
+		var p2 := from_view * Vector3(shoulder_view.x, minf(shoulder_view.y, (to_view * p0).y) - SLEEVE_DROP, -SLEEVE_END)
+		var turn := Quaternion.IDENTITY
+		var heading := back
+		var previous := rim
+		var previous_turn := turn
+		for j in range(1, SLEEVE_RINGS + 1):
+			var t := float(j) / SLEEVE_RINGS
+			var at := p0.lerp(p1, t).lerp(p1.lerp(p2, t), t)
+			var tangent := ((p1 - p0) * (1.0 - t) + (p2 - p1) * t).normalized()
+			if tangent.dot(heading) < 0.9999:
+				turn = Quaternion(heading, tangent) * turn
+			heading = tangent
+			var width := lerpf(1.0, SLEEVE_TIP, smoothstep(0.4, 1.0, t))
+			var ring := PackedVector3Array()
+			for i in count:
+				ring.append(at + turn * (rim[i] - center) * width)
+			for i in count:
+				var i1 := (i + 1) % count
+				verts.append_array([previous[i1], previous[i], ring[i], previous[i1], ring[i], ring[i1]])
+				normals.append_array([previous_turn * rim_normals[i1], previous_turn * rim_normals[i], turn * rim_normals[i],
+						previous_turn * rim_normals[i1], turn * rim_normals[i], turn * rim_normals[i1]])
+			previous = ring
+			previous_turn = turn
+		# Close the far end (out of sight behind the eye anyway).
+		for i in count:
+			verts.append_array([previous[(i + 1) % count], previous[i], p2])
+			normals.append_array([heading, heading, heading])
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	_sleeve_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)

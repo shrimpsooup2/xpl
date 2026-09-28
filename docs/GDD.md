@@ -693,7 +693,7 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 
 ### 11.5 Weapons in hand
 
-**First person.** Your own arms: the body's mesh cut down to the arms, a little smaller, posed by the same rig and drawn over the world with a steady 62° field of view (it follows 30% of the camera's FOV swings), so it never clips into walls. Only the arms are drawn, so the shoulders sit wherever reads best: low, so the thick upper arms stay out of view.
+**First person.** Your own arms: the body's mesh cut down to the arms, a little smaller, posed by the same rig and drawn over the world with a steady 62° field of view (it follows 30% of the camera's FOV swings), so it never clips into walls. Only the arms are drawn, so the shoulders sit wherever reads best: low, so the thick upper arms stay out of view. Past the cut, each arm carries on as a sleeve built fresh every frame (first person only), straight on from the cut and then curving down out of view, so you never see where an arm ends.
 
 | Action | Animation |
 |---|---|
