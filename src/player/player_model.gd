@@ -385,12 +385,27 @@ func fire_pose() -> void:
 		layers.play(&"Pistol_Shoot", BodyLayers.BOTH_ARMS, 1.6, 0.0, 0.35, 0.02, 0.1, 0.8)
 
 
-## A punch with the left (jab) or right (cross).
-func punch(left: bool) -> void:
+## A punch with the left or right: a straight (jab or cross), a hook, or an
+## uppercut (see WeaponHolder.PUNCH_KINDS). The rig has clips for the jab and
+## cross; hooks and uppercuts add a swing on top with the flinch springs, the
+## torso turning across and the elbow coming up for a hook, the hips dipping
+## and the chest rising for an uppercut.
+func punch(left: bool, kind := &"straight") -> void:
 	if left:
 		layers.play(&"Punch_Jab", BodyLayers.UPPER_BODY, 2.0, 0.0, 0.6, 0.03, 0.1)
 	else:
 		layers.play(&"Punch_Cross", BodyLayers.UPPER_BODY, 2.0, 0.0, 0.7, 0.03, 0.1)
+	var side := "L" if left else "R"
+	var out := -1.0 if left else 1.0  # Toward the punching arm's side.
+	var forward := -global_basis.z
+	match kind:
+		&"hook":
+			layers.flinch("DEF-spine.003", Vector3.UP, 0.5 * out)
+			layers.flinch("DEF-upper_arm." + side, forward, 0.8 * out)
+		&"uppercut":
+			layers.dip(Vector3.DOWN * 0.05)
+			layers.flinch("DEF-spine.003", global_basis.x, 0.35)
+			layers.flinch("DEF-forearm." + side, global_basis.x, 0.6)
 
 
 ## Throwing the weapon away.

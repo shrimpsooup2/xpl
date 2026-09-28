@@ -17,19 +17,19 @@ extends Node3D
 
 ## Each arm is cut off this far down the upper arm from the shoulder joint.
 const ARM_CUT_DEPTH := 0.1
-## From the cut, each arm carries on as a sleeve (first person only): straight
-## on up the upper arm (SLEEVE_HANDLE, rig meters), then curving down and back,
-## narrowing to SLEEVE_TIP of its width, to end SLEEVE_DROP below the shoulder
-## and SLEEVE_END in front of the eye, well out of view, so no end of an arm
-## ever shows, whichever way the arm points. It ends in front of the eye and
-## well below the line of sight: the squeezed depth (viewmodel.gdshaderinc)
-## doesn't clip at the near plane, so anything reaching behind the eye near
-## the line of sight would smear across the screen.
-const SLEEVE_HANDLE := 0.15
-const SLEEVE_DROP := 0.12
-const SLEEVE_END := 0.15
-const SLEEVE_TIP := 0.4
-const SLEEVE_RINGS := 8
+## From the cut, each arm carries on (first person only) as the same tube,
+## the same thickness, straight on up the upper arm, so an arm never shows an
+## end, it just runs off screen. The viewmodel's shoulders sit close to the
+## eye, though, and straight on would soon run into it, so once the tube is
+## SLEEVE_BEND_DEPTH from the eye (by then off screen) it bends down and away
+## from the line of sight (radius SLEEVE_BEND_RADIUS) and runs on for
+## SLEEVE_TAIL. Lengths in rig meters, the depth in meters from the eye.
+const SLEEVE_BEND_DEPTH := 0.2
+const SLEEVE_MAX_STRAIGHT := 0.4
+const SLEEVE_MIN_STRAIGHT := 0.03
+const SLEEVE_BEND_RADIUS := 0.12
+const SLEEVE_TAIL := 0.35
+const SLEEVE_BEND_RINGS := 8
 ## Vertical field of view it's drawn with, and how much of the camera's FOV
 ## swings (speed, slides, punches) it still follows.
 const FOV := 62.0
@@ -38,10 +38,28 @@ const FOV_FOLLOW := 0.3
 ## at full size they'd fill the corner of the screen.
 const RIG_SCALE := 0.8
 ## Where the shoulders sit relative to the eye (only the arms are drawn, so
-## they can go anywhere that looks right): low, so the upper arms stay out
-## of view. Empty-handed they come up and forward into a guard.
+## they can go anywhere that looks right): low and back, so the upper arms
+## rise from below the screen, away from the eye, and whatever's past the
+## cut runs off the bottom. Empty-handed they sit a touch higher.
 const SHOULDERS := Vector3(0.0, -0.36, -0.1)
-const FISTS_SHOULDERS := Vector3(0.0, -0.17, -0.2)
+const FISTS_SHOULDERS := Vector3(0.0, -0.32, -0.1)
+## Empty-handed, the fists are held up in a guard by IK, like hands on a gun:
+## where each fist sits (from the eye). A punch is all the way out when it
+## lands (WeaponHolder.PUNCH_LANDS), holds a moment, and comes back. Each
+## kind (WeaponHolder.PUNCH_KINDS) swings out along a curve through `via` to
+## `to`, with the elbow leaning toward `pole`: a straight drives down the
+## middle, a hook swings out wide with the elbow up and comes across, an
+## uppercut dips and drives up.
+const FIST_GUARD := {"L": Vector3(-0.13, -0.16, -0.42), "R": Vector3(0.15, -0.19, -0.36)}
+const GUARD_POLE := Vector3(0.6, -1.0, 0.3)  # For the right arm; mirrored for the left.
+const PUNCHES := {
+	&"straight": {"via": Vector3(0.05, -0.1, -0.5), "to": Vector3(0.03, -0.08, -0.65), "pole": Vector3(0.6, -1.0, 0.3)},
+	&"hook": {"via": Vector3(0.26, -0.06, -0.4), "to": Vector3(-0.02, -0.06, -0.5), "pole": Vector3(1.0, 0.4, 0.2)},
+	&"uppercut": {"via": Vector3(0.09, -0.3, -0.36), "to": Vector3(0.04, 0.0, -0.45), "pole": Vector3(0.3, -1.0, 0.6)},
+}
+const PUNCH_OUT := 0.07
+const PUNCH_HOLD := 0.04
+const PUNCH_BACK := 0.16
 ## Hand targets sit this far back from the grip, so the round arm tip
 ## wraps it instead of swallowing the gun.
 const GRIP_BACK := 0.045
@@ -86,6 +104,8 @@ var _shove := Vector3.ZERO
 var _shove_v := Vector3.ZERO
 var _draw := 1.0
 var _throw := -1.0
+var _punch := {"L": -1.0, "R": -1.0}  # Seconds into each fist's punch; -1 in the guard.
+var _punch_kind := {"L": &"straight", "R": &"straight"}
 var _fan := -1.0
 var _top_up := -1.0
 var _pending_casings: Array[float] = []
@@ -201,11 +221,23 @@ func _on_equipped(weapon: WeaponDef, _ammo: int) -> void:
 func _on_fired(weapon: WeaponDef, shot: Dictionary) -> void:
 	if weapon.is_fists():
 		var left: bool = shot.get("left", true)
+		var kind: StringName = shot.get("kind", &"straight")
+		var side := "L" if left else "R"
+		_punch[side] = 0.0
+		_punch_kind[side] = kind if PUNCHES.has(kind) else &"straight"
+		# The clips turn the shoulders into the punch; the fists go by IK.
 		if left:
 			layers.play(&"Punch_Jab", BodyLayers.UPPER_BODY, 1.4, 0.1, 0.75, 0.02, 0.12)
 		else:
 			layers.play(&"Punch_Cross", BodyLayers.UPPER_BODY, 2.0, 0.15, 0.95, 0.02, 0.12)
-		_add_recoil(Vector3(0, 0, -0.03), Vector3(0.0, (0.04 if left else -0.05), 0.0))
+		var across := 1.0 if left else -1.0  # Which way the view swings with it.
+		match _punch_kind[side]:
+			&"hook":
+				_add_recoil(Vector3(0, 0, -0.02), Vector3(0.0, 0.09 * across, 0.06 * across))
+			&"uppercut":
+				_add_recoil(Vector3(0, 0.01, -0.02), Vector3(deg_to_rad(4.0), 0.02 * across, 0.0))
+			_:
+				_add_recoil(Vector3(0, 0, -0.03), Vector3(0.0, 0.045 * across, 0.0))
 		return
 	if gun == null:
 		return
@@ -237,17 +269,18 @@ func _on_picked_up(_weapon: WeaponDef, how: StringName) -> void:
 
 
 func _on_thrown(weapon: WeaponDef) -> void:
-	# A throwing arm: the right hand winds up and flings (the gun is already
-	# gone into the world).
+	# A throwing arm: the right hand flings forward (the gun is already gone
+	# into the world).
 	layers.play(&"Punch_Cross", BodyLayers.UPPER_BODY, 1.6, 0.05, 0.9, 0.02, 0.15)
+	_punch["R"] = 0.0
+	_punch_kind["R"] = &"straight"
 	_add_recoil(Vector3(0, 0, -0.04), Vector3(deg_to_rad(-6.0), deg_to_rad(-6.0), 0))
 	def = weapon
 
 
 func _place_gun(delta: float) -> void:
 	if gun == null:
-		# Fists: arms free, the rig raised into the guard.
-		_rig.position = FISTS_SHOULDERS - _shoulder_rest
+		_place_fists(delta)
 		return
 	_rig.position = SHOULDERS - _shoulder_rest
 	var d := gun.def
@@ -285,6 +318,33 @@ func _place_gun(delta: float) -> void:
 					(global_transform.affine_inverse().basis * gun.global_basis) * Vector3.RIGHT,
 					(global_transform.affine_inverse().basis * gun.global_basis) * Vector3.UP,
 					shell, d.accent if shell else CombatFx.BRASS)
+
+
+## Fists: up in the guard by IK, thrown out and back on a punch, raised into
+## view like a gun when they come out.
+func _place_fists(delta: float) -> void:
+	_rig.position = FISTS_SHOULDERS - _shoulder_rest
+	var raise := Vector3(0.0, -0.28, 0.12) * (1.0 - _draw_curve(_draw))
+	for side: String in ["L", "R"]:
+		var mirror := Vector3(-1.0, 1.0, 1.0) if side == "L" else Vector3.ONE
+		var guard: Vector3 = FIST_GUARD[side]
+		var at := guard
+		var pole := GUARD_POLE
+		var t: float = _punch[side]
+		if t >= 0.0:
+			var punch: Dictionary = PUNCHES[_punch_kind[side]]
+			var to: Vector3 = (punch.to as Vector3) * mirror
+			var out := smoothstep(0.0, PUNCH_OUT, t) - smoothstep(PUNCH_OUT + PUNCH_HOLD, PUNCH_OUT + PUNCH_HOLD + PUNCH_BACK, t)
+			if t < PUNCH_OUT + PUNCH_HOLD:
+				# Out along the curve through `via`; straight back after.
+				var via: Vector3 = (punch.via as Vector3) * mirror
+				at = guard.lerp(via, out).lerp(via.lerp(to, out), out)
+			else:
+				at = guard.lerp(to, out)
+			pole = GUARD_POLE.lerp(punch.pole, out)
+			_punch[side] = t + delta if t < PUNCH_OUT + PUNCH_HOLD + PUNCH_BACK else -1.0
+		layers.set_arm_ik(side, _root.global_transform * Transform3D(Basis.IDENTITY, at + raise), 1.0,
+				_root.global_basis * (pole * mirror), false, true)
 
 
 ## Raising a gun: eases out past its place and settles back.
@@ -607,16 +667,15 @@ static func _cap_holes(arrays: Array, indices: PackedInt32Array) -> Array[Array]
 	return loops
 
 
-## Rebuilds the sleeves on this frame's pose (see SLEEVE_HANDLE). Each starts
-## on the cut's rim exactly where the skinned arm puts it, and the rim is
-## carried along the curve, turning with it.
+## Rebuilds the sleeves on this frame's pose (see SLEEVE_BEND_DEPTH): the
+## cut's rim, exactly where the skinned arm puts it, carried straight on back
+## up the upper arm, then bent away out of view, the same shape all the way.
 func _update_sleeves() -> void:
 	_sleeve_mesh.clear_surfaces()
 	if _arm_ends.is_empty() or not _root.visible:
 		return
 	var skin := {}  # Bone -> its pose from rest, this frame.
 	var to_view := global_transform.affine_inverse() * skeleton.global_transform
-	var from_view := to_view.affine_inverse()
 	var verts := PackedVector3Array()
 	var normals := PackedVector3Array()
 	for end: Dictionary in _arm_ends:
@@ -644,32 +703,38 @@ func _update_sleeves() -> void:
 			center += p
 		center /= count
 		var bone: int = end.bone
-		var shoulder := skeleton.get_bone_global_pose(bone)
-		var from_rest := shoulder.basis * skeleton.get_bone_global_rest(bone).basis.inverse()
+		var from_rest := skeleton.get_bone_global_pose(bone).basis * skeleton.get_bone_global_rest(bone).basis.inverse()
 		var back := -(from_rest * (end.along as Vector3)).normalized()
-		# A curve from the cut (heading back up the arm) to under the shoulder,
-		# just in front of the eye. Every point stays in front of the eye.
-		var p0 := center
-		var p1_view := to_view * (center + back * SLEEVE_HANDLE)
-		p1_view.z = minf(p1_view.z, -SLEEVE_END)
-		var p1 := from_view * p1_view
-		var shoulder_view := to_view * shoulder.origin
-		var p2 := from_view * Vector3(shoulder_view.x, minf(shoulder_view.y, (to_view * p0).y) - SLEEVE_DROP, -SLEEVE_END)
-		var turn := Quaternion.IDENTITY
-		var heading := back
+		# Straight on until it's SLEEVE_BEND_DEPTH from the eye.
+		var center_view := to_view * center
+		var toward_eye := (to_view.basis * back).z  # View depth lost per rig meter.
+		var straight := SLEEVE_MIN_STRAIGHT
+		if toward_eye > 0.01:
+			straight = clampf((-center_view.z - SLEEVE_BEND_DEPTH) / toward_eye, SLEEVE_MIN_STRAIGHT, SLEEVE_MAX_STRAIGHT)
+		# Then down and out, away from the line of sight.
+		var away_view := Vector3(signf(center_view.x) * 0.4, -1.0, 0.0)
+		var away := (to_view.basis.inverse() * away_view).normalized()
+		# The path: (center, heading, turn) at each ring after the rim.
+		var path: Array[Array] = []
+		var at := center + back * straight
+		path.append([at, Quaternion.IDENTITY])
+		var angle := back.angle_to(away)
+		if angle > 0.01:
+			var side := (away - back * back.dot(away)).normalized()
+			var axis := back.cross(side).normalized()
+			for j in range(1, SLEEVE_BEND_RINGS + 1):
+				var phi := angle * j / SLEEVE_BEND_RINGS
+				path.append([at + (back * sin(phi) + side * (1.0 - cos(phi))) * SLEEVE_BEND_RADIUS, Quaternion(axis, phi)])
+		var last: Array = path[-1]
+		path.append([(last[0] as Vector3) + away * SLEEVE_TAIL, last[1]])
 		var previous := rim
-		var previous_turn := turn
-		for j in range(1, SLEEVE_RINGS + 1):
-			var t := float(j) / SLEEVE_RINGS
-			var at := p0.lerp(p1, t).lerp(p1.lerp(p2, t), t)
-			var tangent := ((p1 - p0) * (1.0 - t) + (p2 - p1) * t).normalized()
-			if tangent.dot(heading) < 0.9999:
-				turn = Quaternion(heading, tangent) * turn
-			heading = tangent
-			var width := lerpf(1.0, SLEEVE_TIP, smoothstep(0.4, 1.0, t))
+		var previous_turn := Quaternion.IDENTITY
+		for step: Array in path:
+			var ring_at: Vector3 = step[0]
+			var turn: Quaternion = step[1]
 			var ring := PackedVector3Array()
 			for i in count:
-				ring.append(at + turn * (rim[i] - center) * width)
+				ring.append(ring_at + turn * (rim[i] - center))
 			for i in count:
 				var i1 := (i + 1) % count
 				verts.append_array([previous[i1], previous[i], ring[i], previous[i1], ring[i], ring[i1]])
@@ -677,10 +742,11 @@ func _update_sleeves() -> void:
 						previous_turn * rim_normals[i1], turn * rim_normals[i], turn * rim_normals[i1]])
 			previous = ring
 			previous_turn = turn
-		# Close the far end (out of sight behind the eye anyway).
+		# Close the far end (off screen).
+		var tip: Vector3 = path[-1][0]
 		for i in count:
-			verts.append_array([previous[(i + 1) % count], previous[i], p2])
-			normals.append_array([heading, heading, heading])
+			verts.append_array([previous[(i + 1) % count], previous[i], tip])
+			normals.append_array([away, away, away])
 	var arrays := []
 	arrays.resize(Mesh.ARRAY_MAX)
 	arrays[Mesh.ARRAY_VERTEX] = verts

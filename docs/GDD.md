@@ -26,7 +26,7 @@
 | 1.1 | Camera and HUD reactions are fast and jerky by default (snap in, drop off, stepped jitter, flickering speed lines); new *camera smoothing* setting for the smooth feel. |
 | 1.2 | First six guns built, each modelled on a real kind of gun (§7.4), with first-person arms, third-person holds and animated actions (§11.5). Hit zones ride the animated body; dummies react to the part you hit (§5.2, §9.3). Ammo shown as a column sized by capacity and a ring around the crosshair (§13.3). Magazine sizes moved toward the real guns'. |
 | 1.3 | Weapons renamed from computing jargon to realistic-sounding model names (SP-12, Marshal .357, SX-50, TR-30, Warden 12, Heron .308…). Damage numbers merge: one number per target that adds up and grows (§10.4). |
-| 1.4 | Hats: the first cosmetic, and how teams are told apart. Sixteen hats in red or blue, or no hat and a team triangle over the head; picked on the title screen (§11.4, §13.4). Dash charges recharge slower (1.75 → 2.25 s). First-person arms end in clean round caps, then carry on out of view as sleeves. UI boxes drawn like the logo: a crooked black frame set in from a white card. |
+| 1.4 | Hats: the first cosmetic, and how teams are told apart. Sixteen hats in red or blue, or no hat and a team triangle over the head; picked on the title screen (§11.4, §13.4). Dash charges recharge slower (1.75 → 2.25 s). First-person arms sit lower and further back and carry on past the cut off screen, so no arm end ever shows. Punches mix jabs, crosses, hooks and uppercuts. UI boxes drawn like the logo: a crooked black frame set in from a white card. |
 
 ---
 
@@ -693,7 +693,7 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 
 ### 11.5 Weapons in hand
 
-**First person.** Your own arms: the body's mesh cut down to the arms, a little smaller, posed by the same rig and drawn over the world with a steady 62° field of view (it follows 30% of the camera's FOV swings), so it never clips into walls. Only the arms are drawn, so the shoulders sit wherever reads best: low, so the thick upper arms stay out of view. Past the cut, each arm carries on as a sleeve built fresh every frame (first person only), straight on from the cut and then curving down out of view, so you never see where an arm ends.
+**First person.** Your own arms: the body's mesh cut down to the arms, a little smaller, posed by the same rig and drawn over the world with a steady 62° field of view (it follows 30% of the camera's FOV swings), so it never clips into walls. Only the arms are drawn, so the shoulders sit wherever reads best: low and back, so the thick upper arms rise from below the screen, away from the eye. Past the cut, each arm carries on as the same tube, rebuilt every frame (first person only): straight on up the arm, bending down out of view only once it's off screen, so you never see where an arm ends.
 
 | Action | Animation |
 |---|---|
@@ -704,12 +704,12 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 | Drawing | The gun comes up from below, turned, and eases past its place. |
 | Top-up | The left arm plays the rig's pistol reload: down to the belt, back up to slap the rounds in; the gun tilts. |
 | Throwing | The throwing arm (the rig's cross punch) flings it. |
-| Fists | The rig's guard; jabs and crosses alternate, timed so the hit lands as the arm is out. |
+| Fists | Held up in a guard by IK, like hands on a gun. Hands alternate, and each punch is a straight (jab or cross, about half), a hook (swings out wide, elbow up, comes across) or an uppercut (dips and drives up), never the same hook or uppercut twice running. Every kind is fully out as the hit lands and only looks different; the rig's jab and cross clips turn the shoulders into it. |
 | Scoped | The arms drop out of view; a scope with fine lines, the rest of the screen dimmed. |
 
 Like the camera, it only moves in answer to you: looking drags it, strafing leans it, landing drops it, sliding tucks it in and rolls it over, dashes swing it, wall rides tilt it away from the wall, smashdowns brace it and slam it down.
 
-**Third person.** Other players hold the same model, drawn 25% bigger so it reads across a map. Pistols use the rig's two-handed pistol aim, blended between its up, level and down poses with the view pitch; two-handed guns are shouldered, both hands on them by IK. Shots play the pistol-shoot clip over the arms. Fists hold the rig's guard and punch with its jab and cross clips.
+**Third person.** Other players hold the same model, drawn 25% bigger so it reads across a map. Pistols use the rig's two-handed pistol aim, blended between its up, level and down poses with the view pitch; two-handed guns are shouldered, both hands on them by IK. Shots play the pistol-shoot clip over the arms. Fists hold the rig's guard and punch with its jab and cross clips; hooks add a torso turn and a raised elbow, uppercuts a hip dip and a rising chest (on the flinch springs).
 
 Code: `src/player/viewmodel.gd`, `src/combat/weapon_model.gd`, `PlayerModel.hold()`.
 

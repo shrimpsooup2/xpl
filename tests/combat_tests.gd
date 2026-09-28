@@ -374,3 +374,26 @@ func test_through_the_heart_without_a_heartshot_is_a_body_hit() -> void:
 	await settle_shots()
 	check(results.size() == 1 and results[0].zone == &"body" and not results[0].heartshot, "an SMG round through the heart counts as body")
 	check(DamageNumber.over(dummy) != null and DamageNumber.over(dummy).zone == &"body", "and its number isn't pink")
+
+
+func test_punches_mix_straights_hooks_and_uppercuts() -> void:
+	var holder := player.weapons
+	var counts := {}
+	var last := &""
+	var repeats := 0
+	for i in 400:
+		var kind: StringName = holder.call(&"_pick_punch")
+		counts[kind] = counts.get(kind, 0) + 1
+		if kind == last and kind != &"straight":
+			repeats += 1
+		last = kind
+	for kind: StringName in WeaponHolder.PUNCH_KINDS:
+		check(counts.get(kind, 0) > 40, "%s comes up (%d of 400)" % [kind, counts.get(kind, 0)])
+	check(counts.get(&"straight", 0) > counts.get(&"hook", 0), "straights are the most common")
+	check(repeats == 0, "never the same hook or uppercut twice running (%d)" % repeats)
+	# A swing says which it is.
+	var kinds: Array[StringName] = []
+	holder.fired.connect(func(_def: WeaponDef, shot: Dictionary) -> void: kinds.append(shot.get("kind", &"")))
+	await fire_once()
+	await run(cmd(), 20)
+	check(kinds.size() == 1 and kinds[0] in WeaponHolder.PUNCH_KINDS, "a punch carries its kind (%s)" % [kinds])

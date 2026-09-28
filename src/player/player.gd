@@ -299,7 +299,7 @@ func slide_look() -> float:
 
 func _on_fired(def: WeaponDef, shot: Dictionary) -> void:
 	if def.is_fists():
-		model.punch(shot.get("left", true))
+		model.punch(shot.get("left", true), shot.get("kind", &"straight"))
 		_kick_camera(1.0, 0.0, 1.5 if shot.get("left", true) else -1.5, 0.0)
 		return
 	model.fire_pose()

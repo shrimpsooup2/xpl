@@ -32,6 +32,10 @@ const BLOOM_RECOVERY := 6.0
 const PUNCH_SPEED_BONUS := 15.0
 const PUNCH_LANDS := 0.07
 const PUNCH_ASSIST := deg_to_rad(12.0)
+## Punches alternate hands; each is a straight (jab or cross), a hook, or an
+## uppercut, picked by these weights, never the same hook or uppercut twice
+## running. Only the look changes: every kind lands the same.
+const PUNCH_KINDS := {&"straight": 0.5, &"hook": 0.28, &"uppercut": 0.22}
 
 var player: Player
 var fists: WeaponDef = Weapons.get_def(Weapons.FISTS)
@@ -51,6 +55,7 @@ var _empty_timer := -1.0
 var _fan_left := 0
 var _fan_timer := 0.0
 var _punch_left := true
+var _last_punch := &"straight"
 var _punch_timer := -1.0
 var _punch_damage := 0.0
 var _ignore_pickup: WeaponPickup
@@ -307,8 +312,22 @@ func _swing() -> void:
 	var bonus := clampf(player.horizontal_speed() - p.run_speed, 0.0, PUNCH_SPEED_BONUS)
 	_punch_damage = fists.damage + bonus
 	_punch_timer = PUNCH_LANDS
-	fired.emit(fists, {"left": _punch_left})
+	fired.emit(fists, {"left": _punch_left, "kind": _pick_punch()})
 	_punch_left = not _punch_left
+
+
+func _pick_punch() -> StringName:
+	var skipped: float = 0.0 if _last_punch == &"straight" else PUNCH_KINDS[_last_punch]
+	var roll := randf() * (1.0 - skipped)
+	for kind: StringName in PUNCH_KINDS:
+		if kind != &"straight" and kind == _last_punch:
+			continue
+		roll -= PUNCH_KINDS[kind]
+		if roll <= 0.0:
+			_last_punch = kind
+			return kind
+	_last_punch = &"straight"
+	return &"straight"
 
 
 ## Reach 2.2 m, with a little aim assist toward bodies near the crosshair.
