@@ -108,15 +108,32 @@ func test_killfeed_caps_and_expires() -> void:
 func test_popup_stamps_down_then_clears() -> void:
 	ui.hud.popup("heartshot", LofiUI.Style.HEART)
 	await frames(30)
-	var boxes := ui.hud._popup_anchor.get_children()
-	check(boxes.size() == 1, "one pop-up showing")
-	if boxes.size() == 1:
-		near((boxes[0] as Control).scale.x, 1.0, 0.01, "landed at full size")
+	var rows := ui.hud._popup_anchor.get_children()
+	check(rows.size() == 1, "one pop-up showing")
+	if rows.size() == 1:
+		var tiles := (rows[0] as Node).get_children().filter(func(c: Node) -> bool: return c is PanelContainer)
+		check(tiles.size() == "heartshot".length() + 1, "a tile per letter, plus the heart")
+		for tile: Control in tiles:
+			near(tile.scale.x, 1.0, 0.01, "tile landed")
 	ui.hud.popup("double kill")
-	await frames(20)
+	await frames(25)
 	check(ui.hud._popup_anchor.get_child_count() == 1, "a new pop-up replaces the old one")
 	await frames(90)
 	check(ui.hud._popup_anchor.get_child_count() == 0, "pop-ups clear themselves")
+
+
+func test_impact_rattles_and_zooms_the_hud_then_settles() -> void:
+	player.view_settings.impact_frames = true
+	await frames(10)
+	ui.kill_confirmed(false)
+	await frames(2)
+	check(ui.hud.scale.x > 1.02, "HUD punches in (scale %.3f)" % ui.hud.scale.x)
+	var rattled := ui.hud._groups().filter(func(c: Control) -> bool: return absf(c.rotation) > 0.01)
+	check(rattled.size() >= 4, "groups rattle (%d)" % rattled.size())
+	await frames(60)
+	near(ui.hud.scale.x, 1.0, 0.001, "HUD scale settled")
+	for c: Control in ui.hud._groups():
+		near(c.rotation, 0.0, 0.001, "%s rotation settled" % c.name)
 
 
 func test_health_rolls_and_heartbeat_follows_low_health() -> void:

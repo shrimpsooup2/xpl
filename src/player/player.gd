@@ -251,7 +251,7 @@ func _process(delta: float) -> void:
 		_fov = camera.fov
 	_fov = lerpf(_fov, vfov_from_hfov_16_9(hfov), 1.0 - exp(-8.0 * delta))
 	_punch_time += delta
-	var punch := _punch_spring(_punch_time)
+	var punch := punch_spring(_punch_time)
 	camera.fov = _fov + _punch_fov * punch
 
 	# The punch only moves the view; aim still follows yaw and pitch.
@@ -282,8 +282,9 @@ func punch_camera(strength: float, side := 0.0) -> void:
 
 
 ## Damped spring released from full displacement: 1 at the hit, swinging
-## through 0 into a recoil, settled by PUNCH_TIME.
-static func _punch_spring(t: float) -> float:
+## through 0 into a recoil, settled by PUNCH_TIME. The HUD rides the same
+## curve so it moves with the camera.
+static func punch_spring(t: float) -> float:
 	if t >= PUNCH_TIME:
 		return 0.0
 	var ringing := PUNCH_FREQUENCY * sqrt(1.0 - PUNCH_DAMPING * PUNCH_DAMPING)

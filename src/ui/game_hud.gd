@@ -12,7 +12,8 @@ extends Control
 ## It's alive (GDD §13.5): the whole HUD hangs off the view on a spring, so
 ## it lags behind mouse look, leans into strafes, and gets knocked around by
 ## jumps, landings, dashes, and smashdowns. Numbers roll, boxes pop, the
-## killfeed slides, pop-ups stamp down.
+## killfeed slides, pop-ups stamp down. When an impact frame fires it takes
+## the hit with the camera (impact()).
 ##
 ## Movement values are live. Health, weapons, and scores are placeholders
 ## until combat (M2) and rounds (M3) exist; the setters below are the API
@@ -43,6 +44,14 @@ const KNOCK_LAND_PER_SPEED := 5.0
 const KNOCK_LAND_MAX := 110.0
 const KNOCK_DASH := 70.0
 const KNOCK_SMASH := 150.0
+## Pop-ups sit this far above the crosshair and drift up by POPUP_DRIFT.
+const POPUP_Y := -34.0
+const POPUP_DRIFT := 6.0
+# Taking an impact frame's hit (at strength 1): zoom in with the camera's
+# punch (fraction of scale, on the same spring) and each group's rattle
+# (radians).
+const IMPACT_ZOOM := 0.07
+const IMPACT_RATTLE := 0.09
 
 var player: Player
 
@@ -76,6 +85,9 @@ var _sway := Vector2.ZERO
 var _sway_velocity := Vector2.ZERO
 var _last_look := Vector2.ZERO
 var _has_look := false
+var _impact_time := INF
+var _impact_zoom := 0.0
+var _popup_drift: Tween
 
 
 ## Dash charge boxes: filled when ready, filling up while recharging. A used
@@ -220,8 +232,8 @@ func _ready() -> void:
 	_popup_anchor.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(_popup_anchor)
 	_popup_anchor.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	_popup_anchor.offset_top = -34
-	_popup_anchor.offset_bottom = -34
+	_popup_anchor.offset_top = POPUP_Y
+	_popup_anchor.offset_bottom = POPUP_Y
 
 	visibility_changed.connect(func() -> void:
 		if visible:
@@ -373,15 +385,45 @@ func hide_prompt() -> void:
 	_hide(_prompt)
 
 
-## A short boxed pop-up above the crosshair ("heartshot", "double kill"...).
-## It stamps down, then blows away.
+## A short pop-up above the crosshair ("heartshot", "double kill"...),
+## one letter tile per character. The tiles slam down one after another,
+## a heartshot's word then beats twice like a heart, the whole thing drifts
+## up, and it shatters into tumbling tiles.
 func popup(text: String, style := LofiUI.Style.INVERTED, time := 1.1) -> void:
 	for old: Control in _popup_anchor.get_children():
-		LofiUI.burst(old, 1.4, 0.12)
-	var b := LofiUI.box(text, LofiUI.BIG, style)
-	_popup_anchor.add_child(b)
-	LofiUI.stamp(b, 0.8 if style == LofiUI.Style.HEART else 0.35)
-	b.create_tween().tween_callback(func() -> void: LofiUI.burst(b, 1.6, 0.18)).set_delay(time)
+		LofiUI.shatter(old, 0.2)
+	var heart := style == LofiUI.Style.HEART
+	var row := LofiUI.tiles(text, LofiUI.BIG, style)
+	if heart:
+		var mark := LofiUI.box("♥", LofiUI.BIG, LofiUI.Style.INVERTED)
+		row.add_child(mark)
+		row.move_child(mark, 0)
+		var gap := Control.new()
+		gap.custom_minimum_size.x = 3
+		row.add_child(gap)
+		row.move_child(gap, 1)
+	_popup_anchor.add_child(row)
+	var landed := LofiUI.stamp_tiles(row, 0.028, 0.8 if heart else 0.35)
+	var t := row.create_tween()
+	t.tween_interval(landed)
+	t.tween_callback(func() -> void: row.pivot_offset = row.size * 0.5)
+	if heart:
+		for thump in [0.22, 0.12]:
+			t.tween_property(row, "scale", Vector2.ONE * (1.0 + thump), 0.05).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+			t.tween_property(row, "scale", Vector2.ONE, 0.11).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	var hold := maxf(time - landed, 0.3)
+	t.tween_interval(maxf(hold - (0.32 if heart else 0.0), 0.05))
+	t.tween_callback(LofiUI.shatter.bind(row, 0.3))
+	# Drift up by moving the anchor (the row's own position belongs to the
+	# centring container).
+	if _popup_drift:
+		_popup_drift.kill()
+	_popup_anchor.offset_top = POPUP_Y
+	_popup_anchor.offset_bottom = POPUP_Y
+	_popup_drift = _popup_anchor.create_tween().set_parallel()
+	for side in ["offset_top", "offset_bottom"]:
+		_popup_drift.tween_property(_popup_anchor, side, POPUP_Y - POPUP_DRIFT, hold).set_delay(landed) \
+				.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 
 
 ## Hooked to Player.movement_event: the HUD gets knocked around.
@@ -411,6 +453,22 @@ func on_movement_event(e: Dictionary) -> void:
 			LofiUI.pop(_speed, 1.5, 0.25)
 
 
+## An impact frame fired (strength 0..1): the HUD takes the hit with the
+## camera. It punches in on the camera's spring and recoils past rest, and
+## every group rattles loose and wobbles back into place.
+func impact(strength: float) -> void:
+	var s := clampf(strength, 0.0, 1.0) * LofiUI.motion
+	if s <= 0.0:
+		return
+	_impact_time = 0.0
+	_impact_zoom = IMPACT_ZOOM * s
+	for c: Control in _groups():
+		c.pivot_offset = c.size * 0.5
+		c.rotation = randf_range(0.5, 1.0) * (1.0 if randf() < 0.5 else -1.0) * IMPACT_RATTLE * s
+		c.create_tween().tween_property(c, "rotation", 0.0, 0.6) \
+				.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+
 # --- Motion -------------------------------------------------------------------
 
 ## Everything springs into place (on start, and after respawning).
@@ -425,6 +483,15 @@ func _arrive() -> void:
 	_sway = Vector2.ZERO
 	_sway_velocity = Vector2.ZERO
 	_has_look = false
+
+
+## The HUD's corner and centre groups (everything that rattles).
+func _groups() -> Array[Control]:
+	var out: Array[Control] = []
+	for c in get_children():
+		if c is Control and c != _popup_anchor and c.visible:
+			out.append(c)
+	return out
 
 
 func _update_sway(delta: float) -> void:
@@ -448,6 +515,8 @@ func _update_sway(delta: float) -> void:
 	position = _sway * LofiUI.motion
 	pivot_offset = size * 0.5
 	rotation = lerpf(rotation, lean * LofiUI.motion, minf(delta * 8.0, 1.0))
+	_impact_time += delta
+	scale = Vector2.ONE * (1.0 + _impact_zoom * Player.punch_spring(_impact_time))
 
 
 func _knock(impulse: Vector2) -> void:

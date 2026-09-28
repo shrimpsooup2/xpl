@@ -336,6 +336,52 @@ static func tiles_in(row: HBoxContainer, stagger := 0.045, kick_strength := 0.6)
 			t.tween_property(tile, "rotation", 0.0, 0.6).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT))
 
 
+## Slams a row of letter tiles down one after another, each from big and
+## crooked, then kicks the layer on the last. Returns how long it takes.
+static func stamp_tiles(row: HBoxContainer, stagger := 0.03, kick_strength := 0.5) -> float:
+	var boxes := row.get_children().filter(func(c: Node) -> bool: return c is PanelContainer)
+	for i in boxes.size():
+		var tile: Control = boxes[i]
+		tile.modulate.a = 0.0
+		_after_layout(tile, func() -> void:
+			tile.pivot_offset = tile.size * 0.5
+			var t := tile.create_tween()
+			tile.set_meta(&"motion", t)
+			t.tween_interval(i * stagger)
+			t.tween_callback(func() -> void:
+				tile.modulate.a = 1.0
+				tile.scale = Vector2.ONE * randf_range(2.2, 2.8)
+				tile.rotation = randf_range(-0.6, 0.6))
+			t.tween_property(tile, "scale", Vector2.ONE, 0.12).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
+			t.parallel().tween_property(tile, "rotation", randf_range(-0.12, 0.12), 0.12)
+			if i == boxes.size() - 1:
+				t.tween_callback(kick.bind(tile, kick_strength))
+			t.tween_property(tile, "rotation", 0.0, 0.5).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT))
+	return boxes.size() * stagger + 0.12
+
+
+## Breaks a row of tiles apart: each one flies off from the middle with a
+## spin and fades, then the row is freed.
+static func shatter(row: Control, time := 0.3) -> void:
+	if not is_instance_valid(row) or row.get_meta(&"leaving", false):
+		return
+	row.set_meta(&"leaving", true)
+	var centre := row.size * 0.5
+	for tile: Control in row.get_children():
+		if tile.has_meta(&"motion"):
+			(tile.get_meta(&"motion") as Tween).kill()
+		tile.pivot_offset = tile.size * 0.5
+		var away := (tile.position + tile.size * 0.5 - centre)
+		var fly := (away.normalized() * randf_range(0.6, 1.0) + Vector2(randf_range(-0.3, 0.3), randf_range(-0.9, 0.2))) \
+				* randf_range(35.0, 70.0)
+		var t := tile.create_tween().set_parallel()
+		t.tween_property(tile, "position", tile.position + fly, time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		t.tween_property(tile, "rotation", tile.rotation + randf_range(-3.0, 3.0), time)
+		t.tween_property(tile, "scale", Vector2.ONE * 0.6, time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+		t.tween_property(tile, "modulate:a", 0.0, time).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	row.create_tween().tween_callback(row.queue_free).set_delay(time)
+
+
 ## Shakes and punches the whole low-res layer (see LofiLayer.kick()).
 static func kick(node: Node, strength := 0.5) -> void:
 	if is_instance_valid(node) and node.is_inside_tree():

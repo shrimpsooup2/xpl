@@ -21,7 +21,7 @@
 | 0.6 | UI direction set: everything in the logo's style (tiny Arial in framed boxes, blown up soft), replacing the chrome/bevel idea. HUD, overlays, pause and main menu defined and built. |
 | 0.7 | Body smoothed out (§11.4): legs split from the torso slab instead of glued on, one-piece tapered arms, C2 blends, A-pose rest. |
 | 0.8 | UI motion (§13.5): springy HUD that reacts to movement, speed meter, kicks, stamped pop-ups, letter-tile banners, typed map cards, animated menus, scene wipe, *ui motion* setting. |
-| 0.9 | Experimental impact frames on kills and hard smashdowns, with a camera punch, off by default (§10.4). |
+| 0.9 | Experimental impact frames on kills and hard smashdowns, with a camera punch the HUD rides too, off by default (§10.4). Pop-ups land letter by letter and shatter (§13.5). |
 
 ---
 
@@ -571,7 +571,7 @@ The camera is **never** driven by the fixed tick directly. Mouse look is applied
 - **Viewmodel:** procedural sway that reacts to velocity, slides, wall rides, smashdowns, and landing, so the gun "breathes" with your movement.
 - **Speed:** optional speedometer. At high speed, subtle wind audio and speed-line particles at the screen edges.
 - **No hitstop** (online multiplayer can't pause time). Weight comes from sound and camera micro-kicks instead.
-- **Impact frames (experimental, off by default):** on a kill you make and on a hard smashdown (8 m or more), the screen is redrawn for a beat or two as stark two-tone ink with outlines and speed lines bursting from the hit, like a held anime frame. Heartshot kills use heart pink instead of white. Each held beat jolts off-centre. The camera takes the hit too: it snaps into a zoom with a roll, a pitch kick and a shove back, is still punched in when the picture returns, then swings out past rest into a recoil and settles in about half a second. The UI gets kicked at the same moment. The punch only moves the view, never your aim, and scales with *screen shake* (0 turns it off). Visual only (the game runs on underneath), at most one every 0.5 s. They stay off by default for two reasons. They are high-contrast full-screen flashes. And on a smashdown they blank the screen for about 0.1 s at the exact moment of the smashdown → knockup → heartshot follow-up (§4.4). Your own death and the crumble never fire one. Setting: *impact frames* (View → Experimental). Code: `src/render/impact_frames.gd(shader)`.
+- **Impact frames (experimental, off by default):** on a kill you make and on a hard smashdown (8 m or more), the screen is redrawn for a beat or two as stark two-tone ink with outlines and speed lines bursting from the hit, like a held anime frame. Heartshot kills use heart pink instead of white. Each held beat jolts off-centre. The camera takes the hit too: it snaps into a zoom with a roll, a pitch kick and a shove back, is still punched in when the picture returns, then swings out past rest into a recoil and settles in about half a second. The HUD rides the same punch (§13.5). The punch only moves the view, never your aim, and scales with *screen shake* (0 turns it off). Visual only (the game runs on underneath), at most one every 0.5 s. They stay off by default for two reasons. They are high-contrast full-screen flashes. And on a smashdown they blank the screen for about 0.1 s at the exact moment of the smashdown → knockup → heartshot follow-up (§4.4). Your own death and the crumble never fire one. Setting: *impact frames* (View → Experimental). Code: `src/render/impact_frames.gd(shader)`.
 
 ### 10.5 Death
 
@@ -718,7 +718,8 @@ The boxes are plain, so the motion carries the energy. The UI should feel as ali
 | Numbers | Roll to new values (health, ammo, scores). A score that goes up flashes inverted and pops. The round timer pops every second for the last 10 and turns red for the last 5. |
 | Health | Damage shakes the row, pops the number, and kicks the UI. At 30 or below the red box beats like a heart. |
 | Killfeed | Rows slide in from the right with an overshoot (a heartshot's ♥ pops) and slide back out when they expire. |
-| Pop-ups | Stamp down from big and crooked, kick the UI, then blow away. |
+| Pop-ups | One letter tile per character, each slamming down from big and crooked in quick succession, then a kick. A heartshot gets a black ♥ tile in front and beats twice like a heart. They drift up while they hold, then shatter: every tile tumbles off in its own direction. |
+| Impact frames | When one fires (§10.4) the HUD takes the hit with the camera: it punches in on the camera's spring and recoils past rest, every group rattles loose and wobbles back, and the crosshair blows wide open. |
 | Alerts | Stamp in, then blink red/black. |
 | Map card | The map name types itself into a box that flips open; the load cells pop as they fill. Countdown numbers stamp down, *go* bursts. |
 | Banners | *round won*, *you won* land one letter tile at a time, then kick; the winner's score rolls up. |
