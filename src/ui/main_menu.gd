@@ -99,7 +99,7 @@ func _build_menu() -> void:
 	var spacer := Control.new()
 	spacer.custom_minimum_size.y = 12
 	col.add_child(spacer)
-	var play := LofiUI.button("play", func() -> void: get_tree().change_scene_to_file(PLAY_SCENE))
+	var play := LofiUI.button("play", func() -> void: get_tree().change_scene_to_file.call_deferred(PLAY_SCENE))
 	col.add_child(play)
 	var settings := LofiUI.button("settings (soon)", func() -> void: pass)
 	settings.disabled = true

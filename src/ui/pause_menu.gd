@@ -44,7 +44,7 @@ func _ready() -> void:
 		e.pressed = true
 		Input.parse_input_event(e)))
 	col.add_child(LofiUI.button("main menu", func() -> void:
-		get_tree().change_scene_to_file(MAIN_MENU)))
+		get_tree().change_scene_to_file.call_deferred(MAIN_MENU)))
 	col.add_child(LofiUI.button("quit", get_tree().quit))
 	_panel = col
 
