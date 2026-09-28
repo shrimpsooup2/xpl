@@ -16,6 +16,8 @@ uniform float seed = 0.0;
 uniform float core = 0.22;
 // Luminance jump that counts as an outline.
 uniform float edge = 0.22;
+// This beat's knock off-centre, in pixels.
+uniform vec2 jolt = vec2(0.0);
 
 float luma(vec2 uv) {
 	return dot(texture(screen_tex, uv).rgb, vec3(0.299, 0.587, 0.114));
@@ -31,13 +33,14 @@ void fragment() {
 		}
 	}
 	average /= 16.0;
-	float l = luma(SCREEN_UV);
+	vec2 uv = SCREEN_UV + jolt * SCREEN_PIXEL_SIZE;
+	float l = luma(uv);
 	float v = step(mix(0.5, average, 0.75), l);
 
 	// Outlines: a big step against any neighbour goes to ink.
 	vec2 px = SCREEN_PIXEL_SIZE * 2.0;
-	float g = max(max(abs(l - luma(SCREEN_UV + vec2(px.x, 0.0))), abs(l - luma(SCREEN_UV - vec2(px.x, 0.0)))),
-			max(abs(l - luma(SCREEN_UV + vec2(0.0, px.y))), abs(l - luma(SCREEN_UV - vec2(0.0, px.y)))));
+	float g = max(max(abs(l - luma(uv + vec2(px.x, 0.0))), abs(l - luma(uv - vec2(px.x, 0.0)))),
+			max(abs(l - luma(uv + vec2(0.0, px.y))), abs(l - luma(uv - vec2(0.0, px.y)))));
 	v *= 1.0 - step(edge, g);
 
 	// Speed lines: thin random wedges radiating from the hit, flipping tone.

@@ -3,12 +3,16 @@ extends CanvasLayer
 ## Experimental, off by default (ViewSettings.impact_frames). On a kill or
 ## a hard smashdown the screen is redrawn for a beat or two as stark two-tone ink with speed
 ## lines bursting from the hit, like an anime impact frame: a negative beat,
-## then (for big hits) a positive one, then straight back.
+## then (for big hits) a positive one, then straight back. Each beat jolts
+## off-centre, and `fired` lets the camera punch and the UI kick with it.
 ##
 ## Visual only. The game keeps running underneath: it's multiplayer, so
 ## there's no hit-stop (GDD §10.4). Anything can fire one through
 ## ImpactFrames.hit(); the local player's view settings decide whether it
 ## shows. Spaced at least MIN_GAP apart so it never strobes (GDD §10.6).
+
+## An impact frame actually showed (the camera and UI react to this).
+signal fired(strength: float, point: Vector2)
 
 const GROUP := &"impact_frames"
 const SHADER := preload("res://src/render/impact_frames.gdshader")
@@ -16,6 +20,9 @@ const SHADER := preload("res://src/render/impact_frames.gdshader")
 const BEAT := 0.05
 ## Hits at or above this get the second, positive beat.
 const BIG := 0.6
+## Each beat is knocked off-centre by up to this many pixels, so the held
+## frames jolt against each other.
+const JOLT := 14.0
 const MIN_GAP := 0.5
 
 var settings: ViewSettings
@@ -23,6 +30,7 @@ var settings: ViewSettings
 var _rect: ColorRect
 var _material := ShaderMaterial.new()
 var _beats: Array[bool] = []  # negative?, per beat still to show.
+var _strength := 0.0
 var _beat_time := 0.0
 var _beat_frames := 0
 var _clock := 0.0
@@ -59,8 +67,10 @@ func trigger(strength: float, point := Vector2(0.5, 0.5), paper := Color.WHITE) 
 	_material.set_shader_parameter(&"paper", paper)
 	_material.set_shader_parameter(&"seed", randf() * 100.0)
 	_material.set_shader_parameter(&"lines", lerpf(0.06, 0.16, strength))
+	_strength = strength
 	_beats.assign([true, false] if strength >= BIG else [true])
 	_start_beat()
+	fired.emit(strength, point)
 
 
 ## True while a frame is showing.
@@ -84,6 +94,7 @@ func _process(delta: float) -> void:
 
 func _start_beat() -> void:
 	_material.set_shader_parameter(&"negative", _beats[0])
+	_material.set_shader_parameter(&"jolt", Vector2.from_angle(randf() * TAU) * JOLT * _strength)
 	_beat_time = BEAT
 	_beat_frames = 0
 	_rect.visible = true

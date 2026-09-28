@@ -21,6 +21,19 @@ const KILL_Y := -40.0
 ## Debug third-person camera (F6): distance behind and height above the eyes.
 const THIRD_PERSON_DISTANCE := 3.4
 const THIRD_PERSON_HEIGHT := 0.5
+## Camera punch (punch_camera()), at strength 1 and default screen shake:
+## zoom-in (degrees of vertical FOV), roll and pitch kick, a shove back
+## (meters), then a damped spring back. Slow enough that the view is still
+## visibly punched in when an impact frame's held beats end, then swings
+## out past rest into a recoil and settles in about half a second.
+const PUNCH_FOV := 14.0
+const PUNCH_ROLL := deg_to_rad(5.0)
+const PUNCH_PITCH := deg_to_rad(2.0)
+const PUNCH_YAW := deg_to_rad(1.0)
+const PUNCH_PUSH := 0.12
+const PUNCH_FREQUENCY := 12.0  # rad/s
+const PUNCH_DAMPING := 0.45
+const PUNCH_TIME := 0.7
 
 @export var movement_params: MovementParams
 @export var view_settings: ViewSettings
@@ -47,6 +60,11 @@ var _eye_height := 1.6
 var _dip := 0.0
 var _roll := 0.0
 var _shake := 0.0
+var _fov := 0.0  # Smoothed FOV, before the punch.
+var _punch_time := INF
+var _punch_fov := 0.0
+var _punch_rot := Vector3.ZERO
+var _punch_push := 0.0
 
 @onready var camera: Camera3D = $Camera
 @onready var model: PlayerModel = $Model
@@ -229,13 +247,47 @@ func _process(delta: float) -> void:
 
 	var speed_t := inverse_lerp(p.run_speed, p.soft_speed_cap, horizontal_speed())
 	var hfov := v.fov_horizontal + v.speed_fov_kick * clampf(speed_t, 0.0, 1.0)
-	camera.fov = lerpf(camera.fov, vfov_from_hfov_16_9(hfov), 1.0 - exp(-8.0 * delta))
+	if _fov <= 0.0:
+		_fov = camera.fov
+	_fov = lerpf(_fov, vfov_from_hfov_16_9(hfov), 1.0 - exp(-8.0 * delta))
+	_punch_time += delta
+	var punch := _punch_spring(_punch_time)
+	camera.fov = _fov + _punch_fov * punch
 
-	var basis := Basis.from_euler(Vector3(pitch, yaw, _roll))
+	# The punch only moves the view; aim still follows yaw and pitch.
+	var basis := Basis.from_euler(Vector3(pitch, yaw, _roll) + _punch_rot * punch)
 	var eye := pos + Vector3.UP * (_eye_height - _dip)
 	if third_person:
 		eye += basis * Vector3(0.0, THIRD_PERSON_HEIGHT, THIRD_PERSON_DISTANCE)
-	camera.global_transform = Transform3D(basis, eye + basis * shake_offset)
+	# Shoved back and a little down by the hit.
+	var push := Vector3(0.0, -0.4, 1.0) * PUNCH_PUSH * _punch_push * punch
+	camera.global_transform = Transform3D(basis, eye + basis * (shake_offset + push))
+
+
+## Snaps the view into a zoom and twists it, then lets it spring back past
+## rest and settle: the camera's half of an impact frame. side (-1..1) is
+## where the hit is across the screen; the view rolls toward it. Scales
+## with the screen shake setting (the default gives the designed punch; 0
+## turns it off).
+func punch_camera(strength: float, side := 0.0) -> void:
+	var s := strength * clampf(view_settings.screen_shake / 0.3, 0.0, 1.5)
+	if s <= 0.0:
+		return
+	var roll_sign := signf(side) if absf(side) > 0.05 else (1.0 if randf() < 0.5 else -1.0)
+	_punch_time = 0.0
+	_punch_fov = -PUNCH_FOV * s
+	_punch_rot = Vector3(PUNCH_PITCH, -side * PUNCH_YAW, roll_sign * PUNCH_ROLL) * s
+	_punch_push = s
+	_shake = maxf(_shake, 0.5 + 0.5 * s)
+
+
+## Damped spring released from full displacement: 1 at the hit, swinging
+## through 0 into a recoil, settled by PUNCH_TIME.
+static func _punch_spring(t: float) -> float:
+	if t >= PUNCH_TIME:
+		return 0.0
+	var ringing := PUNCH_FREQUENCY * sqrt(1.0 - PUNCH_DAMPING * PUNCH_DAMPING)
+	return exp(-PUNCH_DAMPING * PUNCH_FREQUENCY * t) * cos(ringing * t)
 
 
 func _react(e: Dictionary) -> void:

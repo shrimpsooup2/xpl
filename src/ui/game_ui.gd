@@ -56,6 +56,9 @@ func _ready() -> void:
 		player.movement_event.connect(crosshair.on_movement_event)
 		impact.settings = player.view_settings
 		player.movement_event.connect(_impact_on_movement)
+		impact.fired.connect(func(strength: float, point: Vector2) -> void:
+			player.punch_camera(strength, (point.x - 0.5) * 2.0)
+			LofiUI.kick(hud, strength))
 	overlays.round_card("test course", 0, false)
 
 

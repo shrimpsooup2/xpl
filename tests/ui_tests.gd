@@ -245,3 +245,20 @@ func test_impact_frames_never_strobe() -> void:
 			shown += 1
 		was = ui.impact.is_showing()
 	check(shown <= 2, "at most 2 impact frames a second (got %d)" % shown)
+
+
+func test_impact_frame_punches_the_camera_and_settles() -> void:
+	player.view_settings.impact_frames = true
+	await frames(120)  # Let the fov ease in from the scene's default.
+	var rest := Player.vfov_from_hfov_16_9(player.view_settings.fov_horizontal)
+	near(player.camera.fov, rest, 0.05, "fov at rest")
+	ui.kill_confirmed(false)
+	await frames(1)
+	check(player.camera.fov < rest - 2.0, "zooms in on the hit (%.1f -> %.1f)" % [rest, player.camera.fov])
+	await frames(45)
+	near(player.camera.fov, rest, 0.05, "fov once settled")
+	player.view_settings.screen_shake = 0.0
+	ui.kill_confirmed(false)
+	await frames(1)
+	check(ui.impact.is_showing(), "the frame still shows with screen shake off")
+	near(player.camera.fov, rest, 0.05, "but the camera doesn't punch")
