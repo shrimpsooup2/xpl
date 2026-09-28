@@ -15,9 +15,22 @@ var jump_held: bool = false
 var crouch_pressed: bool = false
 var crouch_held: bool = false
 var dash_pressed: bool = false
+var fire_pressed: bool = false
+var fire_held: bool = false
+var alt_pressed: bool = false
+var alt_held: bool = false
+var interact_pressed: bool = false
+var throw_pressed: bool = false
+## 1: switch to the primary, 2: to fists, 3: toggle, 0: stay.
+var switch_to: int = 0
 
 
 func clear_presses() -> void:
 	jump_pressed = false
 	crouch_pressed = false
 	dash_pressed = false
+	fire_pressed = false
+	alt_pressed = false
+	interact_pressed = false
+	throw_pressed = false
+	switch_to = 0

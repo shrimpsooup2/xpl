@@ -6,7 +6,7 @@ extends Control
 ##   top right      killfeed
 ##   bottom left    health
 ##   bottom centre  speed meter over the dash charges
-##   bottom right   throwable, weapon and ammo
+##   bottom right   throwable, weapon, and the ammo column (AmmoMeter)
 ##   centre         pickup prompt below the crosshair, pop-ups above it
 ##
 ## It's alive (GDD §13.5): the whole HUD hangs off the view on a spring, so
@@ -68,7 +68,8 @@ var _health_row: HBoxContainer
 var _health: PanelContainer
 var _heartbeat: Tween
 var _weapon: PanelContainer
-var _ammo: PanelContainer
+var _weapon_col: VBoxContainer
+var _ammo: AmmoMeter
 var _throwable: PanelContainer
 var _speed: PanelContainer
 var _meter: Meter
@@ -81,7 +82,6 @@ var _elapsed := 0.0
 var _timer_seconds := -1.0  # < 0: count up (sandbox).
 var _timer_whole := -1
 var _health_value := 100
-var _ammo_value := -1
 var _weapon_name := "fists"
 var _scores := [0, 0]
 var _sway := Vector2.ZERO
@@ -193,23 +193,24 @@ func _ready() -> void:
 	_health_row.add_child(_health)
 	_anchor(_health_row, Control.PRESET_BOTTOM_LEFT, Vector2(MARGIN, -MARGIN))
 
-	var weapon_col := VBoxContainer.new()
-	weapon_col.add_theme_constant_override(&"separation", 2)
-	weapon_col.alignment = BoxContainer.ALIGNMENT_END
+	_weapon_col = VBoxContainer.new()
+	_weapon_col.add_theme_constant_override(&"separation", 2)
+	_weapon_col.alignment = BoxContainer.ALIGNMENT_END
 	_throwable = LofiUI.box("", LofiUI.SMALL, LofiUI.Style.GHOST)
 	_throwable.visible = false
 	_throwable.size_flags_horizontal = Control.SIZE_SHRINK_END
-	weapon_col.add_child(_throwable)
+	_weapon_col.add_child(_throwable)
 	var weapon_row := HBoxContainer.new()
-	weapon_row.add_theme_constant_override(&"separation", 2)
+	weapon_row.add_theme_constant_override(&"separation", 3)
 	weapon_row.alignment = BoxContainer.ALIGNMENT_END
 	_weapon = LofiUI.box("fists")
-	_ammo = LofiUI.box("", LofiUI.BIG)
+	_weapon.size_flags_vertical = Control.SIZE_SHRINK_END
+	_ammo = AmmoMeter.new()
 	_ammo.visible = false
 	weapon_row.add_child(_weapon)
 	weapon_row.add_child(_ammo)
-	weapon_col.add_child(weapon_row)
-	_anchor(weapon_col, Control.PRESET_BOTTOM_RIGHT, Vector2(-MARGIN, -MARGIN))
+	_weapon_col.add_child(weapon_row)
+	_anchor(_weapon_col, Control.PRESET_BOTTOM_RIGHT, Vector2(-MARGIN, -MARGIN))
 
 	# Speed meter stacked on the dash charges, the number boxed to the left.
 	_meter = Meter.new()
@@ -277,27 +278,41 @@ func set_health(value: int) -> void:
 		_health_row.scale = Vector2.ONE
 
 
-## weapon_name "" or "fists" means empty-handed; ammo < 0 hides the count.
-func set_weapon(weapon_name: String, ammo := -1) -> void:
+## The weapon in hand. weapon_name "" or "fists" means empty-handed;
+## capacity < 0 hides the ammo column (fists), otherwise it's sized to it.
+func set_weapon(weapon_name: String, ammo := -1, capacity := -1) -> void:
 	weapon_name = weapon_name if not weapon_name.is_empty() else "fists"
-	if weapon_name != _weapon_name:
+	var changed := weapon_name != _weapon_name
+	if changed:
 		_weapon_name = weapon_name
 		LofiUI.set_text(_weapon, weapon_name)
 		LofiUI.type_in(_weapon, 45.0)
-		_ammo_value = -1
-	_ammo.visible = ammo >= 0
-	if ammo >= 0:
-		if _ammo_value < 0 or ammo > _ammo_value:
-			LofiUI.roll(_ammo, maxi(_ammo_value, 0), ammo, 0.25)
-			LofiUI.pop(_ammo, 0.6)
-		else:
-			LofiUI.set_text(_ammo, str(ammo))
-			if ammo < _ammo_value:
-				LofiUI.pop(_ammo, 1.3, 0.12)
-		LofiUI.restyle(_ammo, LofiUI.Style.ALERT if ammo == 0 else LofiUI.Style.NORMAL)
-		if ammo == 0 and _ammo_value != 0:
-			LofiUI.shake(_ammo.get_parent().get_parent())
-	_ammo_value = ammo
+	if capacity < 0 and ammo >= 0:
+		capacity = maxi(ammo, _ammo.capacity)
+	_ammo.visible = capacity > 0
+	if capacity > 0 and (changed or capacity != _ammo.capacity):
+		_ammo.set_weapon(capacity, maxi(ammo, 0))
+	elif capacity > 0:
+		set_ammo(ammo)
+
+
+## Rounds left in the gun in hand.
+func set_ammo(ammo: int) -> void:
+	if not _ammo.visible or ammo == _ammo.ammo:
+		return
+	var was := _ammo.ammo
+	_ammo.set_ammo(ammo)
+	if ammo > was:
+		LofiUI.pop(_weapon, 1.2, 0.18)
+	elif ammo == 0:
+		LofiUI.shake(_weapon_col)
+		LofiUI.flash(_weapon, LofiUI.Style.ALERT, 0.3)
+
+
+## Pulled the trigger on an empty gun.
+func click_empty() -> void:
+	_ammo.click_empty()
+	LofiUI.shake(_weapon_col, 2.0, 0.15)
 
 
 func set_throwable(throwable_name: String, count: int) -> void:

@@ -6,7 +6,7 @@ extends SceneTree
 ## Runs each suite in turn. Exits with code 0 when every test passes, 1
 ## otherwise.
 
-const SUITES := ["res://tests/player_tests.gd", "res://tests/ui_tests.gd"]
+const SUITES := ["res://tests/player_tests.gd", "res://tests/ui_tests.gd", "res://tests/combat_tests.gd"]
 
 
 func _initialize() -> void:

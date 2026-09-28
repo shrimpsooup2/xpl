@@ -42,6 +42,7 @@ const K := GreyBox.Kind
 var _root: Node3D
 var _geometry: Node3D
 var _labels: Node3D
+var _combat: Node3D
 
 
 func _initialize() -> void:
@@ -208,6 +209,9 @@ func _build_test_course() -> Node:
 	_labels = Node3D.new()
 	_labels.name = "Labels"
 	_root.add_child(_labels)
+	_combat = Node3D.new()
+	_combat.name = "Combat"
+	_root.add_child(_combat)
 
 	_box("Floor", Vector3(0, -0.5, 0), Vector3(200, 1, 200), K.FLOOR)
 	_run_lane()
@@ -220,6 +224,8 @@ func _build_test_course() -> Node:
 	_smash_tower()
 	_valley()
 	_low_tunnel()
+	_armory()
+	_shooting_range()
 
 	var player: Node3D = load("res://scenes/player.tscn").instantiate()
 	player.name = "Player"
@@ -404,3 +410,41 @@ func _low_tunnel() -> void:
 	_box("TunnelRoof", Vector3(-12, 1.45, 14), Vector3(4, 0.5, 8), K.WALL)
 	_box("TunnelWall_L", Vector3(-14.25, 0.85, 14), Vector3(0.5, 1.7, 8), K.WALL)
 	_box("TunnelWall_R", Vector3(-9.75, 0.85, 14), Vector3(0.5, 1.7, 8), K.WALL)
+
+
+## A pad for every gun just left of spawn. They come back quickly here.
+func _armory() -> void:
+	_label("ARMORY  (walk over a gun · E swap · Q throw · 1/2 switch)", Vector3(-4, 3.2, -3))
+	for i in Weapons.GUNS.size():
+		var pad := Node3D.new()
+		pad.set_script(load("res://src/combat/weapon_pad.gd"))
+		pad.name = "Pad_%s" % String(Weapons.GUNS[i]).capitalize().replace(" ", "")
+		pad.position = Vector3(-4, 0, 2.5 - 2.2 * i)
+		pad.set(&"weapon", Weapons.GUNS[i])
+		pad.set(&"respawn_time", 3.0)
+		_combat.add_child(pad)
+
+
+## Dummies to shoot, facing back toward the armory: standing at 7, 12, 22
+## and 42 m, one up on a block, two pacing across the range.
+func _shooting_range() -> void:
+	_label("SHOOTING RANGE  (7 / 12 / 22 / 42 m)", Vector3(-14, 3.5, 6))
+	var face := -PI * 0.5  # Looking down +X.
+	for d: Array in [
+			["Dummy_7m", Vector3(-12, 0, -1), Vector3.ZERO, 0.0],
+			["Dummy_12m", Vector3(-17, 0, 2), Vector3.ZERO, 0.0],
+			["Dummy_22m", Vector3(-27, 0, -4), Vector3.ZERO, 0.0],
+			["Dummy_42m", Vector3(-47, 0, -1), Vector3.ZERO, 0.0],
+			["Dummy_Up", Vector3(-32, 3, 5), Vector3.ZERO, 0.0],
+			["Dummy_Walker", Vector3(-22, 0, -7), Vector3(0, 0, 11), 1.6],
+			["Dummy_Runner", Vector3(-37, 0, 4), Vector3(0, 0, -11), 4.5]]:
+		var dummy := Node3D.new()
+		dummy.set_script(load("res://src/combat/target_dummy.gd"))
+		dummy.name = d[0]
+		dummy.position = d[1]
+		dummy.set(&"patrol", d[2])
+		dummy.set(&"patrol_speed", d[3] if d[3] > 0.0 else 2.0)
+		dummy.set(&"facing", face)
+		_combat.add_child(dummy)
+	_box("DummyBlock", Vector3(-32, 1.5, 5), Vector3(3, 3, 3), K.LEDGE)
+	_box("RangeBackstop", Vector3(-60, 4, -1), Vector3(1, 8, 26), K.WALL)

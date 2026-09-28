@@ -22,6 +22,7 @@ var speed_lines: SpeedLines
 var player: Player
 
 var _preview_step := -1
+var _prompt := ""
 
 
 func _ready() -> void:
@@ -65,6 +66,7 @@ func _ready() -> void:
 			hud.impact(strength)
 			crosshair.bump(1.5 * strength)
 			LofiUI.kick(hud, strength))
+		_connect_weapons(player.weapons)
 	overlays.round_card("test course", 0, false)
 
 
@@ -73,6 +75,51 @@ func _process(_delta: float) -> void:
 	if player and player.view_settings:
 		LofiUI.motion = player.view_settings.ui_motion
 		LofiUI.smoothing = player.view_settings.camera_smoothing
+	if player and player.weapons:
+		var w := player.weapons
+		var def := w.current
+		crosshair.set_cycle(1.0 - clampf(w.cooldown() / maxf(def.fire_interval, 0.001), 0.0, 1.0))
+		crosshair.set_zoom(w.zoom)
+		if w.swap_candidate and is_instance_valid(w.swap_candidate):
+			var text := "e  swap for %s" % w.swap_candidate.def.display_name
+			if _prompt != text:
+				_prompt = text
+				hud.show_prompt(text)
+		elif not _prompt.is_empty():
+			_prompt = ""
+			hud.hide_prompt()
+
+
+## The HUD and crosshair follow the player's hands.
+func _connect_weapons(w: WeaponHolder) -> void:
+	var show := func(def: WeaponDef, ammo: int) -> void:
+		hud.set_weapon(def.display_name, ammo, def.ammo if not def.is_fists() else -1)
+		crosshair.set_weapon(def.ammo if not def.is_fists() else 0, ammo, def.fire_interval)
+	w.equipped.connect(show)
+	show.call(w.current, w.ammo)
+	w.ammo_changed.connect(func(ammo: int, _capacity: int) -> void:
+		hud.set_ammo(ammo)
+		crosshair.set_ammo(ammo))
+	w.dry_fired.connect(func(_def: WeaponDef) -> void:
+		hud.click_empty()
+		crosshair.click_empty())
+	w.fired.connect(func(def: WeaponDef, _shot: Dictionary) -> void:
+		crosshair.bump(clampf(def.recoil.x / 40.0, 0.1, 0.6)))
+	w.hit_confirmed.connect(_on_hit)
+
+
+## A body you hit: a hit marker, and on a kill the kill feedback and a
+## killfeed line.
+func _on_hit(result: Dictionary) -> void:
+	var weapon: WeaponDef = result.get("weapon")
+	if result.get("killed", false):
+		var heartshot: bool = result.get("heartshot", false)
+		kill_confirmed(heartshot)
+		hud.add_kill("you", result.get("name", "?"), weapon.display_name if weapon else "", heartshot)
+	elif result.get("zone") == &"head":
+		crosshair.hit(&"head")
+	else:
+		crosshair.hit(&"hit")
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -87,7 +134,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		overlays.hide_scoreboard()
 
 
-## A kill you made (combat calls this once it exists; F8 previews it):
+## A kill you made (from a confirmed hit; F8 previews it):
 ## the kill marker, and an impact frame, pink for a heartshot.
 func kill_confirmed(heartshot := false) -> void:
 	if heartshot:
@@ -135,7 +182,7 @@ func _preview() -> void:
 			hud.add_kill("them", "you", "overdraw")
 			hud.add_kill("you", "them", "", true)
 			kill_confirmed(true)
-			hud.set_weapon("hotkey", 4)
+			hud.set_weapon("hotkey", 4, 6)
 			hud.set_throwable("packet", 2)
 			hud.show_prompt("e  swap for overdraw (5)")
 		2:

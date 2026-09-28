@@ -1,7 +1,8 @@
 class_name Player
 extends CharacterBody3D
-## The local player: samples input, runs the movement sim at the fixed tick,
-## and drives a camera that is interpolated between ticks.
+## The local player: samples input, runs the movement sim and its hands
+## (WeaponHolder) at the fixed tick, and drives a camera that is
+## interpolated between ticks, with the first-person arms (Viewmodel) on it.
 ##
 ## Mouse look is applied on every input event, not on the tick, so aiming
 ## never waits for physics (GDD §10.3).
@@ -78,11 +79,20 @@ var is_dead := false
 var third_person := false
 ## The local player's death cinematic; null for bots, remote players and tests.
 var death: DeathSequence
+var weapons: WeaponHolder
+## First-person arms and gun; null for bots, remote players and tests.
+var viewmodel: Viewmodel
 
 var _command := InputCommand.new()
 var _pending_jump := false
 var _pending_crouch := false
 var _pending_dash := false
+var _pending_fire := false
+var _pending_alt := false
+var _pending_interact := false
+var _pending_throw := false
+var _pending_switch := 0
+var _zoom := 1.0
 var _prev_position := Vector3.ZERO
 var _curr_position := Vector3.ZERO
 var _spawn := Transform3D.IDENTITY
@@ -131,7 +141,20 @@ func _ready() -> void:
 
 	camera.top_level = true
 	camera.current = human_controlled
+	collision_mask |= TargetDummy.BODY_LAYER
+	weapons = WeaponHolder.new()
+	weapons.name = "Weapons"
+	weapons.player = self
+	add_child(weapons)
+	weapons.equipped.connect(func(def: WeaponDef, _ammo: int) -> void: model.hold(def))
+	weapons.fired.connect(_on_fired)
+	weapons.thrown.connect(func(_def: WeaponDef) -> void: model.throw_pose())
 	if human_controlled:
+		viewmodel = Viewmodel.new()
+		viewmodel.name = "Viewmodel"
+		viewmodel.player = self
+		viewmodel.holder = weapons
+		add_child(viewmodel)
 		add_to_group(&"local_player")
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		death = DeathSequence.new()
@@ -159,6 +182,18 @@ func _unhandled_input(event: InputEvent) -> void:
 		_pending_crouch = true
 	elif event.is_action_pressed(&"dash"):
 		_pending_dash = true
+	elif event.is_action_pressed(&"fire"):
+		_pending_fire = true
+	elif event.is_action_pressed(&"alt_fire"):
+		_pending_alt = true
+	elif event.is_action_pressed(&"interact"):
+		_pending_interact = true
+	elif event.is_action_pressed(&"throw_weapon"):
+		_pending_throw = true
+	elif event.is_action_pressed(&"weapon_primary"):
+		_pending_switch = 3 if event is InputEventMouseButton else 1
+	elif event.is_action_pressed(&"weapon_fists"):
+		_pending_switch = 2
 	elif event is InputEventMouseButton and event.pressed and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED:
 		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 
@@ -177,6 +212,7 @@ func tick(cmd: InputCommand, delta: float) -> void:
 	for e in state.events:
 		_react(e)
 		movement_event.emit(e)
+	weapons.tick(cmd, delta)
 	model.follow(global_position, yaw)
 	if global_position.y < KILL_Y:
 		die()
@@ -189,8 +225,11 @@ func die() -> void:
 		return
 	is_dead = true
 	velocity = Vector3.ZERO
+	weapons.drop_on_death()
 	_collision.set_deferred(&"disabled", true)
 	model.visible = true
+	if viewmodel:
+		viewmodel.visible = false
 	died.emit()
 	if death:
 		death.play()
@@ -209,6 +248,7 @@ func respawn() -> void:
 	global_transform = _spawn
 	velocity = Vector3.ZERO
 	state.reset(movement_params)
+	weapons.reset()
 	_prev_position = global_position
 	_curr_position = global_position
 	model.follow(global_position, yaw)
@@ -225,6 +265,33 @@ func set_third_person(on: bool) -> void:
 ## Your own body is hidden in first person; others always see it.
 func _update_model_visibility() -> void:
 	model.visible = is_dead or third_person or not human_controlled
+	if viewmodel:
+		viewmodel.visible = not model.visible
+
+
+## Where shots appear to leave the gun: the viewmodel's muzzle in first
+## person, the held gun's otherwise.
+func muzzle_position() -> Vector3:
+	if viewmodel and viewmodel.visible:
+		return viewmodel.muzzle_point(camera)
+	if model.held:
+		return model.held.muzzle.global_position
+	return weapons.eye_position()
+
+
+## 0..1: how far into the slide look the camera is.
+func slide_look() -> float:
+	return _slide_look
+
+
+func _on_fired(def: WeaponDef, shot: Dictionary) -> void:
+	if def.is_fists():
+		model.punch(shot.get("left", true))
+		_kick_camera(1.0, 0.0, 1.5 if shot.get("left", true) else -1.5, 0.0)
+		return
+	model.fire_pose()
+	# The view kicks with the shot; aim stays put (GDD §5.4, no recoil).
+	_kick_camera(def.view_kick.x, def.view_kick.y, randf_range(-0.3, 0.3) * def.view_kick.y, 0.0)
 
 
 func horizontal_speed() -> float:
@@ -244,6 +311,9 @@ func _sample_command() -> InputCommand:
 		_pending_jump = false
 		_pending_crouch = false
 		_pending_dash = false
+		_clear_combat_presses()
+		c.fire_held = false
+		c.alt_held = false
 		return c
 	c.move = Input.get_vector(&"move_left", &"move_right", &"move_back", &"move_forward")
 	c.jump_pressed = _pending_jump
@@ -251,10 +321,26 @@ func _sample_command() -> InputCommand:
 	c.crouch_pressed = _pending_crouch
 	c.crouch_held = Input.is_action_pressed(&"crouch")
 	c.dash_pressed = _pending_dash
+	c.fire_pressed = _pending_fire
+	c.fire_held = Input.is_action_pressed(&"fire")
+	c.alt_pressed = _pending_alt
+	c.alt_held = Input.is_action_pressed(&"alt_fire")
+	c.interact_pressed = _pending_interact
+	c.throw_pressed = _pending_throw
+	c.switch_to = _pending_switch
 	_pending_jump = false
 	_pending_crouch = false
 	_pending_dash = false
+	_clear_combat_presses()
 	return c
+
+
+func _clear_combat_presses() -> void:
+	_pending_fire = false
+	_pending_alt = false
+	_pending_interact = false
+	_pending_throw = false
+	_pending_switch = 0
 
 
 # --- Camera -----------------------------------------------------------------
@@ -268,6 +354,7 @@ func _process(delta: float) -> void:
 	var pos := _prev_position.lerp(_curr_position, f)
 	model.follow(pos, yaw)
 	model.animate_movement(state, velocity)
+	model.aim(pitch, weapons.current.is_fists())
 
 	var smooth := v.camera_smoothing
 	var target_eye := p.crouch_eye_height if state.crouched else p.stand_eye_height
@@ -330,7 +417,10 @@ func _process(delta: float) -> void:
 	var extra := vfov_from_hfov_16_9(base_h + extra_h) - vfov_from_hfov_16_9(base_h)
 	_punch_time += delta
 	var punch := punch_spring(_punch_time, smooth)
-	camera.fov = _fov + extra + _kick.x + _punch_fov * punch
+	# A scoped weapon's alt-fire zooms (GDD §5.4).
+	_zoom = lerpf(_zoom, weapons.zoom, 1.0 - exp(-lerpf(30.0, 14.0, smooth) * delta))
+	var fov := _fov + extra + _kick.x + _punch_fov * punch
+	camera.fov = rad_to_deg(2.0 * atan(tan(deg_to_rad(fov) * 0.5) / _zoom))
 
 	# These only move the view; aim still follows yaw and pitch.
 	var basis := Basis.from_euler(Vector3(pitch + _kick.y, yaw, _roll + _kick.z) + _punch_rot * punch + shake_rot)
@@ -340,6 +430,8 @@ func _process(delta: float) -> void:
 	# Shoved back and a little down by an impact frame's hit.
 	var push := Vector3(0.0, -0.4, 1.0) * PUNCH_PUSH * _punch_push * punch
 	camera.global_transform = Transform3D(basis, eye + basis * (shake_offset + push))
+	if viewmodel and viewmodel.visible:
+		viewmodel.follow(camera, delta)
 
 
 ## Snaps the view into a zoom and twists it, then lets it spring back past

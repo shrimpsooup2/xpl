@@ -4,6 +4,10 @@ extends Node3D
 ## BodyShape) skinned to the Universal Animation Library rig, with a glowing
 ## heart on its chest.
 ##
+## Its arms can hold a weapon and aim, punch, and throw over whatever the
+## legs are doing, and a shot knocks the part it hits (react_to_hit()),
+## both through BodyLayers.
+##
 ## When it dies it is swapped for one of the pre-diced chunk sets, posed
 ## exactly like the body at that moment. The chunks slide apart a hair along
 ## the cuts, then the whole thing crumbles (see fall_apart()).
@@ -39,6 +43,15 @@ const ANIM_HIT := &"Hit_Chest"
 const ANIM_DANCE := &"Dance"
 ## Speeds (m/s) the clips were animated at, for matching playback speed.
 ## The legs are short, so the stride is too.
+## Hit reactions: how far (radians) a full-strength hit knocks each part.
+const KNOCK_HEAD := 0.8
+const KNOCK_CHEST := 0.5
+const KNOCK_GUT := 0.55
+const KNOCK_ARM := 1.1
+const KNOCK_LEG := 0.75
+## Where a two-handed gun's grip sits from the right shoulder, in aim space
+## (x right, y up, -z forward): the stock tucked into the shoulder.
+const SHOULDERED := Vector3(0.02, -0.1, -0.26)
 const WALK_CLIP_SPEED := 1.1
 const JOG_CLIP_SPEED := 2.9
 const SPRINT_CLIP_SPEED := 5.0
@@ -63,6 +76,10 @@ var anim: AnimationPlayer
 var skeleton: Skeleton3D
 var body: MeshInstance3D
 var heart: MeshInstance3D
+var layers: BodyLayers
+var hits: HitShapes
+## The weapon in its hands (third person), or null.
+var held: WeaponModel
 
 var _rig: Node3D
 var _skin: Skin
@@ -74,6 +91,8 @@ var _body_material := StandardMaterial3D.new()
 var _cut_material := StandardMaterial3D.new()
 var _heart_material := StandardMaterial3D.new()
 var _fragment_physics := PhysicsMaterial.new()
+var _aim_pitch := 0.0
+var _aim_yaw := 0.0
 
 
 func _ready() -> void:
@@ -113,6 +132,11 @@ func _ready() -> void:
 	_chunk_rig.name = "ChunkPoser"
 	_chunk_rig.visible = false
 	_build_heart()
+	layers = BodyLayers.new()
+	layers.name = "Layers"
+	skeleton.add_child(layers)
+	layers.modification_processed.connect(_on_posed)
+	hits = HitShapes.for_body(skeleton, heart)
 	anim.play(ANIM_IDLE)
 
 
@@ -158,6 +182,145 @@ func animate_movement(state: MovementState, velocity: Vector3) -> void:
 	anim.speed_scale = clampf(rate, 0.5, 2.5)
 
 
+# --- Hits --------------------------------------------------------------------
+
+## The body part the segment from → to hits first, or {} (see HitShapes).
+func ray_test(from: Vector3, to: Vector3) -> Dictionary:
+	if _falling or not visible:
+		return {}
+	return hits.ray_test(from, to)
+
+
+## Takes a hit on `part` at `point` from a shot travelling along
+## `direction`: the part is knocked away from the shot and springs back.
+## Head and chest hits also play the matching flinch clip over the upper
+## body; a leg hit buckles the knee and drops the hips. strength ~ damage / 40
+## (square-rooted, so small hits still show).
+func react_to_hit(part: StringName, point: Vector3, direction: Vector3, strength: float) -> void:
+	if _falling:
+		return
+	var s := clampf(sqrt(maxf(strength, 0.0)), 0.35, 1.4)
+	var dir := direction.normalized()
+	var clip_weight := clampf(0.45 + s * 0.4, 0.0, 1.0)
+	match part:
+		&"head", &"neck":
+			layers.play(&"Hit_Head", BodyLayers.UPPER_BODY, 1.3, 0.0, 0.0, 0.03, 0.15, clip_weight)
+			_knock("DEF-neck", point, dir, KNOCK_HEAD * 0.6 * s)
+			_knock("DEF-head", point, dir, KNOCK_HEAD * s)
+		&"chest":
+			layers.play(&"Hit_Chest", BodyLayers.UPPER_BODY, 1.2, 0.0, 0.0, 0.03, 0.15, clip_weight)
+			_knock("DEF-spine.002", point, dir, KNOCK_CHEST * s)
+		&"gut":
+			layers.play(&"Hit_Chest", BodyLayers.UPPER_BODY, 1.2, 0.0, 0.0, 0.03, 0.15, clip_weight * 0.6)
+			_knock("DEF-spine.001", point, dir, KNOCK_GUT * s)
+			layers.dip(Vector3.DOWN * 0.03 * s)
+		&"arm_L", &"arm_R":
+			var side := String(part).right(1)
+			_knock("DEF-upper_arm." + side, point, dir, KNOCK_ARM * s)
+			_knock("DEF-forearm." + side, point, dir, KNOCK_ARM * 0.8 * s)
+			_knock("DEF-spine.003", point, dir, KNOCK_CHEST * 0.4 * s)
+		&"leg_L", &"leg_R":
+			var side := String(part).right(1)
+			_knock("DEF-thigh." + side, point, dir, KNOCK_LEG * s)
+			_knock("DEF-shin." + side, point, dir, KNOCK_LEG * 0.9 * s)
+			_knock("DEF-spine.001", point, dir, KNOCK_GUT * 0.3 * s)
+			layers.dip(Vector3.DOWN * 0.08 * s)
+
+
+## Knocks a bone so the point that was hit moves along the shot.
+func _knock(bone_name: String, point: Vector3, dir: Vector3, angle: float) -> void:
+	var bone := skeleton.find_bone(bone_name)
+	var origin := skeleton.global_transform * skeleton.get_bone_global_pose(bone).origin
+	var arm := point - origin
+	var axis := arm.cross(dir)
+	if axis.length() < 0.01:
+		axis = Vector3.UP.cross(dir)
+	layers.flinch(bone_name, axis, angle)
+
+
+# --- Holding weapons (third person) ------------------------------------------
+
+## Puts `def` in its hands (null or fists: empty-handed, arms free).
+func hold(def: WeaponDef) -> void:
+	if held:
+		held.queue_free()
+		held = null
+	for key: StringName in [&"aim", &"aim_up", &"aim_down", &"guard"]:
+		layers.clear_pose(key)
+	layers.set_arm_ik("L", Transform3D(), 0.0, Vector3.DOWN)
+	layers.set_arm_ik("R", Transform3D(), 0.0, Vector3.DOWN)
+	if def and not def.is_fists():
+		held = WeaponModel.new(def)
+		held.top_level = true
+		add_child(held)
+
+
+## Aims the arms (and the held gun) at `pitch` radians; call every frame.
+## Guns: the pistol aim poses blended by pitch. Two-handed guns are also
+## shouldered, both hands on them by IK. Fists: a loose guard.
+func aim(pitch: float, has_fists: bool) -> void:
+	_aim_pitch = pitch
+	_aim_yaw = rotation.y
+	if _falling:
+		return
+	if has_fists:
+		layers.set_pose(&"guard", &"Punch_Enter", 0.8, 0.7, BodyLayers.BOTH_ARMS)
+		return
+	if held == null:
+		return
+	var up := clampf(pitch / deg_to_rad(80.0), 0.0, 1.0)
+	var down := clampf(-pitch / deg_to_rad(80.0), 0.0, 1.0)
+	layers.set_pose(&"aim", &"Pistol_Aim_Neutral", 0.0, 1.0)
+	layers.set_pose(&"aim_up", &"Pistol_Aim_Up", 0.0, up)
+	layers.set_pose(&"aim_down", &"Pistol_Aim_Down", 0.0, down)
+	var aim_basis := _aim_basis()
+	if held.def.hold == WeaponDef.Hold.TWO_HAND:
+		var shoulder := skeleton.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone("DEF-upper_arm.R")).origin
+		var grip := Transform3D(aim_basis, shoulder + aim_basis * SHOULDERED)
+		layers.set_arm_ik("R", grip, 1.0, aim_basis * Vector3(0.6, -1, 0.3), false)
+		layers.set_arm_ik("L", Transform3D(aim_basis, held.fore.global_position), 1.0, aim_basis * Vector3(-0.6, -1, 0.2), false)
+
+
+## A shot: the gun cycles and the arms take the kick.
+func fire_pose() -> void:
+	if held:
+		held.fire()
+		layers.play(&"Pistol_Shoot", BodyLayers.BOTH_ARMS, 1.6, 0.0, 0.35, 0.02, 0.1, 0.8)
+
+
+## A punch with the left (jab) or right (cross).
+func punch(left: bool) -> void:
+	if left:
+		layers.play(&"Punch_Jab", BodyLayers.UPPER_BODY, 2.0, 0.0, 0.6, 0.03, 0.1)
+	else:
+		layers.play(&"Punch_Cross", BodyLayers.UPPER_BODY, 2.0, 0.0, 0.7, 0.03, 0.1)
+
+
+## Throwing the weapon away.
+func throw_pose() -> void:
+	layers.play(&"Punch_Cross", BodyLayers.UPPER_BODY, 1.6, 0.0, 0.6, 0.03, 0.12)
+
+
+func _aim_basis() -> Basis:
+	return Basis.from_euler(Vector3(_aim_pitch, _aim_yaw, 0.0))
+
+
+## Runs once the body is fully posed each frame (the skeleton puts the
+## animation's pose back afterwards): the hit shapes take this pose, and the
+## held gun goes in the right hand, pointing where it aims.
+func _on_posed() -> void:
+	hits.capture()
+	_place_held()
+
+
+func _place_held() -> void:
+	if held == null or not is_instance_valid(held):
+		return
+	var hand := skeleton.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone("DEF-hand.R"))
+	var tip := hand.origin + (hand.basis.y.normalized() * BodyShape.ARM_TIP * 0.5)
+	held.global_transform = Transform3D(_aim_basis(), tip)
+
+
 # --- Falling apart ------------------------------------------------------------
 
 ## The body is revealed to have been diced all along: it freezes, shivers,
@@ -169,6 +332,8 @@ func fall_apart(performance: bool, look_from: Vector3) -> void:
 		return
 	_falling = true
 	anim.speed_scale = 1.0
+	if held:
+		held.visible = false
 	var t := create_tween()
 	_fall_tween = t
 	if performance:
@@ -201,6 +366,9 @@ func reassemble() -> void:
 	_falling = false
 	anim.speed_scale = 1.0
 	anim.play(ANIM_IDLE)
+	layers.stop_actions()
+	if held:
+		held.visible = true
 
 
 func fragments() -> Array[RigidBody3D]:
