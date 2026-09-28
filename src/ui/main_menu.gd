@@ -6,9 +6,9 @@ extends Node3D
 ## into a dance now and then, the camera leans toward the mouse, and a news
 ## ticker crawls along the bottom. Play jumps into a wipe.
 ##
-## Under play is the hat picker (GDD §11.4): arrows (or ← →) step through
-## the hats, which drop onto the blob as you go, and the swatch beside them
-## shows the hat in the other team's colours. The pick is saved (Cosmetics).
+## The blob wears your hat, in red or blue at random. A small picker tucked
+## in the bottom corner (or ← →) steps through the hats, dropping each onto
+## the blob; the pick is saved and is the hat you wear in a match (GDD §11.4).
 
 const PLAY_SCENE := "res://scenes/test_course.tscn"
 const LOGO := preload("res://assets/ui/logo_small.png")
@@ -42,14 +42,14 @@ var _lean := Vector2.ZERO
 var _reaction := 0
 var _leaving := false
 var _hat_name: PanelContainer
-var _team_button: Button
-var _preview_team := Hats.Team.RED
+var _team := Hats.Team.RED
 
 
 func _ready() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	RenderingServer.global_shader_parameter_set(&"world_light", 1.0)
 	Cosmetics.load_saved()
+	_team = Hats.Team.RED if randi() % 2 == 0 else Hats.Team.BLUE
 	_build_stage()
 	_build_menu()
 	_show_hat(false)
@@ -159,7 +159,6 @@ func _build_menu() -> void:
 	var play := LofiUI.button("play", _play)
 	play.mouse_entered.connect(_react.bind(&"Punch_Jab", 0.8))
 	col.add_child(play)
-	col.add_child(_build_hat_picker())
 	var settings := LofiUI.button("settings (soon)", func() -> void: pass)
 	settings.disabled = true
 	col.add_child(settings)
@@ -174,10 +173,13 @@ func _build_menu() -> void:
 	var footer := LofiUI.box("v0.1 · movement prototype", LofiUI.SMALL, LofiUI.Style.GHOST)
 	footer.size_flags_vertical = Control.SIZE_SHRINK_END
 	footer.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var bottom := VBoxContainer.new()
-	bottom.alignment = BoxContainer.ALIGNMENT_END
+	var picker := _build_hat_picker()
+	picker.size_flags_vertical = Control.SIZE_SHRINK_END
+	picker.size_flags_horizontal = Control.SIZE_EXPAND | Control.SIZE_SHRINK_END
+	var bottom := HBoxContainer.new()
 	bottom.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	bottom.add_child(footer)
+	bottom.add_child(picker)
 	root.add_child(bottom)
 	_build_ticker()
 
@@ -185,28 +187,32 @@ func _build_menu() -> void:
 	LofiUI.stamp(_logo, 0.6, 2.6)
 	var i := 0
 	for b in col.get_children():
-		if b is Button or b is HBoxContainer:
+		if b is Button:
 			LofiUI.enter(b, Vector2(-40, 0), 0.25 + i * 0.07, 0.3)
 			i += 1
 	LofiUI.enter(footer, Vector2(0, 10), 0.6, 0.25)
+	LofiUI.enter(picker, Vector2(0, 10), 0.7, 0.25)
 
 
-## [<] [hat name] [>] [team swatch].
+## A quiet [<] [hat: name] [>] in small ghost boxes, like the version tag.
 func _build_hat_picker() -> HBoxContainer:
 	var row := HBoxContainer.new()
-	row.add_theme_constant_override(&"separation", 2)
-	row.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var back := LofiUI.button("<", cycle_hat.bind(-1))
-	row.add_child(back)
-	_hat_name = LofiUI.box("", LofiUI.NORMAL)
-	_hat_name.custom_minimum_size.x = 74
+	row.add_theme_constant_override(&"separation", 1)
+	var ghost := LofiUI.stylebox(LofiUI.Style.GHOST)
+	for by in [-1, 1]:
+		var arrow := LofiUI.button("<" if by < 0 else ">", cycle_hat.bind(by))
+		arrow.add_theme_font_size_override(&"font_size", LofiUI.SMALL)
+		arrow.add_theme_stylebox_override(&"normal", ghost)
+		arrow.add_theme_color_override(&"font_color", LofiUI.GREY)
+		row.add_child(arrow)
+	_hat_name = LofiUI.box("", LofiUI.SMALL, LofiUI.Style.GHOST)
+	# Wide enough for the longest name, so the arrows never jump.
+	for id: StringName in Hats.ALL:
+		var width := LofiUI.FONT.get_string_size("hat: " + Hats.NAMES[id], HORIZONTAL_ALIGNMENT_LEFT, -1, LofiUI.SMALL).x
+		_hat_name.custom_minimum_size.x = maxf(_hat_name.custom_minimum_size.x, ceilf(width) + 10.0)
 	LofiUI.label_of(_hat_name).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	row.add_child(_hat_name)
-	var next := LofiUI.button(">", cycle_hat.bind(1))
-	row.add_child(next)
-	_team_button = LofiUI.button("", _toggle_team)
-	_team_button.tooltip_text = "preview the other team's colours"
-	row.add_child(_team_button)
+	row.move_child(_hat_name, 1)
 	return row
 
 
@@ -217,30 +223,18 @@ func cycle_hat(by: int) -> void:
 	var i := Hats.ALL.find(Cosmetics.hat)
 	Cosmetics.set_hat(Hats.ALL[posmod(i + by, Hats.ALL.size())])
 	_show_hat(true)
-	LofiUI.pop(_hat_name, 1.15, 0.15)
+	LofiUI.pop(_hat_name, 1.1, 0.12)
 
 
-func _toggle_team() -> void:
-	_preview_team = Hats.Team.BLUE if _preview_team == Hats.Team.RED else Hats.Team.RED
-	_show_hat(true)
-
-
-## Puts the picked hat on the blob in the preview team's colours; with `drop`
-## it lands with a little squash and the head nods under it.
+## Puts the picked hat on the blob; with `drop` it lands with a little squash
+## and the head nods under it.
 func _show_hat(drop: bool) -> void:
-	_model.dress(Cosmetics.hat, _preview_team)
+	_model.dress(Cosmetics.hat, _team)
 	if _model.hat:
 		# The spot is nearly overhead: the hat's shadow would black out the face.
 		for part: MeshInstance3D in _model.hat.find_children("*", "MeshInstance3D", true, false):
 			part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
-	LofiUI.set_text(_hat_name, Hats.NAMES[Cosmetics.hat])
-	_team_button.text = Hats.TEAM_NAMES[_preview_team]
-	for state: StringName in [&"normal", &"focus"]:
-		var box := LofiUI.stylebox(LofiUI.Style.NORMAL)
-		box.bg_color = Hats.team_color(_preview_team)
-		_team_button.add_theme_stylebox_override(state, box)
-	_team_button.add_theme_color_override(&"font_color", LofiUI.WHITE)
-	_team_button.add_theme_color_override(&"font_focus_color", LofiUI.WHITE)
+	LofiUI.set_text(_hat_name, "hat: " + Hats.NAMES[Cosmetics.hat])
 	if not drop:
 		return
 	if _model.hat:
@@ -254,9 +248,6 @@ func _show_hat(drop: bool) -> void:
 			part.create_tween().tween_property(part, "scale", Vector3.ONE, 0.3) \
 					.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_model.layers.flinch("DEF-head", _model.global_basis.x, -0.22)
-	var t := create_tween()
-	t.tween_property(_spot, "light_energy", SPOT_ENERGY * 1.2, 0.04)
-	t.tween_property(_spot, "light_energy", SPOT_ENERGY, 0.25)
 
 
 ## A news crawl along the bottom edge, early-2000s TV style.

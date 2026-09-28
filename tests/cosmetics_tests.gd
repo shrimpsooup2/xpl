@@ -197,6 +197,24 @@ func test_players_wear_their_hats_and_dummies_play_for_blue() -> void:
 	check(capped.model.hat != null and Hats.team_color(Hats.Team.BLUE) in colors_of(capped.model.hat), "a blue hat on the other")
 
 
+func test_you_wear_your_picked_hat_in_a_match_every_session() -> void:
+	Cosmetics.set_hat(&"crown")
+	Cosmetics.hat = Cosmetics.DEFAULT_HAT  # A fresh session: nothing in memory.
+	var player: Player = load("res://scenes/player.tscn").instantiate()
+	player.movement_params = MovementParams.new()
+	player.view_settings = ViewSettings.new()
+	world.add_child(player)
+	await frames(2)
+	check(player.model.hat_id == &"crown", "your player wears the saved hat (%s)" % player.model.hat_id)
+	check(player.model.hat != null, "and it's on")
+	player.die()
+	await get_tree().create_timer(0.3).timeout
+	player.respawn()
+	await frames(2)
+	check(player.model.hat_id == &"crown" and player.model.hat != null, "still wearing it after a respawn")
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
 func test_the_title_screen_picker_steps_through_the_hats() -> void:
 	Cosmetics.set_hat(&"cap")
 	var menu: Node = load("res://scenes/main_menu.tscn").instantiate()
@@ -204,6 +222,14 @@ func test_the_title_screen_picker_steps_through_the_hats() -> void:
 	await frames(2)
 	var model: PlayerModel = menu.get(&"_model")
 	check(model.hat_id == &"cap", "the blob wears the saved hat")
+	check(Hats.team_color(model.team) in colors_of(model.hat), "in its team's colour")
+	var hat_name: Control = menu.get(&"_hat_name")
+	var play: Control = null
+	for b in menu.find_children("*", "Button", true, false):
+		if (b as Button).text == "play":
+			play = b
+	check(play != null and not play.get_parent().is_ancestor_of(hat_name), "the picker isn't in the main menu column")
+	check(LofiUI.style_of(hat_name) == LofiUI.Style.GHOST, "it's a quiet ghost box")
 	menu.cycle_hat(1)
 	var after_cap: StringName = Hats.ALL[Hats.ALL.find(&"cap") + 1]
 	check(Cosmetics.hat == after_cap and model.hat_id == after_cap, "→ puts the next hat on (%s)" % Cosmetics.hat)
@@ -217,11 +243,22 @@ func test_the_title_screen_picker_steps_through_the_hats() -> void:
 		if model.hat_id == Hats.NONE:
 			break
 	check(model.hat == null and model.marker != null, "no hat shows the triangle on the blob")
-	menu.call(&"_toggle_team")
-	check(model.team == Hats.Team.BLUE, "the swatch previews blue")
 	await frames(20)
 	menu.queue_free()
 	await frames(1)
+
+
+func test_the_title_screen_blob_is_red_or_blue_at_random() -> void:
+	var teams := {}
+	for k in 6:
+		seed(k * 7919)
+		var menu: Node = load("res://scenes/main_menu.tscn").instantiate()
+		world.add_child(menu)
+		await frames(1)
+		teams[(menu.get(&"_model") as PlayerModel).team] = true
+		menu.queue_free()
+		await frames(1)
+	check(teams.has(Hats.Team.RED) and teams.has(Hats.Team.BLUE), "both teams come up (%s)" % [teams.keys()])
 
 
 func test_first_person_arms_are_a_closed_mesh() -> void:

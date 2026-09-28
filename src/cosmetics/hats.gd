@@ -19,7 +19,6 @@ enum Team { RED, BLUE }
 
 const NONE := &"none"
 const TEAM_COLORS := {Team.RED: Color(0.9, 0.17, 0.2), Team.BLUE: Color(0.17, 0.4, 0.95)}
-const TEAM_NAMES := {Team.RED: "red", Team.BLUE: "blue"}
 const FIXED := {
 	&"white": Color(0.95, 0.95, 0.96),
 	&"black": Color(0.09, 0.09, 0.11),
