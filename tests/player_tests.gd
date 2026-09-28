@@ -155,6 +155,21 @@ func test_coyote_jump_after_leaving_ledge() -> void:
 
 # --- Slide ------------------------------------------------------------------
 
+func test_slide_holds_its_speed() -> void:
+	place(Vector3.ZERO, Vector3(0, 0, -12))
+	player.state.mode = Mode.GROUND
+	await run(cmd(), 2)
+	var c := cmd()
+	c.crouch_pressed = true
+	c.crouch_held = true
+	await run(c)
+	c.crouch_pressed = false
+	check(player.state.mode == Mode.SLIDE, "sliding")
+	var start := hspeed()
+	await run(c, 30)
+	near(start - hspeed(), p.slide_friction * 0.5, 0.2, "speed lost over 0.5 s (%.2f -> %.2f)" % [start, hspeed()])
+
+
 func test_slide_boost_decay_and_cooldown() -> void:
 	place(Vector3.ZERO)
 	await settle()
@@ -453,6 +468,7 @@ func test_smashdown_banks_speed_and_bounces() -> void:
 	await run(c)
 	var expected := minf(p.smash_bounce_base + p.smash_bounce_per_meter * float(impact.drop), p.smash_bounce_max)
 	near(player.velocity.y, expected - p.gravity * DT, 0.1, "slam bounce velocity")
+	near(hspeed(), 8.0 + p.smash_bounce_boost, 0.1, "bounce kicks you on")
 
 
 func test_smashdown_slam_slide() -> void:

@@ -8,10 +8,17 @@ extends Resource
 ## Horizontal FOV at 16:9. Other aspect ratios keep the same vertical FOV.
 @export_range(80.0, 120.0, 1.0) var fov_horizontal: float = 100.0
 ## Extra FOV at the speed soft cap.
-@export_range(0.0, 10.0, 0.5) var speed_fov_kick: float = 5.0
+@export_range(0.0, 15.0, 0.5) var speed_fov_kick: float = 8.0
 @export_range(0.0, 15.0, 0.5) var wallride_tilt: float = 6.0
 @export var landing_dip: bool = true
 @export_range(0.0, 1.0, 0.05) var screen_shake: float = 0.3
+## How much the camera reacts to your movement: leaning into strafes, the
+## slide tilt and rumble, jump, landing, dash and wall jump kicks, and the
+## smashdown's stretch and slam (GDD §10.3). 0 turns all of it off. It never
+## moves on its own.
+@export_range(0.0, 1.0, 0.05) var camera_motion: float = 1.0
+## Streaks at the screen edges when you're fast (GDD §10.4).
+@export var speed_lines: bool = true
 ## How much the UI moves on its own: HUD sway, UI kicks and shakes, the idle
 ## wobble. 0 keeps it still (GDD §13.5).
 @export_range(0.0, 1.0, 0.05) var ui_motion: float = 1.0

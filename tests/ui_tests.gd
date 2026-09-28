@@ -279,3 +279,42 @@ func test_impact_frame_punches_the_camera_and_settles() -> void:
 	await frames(1)
 	check(ui.impact.is_showing(), "the frame still shows with screen shake off")
 	near(player.camera.fov, rest, 0.05, "but the camera doesn't punch")
+
+
+# --- Camera and speed lines -------------------------------------------------------
+
+func test_smash_impact_slams_the_camera_then_settles() -> void:
+	await frames(120)
+	var rest := Player.vfov_from_hfov_16_9(player.view_settings.fov_horizontal)
+	var eye := player.camera.global_position.y
+	player._react({"type": &"smash_impact", "drop": 10.0, "position": player.global_position, "slide": false})
+	await frames(6)
+	check(player.camera.fov < rest - 3.0, "snaps in (%.1f -> %.1f)" % [rest, player.camera.fov])
+	check(player.camera.global_position.y < eye - 0.1, "slams down (%.2f -> %.2f)" % [eye, player.camera.global_position.y])
+	await frames(90)
+	near(player.camera.fov, rest, 0.05, "fov settled")
+	near(player.camera.global_position.y, eye, 0.01, "eye height settled")
+
+
+func test_camera_motion_zero_turns_reactions_off() -> void:
+	player.view_settings.camera_motion = 0.0
+	player.view_settings.screen_shake = 0.0
+	player.view_settings.landing_dip = false
+	await frames(120)
+	var before := player.camera.global_transform
+	for type in [&"jump", &"slide_start", &"slam_bounce"]:
+		player._react({"type": type})
+	player._react({"type": &"dash", "direction": Vector3.RIGHT})
+	await frames(4)
+	check(player.camera.global_transform.is_equal_approx(before), "camera didn't move")
+
+
+func test_speed_lines_follow_speed() -> void:
+	await frames(20)
+	near(ui.speed_lines.amount(), 0.0, 0.01, "none standing still")
+	player.velocity = Vector3(0, 0, -20)
+	await frames(40)
+	check(ui.speed_lines.amount() > 0.6, "streaming at 20 m/s (%.2f)" % ui.speed_lines.amount())
+	player.view_settings.speed_lines = false
+	await frames(40)
+	near(ui.speed_lines.amount(), 0.0, 0.01, "gone when switched off")

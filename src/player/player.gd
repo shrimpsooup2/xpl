@@ -35,6 +35,29 @@ const PUNCH_FREQUENCY := 12.0  # rad/s
 const PUNCH_DAMPING := 0.45
 const PUNCH_TIME := 0.7
 
+# Camera reactions (GDD §10.3), at camera motion 1. The view only ever moves
+# in answer to your movement; nothing sways on its own.
+## Roll per m/s of sideways speed, and its limit.
+const LEAN_PER_SPEED := deg_to_rad(0.3)
+const LEAN_MAX := deg_to_rad(3.0)
+## Sliding: roll into the slide, widen the view with speed, rumble.
+const SLIDE_TILT := deg_to_rad(4.5)
+const SLIDE_FOV := 10.0  # Extra horizontal degrees at 14 m/s.
+const SLIDE_RUMBLE := 0.012  # Meters per 10 m/s.
+## Smashdown: the view tightens during the hang, then stretches on the way
+## down (extra horizontal degrees).
+const SMASH_HANG_FOV := 8.0
+const SMASH_FOV := 22.0
+## Kicks ride one damped spring per channel: (vertical fov degrees, pitch,
+## roll, drop in meters). KICK_GAIN turns a wanted peak into a spring
+## impulse (for this stiffness and damping the peak is ~1/26 of it).
+const KICK_STIFFNESS := 170.0
+const KICK_DAMPING := 16.0
+const KICK_GAIN := 26.0
+## Shake at full trauma and default screen shake.
+const SHAKE_POSITION := 0.05
+const SHAKE_ROTATION := deg_to_rad(1.2)
+
 @export var movement_params: MovementParams
 @export var view_settings: ViewSettings
 ## Off for bots and tests: they call tick() themselves.
@@ -65,6 +88,13 @@ var _punch_time := INF
 var _punch_fov := 0.0
 var _punch_rot := Vector3.ZERO
 var _punch_push := 0.0
+var _kick := Vector4.ZERO  # fov, pitch, roll, drop
+var _kick_velocity := Vector4.ZERO
+var _slide_look := 0.0  # 0..1 blend into the slide camera.
+var _slide_side := 1.0
+var _smash_look := 0.0  # -1 hang .. 1 descent.
+var _shake_time := 0.0
+var _smash_marker: MeshInstance3D
 
 @onready var camera: Camera3D = $Camera
 @onready var model: PlayerModel = $Model
@@ -232,34 +262,63 @@ func _process(delta: float) -> void:
 	var target_eye := p.crouch_eye_height if state.crouched else p.stand_eye_height
 	_eye_height = move_toward(_eye_height, target_eye, EYE_HEIGHT_SPEED * delta)
 	_dip = move_toward(_dip, 0.0, DIP_RECOVER * delta)
+	var motion := v.camera_motion
+	var local := Basis(Vector3.UP, yaw).inverse() * velocity
+	var hspeed := horizontal_speed()
 
-	var target_roll := 0.0
+	# Roll: lean into sideways motion, into the slide, and off walls.
+	var target_roll := clampf(-local.x * LEAN_PER_SPEED, -LEAN_MAX, LEAN_MAX) * motion
+	var sliding := state.mode == MovementState.Mode.SLIDE
+	if sliding and _slide_look == 0.0:
+		_slide_side = -signf(local.x) if absf(local.x) > 0.5 else 1.0
+	_slide_look = move_toward(_slide_look, 1.0 if sliding else 0.0, delta * (7.0 if sliding else 3.0))
+	target_roll += SLIDE_TILT * _slide_side * _slide_look * motion
 	if state.mode == MovementState.Mode.WALLRIDE:
 		var right := Basis(Vector3.UP, yaw) * Vector3.RIGHT
 		target_roll = -signf(state.wallride_normal.dot(right)) * deg_to_rad(v.wallride_tilt)
-	_roll = lerpf(_roll, target_roll, 1.0 - exp(-12.0 * delta))
+	_roll = lerpf(_roll, target_roll, 1.0 - exp(-10.0 * delta))
 
-	var shake_offset := Vector3.ZERO
-	if _shake > 0.0:
-		_shake = maxf(_shake - delta * 4.0, 0.0)
-		var amount := _shake * _shake * 0.15 * v.screen_shake
-		shake_offset = Vector3(randf_range(-1, 1), randf_range(-1, 1), 0.0) * amount
+	# Smashdown hang and descent.
+	var smash_target := 0.0
+	match state.mode:
+		MovementState.Mode.SMASH_WINDUP:
+			smash_target = -1.0
+		MovementState.Mode.SMASH:
+			smash_target = 1.0
+			_shake = maxf(_shake, 0.4)  # The descent rattles.
+	_smash_look = move_toward(_smash_look, smash_target, delta * 10.0)
+	_update_smash_marker()
 
-	var speed_t := inverse_lerp(p.run_speed, p.soft_speed_cap, horizontal_speed())
-	var hfov := v.fov_horizontal + v.speed_fov_kick * clampf(speed_t, 0.0, 1.0)
+	_step_kicks(delta)
+
+	# Shake: trauma squared, in position and rotation. Slides rumble.
+	_shake = maxf(_shake - delta * 2.2, 0.0)
+	_shake_time += delta
+	var t := _shake_time
+	var noise := Vector3(sin(t * 71.0) + 0.6 * sin(t * 43.0 + 0.7), sin(t * 59.0 + 1.3) + 0.6 * sin(t * 37.0), sin(t * 53.0 + 2.1)) / 1.6
+	var trauma := _shake * _shake * clampf(v.screen_shake / 0.3, 0.0, 3.0)
+	var shake_offset := Vector3(noise.x, noise.y, 0.0) * SHAKE_POSITION * trauma
+	var shake_rot := Vector3(noise.y, noise.x, noise.z) * SHAKE_ROTATION * trauma
+	shake_offset.y += sin(t * 97.0) * SLIDE_RUMBLE * hspeed / 10.0 * _slide_look * motion
+
+	# FOV: speed, slides, and the smashdown stretch, plus kicks.
+	var speed_t := clampf(inverse_lerp(p.run_speed, p.soft_speed_cap, hspeed), 0.0, 1.0)
+	var hfov := v.fov_horizontal + v.speed_fov_kick * speed_t
+	hfov += SLIDE_FOV * _slide_look * clampf(inverse_lerp(6.0, 14.0, hspeed), 0.0, 1.0) * motion
+	hfov += _smash_look * (SMASH_FOV if _smash_look > 0.0 else SMASH_HANG_FOV) * motion
 	if _fov <= 0.0:
 		_fov = camera.fov
-	_fov = lerpf(_fov, vfov_from_hfov_16_9(hfov), 1.0 - exp(-8.0 * delta))
+	_fov = lerpf(_fov, vfov_from_hfov_16_9(hfov), 1.0 - exp(-10.0 * delta))
 	_punch_time += delta
 	var punch := punch_spring(_punch_time)
-	camera.fov = _fov + _punch_fov * punch
+	camera.fov = _fov + _kick.x + _punch_fov * punch
 
-	# The punch only moves the view; aim still follows yaw and pitch.
-	var basis := Basis.from_euler(Vector3(pitch, yaw, _roll) + _punch_rot * punch)
-	var eye := pos + Vector3.UP * (_eye_height - _dip)
+	# These only move the view; aim still follows yaw and pitch.
+	var basis := Basis.from_euler(Vector3(pitch + _kick.y, yaw, _roll + _kick.z) + _punch_rot * punch + shake_rot)
+	var eye := pos + Vector3.UP * (_eye_height - _dip - _kick.w)
 	if third_person:
 		eye += basis * Vector3(0.0, THIRD_PERSON_HEIGHT, THIRD_PERSON_DISTANCE)
-	# Shoved back and a little down by the hit.
+	# Shoved back and a little down by an impact frame's hit.
 	var push := Vector3(0.0, -0.4, 1.0) * PUNCH_PUSH * _punch_push * punch
 	camera.global_transform = Transform3D(basis, eye + basis * (shake_offset + push))
 
@@ -292,14 +351,80 @@ static func punch_spring(t: float) -> float:
 
 
 func _react(e: Dictionary) -> void:
+	var local := func(dir: Vector3) -> Vector3: return Basis(Vector3.UP, yaw).inverse() * dir
 	match e.type:
+		&"jump":
+			_kick_camera(0.0, 1.0, 0.0, 0.04)
 		&"land":
 			if view_settings.landing_dip:
 				_dip = minf(_dip + e.impact_speed * DIP_PER_IMPACT, DIP_MAX)
+			_kick_camera(0.0, -minf(e.impact_speed * 0.15, 3.0), 0.0, 0.0)
+			if e.impact_speed > 12.0:
+				_shake = maxf(_shake, (e.impact_speed - 12.0) / 20.0)
+		&"slide_start":
+			_kick_camera(3.0, -1.2, 0.0, 0.05)
+		&"dash":
+			_kick_camera(6.0, 0.0, -local.call(e.direction).x * 2.5, 0.0)
+		&"wall_jump":
+			_kick_camera(3.0, 1.5, -local.call(e.normal).x * 3.0, 0.0)
+		&"wallride_start":
+			_kick_camera(0.0, 0.0, 0.0, 0.03)
+		&"mantle":
+			_kick_camera(0.0, -2.5, 0.0, 0.08)
+		&"smash_start":
+			_kick_camera(-3.0, 2.0, 0.0, -0.04)
 		&"smash_impact":
-			_shake = clampf(0.4 + e.drop * 0.06, 0.0, 1.0)
+			# The heavy one: the view slams down, pitches in, twists, snaps in.
+			var s := clampf(0.5 + e.drop / 10.0, 0.5, 1.4)
+			_kick_camera(-10.0 * s, -6.0 * s, (3.5 if randf() < 0.5 else -3.5) * s, 0.38 * s)
+			_shake = clampf(0.55 + e.drop * 0.05, 0.0, 1.0)
 			if view_settings.landing_dip:
 				_dip = DIP_MAX
+			SmashFx.shockwave(get_parent(), e.position, e.drop / 10.0)
+		&"slam_bounce":
+			# Launch: the view whooshes wide and tips up as you're fired off.
+			_kick_camera(12.0, 5.0, 0.0, -0.12)
+			_shake = maxf(_shake, 0.35)
+			SmashFx.launch(get_parent(), global_position)
+
+
+## Adds a kick to the camera spring: wanted peaks in vertical fov degrees,
+## pitch and roll degrees, and drop meters (positive drops the view).
+## Scales with camera motion.
+func _kick_camera(fov: float, pitch_deg: float, roll_deg: float, drop: float) -> void:
+	var peak := Vector4(fov, deg_to_rad(pitch_deg), deg_to_rad(roll_deg), drop)
+	_kick_velocity += peak * KICK_GAIN * view_settings.camera_motion
+
+
+func _step_kicks(delta: float) -> void:
+	var steps := maxi(1, ceili(delta * 240.0))
+	var h := delta / steps
+	for i in steps:
+		_kick_velocity += (-_kick * KICK_STIFFNESS - _kick_velocity * KICK_DAMPING) * h
+		_kick += _kick_velocity * h
+
+
+## During a smashdown, a ring on the ground where you'll land, tightening as
+## you get close (GDD §4.4 tells).
+func _update_smash_marker() -> void:
+	var smashing := state.mode == MovementState.Mode.SMASH_WINDUP or state.mode == MovementState.Mode.SMASH
+	if not smashing:
+		if _smash_marker:
+			_smash_marker.visible = false
+		return
+	var from := global_position + Vector3.UP * 0.5
+	var query := PhysicsRayQueryParameters3D.create(from, from + Vector3.DOWN * 80.0, collision_mask, [get_rid()])
+	var hit := get_world_3d().direct_space_state.intersect_ray(query)
+	if hit.is_empty():
+		return
+	if _smash_marker == null:
+		_smash_marker = SmashFx.make_marker()
+		add_child(_smash_marker)
+	var height := global_position.y - (hit.position as Vector3).y
+	var radius := lerpf(0.7, 2.4, clampf(height / 10.0, 0.0, 1.0))
+	_smash_marker.visible = true
+	_smash_marker.global_position = (hit.position as Vector3) + Vector3.UP * 0.05
+	_smash_marker.scale = Vector3(radius, 1.0, radius)
 
 
 ## Exported builds can't write to res://, so the tuning panel saves to

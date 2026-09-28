@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.9 (draft) |
+| **Version** | 1.0 (draft) |
 | **Date** | 2026-09-28 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -22,6 +22,7 @@
 | 0.7 | Body smoothed out (§11.4): legs split from the torso slab instead of glued on, one-piece tapered arms, C2 blends, A-pose rest. |
 | 0.8 | UI motion (§13.5): springy HUD that reacts to movement, speed meter, kicks, stamped pop-ups, letter-tile banners, typed map cards, animated menus, scene wipe, *ui motion* setting. |
 | 0.9 | Experimental impact frames on kills and hard smashdowns, with a camera punch the HUD rides too, off by default (§10.4). Pop-ups land letter by letter and shatter (§13.5). |
+| 1.0 | Movement feel pass: constant slide friction (slides carry, hills speed you up), heavier smashdown (0.1 s hang, shockwave ring, landing tell), stronger slam bounce (9 + 0.75 × drop, max 22, plus a 3 m/s kick). A camera that reacts to every movement (§10.3), speed lines (§10.4). |
 
 ---
 
@@ -179,8 +180,8 @@ Tune these in the M1 movement prototype with a live tweak panel. They are a star
 |---|---|---|
 | Entry condition | Grounded and speed ≥ 6 m/s, or landing while holding crouch | Below the threshold, crouch is a crouch-walk |
 | Entry boost | +3 m/s | 1.5 s cooldown so spamming slides can't build speed |
-| Slide friction | 0.8 | Very low. Slides carry. |
-| Slope behavior | Gravity projected on the slope | Downhill slides gain speed |
+| Slide friction | 3.5 m/s², constant | Not proportional to speed, so fast slides carry: a 13 m/s dash-slide still has 11.6 m/s after 0.4 s. |
+| Slope behavior | Gravity projected on the slope | Any slope steeper than about 10° out-pulls the friction, so downhill slides gain speed (the 20° slide hill adds about 3 m/s²). |
 | Exit | Speed < 4 m/s → crouch-walk. Release → stand, if there is headroom. | |
 | Slide-hop | Jump keeps 100% of horizontal speed | |
 
@@ -217,8 +218,8 @@ The smashdown is a vertical move that is also an attack and a chain starter. It 
 
 | Phase | Value | Notes |
 |---|---|---|
-| Windup | 0.06 s hang, vertical velocity zeroed | A tiny readable commit |
-| Descent | 40 m/s straight down | Horizontal speed is **banked**, not lost. No air control during descent. |
+| Windup | 0.1 s hang, vertical velocity zeroed | A readable commit. The view tightens and tips up. |
+| Descent | 40 m/s straight down | Horizontal speed is **banked**, not lost. No air control during descent. The view stretches wide, rattles, and speed lines stream in. |
 | Limit | Once per airtime, no cooldown | Refills on landing |
 
 **Impact**
@@ -235,11 +236,13 @@ The smashdown is a vertical move that is also an attack and a chain starter. It 
 
 | Exit | Input | Result |
 |---|---|---|
-| Slam bounce | Jump within 0.2 s of impact | Vertical velocity = min(7 + 0.5 × drop height, 16) m/s. Banked horizontal speed restored. |
+| Slam bounce | Jump within 0.2 s of impact | Vertical velocity = min(9 + 0.75 × drop height, 22) m/s. Banked horizontal speed restored, plus a 3 m/s kick toward your input (or onward without input). |
 | Slam slide | Hold crouch through impact | Slide at banked speed + 4 m/s. Ignores the normal slide boost cooldown. |
 | Plain landing | Neither | Banked horizontal speed restored |
 
-**Tells.** A rising whistle during the descent, a bright trail, and a ring projected on the ground where you will land, visible to both players. A smashdown is a commitment, and the opponent can read and punish it.
+**Tells.** A rising whistle during the descent, a bright trail, and a ring projected on the ground where you will land, visible to both players (the ring is built: it tightens as you get close). A smashdown is a commitment, and the opponent can read and punish it.
+
+**Weight.** The impact sends a white shockwave ring racing out to the 3.5 m radius over a ground flash, slams the camera down with a pitch-in, twist and zoom-snap, and shakes it (harder the further you fell). A slam bounce launches off a smaller ring while the view whooshes wide and tips up. Code: `src/render/smash_fx.gd`, camera in `src/player/player.gd`.
 
 **Why the knockup matters.** A knocked-up opponent follows a predictable arc, which sets up an aimed follow-up shot. Smashdown → airborne opponent → Heartshot is the high-skill combo.
 
@@ -556,12 +559,26 @@ Any verb can flow into any other. The system is designed around chains like thes
 | Setting | Default | Range |
 |---|---|---|
 | FOV (horizontal, 16:9) | 100° | 80–120° |
-| Speed FOV kick | +5° at 16 m/s | toggle, 0–10° |
+| Speed FOV kick | +8° at 16 m/s | 0–15° |
 | Wall ride tilt | 6° | toggle |
-| Smashdown impact shake | Short, low | 0–100% |
-| View bob | Off | toggle |
+| Camera motion | 100% | 0–100%. Scales every movement reaction below; 0 turns them off. |
+| View bob | Off | The camera never moves on its own. |
 | Landing dip | Subtle, 40 ms | toggle |
 | Screen shake | Low | 0–100% |
+
+**The camera reacts to what you do, and only that.** Nothing sways on its own; every motion answers a movement:
+
+| Movement | Camera |
+|---|---|
+| Strafing | Leans into sideways motion, up to 3°. |
+| Sliding | Drops and kicks down at the start, tilts 4.5° into the slide, widens up to +10° with speed, rumbles faintly. |
+| Jump / landing | A small tip up and lag on the jump; a pitch-down kick on landing that grows with impact speed, plus shake on hard landings. |
+| Dash | FOV kick and a roll toward the dash direction. |
+| Wall jump / mantle | Roll away from the wall; a pull-down as you mantle over. |
+| Smashdown | Tightens and tips up during the hang, stretches +22° and rattles on the way down, then the impact slam (§4.4). |
+| Slam bounce | Whooshes wide and tips up as you launch. |
+
+Kicks ride one damped spring (FOV, pitch, roll, drop) so they overlap and settle naturally. They only move the view; aim still follows your mouse.
 
 The camera is **never** driven by the fixed tick directly. Mouse look is applied every rendered frame; position is interpolated between ticks.
 
@@ -569,7 +586,7 @@ The camera is **never** driven by the fixed tick directly. Mouse look is applied
 - **Hits:** hitmarker plus a distinct sound. Headshots and heartshots each get their own sound and marker. Kill confirm gets a short, sharp accent.
 - **Being hit:** a directional damage indicator and a brief vignette. It must never obscure aim.
 - **Viewmodel:** procedural sway that reacts to velocity, slides, wall rides, smashdowns, and landing, so the gun "breathes" with your movement.
-- **Speed:** optional speedometer. At high speed, subtle wind audio and speed-line particles at the screen edges.
+- **Speed:** the HUD speed meter (§13.3). Speed lines: white streaks at the screen edges racing outward from where you are heading, pixel-chunky like the 3D. They start just above run speed, reach full strength around 22 m/s (vertical speed counts, so a smashdown's descent streams them), and burst on dashes and slam bounces. The middle stays clear. Toggle: *speed lines*. Later: wind audio. Code: `src/render/speed_lines.gd(shader)`.
 - **No hitstop** (online multiplayer can't pause time). Weight comes from sound and camera micro-kicks instead.
 - **Impact frames (experimental, off by default):** on a kill you make and on a hard smashdown (8 m or more), the screen is redrawn for a beat or two as stark two-tone ink with outlines and speed lines bursting from the hit, like a held anime frame. Heartshot kills use heart pink instead of white. Each held beat jolts off-centre. The camera takes the hit too: it snaps into a zoom with a roll, a pitch kick and a shove back, is still punched in when the picture returns, then swings out past rest into a recoil and settles in about half a second. The HUD rides the same punch (§13.5). The punch only moves the view, never your aim, and scales with *screen shake* (0 turns it off). Visual only (the game runs on underneath), at most one every 0.5 s. They stay off by default for two reasons. They are high-contrast full-screen flashes. And on a smashdown they blank the screen for about 0.1 s at the exact moment of the smashdown → knockup → heartshot follow-up (§4.4). Your own death and the crumble never fire one. Setting: *impact frames* (View → Experimental). Code: `src/render/impact_frames.gd(shader)`.
 

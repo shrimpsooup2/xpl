@@ -1,8 +1,8 @@
 class_name GameUI
 extends Node
 ## Builds and wires the in-game interface: the sharp crosshair layer, the
-## low-res layer holding the HUD, overlays, and pause menu, and the
-## (experimental, off by default) impact frames. Hides the HUD while the
+## low-res layer holding the HUD, overlays, and pause menu, the speed lines,
+## and the (experimental, off by default) impact frames. Hides the HUD while the
 ## local player is dead.
 ##
 ## Debug: F8 previews each overlay; hold Tab for the scoreboard.
@@ -18,6 +18,7 @@ var hud: GameHud
 var overlays: Overlays
 var pause: PauseMenu
 var impact: ImpactFrames
+var speed_lines: SpeedLines
 var player: Player
 
 var _preview_step := -1
@@ -45,6 +46,9 @@ func _ready() -> void:
 	impact = ImpactFrames.new()
 	impact.name = "ImpactFrames"
 	add_child(impact)
+	speed_lines = SpeedLines.new()
+	speed_lines.name = "SpeedLines"
+	add_child(speed_lines)
 
 	player = get_tree().get_first_node_in_group(&"local_player") as Player
 	if player:

@@ -136,7 +136,7 @@ func _try_actions(body: CharacterBody3D, st: MovementState, cmd: InputCommand, w
 
 	if st.jump_buffer_timer > 0.0 and not smashing:
 		if st.on_ground or st.coyote_timer > 0.0:
-			_ground_jump(body, st)
+			_ground_jump(body, st, wish)
 		elif (st.mode == Mode.WALLRIDE or st.wall_coyote_timer > 0.0) and st.wall_jumps_left > 0:
 			_wall_jump(body, st)
 
@@ -151,10 +151,14 @@ func _try_actions(body: CharacterBody3D, st: MovementState, cmd: InputCommand, w
 			st.mode = Mode.AIR  # Too low to slam: crouch just drops off the wall.
 
 
-func _ground_jump(body: CharacterBody3D, st: MovementState) -> void:
+func _ground_jump(body: CharacterBody3D, st: MovementState, wish := Vector3.ZERO) -> void:
 	var v := body.velocity
 	if st.bounce_window_timer > 0.0:
 		v.y = minf(p.smash_bounce_base + p.smash_bounce_per_meter * st.last_drop_height, p.smash_bounce_max)
+		# The bounce also kicks you on, toward your input.
+		var h := horizontal(v)
+		var dir := horizontal(wish).normalized() if wish.length_squared() > 0.01 else h.normalized()
+		v += dir * p.smash_bounce_boost
 		_event(st, &"slam_bounce", {"velocity": v.y})
 	else:
 		v.y = maxf(v.y, 0.0) + p.jump_velocity
@@ -235,7 +239,7 @@ func _tick_slide(body: CharacterBody3D, st: MovementState, wish: Vector3, dt: fl
 	var g := Vector3.DOWN * p.gravity
 	var h := horizontal(body.velocity)
 	h += horizontal(g - n * g.dot(n)) * dt  # Downhill pull.
-	h = _friction(h, p.slide_friction, dt)
+	h = h.move_toward(Vector3.ZERO, p.slide_friction * dt)
 	h = _air_accelerate(h, wish, dt)  # Light steering, same rules as air.
 	body.velocity = h
 	st.crouched = true
