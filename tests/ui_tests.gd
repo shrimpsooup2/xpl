@@ -198,3 +198,50 @@ func test_wipe_runs_middle_once_and_frees_itself() -> void:
 	await frames(90)
 	check(hits[0] == 1, "middle ran once (%d)" % hits[0])
 	check(not is_instance_valid(wipe), "wipe freed")
+
+
+# --- Impact frames (experimental) ------------------------------------------------
+
+func smash(drop: float) -> void:
+	player.movement_event.emit({"type": &"smash_impact", "drop": drop, "position": player.global_position, "slide": false})
+
+
+func test_impact_frames_are_off_by_default() -> void:
+	check(not ViewSettings.new().impact_frames, "setting defaults to off")
+	ui.kill_confirmed(true)
+	smash(15.0)
+	await frames(1)
+	check(not ui.impact.is_showing(), "nothing shows while off")
+
+
+func test_impact_frames_on_kills_and_hard_smashdowns_only() -> void:
+	player.view_settings.impact_frames = true
+	smash(GameUI.SMASH_IMPACT_DROP - 1.0)
+	await frames(1)
+	check(not ui.impact.is_showing(), "an ordinary smashdown doesn't fire one")
+	smash(GameUI.SMASH_IMPACT_DROP + 4.0)
+	await frames(1)
+	check(ui.impact.is_showing(), "a hard smashdown fires one")
+	await frames(12)
+	check(not ui.impact.is_showing(), "and it's gone within a few frames")
+	await frames(30)
+	ui.kill_confirmed(false)
+	await frames(1)
+	check(ui.impact.is_showing(), "a kill fires one")
+	await frames(12)
+	player.die()
+	await frames(1)
+	check(not ui.impact.is_showing(), "your own death doesn't")
+
+
+func test_impact_frames_never_strobe() -> void:
+	player.view_settings.impact_frames = true
+	var shown := 0
+	var was := false
+	for i in 60:  # One second of kills every frame.
+		ui.kill_confirmed(false)
+		await frames(1)
+		if ui.impact.is_showing() and not was:
+			shown += 1
+		was = ui.impact.is_showing()
+	check(shown <= 2, "at most 2 impact frames a second (got %d)" % shown)

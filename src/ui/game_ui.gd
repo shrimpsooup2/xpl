@@ -1,16 +1,23 @@
 class_name GameUI
 extends Node
-## Builds and wires the in-game interface: the sharp crosshair layer, and
-## the low-res layer holding the HUD, overlays, and pause menu. Hides the
-## HUD while the local player is dead.
+## Builds and wires the in-game interface: the sharp crosshair layer, the
+## low-res layer holding the HUD, overlays, and pause menu, and the
+## (experimental, off by default) impact frames. Hides the HUD while the
+## local player is dead.
 ##
 ## Debug: F8 previews each overlay; hold Tab for the scoreboard.
+
+## Only hard smashdowns get an impact frame: from this drop up, growing to
+## full strength at SMASH_IMPACT_FULL.
+const SMASH_IMPACT_DROP := 8.0
+const SMASH_IMPACT_FULL := 18.0
 
 var crosshair: Crosshair
 var layer: LofiLayer
 var hud: GameHud
 var overlays: Overlays
 var pause: PauseMenu
+var impact: ImpactFrames
 var player: Player
 
 var _preview_step := -1
@@ -35,6 +42,9 @@ func _ready() -> void:
 	pause = PauseMenu.new()
 	pause.layer = layer
 	layer.canvas.add_child(pause)
+	impact = ImpactFrames.new()
+	impact.name = "ImpactFrames"
+	add_child(impact)
 
 	player = get_tree().get_first_node_in_group(&"local_player") as Player
 	if player:
@@ -44,6 +54,8 @@ func _ready() -> void:
 		player.respawned.connect(_set_alive_ui.bind(true))
 		player.movement_event.connect(hud.on_movement_event)
 		player.movement_event.connect(crosshair.on_movement_event)
+		impact.settings = player.view_settings
+		player.movement_event.connect(_impact_on_movement)
 	overlays.round_card("test course", 0, false)
 
 
@@ -63,6 +75,33 @@ func _unhandled_input(event: InputEvent) -> void:
 		overlays.show_scoreboard([["you", 0, 0, 0, 0]])
 	elif event.is_action_released(&"scoreboard"):
 		overlays.hide_scoreboard()
+
+
+## A kill you made (combat calls this once it exists; F8 previews it):
+## the kill marker, and an impact frame, pink for a heartshot.
+func kill_confirmed(heartshot := false) -> void:
+	if heartshot:
+		crosshair.hit(&"heart")
+		hud.popup("heartshot", LofiUI.Style.HEART)
+		ImpactFrames.hit(get_tree(), 1.0, Vector2(0.5, 0.5), LofiUI.HEART)
+	else:
+		crosshair.hit(&"kill")
+		ImpactFrames.hit(get_tree(), 0.7)
+
+
+## Hard smashdown landings get an impact frame, centred where you hit.
+func _impact_on_movement(e: Dictionary) -> void:
+	if e.type == &"smash_impact" and e.drop >= SMASH_IMPACT_DROP:
+		var strength := remap(minf(e.drop, SMASH_IMPACT_FULL), SMASH_IMPACT_DROP, SMASH_IMPACT_FULL, 0.5, 1.0)
+		ImpactFrames.hit(get_tree(), strength, _screen_point(e.position))
+
+
+## A world position in screen UV, or the middle if it's behind the camera.
+func _screen_point(world: Vector3) -> Vector2:
+	var cam := get_viewport().get_camera_3d()
+	if cam == null or cam.is_position_behind(world):
+		return Vector2(0.5, 0.5)
+	return cam.unproject_position(world) / get_viewport().get_visible_rect().size
 
 
 func _set_alive_ui(alive: bool) -> void:
@@ -85,8 +124,7 @@ func _preview() -> void:
 			hud.add_kill("you", "them", "hotkey")
 			hud.add_kill("them", "you", "overdraw")
 			hud.add_kill("you", "them", "", true)
-			hud.popup("heartshot", LofiUI.Style.HEART)
-			crosshair.hit(&"heart")
+			kill_confirmed(true)
 			hud.set_weapon("hotkey", 4)
 			hud.set_throwable("packet", 2)
 			hud.show_prompt("e  swap for overdraw (5)")

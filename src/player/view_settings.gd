@@ -24,3 +24,9 @@ extends Resource
 ## Optional colour-depth cut with ordered dither (32 ≈ 16-bit colour). 0 is off.
 @export_range(0, 256, 1) var color_levels: int = 0
 @export_range(0.0, 1.0, 0.05) var dither: float = 1.0
+
+@export_group("Experimental")
+## Anime-style impact frames on kills and hard smashdowns: a beat of stark
+## two-tone ink with speed lines (see ImpactFrames). Off by default: they're high-contrast
+## flashes, and still being tried out.
+@export var impact_frames: bool = false

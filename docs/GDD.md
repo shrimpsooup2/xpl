@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.8 (draft) |
+| **Version** | 0.9 (draft) |
 | **Date** | 2026-09-28 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -21,6 +21,7 @@
 | 0.6 | UI direction set: everything in the logo's style (tiny Arial in framed boxes, blown up soft), replacing the chrome/bevel idea. HUD, overlays, pause and main menu defined and built. |
 | 0.7 | Body smoothed out (§11.4): legs split from the torso slab instead of glued on, one-piece tapered arms, C2 blends, A-pose rest. |
 | 0.8 | UI motion (§13.5): springy HUD that reacts to movement, speed meter, kicks, stamped pop-ups, letter-tile banners, typed map cards, animated menus, scene wipe, *ui motion* setting. |
+| 0.9 | Experimental impact frames on kills and hard smashdowns, off by default (§10.4). |
 
 ---
 
@@ -570,6 +571,7 @@ The camera is **never** driven by the fixed tick directly. Mouse look is applied
 - **Viewmodel:** procedural sway that reacts to velocity, slides, wall rides, smashdowns, and landing, so the gun "breathes" with your movement.
 - **Speed:** optional speedometer. At high speed, subtle wind audio and speed-line particles at the screen edges.
 - **No hitstop** (online multiplayer can't pause time). Weight comes from sound and camera micro-kicks instead.
+- **Impact frames (experimental, off by default):** on a kill you make and on a hard smashdown (8 m or more), the screen is redrawn for a beat or two as stark two-tone ink with outlines and speed lines bursting from the hit, like a held anime frame. Heartshot kills use heart pink instead of white. Visual only (the game runs on underneath), at most one every 0.5 s. They stay off by default for two reasons. They are high-contrast full-screen flashes. And on a smashdown they blank the screen for about 0.1 s at the exact moment of the smashdown → knockup → heartshot follow-up (§4.4). Your own death and the crumble never fire one. Setting: *impact frames* (View → Experimental). Code: `src/render/impact_frames.gd(shader)`.
 
 ### 10.5 Death
 
@@ -592,6 +594,7 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 ### 10.6 Accessibility
 - Sensitivity shown in cm/360 as well as a raw value. Raw input is always on.
 - Every camera motion effect can be toggled off, and UI motion can be turned down to nothing (§13.5).
+- No full-screen flashing by default. The experimental impact frames (§10.4) are opt-in and never fire more than twice a second.
 - Colorblind-safe enemy highlight and heart color presets.
 - Hold/toggle options for crouch. Smashdown can have its own key.
 - Full key rebinding.
