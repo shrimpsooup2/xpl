@@ -1,4 +1,4 @@
-extends Node
+extends "res://tests/test_suite.gd"
 ## Movement tests. Each test builds a small world, drives a Player with
 ## scripted InputCommands one physics tick at a time, and checks the result
 ## against the numbers in GDD §4.
@@ -9,31 +9,6 @@ const Mode := MovementState.Mode
 var world: Node3D
 var player: Player
 var p: MovementParams
-var _failures: PackedStringArray = []
-var _current := ""
-var _checks := 0
-
-
-func _ready() -> void:
-	_run.call_deferred()
-
-
-func _run() -> void:
-	var tests: PackedStringArray = []
-	for m in get_method_list():
-		if String(m.name).begins_with("test_"):
-			tests.append(m.name)
-	for t in tests:
-		_current = t
-		var before := _failures.size()
-		await _setup()
-		await Callable(self, t).call()
-		_teardown()
-		print("%s %s" % ["PASS" if _failures.size() == before else "FAIL", t])
-	print("\n%d tests, %d checks, %d failures" % [tests.size(), _checks, _failures.size()])
-	for f in _failures:
-		print("  ✗ ", f)
-	get_tree().quit(1 if _failures.size() > 0 else 0)
 
 
 # --- Harness ----------------------------------------------------------------
@@ -100,16 +75,6 @@ func settle() -> void:
 
 func hspeed() -> float:
 	return player.horizontal_speed()
-
-
-func check(cond: bool, what: String) -> void:
-	_checks += 1
-	if not cond:
-		_failures.append("%s: %s" % [_current, what])
-
-
-func near(actual: float, expected: float, tol: float, what: String) -> void:
-	check(absf(actual - expected) <= tol, "%s = %.3f, expected %.3f ± %.3f" % [what, actual, expected, tol])
 
 
 # --- Ground -----------------------------------------------------------------

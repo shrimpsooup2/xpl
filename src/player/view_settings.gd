@@ -12,6 +12,9 @@ extends Resource
 @export_range(0.0, 15.0, 0.5) var wallride_tilt: float = 6.0
 @export var landing_dip: bool = true
 @export_range(0.0, 1.0, 0.05) var screen_shake: float = 0.3
+## How much the UI moves on its own: HUD sway, UI kicks and shakes, the idle
+## wobble. 0 keeps it still (GDD §13.5).
+@export_range(0.0, 1.0, 0.05) var ui_motion: float = 1.0
 @export var invert_y: bool = false
 
 @export_group("Look")

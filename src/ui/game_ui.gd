@@ -42,7 +42,15 @@ func _ready() -> void:
 		pause.player = player
 		player.died.connect(_set_alive_ui.bind(false))
 		player.respawned.connect(_set_alive_ui.bind(true))
+		player.movement_event.connect(hud.on_movement_event)
+		player.movement_event.connect(crosshair.on_movement_event)
 	overlays.round_card("test course", 0, false)
+
+
+func _process(_delta: float) -> void:
+	# Live, so the tuning panel's slider takes effect straight away.
+	if player and player.view_settings:
+		LofiUI.motion = player.view_settings.ui_motion
 
 
 func _unhandled_input(event: InputEvent) -> void:

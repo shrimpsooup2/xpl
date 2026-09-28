@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 0.7 (draft) |
+| **Version** | 0.8 (draft) |
 | **Date** | 2026-09-28 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -20,6 +20,7 @@
 | 0.5 | Player body defined (smooth, joint-free, gingerbread-person proportions). Added the death sequence: blackout, spotlight, and the body crumbling into diced pieces. |
 | 0.6 | UI direction set: everything in the logo's style (tiny Arial in framed boxes, blown up soft), replacing the chrome/bevel idea. HUD, overlays, pause and main menu defined and built. |
 | 0.7 | Body smoothed out (§11.4): legs split from the torso slab instead of glued on, one-piece tapered arms, C2 blends, A-pose rest. |
+| 0.8 | UI motion (§13.5): springy HUD that reacts to movement, speed meter, kicks, stamped pop-ups, letter-tile banners, typed map cards, animated menus, scene wipe, *ui motion* setting. |
 
 ---
 
@@ -590,7 +591,7 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 
 ### 10.6 Accessibility
 - Sensitivity shown in cm/360 as well as a raw value. Raw input is always on.
-- Every camera motion effect can be toggled off.
+- Every camera motion effect can be toggled off, and UI motion can be turned down to nothing (§13.5).
 - Colorblind-safe enemy highlight and heart color presets.
 - Hold/toggle options for crouch. Smashdown can have its own key.
 - Full key rebinding.
@@ -659,10 +660,10 @@ The interface follows the logo: it looks **default and unfinished** on purpose, 
 |---|---|
 | Canvas | All UI is laid out on a small canvas (about 270 px tall) and scaled up with smooth filtering, so it is soft and blurry like the logo. |
 | Type | Liberation Sans (Arial metrics), lowercase copy everywhere. Sizes on the canvas: 8 small, 10 normal, 16 big, 36 huge. |
-| Boxes | Every piece of text sits in a white box with a thin black frame and black text. |
+| Boxes | Every piece of text sits in a white box with a thin black frame and black text. Solid boxes cast a hard black drop shadow, so they read as cut-outs and their motion reads. |
 | Emphasis | Inverted boxes (black, white text) for emphasis, hover, and the current value. Ghost boxes (translucent, grey) for secondary labels. |
 | Color | Monochrome. The only accents: **heart pink** (heartshots, the heart) and **red** (low health, alerts). |
-| Motion | Things pop in with a quick overshoot; hits and damage shake. No slow fades. |
+| Motion | Nothing just appears or vanishes: boxes spring, stamp, type, roll, and flick (§13.5). No slow fades. |
 | Exceptions | The crosshair and hit markers are drawn at full resolution, sharp, because aiming needs to be exact. Developer tools (F1 tuning, debug readout) stay crisp too. |
 
 Code: `src/ui/lofi_ui.gd` (style kit), `src/ui/lofi_layer.gd` (the low-res canvas).
@@ -682,10 +683,10 @@ Code: `src/ui/lofi_ui.gd` (style kit), `src/ui/lofi_layer.gd` (the low-res canva
 | Above the crosshair | Pop-ups: *heartshot* (pink), later *double kill* etc. |
 | Below the crosshair | Pickup prompt: `e  swap for overdraw (5)`. Never covers the crosshair. Auto-pickups only flash the name. |
 | Bottom left | `hp` + health. Turns red and shakes at 30 or below. |
-| Bottom centre | Dash charges as small boxes: black when ready, filling grey while recharging. |
+| Bottom centre | Speed meter: a row of cells that get taller left to right (volume-meter style), lit black up to your speed, a grey cell marking the recent peak, jittering past the soft cap. Your speed in a box to its left, inverted above run speed. Dash charges underneath as small boxes: black when ready, filling grey while recharging; a used charge flashes, a recharged one pops. |
 | Bottom right | Throwable (ghost box) above weapon name + ammo left. Ammo box turns red at 0. `fists` when empty-handed. |
 
-The HUD hides during your death sequence. Code: `src/ui/game_hud.gd`, `src/ui/crosshair.gd`.
+The HUD hides during your death sequence and springs back in on respawn. Code: `src/ui/game_hud.gd`, `src/ui/crosshair.gd`.
 
 ### 13.4 Overlays and screens
 
@@ -702,6 +703,29 @@ The HUD hides during your death sequence. Code: `src/ui/game_hud.gd`, `src/ui/cr
 | Lobby | Planned (M3) | Invite / join code, ready-up. |
 
 "Preview" screens run on made-up data (press **F8** in the test course to cycle them) until rounds exist in M3. Code: `src/ui/overlays.gd`, `src/ui/pause_menu.gd`, `src/ui/main_menu.gd`, wired together by `src/ui/game_ui.gd`.
+
+### 13.5 Motion
+The boxes are plain, so the motion carries the energy. The UI should feel as alive as the movement: it reacts to what you do and never just blinks things on and off.
+
+| Where | What moves |
+|---|---|
+| Everywhere | The canvas warps very faintly and slowly, like the warped logo. **Kicks** shake, punch (zoom), and warp the whole UI for a moment on big events: heartshots, smashdown impacts, damage, the countdown, *go*. |
+| HUD | Hangs off the view on a spring: lags behind mouse look, leans into strafes, rises while falling. Movement knocks it around: jumps bump it up, landings (scaled by impact) and smashdowns slam it down, dashes and wall jumps shove it sideways. It springs into place at spawn. |
+| Crosshair | The ticks spread briefly on jumps, landings, dashes, and smashdowns and close again within ~0.15 s. The centre never moves, so aim is never affected. |
+| Numbers | Roll to new values (health, ammo, scores). A score that goes up flashes inverted and pops. The round timer pops every second for the last 10 and turns red for the last 5. |
+| Health | Damage shakes the row, pops the number, and kicks the UI. At 30 or below the red box beats like a heart. |
+| Killfeed | Rows slide in from the right with an overshoot (a heartshot's ♥ pops) and slide back out when they expire. |
+| Pop-ups | Stamp down from big and crooked, kick the UI, then blow away. |
+| Alerts | Stamp in, then blink red/black. |
+| Map card | The map name types itself into a box that flips open; the load cells pop as they fill. Countdown numbers stamp down, *go* bursts. |
+| Banners | *round won*, *you won* land one letter tile at a time, then kick; the winner's score rolls up. |
+| Menus | Buttons slide in one after another, lift off their shadow on hover, press in on click. The pause menu snaps open (fast dim, stamped title). |
+| Main menu | The logo stamps down, then wobbles gently. The blob reacts to what you hover (a jab for *play*, a flinch for *quit*) and the spotlight pumps. The camera leans toward the mouse. A news ticker crawls along the bottom. |
+| Scene changes | A wipe: black boxes pop in across the screen in a diagonal sweep, the scene changes behind them, and they clear the same way. |
+
+**Accessibility:** *ui motion* (0–1, `ViewSettings.ui_motion`) scales all of the self-motion: sway, lean, kicks, shakes, wobble, and crosshair spread. At 0 the UI holds still; things still arrive and leave, but nothing shakes.
+
+Code: the motion kit is in `src/ui/lofi_ui.gd` (`enter`, `leave`, `pop`, `stamp`, `burst`, `type_in`, `roll`, `flash`, `blink`, `pulse`, `tiles_in`, `kick`), the warp and kick in `src/ui/lofi_layer.gd(shader)`, and the wipe in `src/ui/wipe.gd`.
 
 ---
 

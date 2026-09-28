@@ -48,14 +48,14 @@ The **View → Look** section of the panel controls the render: `pixel height` i
 |---|---|
 | `src/movement/` | The movement simulation: `MovementSim` (one fixed tick), `MovementState`, `MovementParams`, `InputCommand` |
 | `src/player/` | `Player` (input, camera interpolated between ticks), `PlayerModel` (the body and its crumble), `BodyShape` (proportions and shape), `DeathSequence` (the death cinematic), `ViewSettings` |
-| `src/ui/` | The UI: style kit (`LofiUI`), low-res canvas (`LofiLayer`), HUD, crosshair, overlays, pause and main menus |
+| `src/ui/` | The UI: style and motion kit (`LofiUI`), low-res canvas (`LofiLayer`), HUD, crosshair, overlays, pause and main menus, scene wipe |
 | `src/world/` | `GreyBox` blocks (size and surface kind) |
 | `src/render/` | Surface, sky, and screen shaders, and `RetroScreen` (low-res rendering) |
 | `assets/` | Pixel textures, the reflection map, the logo, the generated body and chunk meshes, and third-party assets |
 | `src/debug/` | Debug HUD and the live tuning panel |
 | `data/` | Tuning resources |
 | `scenes/` | `main_menu.tscn` (main scene), `test_course.tscn`, and `player.tscn` |
-| `tests/` | Headless movement tests |
+| `tests/` | Headless movement and UI tests |
 | `tools/` | Test runner and the scene generator |
 
 ## Tests
@@ -64,9 +64,9 @@ The **View → Look** section of the panel controls the render: `pixel height` i
 tools/run_tests.sh
 ```
 
-This runs the headless movement tests. It uses `$GODOT` or `godot` on your PATH; on Linux x86_64 it downloads Godot 4.7.2 into `.tools/` if neither is found.
+This runs the headless movement and UI tests. It uses `$GODOT` or `godot` on your PATH; on Linux x86_64 it downloads Godot 4.7.2 into `.tools/` if neither is found.
 
-`tools/build_scenes.gd` regenerates the input map, `player.tscn`, and the greybox test course. Once you edit the course by hand in the editor, stop regenerating it (pass `-- --skip-course`). `tools/gen_textures.gd` and `tools/gen_logo.gd` regenerate the placeholder textures and the logo; paint over the PNGs freely instead. `tools/gen_body.gd` regenerates the player's body and its pre-diced chunks from `src/player/body_shape.gd` (about a minute).
+`tools/build_scenes.gd` regenerates the input map, `player.tscn`, and the greybox test course. Once you edit the course by hand in the editor, stop regenerating it (pass `-- --skip-course`). `tools/gen_textures.gd` and `tools/gen_logo.gd` regenerate the placeholder textures and the logo; paint over the PNGs freely instead. `tools/gen_body.gd` regenerates the player's body and its pre-diced chunks from `src/player/body_shape.gd` (about a minute; add `-- --body-only` to skip the dicing while tuning the shape).
 
 ## Credits
 

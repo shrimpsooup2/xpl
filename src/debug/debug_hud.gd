@@ -1,6 +1,7 @@
 extends CanvasLayer
-## Developer overlay: speedometer, movement state readout, and a ticker
-## of recent movement events so chains are easy to see while testing.
+## Developer overlay: movement state readout (with exact and peak speed;
+## the HUD has the player-facing speed meter), and a ticker of recent
+## movement events so chains are easy to see while testing.
 ## Also owns the debug hotkeys: F2 respawn, F3 vsync, F4 toggle this readout,
 ## F6 third-person camera, F7 die.
 
@@ -15,7 +16,6 @@ const EVENT_LABELS := {
 
 var _player: Player
 var _root: Control
-var _speed_label: Label
 var _info_label: Label
 var _ticker_label: Label
 var _ticker: Array[Dictionary] = []
@@ -59,7 +59,6 @@ func _process(delta: float) -> void:
 	if speed > _peak_speed or _peak_timer <= 0.0:
 		_peak_speed = speed
 		_peak_timer = 1.5
-	_speed_label.text = "%.1f m/s\npeak %.1f" % [speed, _peak_speed]
 
 	if _show_info:
 		var p := _player.movement_params
@@ -76,7 +75,7 @@ func _process(delta: float) -> void:
 			"%d fps   vsync %s" % [Engine.get_frames_per_second(), "on" if vsync else "off"],
 			"mode      %s" % MovementState.Mode.keys()[st.mode],
 			"ground    %s   crouch %s" % [st.on_ground, st.crouched],
-			"speed     h %.2f   v %.2f" % [speed, _player.velocity.y],
+			"speed     h %.2f   v %.2f   peak %.1f" % [speed, _player.velocity.y, _peak_speed],
 			"dash      %s" % dash_bar,
 			"walljump  %d / %d" % [st.wall_jumps_left, p.wall_jumps],
 			"slide cd  %.2f" % st.slide_boost_cooldown,
@@ -108,12 +107,6 @@ func _build() -> void:
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
 	_root = root
-
-	_speed_label = _label(root, 30, HORIZONTAL_ALIGNMENT_CENTER)
-	_speed_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	_speed_label.offset_top = -130
-	_speed_label.offset_left = -200
-	_speed_label.offset_right = 200
 
 	_info_label = _label(root, 15, HORIZONTAL_ALIGNMENT_LEFT)
 	_info_label.position = Vector2(16, 12)

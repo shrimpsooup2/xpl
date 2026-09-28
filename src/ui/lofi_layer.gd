@@ -6,9 +6,22 @@ extends CanvasLayer
 ##
 ## Mouse input only reaches the canvas while `interactive` is on (menus);
 ## otherwise it passes straight through to the game.
+##
+## The blow-up goes through lofi_layer.gdshader: a faint idle warp, and
+## kick() for impacts, which shakes, punches, and warps the whole UI.
 
+const GROUP := &"lofi_layer"
+const SHADER := preload("res://src/ui/lofi_layer.gdshader")
 ## Target canvas height; the actual scale is the nearest whole number.
 const CANVAS_HEIGHT := 270.0
+## Idle warp in canvas pixels.
+const WARP := 0.3
+## A full-strength kick: shake (canvas px), punch (zoom), extra warp.
+const KICK_SHAKE := 3.0
+const KICK_ZOOM := 0.035
+const KICK_WARP := 1.6
+## How fast a kick dies away (strength per second).
+const KICK_DECAY := 3.5
 
 var canvas: Control
 var interactive := false:
@@ -19,12 +32,17 @@ var interactive := false:
 
 var _container: SubViewportContainer
 var _viewport: SubViewport
+var _material := ShaderMaterial.new()
+var _kick := 0.0
 
 
 func _ready() -> void:
+	add_to_group(GROUP)
 	_container = SubViewportContainer.new()
 	_container.stretch = true
 	_container.texture_filter = CanvasItem.TEXTURE_FILTER_LINEAR
+	_material.shader = SHADER
+	_container.material = _material
 	_container.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(_container)
 	_viewport = SubViewport.new()
@@ -42,6 +60,21 @@ func _ready() -> void:
 	interactive = interactive
 	get_viewport().size_changed.connect(_fit)
 	_fit()
+
+
+func _process(delta: float) -> void:
+	_kick = maxf(_kick - KICK_DECAY * delta, 0.0)
+	var k := _kick * _kick
+	var shake := Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * KICK_SHAKE * k
+	_material.set_shader_parameter(&"offset", shake)
+	_material.set_shader_parameter(&"zoom", 1.0 + KICK_ZOOM * k)
+	_material.set_shader_parameter(&"warp", (WARP + KICK_WARP * k) * LofiUI.motion)
+
+
+## Shakes, punches, and warps the whole layer; strength 1 is a big hit.
+## Every layer is kicked at once through LofiUI.kick().
+func kick(strength := 0.5) -> void:
+	_kick = maxf(_kick, clampf(strength * LofiUI.motion, 0.0, 1.0))
 
 
 ## Canvas pixels per screen pixel.
