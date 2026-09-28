@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 1.3 (draft) |
+| **Version** | 1.4 (draft) |
 | **Date** | 2026-09-28 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -24,8 +24,9 @@
 | 0.9 | Experimental impact frames on kills and hard smashdowns, with a camera punch the HUD rides too, off by default (§10.4). Pop-ups land letter by letter and shatter (§13.5). |
 | 1.0 | Movement feel pass: constant slide friction (slides carry, hills speed you up), heavier smashdown (0.1 s hang, shockwave ring, landing tell), stronger slam bounce (9 + 0.75 × drop, max 22, plus a 3 m/s kick). A camera that reacts to every movement (§10.3), speed lines (§10.4). |
 | 1.1 | Camera and HUD reactions are fast and jerky by default (snap in, drop off, stepped jitter, flickering speed lines); new *camera smoothing* setting for the smooth feel. |
-| 1.3 | Weapons renamed from computing jargon to realistic-sounding model names (SP-12, Marshal .357, SX-50, TR-30, Warden 12, Heron .308…). Damage numbers merge: one number per target that adds up and grows (§10.4). |
 | 1.2 | First six guns built, each modelled on a real kind of gun (§7.4), with first-person arms, third-person holds and animated actions (§11.5). Hit zones ride the animated body; dummies react to the part you hit (§5.2, §9.3). Ammo shown as a column sized by capacity and a ring around the crosshair (§13.3). Magazine sizes moved toward the real guns'. |
+| 1.3 | Weapons renamed from computing jargon to realistic-sounding model names (SP-12, Marshal .357, SX-50, TR-30, Warden 12, Heron .308…). Damage numbers merge: one number per target that adds up and grows (§10.4). |
+| 1.4 | Hats: the first cosmetic, and how teams are told apart. Sixteen hats in red or blue, or no hat and a team triangle over the head; picked on the title screen (§11.4, §13.4). Dash charges recharge slower (1.75 → 2.25 s). First-person arms end in clean round caps. |
 
 ---
 
@@ -193,7 +194,7 @@ Tune these in the M1 movement prototype with a live tweak panel. They are a star
 | Parameter | Value | Notes |
 |---|---|---|
 | Charges | 2 | |
-| Recharge | 1.75 s per charge, one at a time | |
+| Recharge | 2.25 s per charge, one at a time | |
 | Burst | 18 m/s for 0.15 s in the input direction (look direction if no input) | Horizontal only |
 | Exit speed | max(pre-dash horizontal speed, 10 m/s) along the dash direction | A dash never slows you down |
 | Airborne | Zeroes downward velocity at start | Recovers bad jumps |
@@ -674,6 +675,7 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 ### 11.3 Readability rules (Pillar 4)
 - **Players:** glossy, featureless figures with a strong rim light and emissive player color. They must separate from any background at any distance.
 - **The heart:** glows on the chest, in the player's color. It is never hidden by cosmetics.
+- **Teams:** told apart by the hat. Every hat's main mass is the team colour (red or blue), and a player with no hat has a team-coloured triangle over the head instead (§11.4).
 - **Weapons in hand:** chunky silhouettes, identifiable at 30 m.
 - **Weapon pickups:** float and rotate above glowing pads, arena-shooter style. Pad color shows the tier (Standard, Heavy, Power). Respawn timers are shown on the pad.
 - **Projectiles:** bright emissive cores with short trails. Enemy projectiles use the enemy's color.
@@ -685,7 +687,8 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 - The body is one skinned mesh generated from a smooth signed-distance shape (`src/player/body_shape.gd`, `tools/gen_body.gd`), so proportions are tuned in code, not in a modeling tool.
 - It must never read as lumpy. Nothing is glued on: the legs are the bottom of the torso slab split by a slit, each arm is one tapered tube, and every join is a wide C2 blend. The mesh is built in an A-pose (arms 45° down, where they spend most of their time), so skinning never bends a shoulder far.
 - Animation comes from Quaternius's Universal Animation Library (CC0). Its human rig is reshaped at load time to the body's proportions (shorter legs, longer spine, A-pose rest), and the hips motion is scaled to match.
-- Cosmetics (post-MVP): head primitives, surface materials (chrome, marble, carpet, TV static), heart styles, weapon skins. Cosmetics can never change hitboxes or hide the heart.
+- **Hats** are the first cosmetic, and they carry the team colour. Sixteen, built like the guns from glossy primitives listed as data (`src/cosmetics/hats.gd`): top hat, cap, beanie, cowboy hat, bowler, party hat, crown, fez, propeller cap, chef hat, viking helmet, hard hat, bucket hat, mortarboard, wizard hat, halo. Each one's main mass is the wearer's team colour (red or blue) with trim in black, white, gold or metal, so one glance at the head says whose side someone is on. **No hat** is a choice too: a team-coloured triangle, pointing up with a dark outline, hovers over the head and turns to face whoever looks. The hat rides the head bone, flies off when the body falls apart, and is back on respawn. You pick yours on the title screen; the pick is saved (`src/cosmetics/cosmetics.gd`). Practice dummies play for blue, each in a different hat.
+- Cosmetics (post-MVP): more hats, surface materials (chrome, marble, carpet, TV static), heart styles, weapon skins. Cosmetics can never change hitboxes or hide the heart, and hats are never hit shapes.
 - **Layered animation** (`src/player/body_layers.gd`): on top of the locomotion clip, clips can be laid over some bones (the arms aim while the legs run), played once over some bones (a hit, a punch), arms reach for targets by two-bone IK, and bones can be knocked on springs.
 
 ### 11.5 Weapons in hand
@@ -775,7 +778,7 @@ The HUD hides during your death sequence and springs back in on respawn. Code: `
 
 | Screen | Status | Description |
 |---|---|---|
-| Main menu | Built | Your blob idles (and sometimes dances) under a spotlight on a dark stage. Logo top left, boxed menu below (*play*, *settings (soon)*, *quit*), version in a ghost box. |
+| Main menu | Built | Your blob idles (and sometimes dances) under a spotlight on a dark stage. Logo top left, boxed menu below (*play*, the hat picker, *settings (soon)*, *quit*), version in a ghost box. The hat picker is `<` *hat name* `>` (or ← →): each step drops the next hat onto the blob, which nods under it. A swatch beside it flips the preview between red and blue. |
 | Pause (Esc) | Built | Dim + boxed list: *resume*, *respawn*, *tuning*, *main menu*, *quit*. The game keeps running underneath (it's multiplayer). |
 | Map card + countdown | Built (preview) | *round 3* over the map name, a fake loading bar of boxes, then *3 · 2 · 1 · go*. |
 | Round result | Built (preview) | Huge *round won* (inverted) or *round lost* banner over the score. |
@@ -940,3 +943,4 @@ Each milestone has a **gate question**. We don't move on until the answer is yes
 | 13 | Controller support: in the MVP, or post-MVP with aim assist tuning? | Post-MVP |
 | 14 | Monetization model (premium, or premium plus cosmetics)? | Premium, TBD |
 | 15 | Hit shapes follow the animated pose, which is exact locally. Online, do we sync a deterministic pose (the sim's movement state drives the upper body's aim, so the server can rebuild it), or fall back to capsules on the simulated body? | Rebuild the pose from sim state; keep the heart on the chest bone |
+| 16 | Teams are shown by hat colour (red / blue). In 3–4 player FFA, does each player get their own hat colour, or do enemies all show one "enemy" colour? | One colour per player, from a fixed palette that stays readable |

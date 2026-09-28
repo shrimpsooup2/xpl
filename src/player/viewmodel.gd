@@ -15,6 +15,8 @@ extends Node3D
 ## what you do: looking drags it, landing drops it, slides tilt it, dashes
 ## swing it, smashdowns pull it up and slam it down.
 
+## Each arm is cut off this far down the upper arm from the shoulder joint.
+const ARM_CUT_DEPTH := 0.1
 ## Vertical field of view it's drawn with, and how much of the camera's FOV
 ## swings (speed, slides, punches) it still follows.
 const FOV := 62.0
@@ -383,36 +385,165 @@ func _fov_scale(camera: Camera3D) -> float:
 	return tan(deg_to_rad(camera.fov) * 0.5) / tan(deg_to_rad(clampf(fov, 20.0, 120.0)) * 0.5)
 
 
-## The body mesh cut down to the arms (every triangle mostly skinned to an
-## upper arm, forearm or hand). Shared, built once.
+## The body mesh cut down to the arms: each arm sliced off cleanly across
+## the upper arm (triangles on the cut are split, the hole capped), and
+## rebound to the arm's bones alone, so nothing stretches back toward the
+## chest and an arm pointing back at the camera shows a smooth round end
+## rather than the rim of an open tube. Shared, built once.
 static func arms_only(sk: Skeleton3D) -> ArrayMesh:
 	if _arms_mesh:
 		return _arms_mesh
 	var arm_bones := {}
+	var cuts := {}  # Side -> [origin, direction] of the upper arm, rest pose.
 	for side: String in ["L", "R"]:
-		for bone: String in BodyShape.ARM_BONES[side]:
+		var names: Array = BodyShape.ARM_BONES[side]
+		for bone: String in names:
 			arm_bones[sk.find_bone(bone)] = true
+		var shoulder := sk.get_bone_global_rest(sk.find_bone(names[0])).origin
+		var elbow := sk.get_bone_global_rest(sk.find_bone(names[1])).origin
+		cuts[side] = [shoulder, (elbow - shoulder).normalized()]
+	var upper_arm := {"L": sk.find_bone(BodyShape.ARM_BONES.L[0]), "R": sk.find_bone(BodyShape.ARM_BONES.R[0])}
 	var source: ArrayMesh = PlayerModel.BODY_MESH
 	_arms_mesh = ArrayMesh.new()
 	for s in source.get_surface_count():
 		var arrays := source.surface_get_arrays(s)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
 		var bones: PackedInt32Array = arrays[Mesh.ARRAY_BONES]
 		var weights: PackedFloat32Array = arrays[Mesh.ARRAY_WEIGHTS]
-		var vertex_count := (arrays[Mesh.ARRAY_VERTEX] as PackedVector3Array).size()
+		var vertex_count := verts.size()
 		var per := bones.size() / vertex_count
-		var on_arm := PackedByteArray()
-		on_arm.resize(vertex_count)
+		# Rebind to the arm alone.
 		for v in vertex_count:
 			var w := 0.0
 			for k in per:
 				if arm_bones.has(bones[v * per + k]):
 					w += weights[v * per + k]
-			on_arm[v] = 1 if w >= 0.35 else 0
-		var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] != null else PackedInt32Array(range(vertex_count))
+			for k in per:
+				var i := v * per + k
+				if w > 0.0:
+					weights[i] = weights[i] / w if arm_bones.has(bones[i]) else 0.0
+				else:
+					bones[i] = upper_arm["L" if verts[v].x > 0.0 else "R"] if k == 0 else 0
+					weights[i] = 1.0 if k == 0 else 0.0
+		arrays[Mesh.ARRAY_BONES] = bones
+		arrays[Mesh.ARRAY_WEIGHTS] = weights
+		# Signed distance past each arm's cut, and whether it's on the arm at all.
+		var past := PackedFloat32Array()
+		var near := PackedByteArray()
+		past.resize(vertex_count)
+		near.resize(vertex_count)
+		for v in vertex_count:
+			var cut: Array = cuts["L" if verts[v].x > 0.0 else "R"]
+			var rel: Vector3 = verts[v] - cut[0]
+			var along := rel.dot(cut[1])
+			past[v] = along - ARM_CUT_DEPTH
+			near[v] = 1 if (rel - (cut[1] as Vector3) * along).length() <= BodyShape.ARM_RADIUS + 0.02 and along > -0.1 else 0
+		var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX]
 		var kept := PackedInt32Array()
+		var split := {}  # Edge -> new vertex on the cut.
 		for i in range(0, indices.size(), 3):
-			if on_arm[indices[i]] and on_arm[indices[i + 1]] and on_arm[indices[i + 2]]:
-				kept.append_array([indices[i], indices[i + 1], indices[i + 2]])
+			var tri := [indices[i], indices[i + 1], indices[i + 2]]
+			if not (near[tri[0]] and near[tri[1]] and near[tri[2]]):
+				continue
+			var inside := tri.filter(func(v: int) -> bool: return past[v] > 0.0).size()
+			if inside == 3:
+				kept.append_array(tri)
+			elif inside > 0:
+				# Clip to the kept side, keeping the winding.
+				var poly: Array[int] = []
+				for k in 3:
+					var a: int = tri[k]
+					var b: int = tri[(k + 1) % 3]
+					if past[a] > 0.0:
+						poly.append(a)
+					if (past[a] > 0.0) != (past[b] > 0.0):
+						poly.append(_split_edge(arrays, past, split, a, b))
+				for k in range(1, poly.size() - 1):
+					kept.append_array([poly[0], poly[k], poly[k + 1]])
+		_cap_holes(arrays, kept)
 		arrays[Mesh.ARRAY_INDEX] = kept
 		_arms_mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays, [], {}, source.surface_get_format(s) & Mesh.ARRAY_FLAG_USE_8_BONE_WEIGHTS)
 	return _arms_mesh
+
+
+## The vertex where edge a–b crosses the cut (made once per edge).
+static func _split_edge(arrays: Array, past: PackedFloat32Array, split: Dictionary, a: int, b: int) -> int:
+	var key := Vector2i(mini(a, b), maxi(a, b))
+	if split.has(key):
+		return split[key]
+	var t := past[a] / (past[a] - past[b])
+	var inner := a if past[a] > 0.0 else b
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	var index := verts.size()
+	verts.append(verts[a].lerp(verts[b], t))
+	normals.append(normals[a].lerp(normals[b], t).normalized())
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	for slot: int in [Mesh.ARRAY_TANGENT, Mesh.ARRAY_BONES, Mesh.ARRAY_WEIGHTS]:
+		if arrays[slot] == null:
+			continue
+		var values: Variant = arrays[slot]  # A packed array: copied, so set back.
+		var stride: int = values.size() / index
+		for k in stride:
+			values.append(values[inner * stride + k])
+		arrays[slot] = values
+	split[key] = index
+	return index
+
+
+## Closes every hole in the triangle list `indices` (appending to it and to
+## the vertex arrays) with a fan around the hole's centre. The fan runs
+## against the boundary edges' direction, so it faces outward like the rest.
+static func _cap_holes(arrays: Array, indices: PackedInt32Array) -> void:
+	var count := {}
+	for i in range(0, indices.size(), 3):
+		for k in 3:
+			var a := indices[i + k]
+			var b := indices[i + (k + 1) % 3]
+			var key := Vector2i(mini(a, b), maxi(a, b))
+			count[key] = count.get(key, 0) + 1
+	var next := {}  # Boundary edges as the triangles run them: a -> b.
+	for i in range(0, indices.size(), 3):
+		for k in 3:
+			var a := indices[i + k]
+			var b := indices[i + (k + 1) % 3]
+			if count[Vector2i(mini(a, b), maxi(a, b))] == 1:
+				next[a] = b
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+	while not next.is_empty():
+		var start: int = next.keys()[0]
+		var loop: Array[int] = []
+		var v := start
+		while next.has(v):
+			loop.append(v)
+			var n: int = next[v]
+			next.erase(v)
+			v = n
+		if loop.size() < 3:
+			continue
+		var center := Vector3.ZERO
+		for i in loop:
+			center += verts[i]
+		center /= loop.size()
+		var c := verts.size()
+		verts.append(center)
+		# Skinned like the loop's first vertex; faces along the arm, outward.
+		var outward := Vector3.ZERO
+		for i in loop.size():
+			var a := loop[i]
+			var b := loop[(i + 1) % loop.size()]
+			indices.append_array([b, a, c])
+			outward += (verts[a] - center).cross(verts[b] - center)
+		normals.append(-outward.normalized())
+		for slot: int in [Mesh.ARRAY_TANGENT, Mesh.ARRAY_BONES, Mesh.ARRAY_WEIGHTS]:
+			if arrays[slot] == null:
+				continue
+			var values: Variant = arrays[slot]  # A packed array: copied, so set back.
+			var stride: int = values.size() / (verts.size() - 1)
+			for k in stride:
+				values.append(values[loop[0] * stride + k])
+			arrays[slot] = values
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = normals

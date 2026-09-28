@@ -48,7 +48,7 @@ extends Resource
 
 @export_group("Dash")
 @export_range(0, 5, 1) var dash_charges: int = 2
-@export_range(0.1, 10.0, 0.05) var dash_recharge: float = 1.75
+@export_range(0.1, 10.0, 0.05) var dash_recharge: float = 2.25
 @export_range(1.0, 50.0, 0.5) var dash_speed: float = 18.0
 @export_range(0.02, 0.5, 0.01) var dash_duration: float = 0.15
 @export_range(0.0, 30.0, 0.5) var dash_exit_min_speed: float = 10.0

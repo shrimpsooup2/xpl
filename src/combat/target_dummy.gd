@@ -1,7 +1,7 @@
 class_name TargetDummy
 extends Node3D
 ## A practice dummy: the player's own blob body on a little stand, with a
-## heart. Hits land where they're aimed (HitShapes) and the body reacts to
+## heart and a blue team hat. Hits land where they're aimed (HitShapes) and the body reacts to
 ## the part that was hit (PlayerModel.react_to_hit). A heartshot, or
 ## running out of health, and it falls apart like a player does; then it
 ## pulls itself back together. Health comes back after a moment untouched.
@@ -21,6 +21,9 @@ const BAR_WIDTH := 0.5
 @export var patrol_speed := 2.0
 ## Facing, radians (0 looks down -Z like the player).
 @export var facing := 0.0
+## Dummies play for blue; `hat` is one of Hats.ALL (none: the team triangle).
+@export var team := Hats.Team.BLUE
+@export var hat := Cosmetics.DEFAULT_HAT
 
 var model: PlayerModel
 var health := MAX_HEALTH
@@ -46,6 +49,7 @@ func _ready() -> void:
 	model = PlayerModel.new()
 	model.name = "Model"
 	add_child(model)
+	model.dress(hat, team)
 	_body = StaticBody3D.new()
 	_body.collision_layer = BODY_LAYER
 	_body.collision_mask = 0

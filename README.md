@@ -12,7 +12,7 @@ A round-based, movement-first arena FPS. Two players duel through short rounds o
 
 1. Install **Godot 4.7.2**, the standard build (not .NET): <https://godotengine.org/download>
 2. Clone this repo, open Godot, choose **Import**, and select `project.godot`.
-3. Press **F5** to play. The main menu opens; choose **play** to enter the movement test course. The gun pads are just to your left, and the shooting range is beyond them.
+3. Press **F5** to play. The main menu opens. Pick a hat with the arrows under **play** (the swatch beside them previews red and blue), then choose **play** to enter the movement test course. The gun pads are just to your left, and the shooting range is beyond them; its dummies play for blue.
 
 ### Controls
 
@@ -52,6 +52,7 @@ The **View → Look** section of the panel controls the render: `pixel height` i
 |---|---|
 | `src/movement/` | The movement simulation: `MovementSim` (one fixed tick), `MovementState`, `MovementParams`, `InputCommand` |
 | `src/player/` | `Player` (input, camera interpolated between ticks), `PlayerModel` (the body, its holds, hit reactions and crumble), `BodyLayers` (clips over some bones, arm IK, hit flinches), `Viewmodel` (first-person arms and gun), `BodyShape` (proportions and shape), `DeathSequence` (the death cinematic), `ViewSettings` |
+| `src/cosmetics/` | `Hats` (every hat, built from primitives in team colours, and the no-hat team triangle) and `Cosmetics` (the saved pick) |
 | `src/combat/` | The roster (`Weapons`, `WeaponDef`), gun models (`WeaponModel`), a player's hands (`WeaponHolder`: firing, pickups, throwing), shots in flight (`Ballistics`), hit zones (`HitShapes`), pickups and pads, `TargetDummy`, and shooting effects |
 | `src/ui/` | The UI: style and motion kit (`LofiUI`), low-res canvas (`LofiLayer`), HUD and its ammo column, crosshair and ammo ring, overlays, pause and main menus, scene wipe |
 | `src/world/` | `GreyBox` blocks (size and surface kind) |
@@ -60,7 +61,7 @@ The **View → Look** section of the panel controls the render: `pixel height` i
 | `src/debug/` | Debug HUD and the live tuning panel |
 | `data/` | Tuning resources |
 | `scenes/` | `main_menu.tscn` (main scene), `test_course.tscn`, and `player.tscn` |
-| `tests/` | Headless movement, UI and combat tests |
+| `tests/` | Headless movement, UI, combat and cosmetics tests |
 | `tools/` | Test runner and the scene generator |
 
 ## Tests

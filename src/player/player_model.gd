@@ -55,6 +55,8 @@ const SHOULDERED := Vector3(0.02, -0.1, -0.26)
 ## Guns in other players' hands are drawn a bit big, so you can tell what
 ## someone's carrying across the map (GDD §7.6).
 const HELD_SCALE := 1.25
+## The team triangle hovers this far over the head bone.
+const MARKER_OVER_HEAD := 0.62
 const WALK_CLIP_SPEED := 1.1
 const JOG_CLIP_SPEED := 2.9
 const SPRINT_CLIP_SPEED := 5.0
@@ -83,6 +85,11 @@ var layers: BodyLayers
 var hits: HitShapes
 ## The weapon in its hands (third person), or null.
 var held: WeaponModel
+## Its hat (null with no hat), and the team triangle shown instead.
+var hat: Node3D
+var marker: Node3D
+var team := Hats.Team.RED
+var hat_id := Hats.NONE
 
 var _rig: Node3D
 var _skin: Skin
@@ -96,6 +103,9 @@ var _heart_material := StandardMaterial3D.new()
 var _fragment_physics := PhysicsMaterial.new()
 var _aim_pitch := 0.0
 var _aim_yaw := 0.0
+var _hat_mount: BoneAttachment3D
+var _dressed := false
+var _marker_time := 0.0
 
 
 func _ready() -> void:
@@ -135,6 +145,10 @@ func _ready() -> void:
 	_chunk_rig.name = "ChunkPoser"
 	_chunk_rig.visible = false
 	_build_heart()
+	_hat_mount = BoneAttachment3D.new()
+	_hat_mount.name = "HatMount"
+	_hat_mount.bone_name = "DEF-head"
+	skeleton.add_child(_hat_mount)
 	layers = BodyLayers.new()
 	layers.name = "Layers"
 	skeleton.add_child(layers)
@@ -183,6 +197,85 @@ func animate_movement(state: MovementState, velocity: Vector3) -> void:
 	if anim.current_animation != clip:
 		anim.play(clip, BLEND)
 	anim.speed_scale = clampf(rate, 0.5, 2.5)
+
+
+func _process(delta: float) -> void:
+	if hat:
+		Hats.animate(hat, delta)
+	if marker and marker.visible:
+		# Hovers over the head wherever the head is, bobbing a touch.
+		_marker_time += delta
+		var head := skeleton.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone("DEF-head")).origin
+		marker.global_position = head + Vector3.UP * (MARKER_OVER_HEAD + sin(_marker_time * 2.4) * 0.025)
+		var cam := get_viewport().get_camera_3d()
+		if cam:
+			Hats.face_marker(marker, cam.global_position)
+
+
+# --- Hat and team -------------------------------------------------------------
+
+## Dresses it in hat `id` in `for_team`'s colours; with no hat (Hats.NONE) a
+## team triangle hovers over the head instead.
+func dress(id: StringName, for_team: Hats.Team) -> void:
+	hat_id = id
+	team = for_team
+	_dressed = true
+	if hat:
+		hat.queue_free()
+		hat = null
+	if marker:
+		marker.queue_free()
+		marker = null
+	hat = Hats.build(id, team)
+	if hat:
+		_hat_mount.add_child(hat)
+		# Hat space (y up, -z forward, from the head's centre) into the head
+		# bone's space; the rig faces +Z.
+		var rest := skeleton.get_bone_global_rest(skeleton.find_bone("DEF-head"))
+		hat.transform = rest.affine_inverse() * Transform3D(Basis(Vector3.UP, PI), rest.origin + BodyShape.HEAD_OFFSET)
+	else:
+		marker = Hats.build_marker(team)
+		marker.top_level = true
+		add_child(marker)
+		marker.visible = not _falling
+
+
+## The hat flies off as the body falls apart.
+func _pop_hat(look_from: Vector3) -> void:
+	if marker:
+		marker.visible = false
+	if hat == null:
+		return
+	var at := hat.global_transform
+	var box := AABB()
+	var first := true
+	for mi: MeshInstance3D in hat.find_children("*", "MeshInstance3D", false, false):
+		var b := mi.transform * mi.mesh.get_aabb()
+		box = b if first else box.merge(b)
+		first = false
+	var piece := RigidBody3D.new()
+	piece.collision_layer = FRAGMENT_LAYER
+	piece.collision_mask = WORLD_LAYER | FRAGMENT_LAYER
+	piece.mass = 0.3
+	piece.physics_material_override = _fragment_physics
+	var col := CollisionShape3D.new()
+	var shape := BoxShape3D.new()
+	shape.size = box.size.max(Vector3.ONE * 0.05)
+	col.shape = shape
+	col.position = box.get_center()
+	piece.add_child(col)
+	_fragment_parent().add_child(piece)
+	piece.global_transform = at
+	hat.get_parent().remove_child(hat)
+	piece.add_child(hat)
+	hat.transform = Transform3D.IDENTITY
+	var away := look_from - at.origin
+	away.y = 0.0
+	away = away.normalized() if away.length() > 0.01 else Vector3.FORWARD
+	piece.linear_velocity = Vector3.UP * randf_range(3.0, 4.2) - away * randf_range(0.6, 1.4) + Vector3(randf_range(-0.6, 0.6), 0, randf_range(-0.6, 0.6))
+	piece.angular_velocity = Vector3(randf_range(-6, 6), randf_range(-4, 4), randf_range(-6, 6))
+	_fragments.append(piece)
+	hat = null
 
 
 # --- Hits --------------------------------------------------------------------
@@ -373,6 +466,8 @@ func reassemble() -> void:
 	layers.stop_actions()
 	if held:
 		held.visible = true
+	if _dressed:
+		dress(hat_id, team)  # A fresh hat (the old one flew off), or the triangle back.
 
 
 func fragments() -> Array[RigidBody3D]:
@@ -485,6 +580,7 @@ func _crumble(look_from: Vector3) -> void:
 		piece.linear_velocity = away.normalized() * randf_range(0.2, CRUMBLE_SPEED) + Vector3.UP * randf_range(0.0, 0.6)
 		piece.angular_velocity = Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1)) * CRUMBLE_SPIN
 	_pop_heart(look_from)
+	_pop_hat(look_from)
 
 
 ## The heart pops out and bounces toward whoever is watching.

@@ -70,6 +70,10 @@ const SHAKE_RATE := 30.0
 @export var view_settings: ViewSettings
 ## Off for bots and tests: they call tick() themselves.
 @export var human_controlled: bool = true
+## Its side, shown by its hat's colour (GDD §11.4). The local player wears
+## the hat picked on the title screen (Cosmetics); anyone else wears `hat`.
+@export var team := Hats.Team.RED
+@export var hat := Cosmetics.DEFAULT_HAT
 
 var state := MovementState.new()
 var sim: MovementSim
@@ -163,6 +167,10 @@ func _ready() -> void:
 		death.finished.connect(respawn)
 	else:
 		set_physics_process(false)
+	if human_controlled:
+		Cosmetics.load_saved()
+		hat = Cosmetics.hat
+	model.dress(hat, team)
 	_update_model_visibility()
 	model.follow(global_position, yaw)
 

@@ -431,13 +431,13 @@ func _shooting_range() -> void:
 	_label("SHOOTING RANGE  (7 / 12 / 22 / 42 m)", Vector3(-14, 3.5, 6))
 	var face := -PI * 0.5  # Looking down +X.
 	for d: Array in [
-			["Dummy_7m", Vector3(-12, 0, -1), Vector3.ZERO, 0.0],
-			["Dummy_12m", Vector3(-17, 0, 2), Vector3.ZERO, 0.0],
-			["Dummy_22m", Vector3(-27, 0, -4), Vector3.ZERO, 0.0],
-			["Dummy_42m", Vector3(-47, 0, -1), Vector3.ZERO, 0.0],
-			["Dummy_Up", Vector3(-32, 3, 5), Vector3.ZERO, 0.0],
-			["Dummy_Walker", Vector3(-22, 0, -7), Vector3(0, 0, 11), 1.6],
-			["Dummy_Runner", Vector3(-37, 0, 4), Vector3(0, 0, -11), 4.5]]:
+			["Dummy_7m", Vector3(-12, 0, -1), Vector3.ZERO, 0.0, &"top_hat"],
+			["Dummy_12m", Vector3(-17, 0, 2), Vector3.ZERO, 0.0, &"cowboy_hat"],
+			["Dummy_22m", Vector3(-27, 0, -4), Vector3.ZERO, 0.0, &"none"],
+			["Dummy_42m", Vector3(-47, 0, -1), Vector3.ZERO, 0.0, &"viking_helmet"],
+			["Dummy_Up", Vector3(-32, 3, 5), Vector3.ZERO, 0.0, &"crown"],
+			["Dummy_Walker", Vector3(-22, 0, -7), Vector3(0, 0, 11), 1.6, &"party_hat"],
+			["Dummy_Runner", Vector3(-37, 0, 4), Vector3(0, 0, -11), 4.5, &"propeller_cap"]]:
 		var dummy := Node3D.new()
 		dummy.set_script(load("res://src/combat/target_dummy.gd"))
 		dummy.name = d[0]
@@ -445,6 +445,7 @@ func _shooting_range() -> void:
 		dummy.set(&"patrol", d[2])
 		dummy.set(&"patrol_speed", d[3] if d[3] > 0.0 else 2.0)
 		dummy.set(&"facing", face)
+		dummy.set(&"hat", d[4])
 		_combat.add_child(dummy)
 	_box("DummyBlock", Vector3(-32, 1.5, 5), Vector3(3, 3, 3), K.LEDGE)
 	_box("RangeBackstop", Vector3(-60, 4, -1), Vector3(1, 8, 26), K.WALL)
