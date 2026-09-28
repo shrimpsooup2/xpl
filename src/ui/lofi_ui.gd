@@ -32,6 +32,9 @@ const SHADOW := Vector2(2, 2)
 ## wobble all scale with this (ViewSettings.ui_motion). Things still come
 ## and go at 0, they just don't shake.
 static var motion := 1.0
+## How smoothly things settle (ViewSettings.camera_smoothing): 0 snaps and
+## drops straight off, 1 eases and wobbles into place.
+static var smoothing := 0.0
 
 static var _theme: Theme
 
@@ -234,7 +237,7 @@ static func stamp(control: Control, kick_strength := 0.5, from := 2.2) -> void:
 		t.tween_property(control, "scale", Vector2.ONE, 0.14).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_IN)
 		t.tween_property(control, "rotation", settle, 0.14).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 		t.chain().tween_callback(kick.bind(control, kick_strength))
-		t.chain().tween_property(control, "rotation", 0.0, 0.5).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT))
+		settle(t.chain(), control, "rotation", 0.0))
 
 
 ## Blows a control up and away (for "go" and other exits with a bang).
@@ -333,7 +336,7 @@ static func tiles_in(row: HBoxContainer, stagger := 0.045, kick_strength := 0.6)
 			t.tween_property(tile, "rotation", randf_range(-0.06, 0.06), 0.16)
 			if i == boxes.size() - 1:
 				t.tween_callback(kick.bind(tile, kick_strength))
-			t.tween_property(tile, "rotation", 0.0, 0.6).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT))
+			settle(t, tile, "rotation", 0.0))
 
 
 ## Slams a row of letter tiles down one after another, each from big and
@@ -356,7 +359,7 @@ static func stamp_tiles(row: HBoxContainer, stagger := 0.03, kick_strength := 0.
 			t.parallel().tween_property(tile, "rotation", randf_range(-0.12, 0.12), 0.12)
 			if i == boxes.size() - 1:
 				t.tween_callback(kick.bind(tile, kick_strength))
-			t.tween_property(tile, "rotation", 0.0, 0.5).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT))
+			settle(t, tile, "rotation", 0.0))
 	return boxes.size() * stagger + 0.12
 
 
@@ -386,6 +389,15 @@ static func shatter(row: Control, time := 0.3) -> void:
 static func kick(node: Node, strength := 0.5) -> void:
 	if is_instance_valid(node) and node.is_inside_tree():
 		node.get_tree().call_group(LofiLayer.GROUP, &"kick", strength)
+
+
+# Brings a property back to rest: a quick snap when snappy, an elastic
+# wobble when smooth.
+static func settle(t: Tween, target: Object, property: String, rest: Variant) -> void:
+	if smoothing >= 0.5:
+		t.tween_property(target, property, rest, 0.55).set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+	else:
+		t.tween_property(target, property, rest, 0.12).set_trans(Tween.TRANS_EXPO).set_ease(Tween.EASE_OUT)
 
 
 # Runs fn on the next frame, after containers have sorted their children.

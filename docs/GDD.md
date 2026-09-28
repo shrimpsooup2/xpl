@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 1.0 (draft) |
+| **Version** | 1.1 (draft) |
 | **Date** | 2026-09-28 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -23,6 +23,7 @@
 | 0.8 | UI motion (§13.5): springy HUD that reacts to movement, speed meter, kicks, stamped pop-ups, letter-tile banners, typed map cards, animated menus, scene wipe, *ui motion* setting. |
 | 0.9 | Experimental impact frames on kills and hard smashdowns, with a camera punch the HUD rides too, off by default (§10.4). Pop-ups land letter by letter and shatter (§13.5). |
 | 1.0 | Movement feel pass: constant slide friction (slides carry, hills speed you up), heavier smashdown (0.1 s hang, shockwave ring, landing tell), stronger slam bounce (9 + 0.75 × drop, max 22, plus a 3 m/s kick). A camera that reacts to every movement (§10.3), speed lines (§10.4). |
+| 1.1 | Camera and HUD reactions are fast and jerky by default (snap in, drop off, stepped jitter, flickering speed lines); new *camera smoothing* setting for the smooth feel. |
 
 ---
 
@@ -562,6 +563,7 @@ Any verb can flow into any other. The system is designed around chains like thes
 | Speed FOV kick | +8° at 16 m/s | 0–15° |
 | Wall ride tilt | 6° | toggle |
 | Camera motion | 100% | 0–100%. Scales every movement reaction below; 0 turns them off. |
+| Camera smoothing | 0% (snappy) | 0–100%. How reactions move, not how big they are: see below. Also sets how the HUD and speed lines move. |
 | View bob | Off | The camera never moves on its own. |
 | Landing dip | Subtle, 40 ms | toggle |
 | Screen shake | Low | 0–100% |
@@ -578,7 +580,7 @@ Any verb can flow into any other. The system is designed around chains like thes
 | Smashdown | Tightens and tips up during the hang, stretches +22° and rattles on the way down, then the impact slam (§4.4). |
 | Slam bounce | Whooshes wide and tips up as you launch. |
 
-Kicks ride one damped spring (FOV, pitch, roll, drop) so they overlap and settle naturally. They only move the view; aim still follows your mouse.
+**Fast and jerky by default.** Reactions snap in on the frame they happen and drop straight off (gone in about 0.2 s), shake is random jitter stepped at 30 Hz, the slide tilt and smashdown stretch arrive within a couple of frames, and the smashdown impact holds its slam for 50 ms before letting go. Only things that change gradually blend: the speed FOV eases with your speed, and the HUD lags your mouse a touch. **Camera smoothing** blends toward the old feel: kicks swell in and settle with a little overshoot, shake wobbles, everything eases, and the HUD, pop-ups and speed lines soften to match (speed lines stream instead of flickering). They only move the view; aim still follows your mouse.
 
 The camera is **never** driven by the fixed tick directly. Mouse look is applied every rendered frame; position is interpolated between ticks.
 
@@ -586,7 +588,7 @@ The camera is **never** driven by the fixed tick directly. Mouse look is applied
 - **Hits:** hitmarker plus a distinct sound. Headshots and heartshots each get their own sound and marker. Kill confirm gets a short, sharp accent.
 - **Being hit:** a directional damage indicator and a brief vignette. It must never obscure aim.
 - **Viewmodel:** procedural sway that reacts to velocity, slides, wall rides, smashdowns, and landing, so the gun "breathes" with your movement.
-- **Speed:** the HUD speed meter (§13.3). Speed lines: white streaks at the screen edges racing outward from where you are heading, pixel-chunky like the 3D. They start just above run speed, reach full strength around 22 m/s (vertical speed counts, so a smashdown's descent streams them), and burst on dashes and slam bounces. The middle stays clear. Toggle: *speed lines*. Later: wind audio. Code: `src/render/speed_lines.gd(shader)`.
+- **Speed:** the HUD speed meter (§13.3). Speed lines: thin white streaks at the screen edges pointing out from where you are heading, pixel-chunky like the 3D, redrawn at random 24 times a second like hand-drawn anime lines (they stream smoothly with camera smoothing up). They start just above run speed, reach full strength around 22 m/s (vertical speed counts, so a smashdown's descent streams them), and burst on dashes and slam bounces. The middle stays clear. Toggle: *speed lines*. Later: wind audio. Code: `src/render/speed_lines.gd(shader)`.
 - **No hitstop** (online multiplayer can't pause time). Weight comes from sound and camera micro-kicks instead.
 - **Impact frames (experimental, off by default):** on a kill you make and on a hard smashdown (8 m or more), the screen is redrawn for a beat or two as stark two-tone ink with outlines and speed lines bursting from the hit, like a held anime frame. Heartshot kills use heart pink instead of white. Each held beat jolts off-centre. The camera takes the hit too: it snaps into a zoom with a roll, a pitch kick and a shove back, is still punched in when the picture returns, then swings out past rest into a recoil and settles in about half a second. The HUD rides the same punch (§13.5). The punch only moves the view, never your aim, and scales with *screen shake* (0 turns it off). Visual only (the game runs on underneath), at most one every 0.5 s. They stay off by default for two reasons. They are high-contrast full-screen flashes. And on a smashdown they blank the screen for about 0.1 s at the exact moment of the smashdown → knockup → heartshot follow-up (§4.4). Your own death and the crumble never fire one. Setting: *impact frames* (View → Experimental). Code: `src/render/impact_frames.gd(shader)`.
 

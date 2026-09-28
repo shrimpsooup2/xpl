@@ -5,8 +5,8 @@ extends RefCounted
 ## projected on the ground where a descending smashdown will land. Flat,
 ## unshaded, white: they read against any floor and to every player.
 
-const RING_TIME := 0.4
-const FLASH_TIME := 0.16
+const RING_TIME := 0.22
+const FLASH_TIME := 0.07
 ## Shockwave reach at impact (GDD: 3.5 m radius).
 const SHOCKWAVE_RADIUS := 3.5
 
@@ -25,7 +25,7 @@ static func shockwave(parent: Node, at: Vector3, strength: float) -> void:
 
 ## A slam bounce's launch: one small, quick ring.
 static func launch(parent: Node, at: Vector3) -> void:
-	_ring(parent, at, 0.2, 1.4, 0.25, 0.7)
+	_ring(parent, at, 0.2, 1.4, 0.15, 0.7)
 
 
 ## The landing tell: a flat ring you place and scale every frame.
@@ -79,7 +79,7 @@ static func _flash(parent: Node, at: Vector3, radius: float) -> void:
 static func _ring_shape() -> TorusMesh:
 	if _ring_mesh == null:
 		_ring_mesh = TorusMesh.new()
-		_ring_mesh.inner_radius = 0.88
+		_ring_mesh.inner_radius = 0.93
 		_ring_mesh.outer_radius = 1.0
 		_ring_mesh.rings = 32
 		_ring_mesh.ring_segments = 4

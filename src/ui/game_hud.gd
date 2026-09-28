@@ -29,8 +29,9 @@ const TIMER_TENSE := 10
 const TIMER_PANIC := 5
 
 # Sway (canvas pixels): a damped spring pulled by look speed and velocity.
-const SWAY_SPRING := 140.0
-const SWAY_DAMPING := 15.0
+## (snappy, smooth), blended by camera smoothing.
+const SWAY_SPRING := Vector2(420.0, 140.0)
+const SWAY_DAMPING := Vector2(40.0, 15.0)
 ## Pixels per rad/s of mouse look.
 const SWAY_LOOK := 0.9
 ## Pixels per m/s of vertical speed (falling lifts the HUD).
@@ -44,6 +45,8 @@ const KNOCK_LAND_PER_SPEED := 5.0
 const KNOCK_LAND_MAX := 110.0
 const KNOCK_DASH := 70.0
 const KNOCK_SMASH := 150.0
+## Seconds that turn a knock impulse into an instant displacement (snappy).
+const KNOCK_SNAP := 0.05
 ## Pop-ups sit this far above the crosshair and drift up by POPUP_DRIFT.
 const POPUP_Y := -34.0
 const POPUP_DRIFT := 6.0
@@ -465,8 +468,10 @@ func impact(strength: float) -> void:
 	for c: Control in _groups():
 		c.pivot_offset = c.size * 0.5
 		c.rotation = randf_range(0.5, 1.0) * (1.0 if randf() < 0.5 else -1.0) * IMPACT_RATTLE * s
-		c.create_tween().tween_property(c, "rotation", 0.0, 0.6) \
-				.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+		# Held through the impact frame's beats like the camera, then settles.
+		var t := c.create_tween()
+		t.tween_interval(Player.PUNCH_HOLD * (1.0 - LofiUI.smoothing) + 0.001)
+		LofiUI.settle(t, c, "rotation", 0.0)
 
 
 # --- Motion -------------------------------------------------------------------
@@ -509,18 +514,25 @@ func _update_sway(delta: float) -> void:
 		target.y += player.velocity.y * SWAY_FALL
 		lean = -local.x * LEAN
 	target = target.limit_length(SWAY_MAX)
-	_sway_velocity += ((target - _sway) * SWAY_SPRING - _sway_velocity * SWAY_DAMPING) * delta
-	_sway += _sway_velocity * delta
+	var spring := lerpf(SWAY_SPRING.x, SWAY_SPRING.y, LofiUI.smoothing)
+	var damping := lerpf(SWAY_DAMPING.x, SWAY_DAMPING.y, LofiUI.smoothing)
+	var steps := maxi(1, ceili(delta * 240.0))
+	for i in steps:
+		_sway_velocity += ((target - _sway) * spring - _sway_velocity * damping) * (delta / steps)
+		_sway += _sway_velocity * (delta / steps)
 	_sway = _sway.limit_length(SWAY_MAX * 2.0)
 	position = _sway * LofiUI.motion
 	pivot_offset = size * 0.5
 	rotation = lerpf(rotation, lean * LofiUI.motion, minf(delta * 8.0, 1.0))
 	_impact_time += delta
-	scale = Vector2.ONE * (1.0 + _impact_zoom * Player.punch_spring(_impact_time))
+	scale = Vector2.ONE * (1.0 + _impact_zoom * Player.punch_spring(_impact_time, LofiUI.smoothing))
 
 
+## A knock from a movement event (impulse in px/s of spring velocity).
+## Snappy: it lands as displacement this frame. Smooth: it swells in.
 func _knock(impulse: Vector2) -> void:
-	_sway_velocity += impulse
+	_sway += impulse * KNOCK_SNAP * (1.0 - LofiUI.smoothing)
+	_sway_velocity += impulse * LofiUI.smoothing
 
 
 ## -1..1: how far a world direction points to the view's right.

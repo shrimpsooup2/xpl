@@ -20,8 +20,8 @@ const WARP := 0.3
 const KICK_SHAKE := 3.0
 const KICK_ZOOM := 0.035
 const KICK_WARP := 1.6
-## How fast a kick dies away (strength per second).
-const KICK_DECAY := 3.5
+## How fast a kick dies away (strength per second): (snappy, smooth).
+const KICK_DECAY := Vector2(6.0, 3.5)
 
 var canvas: Control
 var interactive := false:
@@ -63,7 +63,7 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	_kick = maxf(_kick - KICK_DECAY * delta, 0.0)
+	_kick = maxf(_kick - lerpf(KICK_DECAY.x, KICK_DECAY.y, LofiUI.smoothing) * delta, 0.0)
 	var k := _kick * _kick
 	var shake := Vector2(randf_range(-1.0, 1.0), randf_range(-1.0, 1.0)) * KICK_SHAKE * k
 	_material.set_shader_parameter(&"offset", shake)

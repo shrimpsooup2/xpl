@@ -72,6 +72,7 @@ func _process(_delta: float) -> void:
 	# Live, so the tuning panel's slider takes effect straight away.
 	if player and player.view_settings:
 		LofiUI.motion = player.view_settings.ui_motion
+		LofiUI.smoothing = player.view_settings.camera_smoothing
 
 
 func _unhandled_input(event: InputEvent) -> void:

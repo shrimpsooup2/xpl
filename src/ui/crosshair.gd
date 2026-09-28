@@ -74,7 +74,7 @@ func _process(delta: float) -> void:
 		_mark_time = maxf(_mark_time - delta, 0.0)
 		queue_redraw()
 	if _bump > 0.0:
-		_bump = maxf(_bump - BUMP_DECAY * delta * maxf(_bump, 0.3), 0.0)
+		_bump = maxf(_bump - BUMP_DECAY * lerpf(2.0, 1.0, LofiUI.smoothing) * delta * maxf(_bump, 0.3), 0.0)
 		queue_redraw()
 
 

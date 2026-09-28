@@ -17,6 +17,10 @@ extends Resource
 ## smashdown's stretch and slam (GDD §10.3). 0 turns all of it off. It never
 ## moves on its own.
 @export_range(0.0, 1.0, 0.05) var camera_motion: float = 1.0
+## How smoothly the camera and HUD react. 0 (default) is fast and jerky:
+## kicks snap in on the frame and drop straight off, shake jitters. 1 eases
+## everything in and lets it settle with a little overshoot.
+@export_range(0.0, 1.0, 0.05) var camera_smoothing: float = 0.0
 ## Streaks at the screen edges when you're fast (GDD §10.4).
 @export var speed_lines: bool = true
 ## How much the UI moves on its own: HUD sway, UI kicks and shakes, the idle

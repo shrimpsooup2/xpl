@@ -318,3 +318,22 @@ func test_speed_lines_follow_speed() -> void:
 	player.view_settings.speed_lines = false
 	await frames(40)
 	near(ui.speed_lines.amount(), 0.0, 0.01, "gone when switched off")
+
+
+func test_camera_smoothing_snaps_or_eases() -> void:
+	await frames(120)
+	var rest := player.camera.fov
+	player._react({"type": &"slam_bounce"})
+	await frames(1)
+	var snappy_first := player.camera.fov - rest
+	check(snappy_first > 9.0, "snappy: the kick lands on the first frame (+%.1f)" % snappy_first)
+	await frames(60)
+	near(player.camera.fov, rest, 0.05, "snappy kick gone")
+	player.view_settings.camera_smoothing = 1.0
+	player._react({"type": &"slam_bounce"})
+	await frames(1)
+	var smooth_first := player.camera.fov - rest
+	await frames(5)
+	var smooth_later := player.camera.fov - rest
+	check(smooth_first < snappy_first * 0.6, "smooth: it starts small (+%.1f)" % smooth_first)
+	check(smooth_later > smooth_first, "and builds (+%.1f)" % smooth_later)

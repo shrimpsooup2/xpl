@@ -1,7 +1,8 @@
 class_name SpeedLines
 extends CanvasLayer
-## Speed lines (GDD §10.4): streaks at the screen edges racing outward from
-## where you're heading, growing with your speed (vertical included, so a
+## Speed lines (GDD §10.4): thin streaks at the screen edges pointing out
+## from where you're heading (redrawn at random in steps, or streaming when
+## the camera is set smooth), growing with your speed (vertical included, so a
 ## smashdown's descent streams them). Dashes, smashdown descents, and slam
 ## bounces kick them up for a moment. Sits over the 3D and under the HUD.
 ## Off with ViewSettings.speed_lines.
@@ -12,8 +13,9 @@ const FULL_SPEED := 22.0
 ## Extra burst on dashes, bounces, and smashdown descents; how fast it fades.
 const BURST_DASH := 0.6
 const BURST_BOUNCE := 0.7
-const BURST_DECAY := 2.0
-const SMOOTHING := 10.0
+const BURST_DECAY := 3.0
+## How fast the lines follow your speed: (snappy, smooth), by camera smoothing.
+const SMOOTHING := Vector2(20.0, 10.0)
 
 var player: Player
 
@@ -52,7 +54,9 @@ func _process(delta: float) -> void:
 			_burst = maxf(_burst, 0.8)
 	_burst = maxf(_burst - BURST_DECAY * delta, 0.0)
 	target = clampf(target + _burst, 0.0, 1.0) if on else 0.0
-	_amount = lerpf(_amount, target, 1.0 - exp(-SMOOTHING * delta))
+	var smooth := player.view_settings.camera_smoothing if player else 0.0
+	_amount = lerpf(_amount, target, 1.0 - exp(-lerpf(SMOOTHING.x, SMOOTHING.y, smooth) * delta))
+	_material.set_shader_parameter(&"stepped", 1.0 if smooth < 0.5 else 0.0)
 	_rect.visible = _amount > 0.01
 	if not _rect.visible:
 		return

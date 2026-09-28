@@ -23,16 +23,17 @@ const THIRD_PERSON_DISTANCE := 3.4
 const THIRD_PERSON_HEIGHT := 0.5
 ## Camera punch (punch_camera()), at strength 1 and default screen shake:
 ## zoom-in (degrees of vertical FOV), roll and pitch kick, a shove back
-## (meters), then a damped spring back. Slow enough that the view is still
-## visibly punched in when an impact frame's held beats end, then swings
-## out past rest into a recoil and settles in about half a second.
+## (meters), then a damped spring back. Snappy (camera smoothing 0): held
+## through the impact frame's beats, then a fast snap back with a small
+## recoil. Smooth (1): no hold, a slow swing out past rest.
 const PUNCH_FOV := 14.0
 const PUNCH_ROLL := deg_to_rad(5.0)
 const PUNCH_PITCH := deg_to_rad(2.0)
 const PUNCH_YAW := deg_to_rad(1.0)
 const PUNCH_PUSH := 0.12
-const PUNCH_FREQUENCY := 12.0  # rad/s
-const PUNCH_DAMPING := 0.45
+const PUNCH_HOLD := 0.08
+const PUNCH_FREQUENCY := Vector2(26.0, 12.0)  # rad/s: (snappy, smooth).
+const PUNCH_DAMPING := Vector2(0.55, 0.45)
 const PUNCH_TIME := 0.7
 
 # Camera reactions (GDD §10.3), at camera motion 1. The view only ever moves
@@ -48,15 +49,21 @@ const SLIDE_RUMBLE := 0.012  # Meters per 10 m/s.
 ## down (extra horizontal degrees).
 const SMASH_HANG_FOV := 8.0
 const SMASH_FOV := 22.0
-## Kicks ride one damped spring per channel: (vertical fov degrees, pitch,
-## roll, drop in meters). KICK_GAIN turns a wanted peak into a spring
-## impulse (for this stiffness and damping the peak is ~1/26 of it).
-const KICK_STIFFNESS := 170.0
-const KICK_DAMPING := 16.0
+## Kicks ride one spring per channel: (vertical fov degrees, pitch, roll,
+## drop in meters). Snappy: a kick lands in full on the frame it happens and
+## falls straight off (critically damped, gone in ~0.2 s). Smooth: it swells
+## in from an impulse and settles with a little overshoot (~0.4 s); KICK_GAIN
+## turns a wanted peak into that impulse. (snappy, smooth) pairs.
+const KICK_STIFFNESS := Vector2(576.0, 170.0)
+const KICK_DAMPING := Vector2(48.0, 16.0)
 const KICK_GAIN := 26.0
-## Shake at full trauma and default screen shake.
+## A smashdown impact holds its kick this long before letting go (snappy).
+const IMPACT_HOLD := 0.05
+## Shake at full trauma and default screen shake. Snappy shake is random
+## jitter stepped at SHAKE_RATE; smooth shake is a sine wobble.
 const SHAKE_POSITION := 0.05
 const SHAKE_ROTATION := deg_to_rad(1.2)
+const SHAKE_RATE := 30.0
 
 @export var movement_params: MovementParams
 @export var view_settings: ViewSettings
@@ -90,6 +97,9 @@ var _punch_rot := Vector3.ZERO
 var _punch_push := 0.0
 var _kick := Vector4.ZERO  # fov, pitch, roll, drop
 var _kick_velocity := Vector4.ZERO
+var _kick_hold := 0.0
+var _jitter := Vector3.ZERO
+var _jitter_timer := 0.0
 var _slide_look := 0.0  # 0..1 blend into the slide camera.
 var _slide_side := 1.0
 var _smash_look := 0.0  # -1 hang .. 1 descent.
@@ -259,8 +269,9 @@ func _process(delta: float) -> void:
 	model.follow(pos, yaw)
 	model.animate_movement(state, velocity)
 
+	var smooth := v.camera_smoothing
 	var target_eye := p.crouch_eye_height if state.crouched else p.stand_eye_height
-	_eye_height = move_toward(_eye_height, target_eye, EYE_HEIGHT_SPEED * delta)
+	_eye_height = move_toward(_eye_height, target_eye, lerpf(10.0, EYE_HEIGHT_SPEED, smooth) * delta)
 	_dip = move_toward(_dip, 0.0, DIP_RECOVER * delta)
 	var motion := v.camera_motion
 	var local := Basis(Vector3.UP, yaw).inverse() * velocity
@@ -271,12 +282,13 @@ func _process(delta: float) -> void:
 	var sliding := state.mode == MovementState.Mode.SLIDE
 	if sliding and _slide_look == 0.0:
 		_slide_side = -signf(local.x) if absf(local.x) > 0.5 else 1.0
-	_slide_look = move_toward(_slide_look, 1.0 if sliding else 0.0, delta * (7.0 if sliding else 3.0))
+	var slide_rate := lerpf(30.0, 7.0, smooth) if sliding else lerpf(14.0, 3.0, smooth)
+	_slide_look = move_toward(_slide_look, 1.0 if sliding else 0.0, delta * slide_rate)
 	target_roll += SLIDE_TILT * _slide_side * _slide_look * motion
 	if state.mode == MovementState.Mode.WALLRIDE:
 		var right := Basis(Vector3.UP, yaw) * Vector3.RIGHT
 		target_roll = -signf(state.wallride_normal.dot(right)) * deg_to_rad(v.wallride_tilt)
-	_roll = lerpf(_roll, target_roll, 1.0 - exp(-10.0 * delta))
+	_roll = lerpf(_roll, target_roll, 1.0 - exp(-lerpf(22.0, 10.0, smooth) * delta))
 
 	# Smashdown hang and descent.
 	var smash_target := 0.0
@@ -286,32 +298,39 @@ func _process(delta: float) -> void:
 		MovementState.Mode.SMASH:
 			smash_target = 1.0
 			_shake = maxf(_shake, 0.4)  # The descent rattles.
-	_smash_look = move_toward(_smash_look, smash_target, delta * 10.0)
+	_smash_look = move_toward(_smash_look, smash_target, delta * lerpf(30.0, 10.0, smooth))
 	_update_smash_marker()
 
-	_step_kicks(delta)
+	_step_kicks(delta, smooth)
 
 	# Shake: trauma squared, in position and rotation. Slides rumble.
-	_shake = maxf(_shake - delta * 2.2, 0.0)
+	_shake = maxf(_shake - delta * lerpf(4.0, 2.2, smooth), 0.0)
 	_shake_time += delta
+	_jitter_timer -= delta
+	if _jitter_timer <= 0.0:
+		_jitter_timer = 1.0 / SHAKE_RATE
+		_jitter = Vector3(randf_range(-1, 1), randf_range(-1, 1), randf_range(-1, 1))
 	var t := _shake_time
-	var noise := Vector3(sin(t * 71.0) + 0.6 * sin(t * 43.0 + 0.7), sin(t * 59.0 + 1.3) + 0.6 * sin(t * 37.0), sin(t * 53.0 + 2.1)) / 1.6
+	var wobble := Vector3(sin(t * 71.0) + 0.6 * sin(t * 43.0 + 0.7), sin(t * 59.0 + 1.3) + 0.6 * sin(t * 37.0), sin(t * 53.0 + 2.1)) / 1.6
+	var noise := _jitter.lerp(wobble, smooth)
 	var trauma := _shake * _shake * clampf(v.screen_shake / 0.3, 0.0, 3.0)
 	var shake_offset := Vector3(noise.x, noise.y, 0.0) * SHAKE_POSITION * trauma
 	var shake_rot := Vector3(noise.y, noise.x, noise.z) * SHAKE_ROTATION * trauma
-	shake_offset.y += sin(t * 97.0) * SLIDE_RUMBLE * hspeed / 10.0 * _slide_look * motion
+	shake_offset.y += noise.z * SLIDE_RUMBLE * hspeed / 10.0 * _slide_look * motion
 
-	# FOV: speed, slides, and the smashdown stretch, plus kicks.
+	# FOV: speed eases (speed itself changes gradually); slides and the
+	# smashdown come in as fast as their looks do; kicks on top.
 	var speed_t := clampf(inverse_lerp(p.run_speed, p.soft_speed_cap, hspeed), 0.0, 1.0)
-	var hfov := v.fov_horizontal + v.speed_fov_kick * speed_t
-	hfov += SLIDE_FOV * _slide_look * clampf(inverse_lerp(6.0, 14.0, hspeed), 0.0, 1.0) * motion
-	hfov += _smash_look * (SMASH_FOV if _smash_look > 0.0 else SMASH_HANG_FOV) * motion
 	if _fov <= 0.0:
 		_fov = camera.fov
-	_fov = lerpf(_fov, vfov_from_hfov_16_9(hfov), 1.0 - exp(-10.0 * delta))
+	var base_h := v.fov_horizontal + v.speed_fov_kick * speed_t
+	_fov = lerpf(_fov, vfov_from_hfov_16_9(base_h), 1.0 - exp(-6.0 * delta))
+	var extra_h := SLIDE_FOV * _slide_look * clampf(inverse_lerp(6.0, 14.0, hspeed), 0.0, 1.0) * motion
+	extra_h += _smash_look * (SMASH_FOV if _smash_look > 0.0 else SMASH_HANG_FOV) * motion
+	var extra := vfov_from_hfov_16_9(base_h + extra_h) - vfov_from_hfov_16_9(base_h)
 	_punch_time += delta
-	var punch := punch_spring(_punch_time)
-	camera.fov = _fov + _kick.x + _punch_fov * punch
+	var punch := punch_spring(_punch_time, smooth)
+	camera.fov = _fov + extra + _kick.x + _punch_fov * punch
 
 	# These only move the view; aim still follows yaw and pitch.
 	var basis := Basis.from_euler(Vector3(pitch + _kick.y, yaw, _roll + _kick.z) + _punch_rot * punch + shake_rot)
@@ -340,14 +359,20 @@ func punch_camera(strength: float, side := 0.0) -> void:
 	_shake = maxf(_shake, 0.5 + 0.5 * s)
 
 
-## Damped spring released from full displacement: 1 at the hit, swinging
-## through 0 into a recoil, settled by PUNCH_TIME. The HUD rides the same
-## curve so it moves with the camera.
-static func punch_spring(t: float) -> float:
+## The punch's curve: 1 at the hit (held for PUNCH_HOLD when snappy), then
+## a damped spring swinging through 0 into a recoil, settled by PUNCH_TIME.
+## The HUD rides the same curve so it moves with the camera.
+static func punch_spring(t: float, smoothing := 0.0) -> float:
+	var hold := PUNCH_HOLD * (1.0 - smoothing)
+	if t < hold:
+		return 1.0
+	t -= hold
 	if t >= PUNCH_TIME:
 		return 0.0
-	var ringing := PUNCH_FREQUENCY * sqrt(1.0 - PUNCH_DAMPING * PUNCH_DAMPING)
-	return exp(-PUNCH_DAMPING * PUNCH_FREQUENCY * t) * cos(ringing * t)
+	var frequency := lerpf(PUNCH_FREQUENCY.x, PUNCH_FREQUENCY.y, smoothing)
+	var damping := lerpf(PUNCH_DAMPING.x, PUNCH_DAMPING.y, smoothing)
+	var ringing := frequency * sqrt(1.0 - damping * damping)
+	return exp(-damping * frequency * t) * cos(ringing * t)
 
 
 func _react(e: Dictionary) -> void:
@@ -377,6 +402,7 @@ func _react(e: Dictionary) -> void:
 			# The heavy one: the view slams down, pitches in, twists, snaps in.
 			var s := clampf(0.5 + e.drop / 10.0, 0.5, 1.4)
 			_kick_camera(-10.0 * s, -6.0 * s, (3.5 if randf() < 0.5 else -3.5) * s, 0.38 * s)
+			_kick_hold = IMPACT_HOLD * (1.0 - view_settings.camera_smoothing)
 			_shake = clampf(0.55 + e.drop * 0.05, 0.0, 1.0)
 			if view_settings.landing_dip:
 				_dip = DIP_MAX
@@ -388,19 +414,27 @@ func _react(e: Dictionary) -> void:
 			SmashFx.launch(get_parent(), global_position)
 
 
-## Adds a kick to the camera spring: wanted peaks in vertical fov degrees,
-## pitch and roll degrees, and drop meters (positive drops the view).
+## Adds a kick to the camera: wanted peaks in vertical fov degrees, pitch
+## and roll degrees, and drop meters (positive drops the view). Snappy kicks
+## land as displacement right away; smooth ones as an impulse that swells.
 ## Scales with camera motion.
 func _kick_camera(fov: float, pitch_deg: float, roll_deg: float, drop: float) -> void:
-	var peak := Vector4(fov, deg_to_rad(pitch_deg), deg_to_rad(roll_deg), drop)
-	_kick_velocity += peak * KICK_GAIN * view_settings.camera_motion
+	var peak := Vector4(fov, deg_to_rad(pitch_deg), deg_to_rad(roll_deg), drop) * view_settings.camera_motion
+	var smooth := view_settings.camera_smoothing
+	_kick += peak * (1.0 - smooth)
+	_kick_velocity += peak * smooth * KICK_GAIN
 
 
-func _step_kicks(delta: float) -> void:
+func _step_kicks(delta: float, smooth: float) -> void:
+	if _kick_hold > 0.0:
+		_kick_hold -= delta
+		return
+	var stiffness := lerpf(KICK_STIFFNESS.x, KICK_STIFFNESS.y, smooth)
+	var damping := lerpf(KICK_DAMPING.x, KICK_DAMPING.y, smooth)
 	var steps := maxi(1, ceili(delta * 240.0))
 	var h := delta / steps
 	for i in steps:
-		_kick_velocity += (-_kick * KICK_STIFFNESS - _kick_velocity * KICK_DAMPING) * h
+		_kick_velocity += (-_kick * stiffness - _kick_velocity * damping) * h
 		_kick += _kick_velocity * h
 
 
