@@ -146,8 +146,8 @@ func preview_next() -> void:
 			get_tree().create_timer(2.5).timeout.connect(hide_scoreboard)
 		3:
 			match_end(true, 7, 4, [
-				["waiting room", "you", "hotkey"], ["food court eclipse", "them", "overdraw"],
-				["aquarium server", "you", "♥ ping"], ["birthday.exe", "you", "fists"]])
+				["waiting room", "you", "marshal .357"], ["food court eclipse", "them", "rl-5"],
+				["aquarium server", "you", "♥ heron .308"], ["birthday.exe", "you", "fists"]])
 
 
 # --- Helpers ------------------------------------------------------------------

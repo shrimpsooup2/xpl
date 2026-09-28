@@ -1,19 +1,20 @@
 class_name Weapons
 extends RefCounted
 ## The weapon roster (GDD §7.4): six guns modelled on real kinds of gun,
-## named in the game's early-2000s computing theme, plus fists. Each gun is
-## built from chunky blocks in beige plastic, gunmetal and chrome with one
-## candy-coloured part, like the translucent computers of the time.
+## with made-up but realistic model names, plus fists. Each gun is built
+## from chunky blocks in beige plastic, gunmetal and chrome with one
+## candy-coloured part, like the translucent computers of the time. Ids
+## name the kind of gun; display names are the models.
 
 const FISTS := &"fists"
-const POINTER := &"pointer"
-const HOTKEY := &"hotkey"
-const POPUP := &"popup"
-const KEYSTROKE := &"keystroke"
-const SCATTER_PLOT := &"scatter_plot"
-const PING := &"ping"
+const PISTOL := &"pistol"
+const REVOLVER := &"revolver"
+const SMG := &"smg"
+const RIFLE := &"rifle"
+const SHOTGUN := &"shotgun"
+const SNIPER := &"sniper"
 ## The guns, in pad order.
-const GUNS := [POINTER, HOTKEY, POPUP, KEYSTROKE, SCATTER_PLOT, PING]
+const GUNS := [PISTOL, REVOLVER, SMG, RIFLE, SHOTGUN, SNIPER]
 
 const COLORS := {
 	&"dark": Color(0.17, 0.17, 0.2),
@@ -28,7 +29,7 @@ static var _defs := {}
 
 static func get_def(id: StringName) -> WeaponDef:
 	if _defs.is_empty():
-		for def in [_fists(), _pointer(), _hotkey(), _popup(), _keystroke(), _scatter_plot(), _ping()]:
+		for def in [_fists(), _pistol(), _revolver(), _smg(), _rifle(), _shotgun(), _sniper()]:
 			_defs[def.id] = def
 	return _defs.get(id)
 
@@ -70,10 +71,10 @@ static func _fists() -> WeaponDef:
 # --- Precision --------------------------------------------------------------
 
 ## A polymer-framed 9 mm service pistol: blocky slide, beige frame.
-static func _pointer() -> WeaponDef:
+static func _pistol() -> WeaponDef:
 	var d := WeaponDef.new()
-	d.id = POINTER
-	d.display_name = "pointer"
+	d.id = PISTOL
+	d.display_name = "sp-12"
 	d.based_on = "semi-automatic 9 mm pistol"
 	d.damage = 20.0
 	d.fire_interval = 0.3
@@ -106,10 +107,10 @@ static func _pointer() -> WeaponDef:
 
 ## A .357 six-shooter: long chrome barrel, tangerine cylinder, a hammer you
 ## can fan.
-static func _hotkey() -> WeaponDef:
+static func _revolver() -> WeaponDef:
 	var d := WeaponDef.new()
-	d.id = HOTKEY
-	d.display_name = "hotkey"
+	d.id = REVOLVER
+	d.display_name = "marshal .357"
 	d.based_on = ".357 revolver"
 	d.damage = 45.0
 	d.fire_interval = 0.5
@@ -141,10 +142,10 @@ static func _hotkey() -> WeaponDef:
 
 
 ## A bolt-action rifle with a big scope.
-static func _ping() -> WeaponDef:
+static func _sniper() -> WeaponDef:
 	var d := WeaponDef.new()
-	d.id = PING
-	d.display_name = "ping"
+	d.id = SNIPER
+	d.display_name = "heron .308"
 	d.based_on = "bolt-action sniper rifle"
 	d.tier = "heavy"
 	d.damage = 85.0
@@ -192,10 +193,10 @@ static func _ping() -> WeaponDef:
 # --- Automatic --------------------------------------------------------------
 
 ## A compact 9 mm submachine gun with a long grape magazine.
-static func _popup() -> WeaponDef:
+static func _smg() -> WeaponDef:
 	var d := WeaponDef.new()
-	d.id = POPUP
-	d.display_name = "popup"
+	d.id = SMG
+	d.display_name = "sx-50"
 	d.based_on = "9 mm submachine gun"
 	d.damage = 11.0
 	d.fire_interval = 0.07
@@ -232,10 +233,10 @@ static func _popup() -> WeaponDef:
 
 
 ## A 5.56 assault rifle: carry handle, lime banana magazine.
-static func _keystroke() -> WeaponDef:
+static func _rifle() -> WeaponDef:
 	var d := WeaponDef.new()
-	d.id = KEYSTROKE
-	d.display_name = "keystroke"
+	d.id = RIFLE
+	d.display_name = "tr-30"
 	d.based_on = "assault rifle"
 	d.damage = 16.0
 	d.fire_interval = 0.11
@@ -276,10 +277,10 @@ static func _keystroke() -> WeaponDef:
 # --- Close range ------------------------------------------------------------
 
 ## A 12-gauge pump-action: strawberry pump, tube magazine under the barrel.
-static func _scatter_plot() -> WeaponDef:
+static func _shotgun() -> WeaponDef:
 	var d := WeaponDef.new()
-	d.id = SCATTER_PLOT
-	d.display_name = "scatter plot"
+	d.id = SHOTGUN
+	d.display_name = "warden 12"
 	d.based_on = "pump-action shotgun"
 	d.damage = 10.0
 	d.pellets = 9

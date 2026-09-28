@@ -7,7 +7,7 @@ extends Node3D
 const HOVER := 0.95
 const RADIUS := 0.7
 
-@export var weapon: StringName = Weapons.POINTER
+@export var weapon: StringName = Weapons.PISTOL
 @export var respawn_time := 20.0
 
 var pickup: WeaponPickup

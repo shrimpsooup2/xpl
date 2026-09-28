@@ -1,15 +1,14 @@
 class_name CombatFx
 extends RefCounted
 ## Shooting effects: muzzle flashes, spent casings, sparks and holes where
-## shots hit the world, white splashes where they hit a body, and damage
-## numbers. All additive or flat, short-lived, and cheap.
+## shots hit the world, and white splashes where they hit a body. All
+## additive or flat, short-lived, and cheap. (Damage numbers: DamageNumber.)
 
 const TRACER_COLOR := Color(1.0, 0.92, 0.7)
 const SPARK_COLOR := Color(1.0, 0.8, 0.45)
 const HOLE_COLOR := Color(0.06, 0.05, 0.08)
 const HOLE_LIFE := 10.0
 const MAX_HOLES := 80
-const NUMBER_COLORS := {&"body": Color.WHITE, &"head": Color(1.0, 0.9, 0.3), &"heart": Color(1.0, 0.35, 0.55)}
 const BRASS := Color(0.86, 0.66, 0.26)
 
 static var _flash_materials := {}
@@ -126,36 +125,6 @@ static func body_hit(world: Node, point: Vector3, direction: Vector3, heart := f
 		var dir := (direction + Vector3(randf_range(-1, 1), randf_range(-0.4, 1.0), randf_range(-1, 1)) * 0.7).normalized()
 		_blob(world, point, dir * randf_range(1.5, 4.0), randf_range(0.02, 0.04) * size, color)
 	_puff(world, point, -direction, 0.2 * size, Color(color, 0.9))
-
-
-## A number that pops out of the hit and floats up: white, yellow for the
-## head, pink for the heart.
-static func damage_number(world: Node, point: Vector3, amount: float, zone: StringName) -> void:
-	var label := Label3D.new()
-	label.text = "♥" if zone == &"heart" else str(roundi(amount))
-	label.font = preload("res://assets/fonts/LiberationSans-Regular.ttf")
-	label.font_size = 48
-	label.outline_size = 12
-	label.modulate = NUMBER_COLORS.get(zone, Color.WHITE)
-	label.outline_modulate = Color(0.1, 0.07, 0.15)
-	label.billboard = BaseMaterial3D.BILLBOARD_ENABLED
-	label.no_depth_test = true
-	label.fixed_size = true
-	label.pixel_size = 0.0009
-	label.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	world.add_child(label)
-	var drift := Vector3(randf_range(-0.25, 0.25), 0.0, randf_range(-0.25, 0.25))
-	label.global_position = point + Vector3.UP * 0.1
-	var big := 1.6 if zone != &"body" else 1.25
-	label.scale = Vector3.ONE * 0.3
-	var t := label.create_tween()
-	t.tween_property(label, "scale", Vector3.ONE * big, 0.06).set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	t.tween_property(label, "scale", Vector3.ONE, 0.1)
-	t.parallel().tween_property(label, "global_position", label.global_position + Vector3.UP * 0.5 + drift, 0.7) \
-			.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	t.tween_property(label, "modulate:a", 0.0, 0.15)
-	t.parallel().tween_property(label, "outline_modulate:a", 0.0, 0.15)
-	t.tween_callback(label.queue_free)
 
 
 ## Clears the lingering holes (tests, respawns).

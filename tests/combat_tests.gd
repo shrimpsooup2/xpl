@@ -143,7 +143,7 @@ func test_shots_find_the_body_part_they_hit() -> void:
 # --- Firing -----------------------------------------------------------------
 
 func test_heartshot_kills_with_a_precision_gun() -> void:
-	player.weapons.give(Weapons.get_def(Weapons.POINTER))
+	player.weapons.give(Weapons.get_def(Weapons.PISTOL))
 	await run(cmd(), 12)  # Ready time.
 	var confirmed: Array[Dictionary] = []
 	player.weapons.hit_confirmed.connect(func(r: Dictionary) -> void: confirmed.append(r))
@@ -156,17 +156,17 @@ func test_heartshot_kills_with_a_precision_gun() -> void:
 
 
 func test_automatic_guns_cannot_heartshot() -> void:
-	player.weapons.give(Weapons.get_def(Weapons.POPUP))
+	player.weapons.give(Weapons.get_def(Weapons.SMG))
 	await run(cmd(), 12)
 	aim_at(heart_point())
 	await fire_once()
 	await settle_shots()
 	check(not dummy.dead, "an SMG round through the heart doesn't kill")
-	near(dummy.health, TargetDummy.MAX_HEALTH - Weapons.get_def(Weapons.POPUP).damage, 0.01, "it did body damage")
+	near(dummy.health, TargetDummy.MAX_HEALTH - Weapons.get_def(Weapons.SMG).damage, 0.01, "it did body damage")
 
 
 func test_headshots_do_more() -> void:
-	var d := Weapons.get_def(Weapons.KEYSTROKE)
+	var d := Weapons.get_def(Weapons.RIFLE)
 	player.weapons.give(d)
 	await run(cmd(), 12)
 	aim_at(bone_point("DEF-head", Vector3(0, 0.12, 0)))
@@ -176,7 +176,7 @@ func test_headshots_do_more() -> void:
 
 
 func test_semi_auto_fires_once_per_click_and_auto_while_held() -> void:
-	player.weapons.give(Weapons.get_def(Weapons.POINTER))
+	player.weapons.give(Weapons.get_def(Weapons.PISTOL))
 	await run(cmd(), 12)
 	aim_at(Vector3(5, 1, -20))  # Away from the dummy.
 	var held := cmd()
@@ -188,20 +188,20 @@ func test_semi_auto_fires_once_per_click_and_auto_while_held() -> void:
 		await run(held, 1)
 		held.fire_held = true
 	check(player.weapons.ammo == 11, "holding a pistol's trigger fires once (%d left)" % player.weapons.ammo)
-	var popup := Weapons.get_def(Weapons.POPUP)
-	player.weapons.give(popup)
+	var smg := Weapons.get_def(Weapons.SMG)
+	player.weapons.give(smg)
 	await run(cmd(), 12)
 	held.fire_pressed = true
 	held.fire_held = true
 	for i in 60:
 		await run(held, 1)
 		held.fire_held = true
-	var fired := popup.ammo - player.weapons.ammo
-	near(fired, 1.0 / popup.fire_interval, 2.0, "an SMG held for a second fires at its rate (%d)" % fired)
+	var fired := smg.ammo - player.weapons.ammo
+	near(fired, 1.0 / smg.fire_interval, 2.0, "an SMG held for a second fires at its rate (%d)" % fired)
 
 
 func test_shotgun_throws_all_its_pellets() -> void:
-	var d := Weapons.get_def(Weapons.SCATTER_PLOT)
+	var d := Weapons.get_def(Weapons.SHOTGUN)
 	player.weapons.give(d)
 	await run(cmd(), 12)
 	aim_at(Vector3(0, 1.2, -8))
@@ -213,7 +213,7 @@ func test_shotgun_throws_all_its_pellets() -> void:
 
 
 func test_empty_gun_switches_to_fists() -> void:
-	player.weapons.give(Weapons.get_def(Weapons.HOTKEY), 1)
+	player.weapons.give(Weapons.get_def(Weapons.REVOLVER), 1)
 	await run(cmd(), 12)
 	aim_at(Vector3(5, 1, -20))
 	await fire_once()
@@ -224,7 +224,7 @@ func test_empty_gun_switches_to_fists() -> void:
 
 
 func test_fanning_empties_the_revolver_quickly() -> void:
-	player.weapons.give(Weapons.get_def(Weapons.HOTKEY))
+	player.weapons.give(Weapons.get_def(Weapons.REVOLVER))
 	await run(cmd(), 12)
 	aim_at(Vector3(5, 1, -20))
 	var c := cmd()
@@ -244,28 +244,28 @@ func test_pickups_auto_top_up_and_swap() -> void:
 		p.rest_on_pad(at, null)
 		p.pad = null
 		return p
-	drop.call(Weapons.POINTER, player.global_position + Vector3(0, 0.9, 0))
+	drop.call(Weapons.PISTOL, player.global_position + Vector3(0, 0.9, 0))
 	await run(cmd(), 2)
-	check(player.weapons.primary == Weapons.get_def(Weapons.POINTER), "walking over a gun empty-handed takes it")
+	check(player.weapons.primary == Weapons.get_def(Weapons.PISTOL), "walking over a gun empty-handed takes it")
 	player.weapons.primary_ammo = 4
-	drop.call(Weapons.POINTER, player.global_position + Vector3(0, 0.9, 0.5))
+	drop.call(Weapons.PISTOL, player.global_position + Vector3(0, 0.9, 0.5))
 	await run(cmd(), 2)
 	check(player.weapons.primary_ammo == 12, "the same gun tops it up to full (%d)" % player.weapons.primary_ammo)
-	drop.call(Weapons.PING, player.global_position + Vector3(0.5, 0.9, 0))
+	drop.call(Weapons.SNIPER, player.global_position + Vector3(0.5, 0.9, 0))
 	await run(cmd(), 2)
-	check(player.weapons.primary == Weapons.get_def(Weapons.POINTER), "a different gun needs E")
+	check(player.weapons.primary == Weapons.get_def(Weapons.PISTOL), "a different gun needs E")
 	check(player.weapons.swap_candidate != null, "and offers the swap")
 	var c := cmd()
 	c.interact_pressed = true
 	await run(c, 1)
-	check(player.weapons.primary == Weapons.get_def(Weapons.PING), "E swaps")
+	check(player.weapons.primary == Weapons.get_def(Weapons.SNIPER), "E swaps")
 	var dropped := get_tree().get_nodes_in_group(WeaponPickup.GROUP).filter(
-			func(n: Node) -> bool: return (n as WeaponPickup).def == Weapons.get_def(Weapons.POINTER) and (n as WeaponPickup).ammo == 12)
+			func(n: Node) -> bool: return (n as WeaponPickup).def == Weapons.get_def(Weapons.PISTOL) and (n as WeaponPickup).ammo == 12)
 	check(dropped.size() == 1, "the old gun drops with its rounds")
 
 
 func test_thrown_gun_hits_for_25() -> void:
-	player.weapons.give(Weapons.get_def(Weapons.PING))
+	player.weapons.give(Weapons.get_def(Weapons.SNIPER))
 	await run(cmd(), 12)
 	aim_at(Vector3(0, 1.5, -8))
 	var c := cmd()
@@ -339,3 +339,26 @@ func test_ammo_column_grows_with_capacity() -> void:
 		check(heights[i] > heights[i - 1] or caps[i] == caps[i - 1], "more rounds, taller column (%d: %.0f px)" % [caps[i], heights[i]])
 	check(AmmoMeter.is_segmented(6) and AmmoMeter.is_segmented(12), "small guns are cut into rounds")
 	check(not AmmoMeter.is_segmented(30), "big ones aren't")
+
+
+func test_hits_add_up_in_one_number() -> void:
+	var hit := func(amount: float, zone: StringName) -> void:
+		dummy.take_hit({"damage": amount, "zone": zone, "part": &"chest", "point": bone_point("DEF-spine.003"),
+				"normal": Vector3.BACK, "direction": Vector3.FORWARD, "heartshot": false})
+	hit.call(11.0, &"body")
+	var first := DamageNumber.over(dummy)
+	check(first != null and first.text == "11", "the first hit shows its damage")
+	await frames(6)
+	hit.call(11.0, &"body")
+	hit.call(16.5, &"head")
+	check(DamageNumber.over(dummy) == first, "more hits add to the same number")
+	near(first.total, 38.5, 0.01, "the total")
+	check(first.zone == &"head", "a head hit colours it")
+	var small := first.scale.x
+	await frames(20)
+	check(first.text == "39", "it rolls up to the total (shows %s)" % first.text)
+	check(first.scale.x > 1.0 and first.scale.x < small, "bigger for more damage, settled after the pop")
+	await frames(int((DamageNumber.HOLD + DamageNumber.FADE) * 60) + 5)
+	check(DamageNumber.over(dummy) == null, "gone after a pause")
+	hit.call(20.0, &"body")
+	check(DamageNumber.over(dummy) != null and DamageNumber.over(dummy).total == 20.0, "the next hit starts a new one")

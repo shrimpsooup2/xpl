@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 1.2 (draft) |
+| **Version** | 1.3 (draft) |
 | **Date** | 2026-09-28 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -24,6 +24,7 @@
 | 0.9 | Experimental impact frames on kills and hard smashdowns, with a camera punch the HUD rides too, off by default (§10.4). Pop-ups land letter by letter and shatter (§13.5). |
 | 1.0 | Movement feel pass: constant slide friction (slides carry, hills speed you up), heavier smashdown (0.1 s hang, shockwave ring, landing tell), stronger slam bounce (9 + 0.75 × drop, max 22, plus a 3 m/s kick). A camera that reacts to every movement (§10.3), speed lines (§10.4). |
 | 1.1 | Camera and HUD reactions are fast and jerky by default (snap in, drop off, stepped jitter, flickering speed lines); new *camera smoothing* setting for the smooth feel. |
+| 1.3 | Weapons renamed from computing jargon to realistic-sounding model names (SP-12, Marshal .357, SX-50, TR-30, Warden 12, Heron .308…). Damage numbers merge: one number per target that adds up and grows (§10.4). |
 | 1.2 | First six guns built, each modelled on a real kind of gun (§7.4), with first-person arms, third-person holds and animated actions (§11.5). Hit zones ride the animated body; dummies react to the part you hit (§5.2, §9.3). Ammo shown as a column sized by capacity and a ring around the crosshair (§13.3). Magazine sizes moved toward the real guns'. |
 
 ---
@@ -252,7 +253,7 @@ The smashdown is a vertical move that is also an attack and a chain starter. It 
 
 1. **Deterministic and pure.** Movement is a pure function of `(state, input, dt)`. That is needed for client prediction ([§15](#15-technical-design)).
 2. **Fixed timestep.** Movement simulates at the fixed network tick. The camera and rendering interpolate between ticks.
-3. **Momentum is never silently removed.** Only friction, drag above the soft cap, collisions, and explicit weapon effects (knockback, the Buffering slow field) reduce speed.
+3. **Momentum is never silently removed.** Only friction, drag above the soft cap, collisions, and explicit weapon effects (knockback, the Stasis slow field) reduce speed.
 4. **Collision slides, not stops.** Glancing a wall or corner deflects velocity along the surface. Small ledges are stepped over or mantled.
 5. **Every chain is legal.** Any verb can follow any other verb. There is no "recovery" state.
 6. **Skill ceiling, skill floor.** Buffers and coyote windows make basic chaining easy. Air strafing, slope slides, and slam bounces give experts more.
@@ -411,7 +412,7 @@ Everyone spawns with fists and nothing else. The opening seconds of every round 
 
 ### 7.4 Primary weapons (MVP roster)
 
-Names are placeholders, but they follow one theme: **early-2000s computing jargon.** ♥ = can heartshot.
+Names are made up but realistic: model names in the style of real guns (a letter code with a round count, or a name with a calibre), never real products. ♥ = can heartshot.
 
 Every gun is modelled on a real kind of gun, abstracted: chunky blocks in beige plastic, gunmetal and chrome, with one part in a candy colour like the translucent computers of the time. Its mechanism works the way the real one does (a pistol's slide, a revolver's cylinder and hammer, a pump, a bolt). Magazine sizes stay close to the real guns', so the ammo column (§13.3) tells you what you're holding.
 
@@ -419,69 +420,69 @@ Every gun is modelled on a real kind of gun, abstracted: chunky blocks in beige 
 
 | Weapon | Modelled on | Rounds | Accent | Its animation |
 |---|---|---|---|---|
-| Pointer | 9 mm semi-automatic pistol | 12 | Bondi blue slide | Slide snaps back; one-handed |
-| Hotkey | .357 revolver | 6 | Tangerine cylinder | Hammer falls, cylinder turns a sixth; alt fans the hammer with the left hand |
-| Popup | 9 mm submachine gun | 50 | Grape magazine | Bolt carrier chatters; two hands |
-| Keystroke | Assault rifle | 30 | Lime magazine | Bolt carrier; carry handle, banana mag |
-| Scatter Plot | Pump-action shotgun | 8 | Strawberry pump | The left hand racks the pump; red shells fly |
-| Ping | Bolt-action sniper rifle | 5 | Blueberry scope | The right hand leaves the grip to work the bolt; alt zooms 3× into a scope |
+| SP-12 | 9 mm semi-automatic pistol | 12 | Bondi blue slide | Slide snaps back; one-handed |
+| Marshal .357 | .357 revolver | 6 | Tangerine cylinder | Hammer falls, cylinder turns a sixth; alt fans the hammer with the left hand |
+| SX-50 | 9 mm submachine gun | 50 | Grape magazine | Bolt carrier chatters; two hands |
+| TR-30 | Assault rifle | 30 | Lime magazine | Bolt carrier; carry handle, banana mag |
+| Warden 12 | Pump-action shotgun | 8 | Strawberry pump | The left hand racks the pump; red shells fly |
+| Heron .308 | Bolt-action sniper rifle | 5 | Blueberry scope | The right hand leaves the grip to work the bolt; alt zooms 3× into a scope |
 
 **Precision**
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
-| Pointer | Standard | 20 | 0.3 s | 12 | Projectile 150 m/s | ♥ | 9 mm pistol. Common, found near spawns. |
-| Hotkey | Standard | 45 | 0.5 s | 6 | Projectile 250 m/s | ♥ | .357 revolver. Alt: fan the hammer (remaining rounds at 0.1 s, +3° spread, no ♥) |
-| Magnifier | Standard | 40 | 0.35 s | 10 | Hitscan | ♥ | Alt: 1.5× zoom |
-| Stylus | Standard | 70 | 0.9 s | 5 | Bolt 90 m/s, with drop | ♥ | Crossbow. Bolts stick in walls. |
-| Ping | Heavy | 85 (head kills) | 1.2 s | 5 | Hitscan | ♥ | Bolt-action sniper. Alt: 3× zoom. |
+| SP-12 | Standard | 20 | 0.3 s | 12 | Projectile 150 m/s | ♥ | 9 mm pistol. Common, found near spawns. |
+| Marshal .357 | Standard | 45 | 0.5 s | 6 | Projectile 250 m/s | ♥ | .357 revolver. Alt: fan the hammer (remaining rounds at 0.1 s, +3° spread, no ♥) |
+| Sentry DMR | Standard | 40 | 0.35 s | 10 | Hitscan | ♥ | Alt: 1.5× zoom |
+| Talon | Standard | 70 | 0.9 s | 5 | Bolt 90 m/s, with drop | ♥ | Crossbow. Bolts stick in walls. |
+| Heron .308 | Heavy | 85 (head kills) | 1.2 s | 5 | Hitscan | ♥ | Bolt-action sniper. Alt: 3× zoom. |
 
 **Automatic**
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
-| Popup | Standard | 11 | 0.07 s | 50 | Projectile 180 m/s | — | SMG. Spread blooms 1° → 4°. |
-| Keystroke | Standard | 16 | 0.11 s | 30 | Projectile 200 m/s | — | Assault rifle. 0.5° spread, blooming to 1.5°. |
-| Spam | Standard | 14 | 0.09 s | 50 | Nail 90 m/s, slight drop | — | Nailgun. Nails bounce once. |
-| Scroll Wheel | Heavy | 9 | 0.04 s after 0.5 s spin-up | 200 | Projectile 160 m/s | — | Minigun. 2.5° spread. Alt: keep spun up without firing. |
+| SX-50 | Standard | 11 | 0.07 s | 50 | Projectile 180 m/s | — | SMG. Spread blooms 1° → 4°. |
+| TR-30 | Standard | 16 | 0.11 s | 30 | Projectile 200 m/s | — | Assault rifle. 0.5° spread, blooming to 1.5°. |
+| NX-50 | Standard | 14 | 0.09 s | 50 | Nail 90 m/s, slight drop | — | Nailgun. Nails bounce once. |
+| GX-6 | Heavy | 9 | 0.04 s after 0.5 s spin-up | 200 | Projectile 160 m/s | — | Minigun. 2.5° spread. Alt: keep spun up without firing. |
 
 **Close range**
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
-| Scatter Plot | Standard | 10 × 9 pellets | 0.8 s | 8 | Pellets, 5° spread | — | Pump shotgun. Pellets land in a readable pattern: one in the middle, a tight inner ring, an outer ring. |
-| Double Click | Heavy | 12 × 9 pellets per barrel | 0.25 s | 10 | Pellets, 6° spread | — | Alt: both barrels at once, with 5 m/s self-knockback (shotgun jump) |
-| Firewall | Heavy | 120 DPS + 15 burn over 3 s | Continuous | 5 s of fuel | 8 m cone | — | Flamethrower |
+| Warden 12 | Standard | 10 × 9 pellets | 0.8 s | 8 | Pellets, 5° spread | — | Pump shotgun. Pellets land in a readable pattern: one in the middle, a tight inner ring, an outer ring. |
+| Coachman | Heavy | 12 × 9 pellets per barrel | 0.25 s | 10 | Pellets, 6° spread | — | Alt: both barrels at once, with 5 m/s self-knockback (shotgun jump) |
+| FT-5 | Heavy | 120 DPS + 15 burn over 3 s | Continuous | 5 s of fuel | 8 m cone | — | Flamethrower |
 
 **Explosive**
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
-| Overdraw | Heavy | 90 direct, up to 55 splash (3 m) | 0.9 s | 5 | Rocket 35 m/s | — | Rocket launcher. 12 m/s knockback enables rocket jumps. |
-| Zip Bomb | Heavy | 60 (3 m) + 3 bomblets × 20 (1.5 m) | 0.7 s | 6 | Bouncing grenade | — | Explodes after 1 s or on contact with a player |
+| RL-5 | Heavy | 90 direct, up to 55 splash (3 m) | 0.9 s | 5 | Rocket 35 m/s | — | Rocket launcher. 12 m/s knockback enables rocket jumps. |
+| GL-6 | Heavy | 60 (3 m) + 3 bomblets × 20 (1.5 m) | 0.7 s | 6 | Bouncing grenade | — | Explodes after 1 s or on contact with a player |
 
 **Strange**
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
-| Screensaver | Standard | 35, +10% per bounce | 0.5 s | 8 | Disc 40 m/s | — | Discs bounce off walls up to 4 times |
-| Scanline | Standard | 80 DPS | Continuous | 5 s of charge | Hitscan beam, 25 m | — | Perfectly accurate, low burst |
-| Defrag | **Power** | 100 | 0.5 s charge | 3 | Hitscan | — | Railgun. Pierces players and up to 1 m of wall. One per map, at a hard-to-reach spot. |
+| DL-8 | Standard | 35, +10% per bounce | 0.5 s | 8 | Disc 40 m/s | — | Discs bounce off walls up to 4 times |
+| LX-25 | Standard | 80 DPS | Continuous | 5 s of charge | Hitscan beam, 25 m | — | Perfectly accurate, low burst |
+| RG-1 | **Power** | 100 | 0.5 s charge | 3 | Hitscan | — | Railgun. Pierces players and up to 1 m of wall. One per map, at a hard-to-reach spot. |
 
 **Utility and melee**
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
-| Hyperlink | Standard | 15 | 2.5 s cooldown | Unlimited | Hook, 35 m | — | Grapple gun. Pulls you at 22 m/s, release keeps velocity. Hooking a player pulls them toward you. |
-| Backspace | Standard | 50 | 0.5 s | Unlimited | Melee | — | Bat. 12 m/s knockback. The start of each swing (0.2 s) deflects projectiles back at their shooter. |
-| Ctrl+X | Standard | 55 | 0.4 s | Unlimited | Melee | — | Katana. Alt: 8 m lunge (2 s cooldown) that chains like a dash. |
+| GH-35 | Standard | 15 | 2.5 s cooldown | Unlimited | Hook, 35 m | — | Grapple gun. Pulls you at 22 m/s, release keeps velocity. Hooking a player pulls them toward you. |
+| Slugger | Standard | 50 | 0.5 s | Unlimited | Melee | — | Bat. 12 m/s knockback. The start of each swing (0.2 s) deflects projectiles back at their shooter. |
+| Katana | Standard | 55 | 0.4 s | Unlimited | Melee | — | Sword. Alt: 8 m lunge (2 s cooldown) that chains like a dash. |
 
 ### 7.5 Throwables
 
 | Throwable | Effect |
 |---|---|
-| Packet | Frag grenade. 1.5 s fuse. 90 damage at center down to 20 at 4 m. |
-| Buffering | Slow field. A 5 m sphere for 3 s. Players **and projectiles** inside move at 40% speed. |
+| Frag | Frag grenade. 1.5 s fuse. 90 damage at center down to 20 at 4 m. |
+| Stasis | Slow field. A 5 m sphere for 3 s. Players **and projectiles** inside move at 40% speed. |
 
 ### 7.6 Weapon design rules
 
@@ -616,6 +617,7 @@ The camera is **never** driven by the fixed tick directly. Mouse look is applied
 
 ### 10.4 Feedback
 - **Hits:** hitmarker plus a distinct sound. Headshots and heartshots each get their own sound and marker. Kill confirm gets a short, sharp accent.
+- **Damage numbers:** one number per target, never a spray of them. Every hit that lands while it's up (a burst, a string of shots, a shotgun's pellets, anything on a far-off target) adds to it: it rolls up to the new total, pops, and grows with the damage (a little bigger each time the total doubles, capped). It follows the target and fades 0.8 s after the last hit; the next hit after that starts a new one. White for the body, yellow once a hit lands on the head, pink with a ♥ for a heartshot. Code: `src/combat/damage_number.gd`.
 - **Being hit:** a directional damage indicator and a brief vignette. It must never obscure aim.
 - **Viewmodel:** procedural sway that reacts to velocity, slides, wall rides, smashdowns, and landing, so the gun "breathes" with your movement.
 - **Speed:** the HUD speed meter (§13.3). Speed lines: thin white streaks at the screen edges pointing out from where you are heading, pixel-chunky like the 3D, redrawn at random 24 times a second like hand-drawn anime lines (they stream smoothly with camera smoothing up). They start just above run speed, reach full strength around 22 m/s (vertical speed counts, so a smashdown's descent streams them), and burst on dashes and slam bounces. The middle stays clear. Toggle: *speed lines*. Later: wind audio. Code: `src/render/speed_lines.gd(shader)`.
@@ -695,7 +697,7 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 | Holding a gun | Both hands on it by IK: the right on the grip, the left on the foregrip or pump (one-handed guns leave the left arm down). |
 | Firing | The gun kicks around the grip (pitch, a random twist, a shove back) on a snappy spring, its mechanism cycles, a muzzle flash, a light pops on the world, casings fly out to the right. |
 | Pump / bolt | The left hand rides the pump; the right hand leaves the grip to work the bolt and comes back. |
-| Fanning (Hotkey alt) | The left hand swipes over the hammer on every shot. |
+| Fanning (Marshal .357 alt) | The left hand swipes over the hammer on every shot. |
 | Drawing | The gun comes up from below, turned, and eases past its place. |
 | Top-up | The left arm plays the rig's pistol reload: down to the belt, back up to slap the rounds in; the gun tilts. |
 | Throwing | The throwing arm (the rig's cross punch) flings it. |
@@ -756,7 +758,7 @@ Code: `src/ui/lofi_ui.gd` (style kit), `src/ui/lofi_layer.gd` (the low-res canva
 | Top right | Killfeed: `killer [weapon] victim`, newest on top, five at most, five seconds each. A heartshot kill shows a pink ♥ instead of the weapon. |
 | Centre | The sharp crosshair. Hit markers: white (hit), yellow (head), red (kill), big pink (heartshot). Around it, a ring of the gun's rounds (below). |
 | Above the crosshair | Pop-ups: *heartshot* (pink), later *double kill* etc. |
-| Below the crosshair | Pickup prompt: `e  swap for overdraw (5)`. Never covers the crosshair. Auto-pickups only flash the name. |
+| Below the crosshair | Pickup prompt: `e  swap for rl-5 (5)`. Never covers the crosshair. Auto-pickups only flash the name. |
 | Bottom left | `hp` + health. Turns red and shakes at 30 or below. |
 | Bottom centre | Speed meter: a row of cells that get taller left to right (volume-meter style), lit black up to your speed, a grey cell marking the recent peak, jittering past the soft cap. Your speed in a box to its left, inverted above run speed. Dash charges underneath as small boxes: black when ready, filling grey while recharging; a used charge flashes, a recharged one pops. |
 | Bottom right | Throwable (ghost box) above the weapon name and the ammo column (below). `fists` when empty-handed, with no column. |
@@ -765,7 +767,7 @@ The HUD hides during your death sequence and springs back in on respawn. Code: `
 
 **Ammo is shown, not counted.** Map weapons never reload (§7.2), so what matters is how much the gun holds and how much is left:
 
-- **The column** (`src/ui/ammo_meter.gd`) stands next to the weapon name. Its height is set by the gun's capacity (9 px × √rounds on the 270 px canvas: 22 px for the Hotkey's 6, 64 px for the Popup's 50), so a glance tells you what you're carrying. Guns that hold a dozen or fewer are cut into one cell per round; bigger ones get a notch every ten. It fills black from the bottom; a small tag rides the top of the fill with the exact count. Each shot pops its cell off the top; a new gun grows its column in; a top-up rolls the fill back up. At a quarter or less it turns red, empty it blinks.
+- **The column** (`src/ui/ammo_meter.gd`) stands next to the weapon name. Its height is set by the gun's capacity (9 px × √rounds on the 270 px canvas: 22 px for the Marshal .357's 6, 64 px for the SX-50's 50), so a glance tells you what you're carrying. Guns that hold a dozen or fewer are cut into one cell per round; bigger ones get a notch every ten. It fills black from the bottom; a small tag rides the top of the fill with the exact count. Each shot pops its cell off the top; a new gun grows its column in; a top-up rolls the fill back up. At a quarter or less it turns red, empty it blinks.
 - **The ring** around the crosshair says the same where you're looking: one arc per round for small guns, one notched arc for big ones, spent rounds dimming from the end, the one just fired flicking outward. Red when low, blinking when empty, a red blink on a dry click.
 - **The cycle arc**, a thin arc inside the ring, fills while a slow gun (0.45 s or more between shots) gets its next round ready.
 
@@ -909,7 +911,7 @@ Each milestone has a **gate question**. We don't move on until the answer is yes
 |---|---|---|---|
 | M0 | Pre-production | Engine decision (done: Godot 4.7), repo setup, coding conventions, greybox kit | Can we greybox a map in an afternoon? |
 | M1 | **Movement prototype** (offline) | Full base movement kit including smashdown, live tweak panel, speedometer, one greybox test course | Is running around alone fun for 10 minutes? |
-| M2 | Combat prototype (offline) | Fists plus 4 pickups (Pointer, Hotkey, Scatter Plot, Overdraw), pickup and throw, damage zones and heartshot, moving target dummies, hit feedback | Does shooting while moving feel fluid? Does a heartshot feel earned? |
+| M2 | Combat prototype (offline) | Fists plus 4 pickups (SP-12, Marshal .357, Warden 12, RL-5), pickup and throw, damage zones and heartshot, moving target dummies, hit feedback | Does shooting while moving feel fluid? Does a heartshot feel earned? |
 | M3 | Networked 1v1 | Prediction, reconciliation, interpolation, lag compensation, round loop with map rotation on 3 greybox maps, sudden death | Does a 100 ms match feel as good as LAN? Do heartshots register as seen? |
 | M4 | Weapons and maps | Data-driven weapon system, 12 weapons plus throwables, pad rolling and respawn, 6 greybox maps | Do rounds feel different from each other? |
 | M5 | Vertical slice | ~20 weapons, 8 maps (1 art-complete in the target style), audio pass, core menus, movement sandbox | Would a stranger play a second match? |
@@ -932,7 +934,7 @@ Each milestone has a **gate question**. We don't move on until the answer is yes
 | 7 | Do Standard pads respawn within a round? | Yes, after 20 s. Heavy and Power never. |
 | 8 | Smashdown input: context-sensitive crouch in the air, or a dedicated key by default? | Context-sensitive, with an optional dedicated key |
 | 9 | Should air strafing gain speed at all, or only steer? (Skill ceiling vs. accessibility) | Gain, soft-capped at 16 m/s |
-| 10 | Do we want a defensive verb (block or parry)? It was removed with the card draft. | No. The Backspace bat's deflect covers it. |
+| 10 | Do we want a defensive verb (block or parry)? It was removed with the card draft. | No. The Slugger bat's deflect covers it. |
 | 11 | Rounds to win | 7 |
 | 12 | Networking: listen server via Steam relay for MVP, or dedicated servers from day one? | Listen server |
 | 13 | Controller support: in the MVP, or post-MVP with aim assist tuning? | Post-MVP |

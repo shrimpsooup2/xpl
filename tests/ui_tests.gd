@@ -97,7 +97,7 @@ func test_kick_dies_away() -> void:
 
 func test_killfeed_caps_and_expires() -> void:
 	for i in 7:
-		ui.hud.add_kill("you", "them", "hotkey", i == 3)
+		ui.hud.add_kill("you", "them", "marshal .357", i == 3)
 	await frames(30)
 	check(ui.hud._killfeed.get_child_count() == GameHud.KILLFEED_MAX,
 			"killfeed holds %d rows (has %d)" % [GameHud.KILLFEED_MAX, ui.hud._killfeed.get_child_count()])
@@ -148,11 +148,11 @@ func test_health_rolls_and_heartbeat_follows_low_health() -> void:
 
 
 func test_prompt_can_show_again_while_hiding() -> void:
-	ui.hud.show_prompt("e  pick up hotkey")
+	ui.hud.show_prompt("e  pick up marshal .357")
 	await frames(20)
 	ui.hud.hide_prompt()
 	await frames(2)
-	ui.hud.show_prompt("e  pick up overdraw")
+	ui.hud.show_prompt("e  pick up rl-5")
 	await frames(20)
 	check(ui.hud._prompt.visible and is_equal_approx(ui.hud._prompt.modulate.a, 1.0), "prompt visible")
 
@@ -345,13 +345,13 @@ func test_ammo_column_follows_the_gun_in_hand() -> void:
 	var meter: AmmoMeter = ui.hud._ammo
 	check(not meter.visible, "no column for fists")
 	check(ui.crosshair.capacity == 0, "no ring for fists")
-	player.weapons.give(Weapons.get_def(Weapons.HOTKEY))
+	player.weapons.give(Weapons.get_def(Weapons.REVOLVER))
 	await frames(30)
 	check(meter.visible and meter.capacity == 6 and meter.ammo == 6, "a six-shooter's column")
 	near(meter._height, AmmoMeter.height_for(6), 0.5, "grown to its size")
 	check(ui.crosshair.capacity == 6 and ui.crosshair.ammo == 6, "and its ring")
 	var short := meter._height
-	player.weapons.give(Weapons.get_def(Weapons.POPUP))
+	player.weapons.give(Weapons.get_def(Weapons.SMG))
 	await frames(30)
 	check(meter._height > short * 2.0, "an SMG's column is far taller (%.0f vs %.0f px)" % [meter._height, short])
 	player.weapons.primary_ammo = 3
@@ -369,7 +369,7 @@ func test_hits_and_kills_reach_the_crosshair_and_killfeed() -> void:
 	w.hit_confirmed.emit({"zone": &"head", "killed": false})
 	check(ui.crosshair._mark_time > 0.0 and ui.crosshair._mark_color == Color(1.0, 0.9, 0.3), "a headshot marker")
 	w.hit_confirmed.emit({"zone": &"heart", "killed": true, "heartshot": true, "name": "dummy",
-			"weapon": Weapons.get_def(Weapons.POINTER)})
+			"weapon": Weapons.get_def(Weapons.PISTOL)})
 	await frames(2)
 	check(ui.crosshair._mark_color == LofiUI.HEART, "a heartshot marker")
 	check(ui.hud._killfeed.get_child_count() == 1, "and a killfeed line")

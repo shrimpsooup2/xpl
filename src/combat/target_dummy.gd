@@ -117,7 +117,7 @@ func take_hit(hit: Dictionary) -> Dictionary:
 	health -= amount
 	_since_hit = 0.0
 	var world := get_parent()
-	CombatFx.damage_number(world, hit.point, amount, &"heart" if lethal else hit.zone)
+	DamageNumber.add(world, self, hit.point, amount, &"heart" if lethal else hit.zone)
 	var killed_now := health <= 0.0
 	if killed_now:
 		_die(hit, lethal)

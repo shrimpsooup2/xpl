@@ -178,13 +178,13 @@ func _preview() -> void:
 			hud.set_map("waiting room")
 			overlays.preview_next()
 		1:
-			hud.add_kill("you", "them", "hotkey")
-			hud.add_kill("them", "you", "overdraw")
+			hud.add_kill("you", "them", "marshal .357")
+			hud.add_kill("them", "you", "rl-5")
 			hud.add_kill("you", "them", "", true)
 			kill_confirmed(true)
-			hud.set_weapon("hotkey", 4, 6)
-			hud.set_throwable("packet", 2)
-			hud.show_prompt("e  swap for overdraw (5)")
+			hud.set_weapon("marshal .357", 4, 6)
+			hud.set_throwable("frag", 2)
+			hud.show_prompt("e  swap for rl-5 (5)")
 		2:
 			hud.set_health(24)
 			hud.set_alert("the map is unloading")
