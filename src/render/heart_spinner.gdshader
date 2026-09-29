@@ -3,9 +3,9 @@ shader_type spatial;
 // light dots round a round glass glowing pink (so it glows from afar, like
 // the TV), the lead one white, stepping round like an old buffering wheel.
 // The script turns it (faster at speed; it hitches when hit and stutters
-// near death). A heartshot flashes white,
-// drops the dots out of the ring one by one and leaves a dim cross ("not
-// responding"); any other death greys it out as it winds down.
+// near death). A heartshot flashes white, drops the dots out of the ring
+// one by one and leaves a dim cross ("not responding"); any other death
+// greys it out as it winds down.
 render_mode cull_back, specular_schlick_ggx;
 
 uniform vec3 pink : source_color = vec3(1.0, 0.22, 0.42);
