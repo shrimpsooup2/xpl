@@ -8,6 +8,10 @@ extends Node
 ## Picking up: moving over a weapon while the primary slot is empty (or
 ## holds an empty gun) takes it; E swaps; the same gun tops yours up. Q
 ## throws the primary. An empty gun switches to fists after a moment.
+##
+## Alt-fire held aims down a gun's sights (WeaponDef, Aiming): `aim` rises
+## to 1 over the gun's aim time, zooming the view and tightening the
+## spread. Holding the revolver's trigger from the hip fans the hammer.
 
 signal equipped(def: WeaponDef, ammo: int)
 signal fired(def: WeaponDef, shot: Dictionary)
@@ -25,6 +29,8 @@ const FIRE_BUFFER := 0.15
 const THROW_SPEED := 18.0
 const FAN_INTERVAL := 0.1
 const FAN_SPREAD := 3.0
+## Hold the revolver's trigger this long past the first shot and it fans.
+const FAN_HOLD := 0.2
 ## Automatic spread recovers this many degrees per second once released.
 const BLOOM_RECOVERY := 6.0
 ## Fists (GDD §7.3): +1 damage per m/s over run speed, up to +15. The hit
@@ -48,7 +54,9 @@ var fists: WeaponDef = Weapons.get_def(Weapons.FISTS)
 var primary: WeaponDef
 var primary_ammo := 0
 var using_primary := false
-## Alt-fire zoom (1 = none), for the camera.
+## How far the sights are up: 0 from the hip, 1 aimed.
+var aim := 0.0
+## How far that zooms the view (1 = none), for the camera.
 var zoom := 1.0
 ## A different gun in reach that E would swap for, or null.
 var swap_candidate: WeaponPickup
@@ -58,8 +66,9 @@ var _ready_timer := 0.0
 var _buffer := 0.0
 var _bloom := 0.0
 var _empty_timer := -1.0
-var _fan_left := 0
+var _fanning := false
 var _fan_timer := 0.0
+var _fire_held_for := 0.0
 var _punch_left := true
 var _last_punch := &"straight"
 var _punch_timer := -1.0
@@ -86,10 +95,10 @@ func reset() -> void:
 	using_primary = false
 	_cooldown = 0.0
 	_ready_timer = 0.0
-	_fan_left = 0
+	_stop_fanning()
 	_empty_timer = -1.0
 	_punch_timer = -1.0
-	zoom = 1.0
+	_lower()
 	_equip()
 
 
@@ -100,8 +109,9 @@ func give(def: WeaponDef, rounds := -1) -> void:
 	using_primary = true
 	_ready_timer = READY_TIME
 	_cooldown = 0.0
-	_fan_left = 0
+	_stop_fanning()
 	_empty_timer = -1.0
+	_lower()
 	_equip()
 
 
@@ -152,14 +162,15 @@ func cooldown() -> float:
 ## Current spread (degrees) of the weapon in hand.
 func spread() -> float:
 	var def := current
-	return minf(def.spread + _bloom, maxf(def.spread_max, def.spread)) + (FAN_SPREAD if _fan_left > 0 else 0.0)
+	var cone := minf(def.spread + _bloom, maxf(def.spread_max, def.spread)) * lerpf(1.0, def.aim_spread, aim)
+	return cone + (FAN_SPREAD if _fanning else 0.0)
 
 
 func tick(cmd: InputCommand, delta: float) -> void:
 	if player == null or player.is_dead:
 		return
 	if not enabled:
-		zoom = 1.0
+		_lower()
 		return
 	# Kept going below zero for one tick, so a held automatic keeps its
 	# exact rate instead of rounding each shot up to whole ticks.
@@ -190,20 +201,22 @@ func tick(cmd: InputCommand, delta: float) -> void:
 		if _punch_timer < 0.0:
 			_land_punch()
 
-	# Alt-fire.
-	zoom = def.zoom if def.alt == &"zoom" and cmd.alt_held and using_primary else 1.0
-	if cmd.alt_pressed and def.alt == &"fan" and ammo > 0 and _fan_left == 0 and _ready_timer <= 0.0:
-		_fan_left = ammo
-		_fan_timer = 0.0
-	if _fan_left > 0:
+	# Aiming: the sights come up while alt-fire's held (a gun, not fists).
+	var aiming := cmd.alt_held and not def.is_fists()
+	aim = move_toward(aim, 1.0 if aiming else 0.0, delta / maxf(def.aim_time, 0.01))
+	zoom = lerpf(1.0, def.zoom, aim) if not def.is_fists() else 1.0
+
+	# Fanning: the trigger held from the hip past the first shot, the other
+	# hand slapping the hammer, a round every FAN_INTERVAL until let go.
+	_fire_held_for = _fire_held_for + delta if cmd.fire_held else 0.0
+	if def.fans and cmd.fire_held and _fire_held_for >= FAN_HOLD and aim < 0.5 and ammo > 0 and _ready_timer <= 0.0:
+		_fanning = true
 		_fan_timer -= delta
-		if _fan_timer <= 0.0 and ammo > 0:
+		if _fan_timer <= 0.0:
 			_fire(def, true)
-			_fan_left -= 1
 			_fan_timer = FAN_INTERVAL
-		if ammo <= 0:
-			_fan_left = 0
 		return
+	_stop_fanning()
 
 	# Firing.
 	if cmd.fire_pressed:
@@ -247,7 +260,8 @@ func throw_primary() -> void:
 	primary = null
 	primary_ammo = 0
 	using_primary = false
-	_fan_left = 0
+	_stop_fanning()
+	_lower()
 	_ready_timer = 0.0
 	thrown.emit(def)
 	_equip()
@@ -262,7 +276,8 @@ func drop_on_death() -> void:
 	primary = null
 	primary_ammo = 0
 	using_primary = false
-	_fan_left = 0
+	_stop_fanning()
+	_lower()
 	_punch_timer = -1.0
 
 
@@ -291,9 +306,21 @@ func _switch(to_primary: bool) -> void:
 		return
 	using_primary = to_primary
 	_ready_timer = READY_TIME
-	_fan_left = 0
+	_stop_fanning()
+	_lower()
 	_empty_timer = -1.0
 	_equip()
+
+
+## Sights down at once (switching, throwing, dying).
+func _lower() -> void:
+	aim = 0.0
+	zoom = 1.0
+
+
+func _stop_fanning() -> void:
+	_fanning = false
+	_fan_timer = 0.0
 
 
 func _equip() -> void:

@@ -8,7 +8,10 @@ extends Control
 ## hold a dozen or fewer, one arc notched every ten for the rest. Spent
 ## rounds go dim from the end, the one just fired flicks outward; low turns
 ## red, empty blinks. Inside it, a thin arc fills while a slow gun cycles.
-## A scoped zoom swaps it all for a scope.
+##
+## Aiming down the sights the ticks close in and fade, leaving the dot on
+## the sights (heart pink through a dot sight, like its reticle); a scope,
+## once up, swaps it all for the scope.
 
 const GAP := 4.0
 const TICK := 5.0
@@ -39,7 +42,8 @@ var _spent_index := -1
 var _blink := 0.0
 var _cycle := 1.0  # 0..1 through the gun's cycle; 1 is ready.
 var _cycle_shown := false
-var _zoom := 1.0
+var _aim := 0.0
+var _sight := WeaponDef.Sight.IRON
 
 
 func _ready() -> void:
@@ -100,11 +104,17 @@ func click_empty() -> void:
 	queue_redraw()
 
 
-## Scoped zoom (1 = none) turns the crosshair into a scope.
-func set_zoom(zoom: float) -> void:
-	if not is_equal_approx(zoom, _zoom):
-		_zoom = zoom
+## How far the sights are up (0..1; WeaponHolder.aim), and what they are.
+func set_aim(aim: float, sight: WeaponDef.Sight) -> void:
+	if not is_equal_approx(aim, _aim) or sight != _sight:
+		_aim = aim
+		_sight = sight
 		queue_redraw()
+
+
+## Whether it's showing the scope.
+func scoped() -> bool:
+	return _sight == WeaponDef.Sight.SCOPE and _aim > Viewmodel.SCOPE_CUT
 
 
 ## Spreads the ticks for a moment; strength 1 is a hard landing.
@@ -143,20 +153,24 @@ func _process(delta: float) -> void:
 
 func _draw() -> void:
 	var c := (size * 0.5).floor()
-	if _zoom > 1.2:
+	if scoped():
 		_draw_scope(c)
 		return
 	_draw_ring(c)
 	var outline := Color(0, 0, 0, 0.8)
+	var ticks := 1.0 - _aim
+	var dot := Color.WHITE.lerp(LofiUI.HEART, _aim if _sight == WeaponDef.Sight.DOT else 0.0)
 	for pass_i in 2:
 		var col := outline if pass_i == 0 else Color.WHITE
 		var pad := 1.0 if pass_i == 0 else 0.0
-		draw_rect(Rect2(c - Vector2.ONE * (1 + pad), Vector2.ONE * (2 + pad * 2)), col)
-		var gap := GAP + BUMP_GAP * _bump
+		draw_rect(Rect2(c - Vector2.ONE * (1 + pad), Vector2.ONE * (2 + pad * 2)), col if pass_i == 0 else dot)
+		if ticks <= 0.01:
+			continue
+		var gap := (GAP + BUMP_GAP * _bump) * lerpf(0.5, 1.0, ticks)
 		for dir: Vector2 in [Vector2.UP, Vector2.DOWN, Vector2.LEFT, Vector2.RIGHT]:
 			var a := c + dir * gap
-			var b := c + dir * (gap + TICK)
-			draw_line(a - dir * pad, b + dir * pad, col, THICK + pad * 2)
+			var b := c + dir * (gap + TICK * ticks)
+			draw_line(a - dir * pad, b + dir * pad, Color(col, col.a * ticks), THICK + pad * 2)
 	if _mark_time > 0.0:
 		var t := _mark_time / _mark_length
 		var col := Color(_mark_color, t)

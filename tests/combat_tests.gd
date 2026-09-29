@@ -277,16 +277,62 @@ func test_empty_gun_switches_to_fists() -> void:
 	check(player.weapons.primary != null, "the empty gun is still carried")
 
 
-func test_fanning_empties_the_revolver_quickly() -> void:
-	player.weapons.give(Weapons.get_def(Weapons.REVOLVER))
+func test_the_revolver_fans_when_you_hold_the_trigger_from_the_hip() -> void:
+	var revolver := Weapons.get_def(Weapons.REVOLVER)
+	player.weapons.give(revolver)
 	await run(cmd(), 12)
 	aim_at(Vector3(5, 1, -20))
+	await fire_once()
+	await run(cmd(), 40)
+	check(player.weapons.primary_ammo == 5, "a click is one shot (%d left)" % player.weapons.primary_ammo)
+	var fanned := []
+	player.weapons.fired.connect(func(_def: WeaponDef, shot: Dictionary) -> void:
+		if shot.fanned:
+			fanned.append(shot))
 	var c := cmd()
-	c.alt_pressed = true
+	c.fire_pressed = true
+	for i in int((WeaponHolder.FAN_HOLD + WeaponHolder.FAN_INTERVAL * 4.0) / DT) + 4:
+		c.fire_held = true
+		await run(c, 1)
+	check(player.weapons.primary_ammo == 0 and fanned.size() == 4,
+			"held from the hip: a shot, then the other four fanned in under half a second (%d left, %d fanned)" % [player.weapons.primary_ammo, fanned.size()])
+	player.weapons.give(revolver)
+	await run(cmd(), 12)
+	c = cmd()
+	c.fire_pressed = true
+	for i in 60:
+		c.fire_held = true
+		c.alt_held = true
+		await run(c, 1)
+	check(player.weapons.primary_ammo == 5, "held while aiming: one careful shot (%d left)" % player.weapons.primary_ammo)
+
+
+# --- Aiming -----------------------------------------------------------------
+
+func test_every_gun_aims_down_its_sights() -> void:
+	for id: StringName in Weapons.GUNS:
+		var d := Weapons.get_def(id)
+		player.weapons.give(d)
+		await run(cmd(), 12)
+		var hip := player.weapons.spread()
+		var c := cmd()
+		c.alt_held = true
+		await run(c, int(d.aim_time / DT) + 2)
+		check(d.zoom > 1.0 and player.weapons.aim == 1.0 and is_equal_approx(player.weapons.zoom, d.zoom),
+				"%s: alt-fire held aims, zoomed %.2fx" % [d.display_name, player.weapons.zoom])
+		near(player.weapons.spread(), hip * d.aim_spread, 0.001, "%s: its spread, aimed" % d.display_name)
+		near(player.aim_turn_scale(), 1.0 / d.zoom, 0.001, "%s: turning slows with the zoom" % d.display_name)
+		await run(cmd(), int(d.aim_time / DT) + 2)
+		check(player.weapons.aim == 0.0 and player.weapons.zoom == 1.0, "%s: let go, back to the hip" % d.display_name)
+	var c := cmd()
 	c.alt_held = true
-	await run(c, 1)
-	await run(cmd(), int(WeaponHolder.FAN_INTERVAL * 6.0 / DT) + 4)
-	check(player.weapons.primary_ammo == 0, "six rounds fanned in about 0.6 s (%d left)" % player.weapons.primary_ammo)
+	await run(c, 5)
+	c.switch_to = 2
+	await run(c, 20)
+	check(player.weapons.current.is_fists() and player.weapons.aim == 0.0 and player.weapons.zoom == 1.0,
+			"fists have nothing to aim")
+	check(Weapons.get_def(Weapons.SNIPER).sight == WeaponDef.Sight.SCOPE and Weapons.get_def(Weapons.SMG).sight == WeaponDef.Sight.DOT,
+			"the sniper has a scope, the SMG a dot sight")
 
 
 # --- Pickups and throwing ---------------------------------------------------

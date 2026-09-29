@@ -144,6 +144,7 @@ var _pending_interact := false
 var _pending_throw := false
 var _pending_switch := 0
 var _zoom := 1.0
+var _aim_toggled := false
 var _prev_position := Vector3.ZERO
 var _curr_position := Vector3.ZERO
 var _spawn := Transform3D.IDENTITY
@@ -234,7 +235,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var delta: Vector2 = (event as InputEventMouseMotion).screen_relative
-		var k := deg_to_rad(DEGREES_PER_COUNT * view_settings.sensitivity)
+		var k := deg_to_rad(DEGREES_PER_COUNT * view_settings.sensitivity) * aim_turn_scale()
 		yaw = wrapf(yaw - delta.x * k, -PI, PI)
 		var dy := -delta.y if view_settings.invert_y else delta.y
 		pitch = clampf(pitch - dy * k, -MAX_PITCH, MAX_PITCH)
@@ -437,6 +438,7 @@ func respawn() -> void:
 	velocity = Vector3.ZERO
 	state.reset(movement_params)
 	weapons.reset()
+	_aim_toggled = false
 	health = max_health
 	_since_hit = INF
 	_last_hit = {}
@@ -497,6 +499,14 @@ func zoom_amount() -> float:
 	return _zoom
 
 
+## How much slower you turn while zoomed (ViewSettings.aim_sensitivity).
+func aim_turn_scale() -> float:
+	var zoom := weapons.zoom if weapons else 1.0
+	if zoom <= 1.0:
+		return 1.0
+	return lerpf(1.0, view_settings.aim_sensitivity, clampf((zoom - 1.0) * 10.0, 0.0, 1.0)) / zoom
+
+
 ## 0..1: how far into the slide look the camera is.
 func slide_look() -> float:
 	return _slide_look
@@ -542,7 +552,15 @@ func _sample_command() -> InputCommand:
 	c.fire_pressed = _pending_fire
 	c.fire_held = Input.is_action_pressed(&"fire")
 	c.alt_pressed = _pending_alt
-	c.alt_held = Input.is_action_pressed(&"alt_fire")
+	if view_settings.toggle_aim:
+		if _pending_alt:
+			_aim_toggled = not _aim_toggled
+		# Down again whenever there's nothing to aim.
+		if weapons.current.is_fists():
+			_aim_toggled = false
+		c.alt_held = _aim_toggled
+	else:
+		c.alt_held = Input.is_action_pressed(&"alt_fire")
 	c.interact_pressed = _pending_interact
 	c.throw_pressed = _pending_throw
 	c.switch_to = _pending_switch

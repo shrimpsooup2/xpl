@@ -24,7 +24,7 @@ A round-based, movement-first arena FPS. Two players duel through short rounds o
 | Slide / crouch (on the ground) | Ctrl or C |
 | Smashdown (in the air) | Ctrl or C |
 | Dash | Shift |
-| Fire / alt-fire | Left / right mouse (the revolver fans its hammer, the sniper zooms) |
+| Fire / aim down the sights | Left / right mouse (hold fire from the hip to fan the revolver) |
 | Swap for the gun you're standing at | E (walking over one empty-handed takes it) |
 | Throw your gun | Q |
 | Switch gun / fists | 1 / 2, mouse wheel up |

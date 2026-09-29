@@ -96,7 +96,7 @@ func _process(_delta: float) -> void:
 		var w := player.weapons
 		var def := w.current
 		crosshair.set_cycle(1.0 - clampf(w.cooldown() / maxf(def.fire_interval, 0.001), 0.0, 1.0))
-		crosshair.set_zoom(w.zoom)
+		crosshair.set_aim(w.aim, def.sight)
 		if w.swap_candidate and is_instance_valid(w.swap_candidate):
 			var text := "e  swap for %s" % w.swap_candidate.def.display_name
 			if _prompt != text:

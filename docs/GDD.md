@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 2.0 (draft) |
+| **Version** | 2.1 (draft) |
 | **Date** | 2026-09-29 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -33,6 +33,7 @@
 | 1.8 | Timed hops (§4.2): a hop taken right as you land, pushing the way you're going, adds 1 m/s up to 14 m/s, so flat ground builds speed without a slope or air strafing. A mistimed hop still keeps your speed. |
 | 1.9 | The heart becomes a tiny CRT set into the chest (§6.4): its screen glows heart pink with a pixel heart beating on it, faster at speed and racing near death. Hits tear the picture, near death it rolls. A heartshot switches the set off (the picture collapses to a white-hot line, then a dot) and cracks the glass; any other death loses the signal to static. The set pops out of the crumbling body still showing how it ended. The hit sphere is unchanged. |
 | 2.0 | Timed hops are replaced by dash momentum (§4.3): a dash keeps part of its burst, 35% on the ground (where the extra fades over 0.6 s instead of stopping dead) and 75% in the air, where it ends with a little lift and carries you twice as far. A second look for the heart is on trial (§6.4): a loading spinner, picked in View → Look → *heart style*. |
+| 2.1 | Every gun aims down its sights (§5.4, §7.4): right mouse held zooms by the gun's own amount and tightens its spread, never slowing you. Iron sights, a dot sight on the SX-50, a rear sight on the TR-30's carry handle, a ghost ring on the Warden 12, the Heron's scope. The revolver now fans when you hold the trigger from the hip. Turning slows with the zoom (*aim sensitivity*), and aiming can be a toggle. Bots aim at range. |
 
 ---
 
@@ -73,7 +74,7 @@
 
 **What xtrapartial is not:**
 - Not a loadout or class shooter. Everyone spawns with only their fists. Power comes from the map.
-- Not a tactical shooter. No aim-down-sights (except scoped weapons), no movement inaccuracy, no economy.
+- Not a tactical shooter. Aiming down the sights never slows you, and there's no movement inaccuracy and no economy.
 - Not a hero shooter. No abilities beyond movement and what you pick up.
 
 ### Comparable titles
@@ -315,7 +316,7 @@ Knocks land partly on the frame and swing out the rest of the way on springs, wo
 ### 5.4 Combat rules
 
 - **No dead states.** Firing, switching, picking up, and throwing never lock or slow movement.
-- **No ADS.** Right mouse is each weapon's alt-fire. Scoped weapons zoom as their alt-fire.
+- **Aim down sights, at full speed.** Right mouse held raises the gun's sights to your eye: the view zooms by the gun's own amount and its spread tightens (§7.4), and it never slows you. Turning slows with the zoom so what's under the sights moves as fast as it would from the hip (*aim sensitivity* scales that). *toggle aim* makes right mouse a toggle. Code: `WeaponHolder.aim`.
 - **No movement inaccuracy.** Spread is a property of the weapon, never of your speed.
 - **Self-damage** exists only from explosives, at 40%, and comes with knockback (explosive jumps are allowed).
 - **Mixed hitscan and projectile.** Each weapon picks whichever suits its identity. Most weapons are projectiles, so shots are visible.
@@ -327,7 +328,7 @@ Knocks land partly on the frame and swing out the rest of the way on springs, wo
 | Move | WASD |
 | Look | Mouse (raw input) |
 | Fire | Left mouse |
-| Alt-fire | Right mouse |
+| Aim down sights | Right mouse (held, or a toggle) |
 | Jump | Space (also mouse wheel down, for hop timing) |
 | Slide / crouch (smashdown in the air) | Left Ctrl or C |
 | Dash | Left Shift |
@@ -465,21 +466,32 @@ Every gun is modelled on a real kind of gun, abstracted: chunky blocks in beige 
 | Weapon | Modelled on | Rounds | Accent | Its animation |
 |---|---|---|---|---|
 | SP-12 | 9 mm semi-automatic pistol | 12 | Bondi blue slide | Slide snaps back; one-handed |
-| Marshal .357 | .357 revolver | 6 | Tangerine cylinder | Hammer falls, cylinder turns a sixth; alt fans the hammer with the left hand |
+| Marshal .357 | .357 revolver | 6 | Tangerine cylinder | Hammer falls, cylinder turns a sixth; the trigger held from the hip fans the hammer with the left hand |
 | SX-50 | 9 mm submachine gun | 50 | Grape magazine | Bolt carrier chatters; two hands |
 | TR-30 | Assault rifle | 30 | Lime magazine | Bolt carrier; carry handle, banana mag |
 | Warden 12 | Pump-action shotgun | 8 | Strawberry pump | The left hand racks the pump; red shells fly |
-| Heron .308 | Bolt-action sniper rifle | 5 | Blueberry scope | The right hand leaves the grip to work the bolt; alt zooms 3× into a scope |
+| Heron .308 | Bolt-action sniper rifle | 5 | Blueberry scope | The right hand leaves the grip to work the bolt |
+
+**Sights.** Every gun aims (right mouse held; `WeaponDef`, Aiming). It takes the gun's aim time to come up, 0.12 s for the pistol up to 0.2 s for the sniper.
+
+| Weapon | What you look through | Zoom | Spread, aimed |
+|---|---|---|---|
+| SP-12 | Iron sights: a front post seen between two rear posts | 1.2× | 30% |
+| Marshal .357 | Iron sights: a tall front post standing clear over the hammer | 1.3× | (already exact) |
+| SX-50 | An open dot sight, a grape frame on the rail; the crosshair's dot turns heart pink, like its reticle | 1.25× | 55% |
+| TR-30 | A notched rear sight at the back of the carry handle, the front post in the notch | 1.6× | 35% |
+| Warden 12 | A ghost ring on the receiver and a strawberry front post | 1.15× | 65% (a tighter pattern) |
+| Heron .308 | The scope: once it's up to the eye, the view cuts to it | 3× | (already exact) |
 
 **Precision**
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
 | SP-12 | Standard | 20 | 0.3 s | 12 | Projectile 150 m/s | ♥ | 9 mm pistol. Common, found near spawns. |
-| Marshal .357 | Standard | 45 | 0.5 s | 6 | Projectile 250 m/s | ♥ | .357 revolver. Alt: fan the hammer (remaining rounds at 0.1 s, +3° spread, no ♥) |
-| Sentry DMR | Standard | 40 | 0.35 s | 10 | Hitscan | ♥ | Alt: 1.5× zoom |
+| Marshal .357 | Standard | 45 | 0.5 s | 6 | Projectile 250 m/s | ♥ | .357 revolver. Hold the trigger from the hip past 0.2 s: fan the hammer (a round every 0.1 s while held, +3° spread, no ♥). Aimed, holding it is one careful shot. |
+| Sentry DMR | Standard | 40 | 0.35 s | 10 | Hitscan | ♥ | Aimed: 1.5× zoom |
 | Talon | Standard | 70 | 0.9 s | 5 | Bolt 90 m/s, with drop | ♥ | Crossbow. Bolts stick in walls. |
-| Heron .308 | Heavy | 85 (head kills) | 1.2 s | 5 | Hitscan | ♥ | Bolt-action sniper. Alt: 3× zoom. |
+| Heron .308 | Heavy | 85 (head kills) | 1.2 s | 5 | Hitscan | ♥ | Bolt-action sniper. Scoped: 3× zoom. |
 
 **Automatic**
 
@@ -593,7 +605,7 @@ Two styles, each a `GameRules` preset (`src/game/game_rules.gd`), run by a `Matc
 
 The flow: loading (the Match finds the new level and puts everyone in it: the local person in the level's own Player, everyone else in a new one), countdown (the round card's "go" lands on the moment weapons come on), live, round end (a result card), then the next round or the match end (the winner, the rounds) and back to the menu. The HUD follows along: the score (your side on the left), the round or game timer, a killfeed of every kill, and a real scoreboard on Tab.
 
-**Practice bots** (`src/game/bot_brain.gd`) make both styles playable offline: free-for-all against three, teams four against four. A bot drives its Player through the same input commands a person does: to the nearest gun when empty-handed, then at the nearest enemy it can see, strafing and shooting with a reaction time and aim error, jumping what's in the way and refusing to walk into the void. They don't navigate (no navigation mesh yet), so on multi-level maps they can get stuck.
+**Practice bots** (`src/game/bot_brain.gd`) make both styles playable offline: free-for-all against three, teams four against four. A bot drives its Player through the same input commands a person does: to the nearest gun when empty-handed, then at the nearest enemy it can see, strafing and shooting (down the sights beyond 12 m) with a reaction time and aim error, jumping what's in the way and refusing to walk into the void. They don't navigate (no navigation mesh yet), so on multi-level maps they can get stuck.
 
 *Not built yet:* warmup, the map unloading (sudden death), spectating while dead, the barrier at spawn during the countdown, a rematch vote.
 
@@ -770,7 +782,7 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 - Every camera motion effect can be toggled off, and UI motion can be turned down to nothing (§13.5).
 - No full-screen flashing by default. The experimental impact frames (§10.4) are opt-in and never fire more than twice a second.
 - Colorblind-safe enemy highlight and heart color presets.
-- Hold/toggle options for crouch. Smashdown can have its own key.
+- Hold/toggle options for crouch and for aiming (*toggle aim* is built). Smashdown can have its own key.
 - Full key rebinding.
 
 ---
@@ -823,12 +835,12 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 | Holding a gun | Both hands on it by IK: the right on the grip, the left on the foregrip or pump (one-handed guns leave the left arm down). |
 | Firing | The gun kicks around the grip (pitch, a random twist, a shove back) on a snappy spring, its mechanism cycles, a muzzle flash, a light pops on the world, casings fly out to the right. |
 | Pump / bolt | The left hand rides the pump; the right hand leaves the grip to work the bolt and comes back. |
-| Fanning (Marshal .357 alt) | The left hand swipes over the hammer on every shot. |
+| Fanning (Marshal .357, the trigger held from the hip) | The left hand swipes over the hammer on every shot. |
 | Drawing | The gun comes up from below, turned, and eases past its place. |
 | Top-up | The left arm plays the rig's pistol reload: down to the belt, back up to slap the rounds in; the gun tilts. |
 | Throwing | The throwing arm (the rig's cross punch) flings it. |
 | Fists | Held up in a guard by IK, like hands on a gun. Hands alternate, and each punch is a straight (jab or cross, about half), a hook (swings out wide, elbow up, comes across) or an uppercut (dips and drives up), never the same hook or uppercut twice running. Every kind is fully out as the hit lands and only looks different; the rig's jab and cross clips turn the shoulders into it. |
-| Scoped | The arms drop out of view; a scope with fine lines, the rest of the screen dimmed. |
+| Aiming | The gun comes from the hip onto the line of sight, square to the view, its sight on the middle of the screen. The shoulders drop, so the arms rise to it from below rather than reaching across the view, and a long gun's right hand holds the grip lower, its fist out of sight. Aimed it steadies (look drag and knocks at 30%) and kicks half as much. A scope, once up to the eye, cuts to the scope view: fine lines, the rest of the screen dimmed. |
 
 Like the camera, it only moves in answer to you: looking drags it, strafing leans it, landing drops it, sliding tucks it in and rolls it over, dashes swing it, wall rides tilt it away from the wall, smashdowns brace it and slam it down.
 
@@ -882,7 +894,7 @@ Code: `src/ui/lofi_ui.gd` (style kit), `src/ui/lofi_layer.gd` (the low-res canva
 |---|---|
 | Top centre | Your score · round timer (inverted) · their score. Map name in a ghost box below. Alerts (e.g. *the map is unloading*) in red below that. |
 | Top right | Killfeed: `killer [weapon] victim`, newest on top, five at most, five seconds each. A heartshot kill shows a pink ♥ instead of the weapon. |
-| Centre | The sharp crosshair. Hit markers: white (hit), yellow (head), red (kill), big pink (heartshot). Around it, a ring of the gun's rounds (below). |
+| Centre | The sharp crosshair. Hit markers: white (hit), yellow (head), red (kill), big pink (heartshot). Around it, a ring of the gun's rounds (below). Aiming down the sights, its ticks close in and fade, leaving the dot on the sights (pink through a dot sight); scoped, it becomes the scope. |
 | Above the crosshair | Pop-ups: *heartshot* (pink), later *double kill* etc. |
 | Below the crosshair | Pickup prompt: `e  swap for rl-5 (5)`. Never covers the crosshair. Auto-pickups only flash the name. |
 | Bottom left | `hp` + health. Turns red and shakes at 30 or below. |

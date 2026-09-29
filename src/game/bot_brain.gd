@@ -6,14 +6,16 @@ extends Node
 ## the way, won't walk off into the void, and gets itself unstuck by trying
 ## somewhere else for a moment.
 ##   empty-handed: to the nearest gun lying about (walking over one takes it);
-##   armed: at the nearest enemy it can see, strafing and shooting, with a
-##     human-ish reaction time and aim error; hunting the nearest enemy it
-##     can't see.
+##   armed: at the nearest enemy it can see, strafing and shooting (down
+##     the sights beyond close range), with a human-ish reaction time and
+##     aim error; hunting the nearest enemy it can't see.
 
 ## Degrees of aim error, seconds before it reacts to someone new, turn rate.
 @export var aim_error := 3.0
 @export var reaction := 0.35
 @export var turn_speed := deg_to_rad(320.0)
+## Aims down the sights at enemies further than this (m).
+@export var aim_from := 12.0
 
 var player: Player
 var match_ref: Match
@@ -88,7 +90,9 @@ func _physics_process(delta: float) -> void:
 	if sees and _seen_for > reaction:
 		var def := player.weapons.current
 		var off := rad_to_deg(forward.angle_to(Vector3(want.x, 0, want.z).normalized())) if want.length() > 0.1 else 0.0
-		var in_range := player.global_position.distance_to(_target.global_position) < (2.4 if def.is_fists() else def.max_range * 0.8)
+		var distance := player.global_position.distance_to(_target.global_position)
+		var in_range := distance < (2.4 if def.is_fists() else def.max_range * 0.8)
+		cmd.alt_held = not def.is_fists() and distance > aim_from
 		if off < 6.0 and in_range:
 			_fire_hold += 1
 			cmd.fire_held = true

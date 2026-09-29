@@ -12,6 +12,10 @@ enum Delivery { PROJECTILE, HITSCAN, MELEE }
 enum Hold { FISTS, ONE_HAND, TWO_HAND }
 ## The mechanical cycle animated after each shot.
 enum Action { NONE, SLIDE, REVOLVER, BOLT_CARRIER, PUMP, BOLT }
+## What you look through when aiming (alt-fire held): the gun's own iron
+## sights, a dot sight (the crosshair's dot goes heart pink, like its
+## reticle), or a scope (the view cuts to the scope).
+enum Sight { IRON, DOT, SCOPE }
 
 @export var id: StringName
 @export var display_name: String
@@ -39,9 +43,22 @@ enum Action { NONE, SLIDE, REVOLVER, BOLT_CARRIER, PUMP, BOLT }
 @export var heartshot := false
 ## Knockback on the target (m/s).
 @export var knockback := 0.0
-## &"fan" (fan the hammer) or &"zoom", or empty.
-@export var alt := &""
-@export var zoom := 1.0
+## Holding the trigger from the hip fans the hammer (the revolver).
+@export var fans := false
+
+@export_group("Aiming")
+## Alt-fire held raises the sights to your eye (GDD §5.4): the view zooms by
+## `zoom` and the spread tightens to `aim_spread` of itself, taking
+## `aim_time` to come up. It never slows you down.
+@export var sight := Sight.IRON
+@export var zoom := 1.25
+@export var aim_spread := 0.5
+@export var aim_time := 0.15
+## The point on the gun you sight along (weapon space; the line runs down
+## -Z from it, over the front sight), and how far in front of your eye it
+## sits when aimed.
+@export var sight_point := Vector3(0, 0.12, 0)
+@export var eye_relief := 0.3
 
 @export_group("Feel")
 ## Viewmodel recoil per shot: (pitch degrees, random yaw degrees, push back meters).
