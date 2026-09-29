@@ -32,6 +32,7 @@ func _initialize() -> void:
 			"--stay":
 				_stay = args[i + 1].to_float()
 	Cosmetics.path = "user://test_%s_cosmetics.cfg" % player_name.validate_filename()
+	Settings.path = "user://test_%s_settings.cfg" % player_name.validate_filename()
 	Cosmetics.load_saved()
 	Cosmetics.set_player_name(player_name)
 	NetSession.join(self, "127.0.0.1", port, password)
@@ -60,6 +61,7 @@ func _process(_delta: float) -> bool:
 	if Time.get_ticks_msec() - _started > _stay * 1000.0:
 		NetSession.leave(self)
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(Cosmetics.path))
+		DirAccess.remove_absolute(ProjectSettings.globalize_path(Settings.path))
 		return true
 	return false
 

@@ -15,7 +15,8 @@ extends Node3D
 ## Free-for-all and teams start a practice game against bots (Game); online
 ## opens the host/join page and the lobby in place of the buttons
 ## (OnlineMenu), and a networked game comes back to that lobby when it ends;
-## the sandbox is the movement course.
+## the sandbox is the movement course; settings opens the settings page in
+## place of the buttons (SettingsMenu; esc comes back).
 
 const PLAY_SCENE := "res://scenes/test_course.tscn"
 const FFA_BOTS := 3
@@ -23,6 +24,7 @@ const TEAM_BOTS := 7
 const LOGO := preload("res://assets/ui/logo_small.png")
 const LOGO_SCALE := 1.6
 const LOGO_ONLINE := 1.0
+const LOGO_SETTINGS := 0.0
 const DANCE_EVERY := Vector2(5.0, 9.0)
 ## Camera lean toward the mouse, in meters at the screen edge.
 const MOUSE_LEAN := Vector2(0.35, 0.18)
@@ -59,6 +61,7 @@ var _team := Hats.Team.RED
 var _buttons: VBoxContainer
 var _pickers: Control
 var _online: OnlineMenu
+var _settings: SettingsMenu
 ## What the blob is wearing now: a team's colour or your free-for-all one.
 var _tint := Color.WHITE
 
@@ -72,6 +75,7 @@ func _ready() -> void:
 		return
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	RenderingServer.global_shader_parameter_set(&"world_light", 1.0)
+	Settings.apply_saved()
 	Cosmetics.load_saved()
 	_team = Hats.Team.RED if randi() % 2 == 0 else Hats.Team.BLUE
 	_tint = Hats.team_color(_team)
@@ -83,6 +87,11 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _settings:
+		if event.is_action_pressed(&"ui_cancel"):
+			get_viewport().set_input_as_handled()
+			_settings.escape()
+		return
 	if _name_field and _name_field.has_focus():
 		return
 	if event.is_action_pressed(&"ui_left"):
@@ -93,6 +102,11 @@ func _unhandled_input(event: InputEvent) -> void:
 
 func _process(delta: float) -> void:
 	_time += delta
+	# Live, so the settings page's changes show straight away.
+	var settings := Settings.view()
+	LofiUI.motion = settings.ui_motion
+	LofiUI.smoothing = settings.camera_smoothing
+	HeartScreen.style = settings.heart_style as HeartScreen.Style
 	# A slow drift around the stage, leaning toward the mouse.
 	var view := get_viewport().get_visible_rect().size
 	var mouse := (get_viewport().get_mouse_position() / view - Vector2(0.5, 0.5)) * 2.0
@@ -118,7 +132,7 @@ func _process(delta: float) -> void:
 		if _ticker_label.position.x <= -_ticker_width:
 			_ticker_label.position.x += _ticker_width
 	# Your look is sent when you join: changing it in a lobby wouldn't show.
-	_pickers.visible = not NetSession.active()
+	_pickers.visible = not NetSession.active() and _settings == null
 
 
 func _build_stage() -> void:
@@ -204,6 +218,9 @@ func _build_menu() -> void:
 	var sandbox := LofiUI.button("sandbox", _play.bind(&"sandbox"))
 	sandbox.mouse_entered.connect(_react.bind(&"Punch_Jab", 0.8))
 	col.add_child(sandbox)
+	var settings := LofiUI.button("settings", open_settings)
+	settings.mouse_entered.connect(_react.bind(&"Punch_Jab", 0.8))
+	col.add_child(settings)
 	var quit := LofiUI.button("quit", get_tree().quit)
 	quit.mouse_entered.connect(_react.bind(&"Hit_Head", 0.42))
 	col.add_child(quit)
@@ -365,7 +382,7 @@ func _react(clip: StringName, length: float) -> void:
 
 ## The online page in place of the menu's buttons.
 func open_online() -> void:
-	if _online or _leaving:
+	if _online or _settings or _leaving:
 		return
 	if _name_field:
 		Cosmetics.set_player_name(_name_field.text)
@@ -385,6 +402,37 @@ func close_online() -> void:
 	NetSession.leave(get_tree())
 	_online.queue_free()
 	_online = null
+	var i := 0
+	for c in _buttons.get_children():
+		if c is Button:
+			c.visible = true
+			LofiUI.enter(c, Vector2(-40, 0), i * 0.05, 0.25)
+			i += 1
+	_size_logo(LOGO_SCALE)
+
+
+## The settings page in place of the menu's buttons (the logo steps aside
+## to make room).
+func open_settings() -> void:
+	if _settings or _online or _leaving:
+		return
+	if _name_field:
+		Cosmetics.set_player_name(_name_field.text)
+	for c in _buttons.get_children():
+		if c is Button:
+			c.visible = false
+	_settings = SettingsMenu.new()
+	_settings.back.connect(close_settings)
+	_buttons.add_child(_settings)
+	_size_logo(LOGO_SETTINGS)
+
+
+## Back from the settings page.
+func close_settings() -> void:
+	if _settings == null:
+		return
+	_settings.queue_free()
+	_settings = null
 	var i := 0
 	for c in _buttons.get_children():
 		if c is Button:

@@ -2,8 +2,10 @@ extends CanvasLayer
 ## Live tuning panel (F1). Lists every exported value on the player's
 ## MovementParams and ViewSettings; changes apply on the next tick.
 ##
-## "Save" writes the resources back to res://data/ when running from the
-## editor, so tuned values can be committed. Exported builds save to user://.
+## "Save" writes the movement values back to res://data/ when running from
+## the editor, so tuned values can be committed (exported builds save to
+## user://). The view values are your settings, so they're saved with them
+## (Settings, user://settings.cfg), like the settings page does.
 
 var _player: Player
 var _panel: PanelContainer
@@ -138,7 +140,10 @@ func _refresh_values() -> void:
 
 func _save() -> void:
 	var saved: PackedStringArray = []
-	for res: Resource in [_player.movement_params, _player.view_settings]:
+	if _player.view_settings == Settings.view():
+		Settings.save_view()
+		saved.append("%s (ok)" % Settings.path)
+	for res: Resource in [_player.movement_params]:
 		var path := res.resource_path
 		if not OS.has_feature("editor") or path.is_empty():
 			path = "user://%s" % res.resource_path.get_file()

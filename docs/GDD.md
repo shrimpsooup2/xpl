@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 2.1 (draft) |
+| **Version** | 2.2 (draft) |
 | **Date** | 2026-09-29 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -34,6 +34,7 @@
 | 1.9 | The heart becomes a tiny CRT set into the chest (§6.4): its screen glows heart pink with a pixel heart beating on it, faster at speed and racing near death. Hits tear the picture, near death it rolls. A heartshot switches the set off (the picture collapses to a white-hot line, then a dot) and cracks the glass; any other death loses the signal to static. The set pops out of the crumbling body still showing how it ended. The hit sphere is unchanged. |
 | 2.0 | Timed hops are replaced by dash momentum (§4.3): a dash keeps part of its burst, 35% on the ground (where the extra fades over 0.6 s instead of stopping dead) and 75% in the air, where it ends with a little lift and carries you twice as far. A second look for the heart is on trial (§6.4): a loading spinner, picked in View → Look → *heart style*. |
 | 2.1 | Every gun aims down its sights (§5.4, §7.4): right mouse held zooms by the gun's own amount and tightens its spread, never slowing you. Iron sights, a dot sight on the SX-50, a rear sight on the TR-30's carry handle, a ghost ring on the Warden 12, the Heron's scope. The revolver now fans when you hold the trigger from the hip. Turning slows with the zoom (*aim sensitivity*), and aiming can be a toggle. Bots aim at range. |
+| 2.2 | The settings page is built (§13.4), from the title screen and the pause menu: controls (sensitivity, aim sensitivity, invert, toggle aim), keys (two per action, rebindable), video (window, vsync, frame cap, pixels, colours, heart), camera (field of view and every camera and UI motion setting, impact frames) and sound (volume). Saved as you change them, only what differs from the defaults. |
 
 ---
 
@@ -783,7 +784,7 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 - No full-screen flashing by default. The experimental impact frames (§10.4) are opt-in and never fire more than twice a second.
 - Colorblind-safe enemy highlight and heart color presets.
 - Hold/toggle options for crouch and for aiming (*toggle aim* is built). Smashdown can have its own key.
-- Full key rebinding.
+- Full key rebinding (built: the settings page's keys tab, two keys per action).
 
 ---
 
@@ -913,17 +914,17 @@ The HUD hides during your death sequence and springs back in on respawn. Code: `
 
 | Screen | Status | Description |
 |---|---|---|
-| Main menu | Built | Your blob idles (and sometimes dances) under a spotlight on a dark stage. Logo top left, boxed menu below (*play*, *settings (soon)*, *quit*), version in a ghost box. The blob wears your hat, in red or blue at random. A small ghost-box hat picker sits in the bottom-right corner, `<` *hat: name* `>` (or ← →): each step drops the next hat onto the blob, which nods under it. The pick is saved and is the hat you wear in a match. |
-| Pause (Esc) | Built | Dim + boxed list: *resume*, *respawn*, *tuning*, *main menu*, *quit*. The game keeps running underneath (it's multiplayer). |
+| Main menu | Built | Your blob idles (and sometimes dances) under a spotlight on a dark stage. Logo top left, boxed menu below (*free-for-all*, *teams*, *online*, *sandbox*, *settings*, *quit*), version in a ghost box. The blob wears your hat, in red or blue at random. A small ghost-box hat picker sits in the bottom-right corner, `<` *hat: name* `>` (or ← →): each step drops the next hat onto the blob, which nods under it. The pick is saved and is the hat you wear in a match. |
+| Pause (Esc) | Built | Dim + boxed list: *resume*, *respawn*, *settings*, *tuning*, *main menu*, *quit*. The game keeps running underneath (it's multiplayer). |
 | Map card + countdown | Built (preview) | *round 3* over the map name, a fake loading bar of boxes, then *3 · 2 · 1 · go*. |
 | Round result | Built (preview) | Huge *round won* (inverted) or *round lost* banner over the score. |
 | Scoreboard (hold Tab) | Built (preview) | One boxed table: rounds, kills, ♥ heartshots, ping. |
 | Match end | Built (preview) | *you won* / *you lost*, final score, and a list of every round: map, winner, and how. |
 | Death | Built | See §10.5. Caption in the same boxed style. |
-| Settings | Planned | Video (pixel height, FOV), mouse, audio, key binds. |
+| Settings | Built | From the title screen (in place of the buttons, the logo stepping aside) and the pause menu (in its place); esc comes back. Tabs, each a white card of rows, a name then a slider (a bar filled black to the value, arrows either side, the value after) or a `<` choice `>`: **controls** (sensitivity, aim sensitivity, invert look, toggle aim), **keys** (every action with two slots: click one, press a key or mouse button; esc cancels, backspace clears; a key taken off another action says so and that row shakes), **video** (window: windowed / fullscreen / exclusive, vsync, frame cap, pixels: the 3D picture's height, colours, the heart's look), **camera** (field of view, speed fov, camera motion, smoothing, screen shake, wall ride tilt, ui motion, landing dip, speed lines, impact frames) and **sound** (volume, ready for when there are sounds). Everything takes effect at once and is saved as it changes, only what differs from the defaults (`user://settings.cfg`), so a default tuned later still reaches you; *defaults* puts the open tab back. Code: `src/ui/settings.gd`, `src/ui/settings_menu.gd`. |
 | Lobby | Planned (M3) | Invite / join code, ready-up. |
 
-"Preview" screens run on made-up data (press **F8** in the test course to cycle them) until rounds exist in M3. Code: `src/ui/overlays.gd`, `src/ui/pause_menu.gd`, `src/ui/main_menu.gd`, wired together by `src/ui/game_ui.gd`.
+"Preview" screens run on made-up data (press **F8** in the test course to cycle them) until rounds exist in M3. Code: `src/ui/overlays.gd`, `src/ui/pause_menu.gd`, `src/ui/main_menu.gd`, `src/ui/settings_menu.gd`, wired together by `src/ui/game_ui.gd`.
 
 ### 13.5 Motion
 The boxes are plain, so the motion carries the energy. The UI should feel as alive as the movement: it reacts to what you do and never just blinks things on and off.

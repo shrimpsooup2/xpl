@@ -179,7 +179,7 @@ func _ready() -> void:
 	if movement_params == null:
 		movement_params = _load_tuning("res://data/movement_params.tres")
 	if view_settings == null:
-		view_settings = _load_tuning("res://data/view_settings.tres")
+		view_settings = Settings.view()  # Yours, as saved (the settings page).
 	# Each player resizes its own capsule when crouching.
 	var col := $Collision as CollisionShape3D
 	col.shape = col.shape.duplicate()
@@ -222,6 +222,7 @@ func _ready() -> void:
 	else:
 		set_physics_process(false)
 	if human_controlled:
+		Settings.apply_saved()
 		Cosmetics.load_saved()
 		hat = Cosmetics.hat
 		player_name = Cosmetics.player_name

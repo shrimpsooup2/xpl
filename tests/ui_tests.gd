@@ -209,6 +209,153 @@ func test_pause_opens_and_closes() -> void:
 	ui.pause.close()
 
 
+# --- Settings -------------------------------------------------------------------
+
+## A fresh settings file for one test (the runner's own, emptied).
+func fresh_settings() -> void:
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(Settings.path))
+	InputMap.load_from_project_settings()
+	Settings.reload()
+
+
+func saved() -> ConfigFile:
+	var cfg := ConfigFile.new()
+	cfg.load(Settings.path)
+	return cfg
+
+
+func key(code: Key) -> InputEventKey:
+	var e := InputEventKey.new()
+	e.physical_keycode = code
+	e.pressed = true
+	return e
+
+
+func test_settings_save_only_what_you_changed() -> void:
+	fresh_settings()
+	var view := Settings.view()
+	check(view.fov_horizontal == Settings.defaults().fov_horizontal and view != Settings.defaults(),
+			"your view settings start as the defaults (a copy of them)")
+	view.fov_horizontal = 110.0
+	view.impact_frames = true
+	Settings.save_view()
+	var cfg := saved()
+	check(cfg.get_section_keys("view").size() == 2 and cfg.get_value("view", "fov_horizontal") == 110.0,
+			"only the two changed are saved (%s)" % cfg.get_section_keys("view"))
+	Settings.reload()
+	check(Settings.view().fov_horizontal == 110.0 and Settings.view().impact_frames, "and read back next time")
+	Settings.reset_view(["fov_horizontal"])
+	check(not saved().has_section_key("view", "fov_horizontal") and Settings.view().fov_horizontal == Settings.defaults().fov_horizontal,
+			"a reset puts it back and forgets it")
+	# A hand-edited file can't break anything.
+	cfg = saved()
+	cfg.set_value("view", "fov_horizontal", "wide")
+	cfg.set_value("view", "no_such_setting", 3)
+	cfg.set_value("view", "sensitivity", 2)
+	cfg.save(Settings.path)
+	Settings.reload()
+	check(Settings.view().fov_horizontal == Settings.defaults().fov_horizontal and Settings.view().sensitivity == 2.0,
+			"wrong types and unknown names are skipped; a whole number is fine for a decimal")
+	fresh_settings()
+
+
+func test_keys_rebind_take_over_and_come_back() -> void:
+	fresh_settings()
+	check(Settings.input_name(Settings.binding(&"jump", 0)) == "space" and Settings.input_name(Settings.binding(&"jump", 1)) == "wheel down",
+			"jump: space and the wheel (%s, %s)" % [Settings.input_name(Settings.binding(&"jump", 0)), Settings.input_name(Settings.binding(&"jump", 1))])
+	check(Settings.bind(&"jump", 0, key(KEY_F)) == &"" and InputMap.action_has_event(&"jump", key(KEY_F)),
+			"jump rebound to f")
+	check(not InputMap.action_has_event(&"jump", key(KEY_SPACE)), "space is off it")
+	var taken := Settings.bind(&"dash", 0, key(KEY_F))
+	check(taken == &"jump" and not InputMap.action_has_event(&"jump", key(KEY_F)) and InputMap.action_has_event(&"dash", key(KEY_F)),
+			"binding f to dash takes it off jump (from %s)" % taken)
+	Settings.unbind(&"crouch", 0)
+	check(Settings.binding(&"crouch", 0) != null and Settings.input_name(Settings.binding(&"crouch", 0)) == "c",
+			"clearing crouch's first key leaves c")
+	check(saved().get_value("keys", "dash")[0] == "key:%d" % KEY_F, "saved as the physical key")
+	# Next run: the saved keys come back.
+	InputMap.load_from_project_settings()
+	Settings.reload()
+	Settings.apply_saved()
+	check(InputMap.action_has_event(&"dash", key(KEY_F)) and not InputMap.action_has_event(&"jump", key(KEY_F)),
+			"read back and put into effect")
+	Settings.reset_keys()
+	check(InputMap.action_has_event(&"jump", key(KEY_SPACE)) and not saved().has_section("keys"), "defaults put every key back")
+	fresh_settings()
+
+
+func test_display_and_volume_apply_and_save() -> void:
+	fresh_settings()
+	Settings.set_fps_cap(144)
+	Settings.set_volume(0.5)
+	check(Engine.max_fps == 144 and saved().get_value("display", "fps_cap") == 144, "frame cap applied and saved")
+	near(AudioServer.get_bus_volume_db(0), linear_to_db(0.5), 0.01, "volume in dB")
+	Settings.set_volume(0.0)
+	check(AudioServer.is_bus_mute(0), "silent at 0")
+	Engine.max_fps = 0
+	Settings.reload()
+	Settings.apply_saved()
+	check(Engine.max_fps == 144 and AudioServer.is_bus_mute(0), "put back into effect next run")
+	Settings.set_fps_cap(0)
+	Settings.set_volume(1.0)
+	fresh_settings()
+
+
+func test_settings_page_every_tab_and_a_key() -> void:
+	fresh_settings()
+	var page := SettingsMenu.new()
+	ui.layer.canvas.add_child(page)
+	await frames(2)
+	for i in SettingsMenu.TABS.size():
+		page.show_tab(i)
+		await frames(2)
+		check(page._card.get_child_count() == 1 and page._tabs[i].button_pressed, "%s tab shows" % SettingsMenu.TABS[i])
+	# Camera: the field of view slider's arrow, then a toggle.
+	page.show_tab(SettingsMenu.TABS.find("camera"))
+	await frames(2)
+	var fov_row: HBoxContainer = page._card.find_children("*", "HBoxContainer", true, false) \
+			.filter(func(r: HBoxContainer) -> bool: return r.has_meta(&"bar"))[0]
+	(fov_row.get_child(2) as Button).pressed.emit()
+	check(Settings.view().fov_horizontal == Settings.defaults().fov_horizontal + 1.0 and saved().has_section_key("view", "fov_horizontal"),
+			"its > arrow widens the view a degree, saved (%.0f)" % Settings.view().fov_horizontal)
+	# Keys: click jump's first slot, press g.
+	page.show_tab(SettingsMenu.TABS.find("keys"))
+	await frames(2)
+	var slot: Button = page._slots[&"jump"][0]
+	slot.pressed.emit()
+	check(page.capturing() and slot.text == "...", "waiting for a key")
+	page._input(key(KEY_G))
+	check(not page.capturing() and InputMap.action_has_event(&"jump", key(KEY_G)) and slot.text == "g", "g is jump now")
+	slot.pressed.emit()
+	page._input(key(KEY_ESCAPE))
+	check(InputMap.action_has_event(&"jump", key(KEY_G)), "esc leaves it as it was")
+	(page._slots[&"dash"][0] as Button).pressed.emit()
+	page._input(key(KEY_G))
+	check(not InputMap.action_has_event(&"jump", key(KEY_G)) and page._status.visible, "taking jump's key says so")
+	page.reset_tab()
+	check(InputMap.action_has_event(&"jump", key(KEY_SPACE)) and (page._slots[&"jump"][0] as Button).text == "space",
+			"defaults on the keys tab puts them back")
+	var went := []
+	page.back.connect(func() -> void: went.append(true))
+	page.escape()
+	check(went.size() == 1, "esc goes back")
+	page.queue_free()
+	fresh_settings()
+
+
+func test_pause_menu_opens_settings_and_esc_comes_back() -> void:
+	ui.pause.open()
+	await frames(5)
+	ui.pause.open_settings()
+	await frames(3)
+	check(ui.pause._settings != null and not ui.pause._panel.visible, "settings in the menu's place")
+	ui.pause.toggle()  # Esc.
+	await frames(3)
+	check(ui.pause._settings == null and ui.pause._panel.visible and ui.pause.is_open, "esc: back to the menu, still paused")
+	ui.pause.close()
+	fresh_settings()
+
+
 func test_wipe_runs_middle_once_and_frees_itself() -> void:
 	var hits := [0]
 	var wipe := Wipe.run(get_tree(), func() -> void: hits[0] += 1)

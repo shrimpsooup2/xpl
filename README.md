@@ -41,11 +41,21 @@ A round-based, movement-first arena FPS. Two players duel through short rounds o
 
 Wall ride and mantle are automatic: jump along a wall to ride it, and move into a ledge to climb it. A dash leaves you faster: on the ground for a moment, and in the air much more (a dash at the top of a jump carries you about twice as far).
 
+### Settings
+
+**Settings** on the title screen or in the pause menu (Esc) has the usual settings, in tabs:
+
+- **controls:** sensitivity, aim sensitivity, invert look, toggle aim.
+- **keys:** rebind every action, two keys each. Click a slot and press a key or mouse button; Esc cancels, Backspace clears.
+- **video:** window mode, vsync, frame cap, pixels (the 3D picture's height: 360 by default, *screen* for native), colours (an optional 16-bit colour and dither mode), and the heart's look (the tiny TV or the loading spinner, both on trial).
+- **camera:** field of view, speed FOV, camera motion, smoothing, screen shake, wall ride tilt, UI motion, landing dip, speed lines, impact frames.
+- **sound:** volume. There are no sounds yet.
+
+Changes take effect at once and are saved in `user://settings.cfg` as you make them. Only what you've changed from the defaults is saved. **defaults** resets the open tab.
+
 ### Tuning
 
-Press **F1** in-game to edit every movement value live. **Save** writes them to `data/movement_params.tres` and `data/view_settings.tres` when you run from the editor, so tuned values can be committed.
-
-The **View → Look** section of the panel controls the render: `pixel height` is the internal 3D resolution (360 by default, 0 for native), `color levels` turns on an optional 16-bit color and dither mode (off by default), and `heart style` switches every heart between the two looks on trial: 0 the tiny TV, 1 the loading spinner.
+Press **F1** in-game to edit every movement value live. **Save** writes them to `data/movement_params.tres` when you run from the editor, so tuned values can be committed. The panel's View section is your settings (as above), and Save keeps those in `user://settings.cfg`.
 
 ## Playing online
 
@@ -71,7 +81,7 @@ Both ways run the same server-authoritative game ([how it works, and its safety 
 | `src/player/` | `Player` (input, camera interpolated between ticks), `PlayerModel` (the body, its holds, hit reactions and crumble), `BodyLayers` (clips over some bones, arm IK, hit flinches), `Viewmodel` (first-person arms and gun), `BodyShape` (proportions and shape), `DeathSequence` (the death cinematic), `HeartScreen` (the heart: a tiny CRT in the chest), `ViewSettings` |
 | `src/cosmetics/` | `Hats` (every hat, built from primitives in team colours, and the no-hat team triangle) and `Cosmetics` (the saved pick) |
 | `src/combat/` | The roster (`Weapons`, `WeaponDef`), gun models (`WeaponModel`), a player's hands (`WeaponHolder`: firing, pickups, throwing), shots in flight (`Ballistics`), hit zones (`HitShapes`), pickups and pads, `TargetDummy`, and shooting effects |
-| `src/ui/` | The UI: style and motion kit (`LofiUI`), low-res canvas (`LofiLayer`), HUD and its ammo column, crosshair and ammo ring, overlays, pause and main menus, the online page and lobby (`OnlineMenu`), scene wipe |
+| `src/ui/` | The UI: style and motion kit (`LofiUI`, `LofiSlider`), low-res canvas (`LofiLayer`), HUD and its ammo column, crosshair and ammo ring, overlays, pause and main menus, the online page and lobby (`OnlineMenu`), the settings page (`SettingsMenu`) and what it saves (`Settings`), scene wipe |
 | `src/game/` | Games: `GameRules` (the free-for-all and teams presets), `Match` (runs a game across maps), `Game` (starts and ends one), `PlayerInfo` (each player's name, side and score), `BotBrain` (practice bots) |
 | `src/net/` | Online play: `NetSession` (host, join, handshake, roster), `DedicatedServer`, `MatchSync` (a networked game's messages), `Prediction` and `Puppet` (your player and everyone else on a client), `NetCodec` (the wire format, checked) |
 | `src/world/` | `GreyBox` blocks (size and surface kind) and `Maps` (the map list F9 steps through) |
