@@ -1,30 +1,61 @@
-// xtrapartial's website: the game's UI brought to the page.
+// xtrapartial's website: one screen, drawn small and blown up in hard
+// pixels like the game's 3D (360 lines, point-filtered), with the game's
+// boxes: white cards with a crooked black frame set in from the edge
+// (src/ui/paper_box.gd). The words and buttons come from the page's HTML,
+// which stays over the canvas unseen so links, the keyboard and screen
+// readers work.
 //
-// - Boxes are drawn by hand like the game's (src/ui/paper_box.gd): a white
-//   card with a thin black frame set in from its edge, each box's margins,
-//   corners and frame lines a touch off, differently for every box and the
-//   same every time.
-// - Letter tiles slam down one after another, like the game's pop-ups.
-// - Cards spring in as they come into view.
-// - The heart: six glowing beads going round in a pocket in a chest, each
-//   on its own spring (src/player/heart.gd). Poke it.
-// - Glossy props float in the sky.
-//
-// No libraries. Everything still reads without it (plain CSS frames).
+// - The background dithers from black to maroon in 16-bit colour, like
+//   the game's optional colours mode.
+// - A blob hangs upside down from the top, swinging. Hover a download and
+//   it jolts.
+// - The picture card flips through screenshots (data-shots) with the
+//   game's box wipe, or low-res stand-ins until there are some.
+// - A download without an address yet says "soon :)".
 
 (function () {
 	"use strict";
 
-	var root = document.documentElement;
-	var still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-	var SVG = "http://www.w3.org/2000/svg";
+	const still = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+	const screen = document.getElementById("screen");
+	const canvas = document.getElementById("pixels");
+	const ctx = canvas.getContext("2d");
+	const status = document.getElementById("status");
+	const FONT = '"Liberation Sans", Arial, Helvetica, sans-serif';
+	const INK = "#0d0d0f";
+	const PAPER = "#ffffff";
+	const GREY = "#8c8c94";
+	const PINK = "#ff3d73";
+	// The layout wide screens get, in canvas pixels; narrower ones stack,
+	// on a canvas about TALL_LOW pixels across. Each canvas pixel is a
+	// whole number of screen pixels, and type sits on whole pixels.
+	const DESIGN = { w: 400, h: 222 };
+	const TALL_LOW = 180;
+	const SLIDE_TIME = 5.0;
+	const WIPE_TIME = 0.5;
 
-	// --- Which hand drew it: a seeded random, so a box is crooked the same
-	// way every time. ---------------------------------------------------------
+	// --- The page's words ----------------------------------------------------
+
+	const logoEl = document.querySelector('[data-card="logo"]');
+	const infoEl = document.querySelector('[data-card="info"]');
+	const picsEl = document.querySelector('[data-card="pictures"]');
+	const logoText = logoEl.querySelector("h1").textContent.trim();
+	const lines = Array.from(infoEl.querySelectorAll("li"), (li) => li.textContent.trim());
+	const caption = picsEl.querySelector(".caption");
+	const shots = (picsEl.getAttribute("data-shots") || "").split(",").map((s) => s.trim()).filter(Boolean).map((src) => {
+		const img = new Image();
+		img.src = src;
+		img.onload = () => { img.ready = true; };
+		return img;
+	});
+	const STAND_INS = ["pictures soon", "the maps are being decorated", "pictures soon"];
+	const slideCount = shots.length || STAND_INS.length;
+
+	// --- Which hand drew it -----------------------------------------------------
 
 	function hash(text) {
-		var h = 2166136261;
-		for (var i = 0; i < text.length; i++) {
+		let h = 2166136261;
+		for (let i = 0; i < text.length; i++) {
 			h ^= text.charCodeAt(i);
 			h = Math.imul(h, 16777619);
 		}
@@ -32,583 +63,708 @@
 	}
 
 	function hand(seed) {
-		var s = seed >>> 0;
-		return function (lo, hi) {
+		let s = seed >>> 0;
+		return (lo, hi) => {
 			s = (s + 0x6d2b79f5) >>> 0;
-			var t = Math.imul(s ^ (s >>> 15), 1 | s);
+			let t = Math.imul(s ^ (s >>> 15), 1 | s);
 			t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-			var r = ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-			return lo + (hi - lo) * r;
+			return lo + (hi - lo) * (((t ^ (t >>> 14)) >>> 0) / 4294967296);
 		};
 	}
 
-	// --- Paper boxes -----------------------------------------------------------
+	// --- Layout ----------------------------------------------------------------------
 
-	var seeds = new WeakMap();
-	var drawn = 0;
+	let S = 3;          // Screen pixels per canvas pixel.
+	let U = 1;          // Canvas pixels per layout unit.
+	let W = 0, H = 0;   // The canvas, in its own pixels.
+	let WU = 0, HU = 0; // The canvas, in layout units.
+	let wide = true;
+	let cards = {};     // name -> {x, y, w, h, angle, delay, parts}
+	let hits = [];      // {el, name, card, x, y, w, h}: card-local, from its top-left.
+	let background = null;
+	let blobX = 0;
 
-	// The rect's corners (clockwise from top left), each nudged a little.
-	function corners(x, y, w, h, rand, amount) {
-		var out = [];
-		[[x, y], [x + w, y], [x + w, y + h], [x, y + h]].forEach(function (p) {
-			out.push([p[0] + rand(-amount, amount), p[1] + rand(-amount, amount)]);
-		});
+	function font(size) {
+		return size + "px " + FONT;
+	}
+
+	// Type is drawn at whole canvas pixels, so this is in layout units at
+	// the size it'll really be drawn.
+	function textWidth(text, size) {
+		const px = pixels(size);
+		ctx.font = font(px);
+		return ctx.measureText(text).width / U;
+	}
+
+	function pixels(size) {
+		return Math.max(6, Math.round(size * U));
+	}
+
+	function wrap(text, size, width) {
+		const out = [];
+		let line = "";
+		for (const word of text.split(/\s+/)) {
+			const next = line ? line + " " + word : word;
+			if (line && textWidth(next, size) > width) {
+				out.push(line);
+				line = word;
+			} else {
+				line = next;
+			}
+		}
+		if (line) out.push(line);
 		return out;
 	}
 
-	function points(list) {
-		return list.map(function (p) { return p[0].toFixed(2) + "," + p[1].toFixed(2); }).join(" ");
-	}
+	const deg = (d) => d * Math.PI / 180;
 
-	function shape(tag, cls, pts) {
-		var el = document.createElementNS(SVG, tag);
-		el.setAttribute("class", cls);
-		el.setAttribute("points", points(pts));
-		return el;
-	}
-
-	function draw(box) {
-		var w = box.offsetWidth, h = box.offsetHeight;
-		if (!w || !h) return;
-		var rand = hand(seeds.get(box));
-		var margin = parseFloat(getComputedStyle(box).getPropertyValue("--m")) || 5;
-		var wobble = Math.min(0.5 + margin * 0.3, 3);
-		var card = corners(0, 0, w, h, rand, wobble * 0.6);
-		// The frame sits in from each edge by a different amount.
-		var l = margin * rand(0.6, 1.4), t = margin * rand(0.6, 1.4);
-		var r = margin * rand(0.6, 1.4), b = margin * rand(0.6, 1.4);
-		var inner = corners(l, t, w - l - r, h - t - b, rand, wobble);
-		var svg = box.querySelector(":scope > svg.paper");
-		if (!svg) {
-			svg = document.createElementNS(SVG, "svg");
-			svg.setAttribute("class", "paper");
-			svg.setAttribute("aria-hidden", "true");
-			box.insertBefore(svg, box.firstChild);
+	function layout() {
+		const vw = document.documentElement.clientWidth;
+		const vh = window.innerHeight;
+		const fit = Math.floor(Math.min(vw / DESIGN.w, vh / DESIGN.h));
+		wide = fit >= 2 && vw / vh > 1.2;
+		const buttons = Array.from(infoEl.querySelectorAll(".hit"));
+		let logo, info, pics, size, textSize;
+		U = 1;
+		if (wide) {
+			S = fit;
+			W = Math.ceil(vw / S);
+			H = Math.ceil(vh / S);
+			WU = W;
+			HU = H;
+			const ox = Math.floor((WU - DESIGN.w) / 2), oy = Math.floor((HU - DESIGN.h) / 2);
+			logo = { x: ox + 17, y: oy + 18, w: 164, h: 56, angle: deg(-3) };
+			info = { x: ox + 21, y: oy + 94, w: 158, angle: deg(-1.5) };
+			pics = { x: ox + 214, y: oy + 98, w: 166, h: 104, angle: deg(-2) };
+			blobX = ox + 262;
+			size = 17;
+			textSize = 10;
+		} else {
+			S = Math.max(2, Math.round(vw / TALL_LOW));
+			W = Math.floor(vw / S);
+			WU = W;
+			const cw = Math.min(WU - 24, 230);
+			const cx = Math.floor((WU - cw) / 2);
+			logo = { x: cx, y: 14, w: Math.min(cw - 34, 170), h: 46, angle: deg(-3) };
+			pics = { x: cx + 12, y: 78, w: cw - 24, angle: deg(-2) };
+			pics.h = Math.round(pics.w * 0.64);
+			info = { x: cx, y: pics.y + pics.h + 20, w: cw, angle: deg(-1.5) };
+			blobX = WU - 24;
+			size = Math.min(17, Math.floor(logo.w / 7));
+			textSize = 10;
 		}
-		svg.setAttribute("width", w);
-		svg.setAttribute("height", h);
-		svg.setAttribute("viewBox", "0 0 " + w + " " + h);
-		while (svg.firstChild) svg.removeChild(svg.firstChild);
-		if (box.classList.contains("btn")) {
-			svg.appendChild(shape("polygon", "under", card.map(function (p) { return [p[0] + 4, p[1] + 4]; })));
+		logo.size = size;
+		logo.delay = 0;
+		pics.delay = 0.12;
+		info.delay = 0.24;
+
+		// The info card: its lines wrapped, then the buttons, wrapping too.
+		const pad = 13;
+		const wrapped = [];
+		for (const line of lines) wrapped.push(...wrap(line, textSize, info.w - pad * 2));
+		info.lines = wrapped;
+		info.textSize = textSize;
+		let bx = pad, by = pad + wrapped.length * 12 + 7;
+		info.buttons = buttons.map((el) => {
+			const label = el.getAttribute("data-label") || el.textContent.trim();
+			const words = ARROWS[label[0]] && label[1] === " " ? label.slice(2) : label;
+			const bw = Math.ceil(textWidth(words, 9)) + 14 + (words !== label ? ARROWS[label[0]][0].length + 3 : 0);
+			if (bx + bw > info.w - pad + 2 && bx > pad) {
+				bx = pad;
+				by += 20;
+			}
+			const b = { el, name: el.getAttribute("data-button"), label, x: bx, y: by, w: bw, h: 17 };
+			bx += bw + 5;
+			return b;
+		});
+		info.h = by + 17 + pad;
+
+		// The picture card: the picture, dots under it, arrows either side.
+		pics.image = { x: 9, y: 9, w: pics.w - 18, h: pics.h - 22 };
+		pics.prev = { el: picsEl.querySelector('[data-button="prev"]'), name: "prev", x: -17, y: pics.h / 2 - 15, w: 14, h: 30 };
+		pics.next = { el: picsEl.querySelector('[data-button="next"]'), name: "next", x: pics.w + 3, y: pics.h / 2 - 15, w: 14, h: 30 };
+
+		if (!wide) {
+			HU = Math.max(window.innerHeight / S / U, info.y + info.h + 20);
+			H = Math.ceil(HU * U);
 		}
-		svg.appendChild(shape("polygon", "card", card));
-		svg.appendChild(shape("polygon", "fill", inner));
-		svg.appendChild(shape("polygon", "line", inner));
-	}
+		cards = { logo, info, pictures: pics };
 
-	var resized = "ResizeObserver" in window ? new ResizeObserver(function (entries) {
-		entries.forEach(function (e) { draw(e.target); });
-	}) : null;
-
-	function paper(box) {
-		if (seeds.has(box)) return;
-		seeds.set(box, hash((box.textContent || "").slice(0, 60)) + 7919 * drawn++);
-		draw(box);
-		if (resized) resized.observe(box);
-	}
-
-	function paperAll(scope) {
-		(scope || document).querySelectorAll(".box").forEach(paper);
-	}
-
-	// --- Letter tiles ------------------------------------------------------------
-
-	function tiles(el) {
-		var text = el.textContent.trim();
-		var style = el.getAttribute("data-tiles") || "inv";
-		var rand = hand(hash(text));
-		el.setAttribute("aria-label", text);
-		el.textContent = "";
-		var i = 0;
-		// A word never breaks across lines, except after a hyphen.
-		text.split(/\s+/).join(" ").replace(/-/g, "- ").split(" ").forEach(function (word) {
-			var group = document.createElement("span");
-			group.className = "word" + (/-$/.test(word) ? " joined" : "");
-			group.setAttribute("aria-hidden", "true");
-			el.appendChild(group);
-			Array.from(word).forEach(function (ch) {
-				var span = document.createElement("span");
-				span.className = "box tile" + (style === "plain" ? "" : " " + style);
-				span.textContent = ch;
-				span.style.setProperty("--i", i++);
-				span.style.setProperty("--r0", rand(-28, 28).toFixed(1) + "deg");
-				span.style.setProperty("--r1", rand(-4, 4).toFixed(1) + "deg");
-				// Where it tumbles off to when it shatters.
-				span.style.setProperty("--dx", rand(-90, 90).toFixed(0) + "px");
-				span.style.setProperty("--dy", rand(-40, 90).toFixed(0) + "px");
-				span.style.setProperty("--r2", rand(-200, 200).toFixed(0) + "deg");
-				group.appendChild(span);
+		// Lay the real elements over where they're drawn.
+		hits = [];
+		place(logoEl, logo);
+		place(infoEl, info);
+		place(picsEl, pics);
+		for (const b of info.buttons) hits.push(Object.assign({ card: info }, b));
+		hits.push(Object.assign({ card: pics }, pics.prev), Object.assign({ card: pics }, pics.next));
+		const k = U * S;
+		for (const h of hits) {
+			Object.assign(h.el.style, {
+				left: h.x * k + "px", top: h.y * k + "px", width: h.w * k + "px", height: h.h * k + "px",
 			});
+		}
+
+		lettering.clear();
+		canvas.width = W;
+		canvas.height = H;
+		canvas.style.width = W * S + "px";
+		canvas.style.height = H * S + "px";
+		screen.style.height = wide ? "100vh" : H * S + "px";
+		background = dither(W, H);
+	}
+
+	function place(el, card) {
+		const k = U * S;
+		Object.assign(el.style, {
+			left: card.x * k + "px", top: card.y * k + "px",
+			width: card.w * k + "px", height: card.h * k + "px",
+			transform: "rotate(" + card.angle + "rad)",
 		});
 	}
 
-	// --- Coming into view --------------------------------------------------------
+	// --- The background: black into maroon, in 16-bit colour with an ordered
+	// dither, like the game's colours setting. -------------------------------------------
 
-	var seen = "IntersectionObserver" in window ? new IntersectionObserver(function (entries) {
-		entries.forEach(function (e) {
-			if (!e.isIntersecting) return;
-			e.target.classList.add("in");
-			seen.unobserve(e.target);
-		});
-	}, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 }) : null;
+	const BAYER = [0, 8, 2, 10, 12, 4, 14, 6, 3, 11, 1, 9, 15, 7, 13, 5];
+	const STOPS = [[0, [0, 0, 0]], [0.32, [0, 0, 0]], [0.62, [40, 12, 24]], [1, [118, 46, 72]]];
 
-	function watch(el) {
-		if (seen) seen.observe(el);
-		else el.classList.add("in");
-	}
-
-	// Siblings arrive one after another.
-	function stagger() {
-		document.querySelectorAll(".reveal").forEach(function (el) {
-			var kin = Array.prototype.filter.call(el.parentElement.children, function (c) {
-				return c.classList.contains("reveal");
-			});
-			el.style.setProperty("--d", (Math.min(kin.indexOf(el), 5) * 0.06).toFixed(2) + "s");
-		});
-	}
-
-	// --- The HUD's ammo column -----------------------------------------------------
-
-	function ammo(el) {
-		var rounds = parseInt(el.getAttribute("data-rounds"), 10);
-		if (!rounds) return;
-		// 9 px × √rounds on the game's 270 px canvas, here at about 1.7×.
-		var height = Math.round(15.5 * Math.sqrt(rounds));
-		el.style.setProperty("--h", height + "px");
-		var small = rounds <= 12;
-		el.classList.add(small ? "cells" : "notched");
-		el.style.setProperty("--cell", (small ? height / rounds : height * 10 / rounds).toFixed(2) + "px");
-		var count = document.createElement("span");
-		count.className = "count";
-		count.textContent = rounds;
-		el.appendChild(count);
-		el.setAttribute("role", "img");
-		el.setAttribute("aria-label", rounds + " rounds");
-	}
-
-	// --- Props in the sky ----------------------------------------------------------
-
-	var PROPS = [
-		// left %, top %, size px, colour, seconds a turn, tilt, opacity
-		[6, 18, 64, "#dbd1b3", 46, 24, 0.9],
-		[84, 9, 42, "#8ce6ff", 38, -18, 0.75],
-		[73, 52, 90, "#e0806e", 60, 14, 0.55],
-		[14, 68, 38, "#b8a6e0", 34, 30, 0.7],
-		[46, 84, 54, "#f2a7c3", 52, -24, 0.45],
-		[92, 76, 30, "#a8e0c8", 30, 20, 0.6],
-	];
-
-	function props() {
-		var sky = document.querySelector(".sky");
-		if (!sky || still) return;
-		PROPS.forEach(function (p) {
-			var prop = document.createElement("div");
-			prop.className = "prop";
-			prop.style.cssText = "left:" + p[0] + "%;top:" + p[1] + "%;--s:" + p[2] + "px;--c:" + p[3] +
-				";--t:" + p[4] + "s;--x:" + p[5] + "deg;--o:" + p[6] + ";animation-delay:-" + (p[4] * p[0] / 100).toFixed(1) + "s";
-			for (var i = 0; i < 6; i++) prop.appendChild(document.createElement("i"));
-			sky.appendChild(prop);
-		});
-	}
-
-	// --- The heart ----------------------------------------------------------------
-	//
-	// The game's numbers (src/player/heart.gd), with lengths in ring radii so
-	// they work at any size: springs of the same stiffness and damping, the
-	// same kick and slack, the same spin.
-
-	var DOTS = 6;
-	var DOT_SIZE = 0.42;      // Bead radius / ring radius (0.011 / 0.026).
-	var TAIL_SIZE = 0.55;     // The last bead's size against the lead's.
-	var STIFFNESS = 700;
-	var DAMPING = 14;
-	var SLACK = 0.35;         // How far a bead can lag its place (0.009 / 0.026).
-	var KICK = 34.6;          // A hit's kick (0.9 m/s / 0.026 m).
-	var SPIN_REST = 0.9;      // Turns a second.
-	var SPIN_FAST = 2.4;
-	var HITCH_TIME = 0.25;
-	var DYING_BELOW = 0.35;
-	var HIT = 0.25;           // Health a poke takes.
-	var SPILLED_FOR = 3.2;    // Seconds before it loads again.
-
-	function mix(a, b, t) { return a + (b - a) * t; }
-
-	function rgb(a, b, t) {
-		return "rgb(" + Math.round(mix(a[0], b[0], t)) + "," + Math.round(mix(a[1], b[1], t)) + "," + Math.round(mix(a[2], b[2], t)) + ")";
-	}
-
-	var PINK = [255, 61, 115];
-	var HOT = [255, 244, 247];
-	var GREY = [120, 112, 124];
-	var DARK = [40, 30, 40];
-
-	function Heart(stage) {
-		this.stage = stage;
-		this.canvas = stage.querySelector("canvas");
-		this.ctx = this.canvas.getContext("2d");
-		this.caption = stage.querySelector(".caption");
-		this.dots = [];
-		for (var i = 0; i < DOTS; i++) this.dots.push({ x: 0, y: 0, vx: 0, vy: 0, free: false, dark: 0 });
-		this.angle = 0;
-		this.health = 1;
-		this.hitch = 0;
-		this.grey = 0;
-		this.flash = 0;
-		this.spilled = -1;       // Seconds since it spilled (< 0: it hasn't).
-		this.loose = 0;          // Seconds the beads swing free of the slack (coming back).
-		this.stopped = stage.getAttribute("data-heart") === "timed-out";
-		this.rate = SPIN_REST;
-		this.speed = 0;          // How fast the page is moving: "your speed".
-		this.visible = true;
-		this.placed = false;
-		this.resize();
-		this.bind();
-	}
-
-	Heart.prototype.resize = function () {
-		var r = this.canvas.getBoundingClientRect();
-		var dpr = Math.min(window.devicePixelRatio || 1, 2);
-		this.w = r.width;
-		this.h = r.height;
-		this.canvas.width = Math.round(r.width * dpr);
-		this.canvas.height = Math.round(r.height * dpr);
-		this.ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-		// The chest, and the pocket in it a little off its middle.
-		this.pocket = Math.min(this.w, this.h) * 0.15;
-		this.ring = this.pocket * 0.55;
-		this.cx = this.w * 0.53;
-		this.cy = this.h * 0.47;
-		if (!this.placed) {
-			this.placed = true;
-			for (var i = 0; i < DOTS; i++) {
-				var p = this.place(i);
-				this.dots[i].x = p[0];
-				this.dots[i].y = p[1];
+	function shade(t) {
+		for (let i = 1; i < STOPS.length; i++) {
+			if (t <= STOPS[i][0]) {
+				const [t0, a] = STOPS[i - 1], [t1, b] = STOPS[i];
+				const k = (t - t0) / (t1 - t0);
+				return [a[0] + (b[0] - a[0]) * k, a[1] + (b[1] - a[1]) * k, a[2] + (b[2] - a[2]) * k];
 			}
 		}
-	};
+		return STOPS[STOPS.length - 1][1];
+	}
 
-	// Where bead i belongs: round the ring, or settled in a heap at the
-	// bottom of the pocket once it's stopped.
-	Heart.prototype.place = function (i) {
-		if (this.stopped) {
-			var row = i < 3 ? 0 : 1;
-			var col = (i % 3) - 1;
-			var bead = this.ring * DOT_SIZE;
-			return [this.cx + col * bead * 2.05 + row * bead, this.cy + this.pocket * 0.62 - bead - row * bead * 1.75];
-		}
-		var sag = this.health < DYING_BELOW ? this.ring * 0.12 : 0;
-		var a = this.angle - i * (Math.PI * 2 / DOTS);
-		return [this.cx + Math.cos(a) * this.ring, this.cy + Math.sin(a) * this.ring + sag];
-	};
-
-	Heart.prototype.bind = function () {
-		var self = this;
-		var poke = function (e) {
-			if (e) e.preventDefault();
-			self.poke();
+	function dither(w, h) {
+		const off = document.createElement("canvas");
+		off.width = w;
+		off.height = h;
+		const c = off.getContext("2d");
+		const img = c.createImageData(w, h);
+		// 5 bits of red and blue, 6 of green, like RGB565.
+		const q = (v, levels, d) => {
+			const step = 255 / (levels - 1);
+			return Math.max(0, Math.min(255, Math.round(v / step + d) * step));
 		};
-		this.canvas.addEventListener("pointerdown", poke);
-		this.canvas.addEventListener("keydown", function (e) {
-			if (e.key === "Enter" || e.key === " ") poke(e);
-		});
-		var last = window.scrollY;
-		window.addEventListener("scroll", function () {
-			var dy = window.scrollY - last;
-			last = window.scrollY;
-			if (still) return;
-			// The beads lag behind as the page moves.
-			self.speed = Math.min(self.speed + Math.abs(dy) * 0.02, 1);
-			for (var i = 0; i < DOTS; i++) if (!self.dots[i].free) self.dots[i].vy += dy * self.ring * 0.05;
-		}, { passive: true });
-		window.addEventListener("resize", function () { self.resize(); });
-		if ("IntersectionObserver" in window) {
-			new IntersectionObserver(function (entries) {
-				self.visible = entries[0].isIntersecting;
-				if (self.visible) self.start();
-			}).observe(this.stage);
-		}
-	};
-
-	Heart.prototype.poke = function () {
-		if (this.spilled >= 0) return;
-		if (this.stopped) {
-			// Timed out: a poke loads it again.
-			this.stopped = false;
-			this.health = 1;
-			this.grey = 1;
-			this.loose = 0.6;
-			return;
-		}
-		this.health -= HIT;
-		if (this.health <= 0.001) {
-			this.spill();
-			return;
-		}
-		// Hit: the beads rattle, the spin hitches and the pocket greys, like lag.
-		this.hitch = HITCH_TIME;
-		this.grey = 1;
-		for (var i = 0; i < DOTS; i++) {
-			var a = Math.random() * Math.PI * 2;
-			var kick = KICK * this.ring * (still ? 0.2 : 1);
-			this.dots[i].vx += Math.cos(a) * kick;
-			this.dots[i].vy += Math.sin(a) * kick;
-		}
-	};
-
-	// A heartshot: the beads flash white and spill out of the chest.
-	Heart.prototype.spill = function () {
-		this.spilled = 0;
-		this.flash = 1;
-		for (var i = 0; i < DOTS; i++) {
-			var d = this.dots[i];
-			d.free = true;
-			d.dark = 0;
-			var a = -Math.PI / 2 + (Math.random() - 0.5) * 2.2;
-			var speed = this.ring * (9 + Math.random() * 9);
-			d.vx = Math.cos(a) * speed;
-			d.vy = Math.sin(a) * speed;
-		}
-		popup(this.stage, "heartshot");
-	};
-
-	Heart.prototype.revive = function () {
-		this.spilled = -1;
-		this.health = 1;
-		this.loose = 0.6;
-		for (var i = 0; i < DOTS; i++) {
-			var d = this.dots[i];
-			d.free = false;
-			d.dark = 0;
-			var p = this.place(i);
-			d.x = this.cx;
-			d.y = this.cy;
-			d.vx = (p[0] - this.cx) * 10;
-			d.vy = (p[1] - this.cy) * 10;
-		}
-	};
-
-	Heart.prototype.step = function (dt) {
-		// Spin: faster the faster the page moves, held while hit, stuttering
-		// near death, stopped once it's timed out.
-		this.speed = Math.max(this.speed - dt * 1.5, 0);
-		var want = still ? 0.12 : mix(SPIN_REST, SPIN_FAST, this.speed);
-		this.rate += (want - this.rate) * Math.min(dt * 4, 1);
-		var turning = !this.stopped && this.hitch <= 0 && this.spilled < 0;
-		if (turning && this.health < DYING_BELOW && Math.sin(this.angle * 3.1) > 0.82) turning = false;
-		if (turning) this.angle += this.rate * Math.PI * 2 * dt;
-		this.hitch = Math.max(this.hitch - dt, 0);
-		this.grey = Math.max(this.grey - dt / HITCH_TIME, 0);
-		this.flash = Math.max(this.flash - dt * 2.5, 0);
-		this.loose = Math.max(this.loose - dt, 0);
-
-		var floor = this.h - this.ring * DOT_SIZE - 6;
-		for (var i = 0; i < DOTS; i++) {
-			var d = this.dots[i];
-			if (d.free) {
-				// Spilled: little bodies bouncing about the floor, going dark.
-				d.vy += this.h * 2.6 * dt;
-				d.x += d.vx * dt;
-				d.y += d.vy * dt;
-				if (d.y > floor) {
-					d.y = floor;
-					d.vy *= -0.45;
-					d.vx *= 0.8;
-				}
-				if (d.x < 6 || d.x > this.w - 6) {
-					d.x = Math.min(Math.max(d.x, 6), this.w - 6);
-					d.vx *= -0.6;
-				}
-				d.dark = Math.min(d.dark + dt / 2, 1);
-				continue;
-			}
-			var p = this.place(i);
-			var ax = STIFFNESS * (p[0] - d.x) - DAMPING * d.vx;
-			var ay = STIFFNESS * (p[1] - d.y) - DAMPING * d.vy;
-			d.vx += ax * dt;
-			d.vy += ay * dt;
-			d.x += d.vx * dt;
-			d.y += d.vy * dt;
-			// Never further from its place than the slack (unless it's on its
-			// way back in).
-			var ox = d.x - p[0], oy = d.y - p[1];
-			var off = Math.sqrt(ox * ox + oy * oy);
-			var slack = SLACK * this.ring;
-			if (off > slack && this.loose <= 0) {
-				d.x = p[0] + ox / off * slack;
-				d.y = p[1] + oy / off * slack;
+		for (let y = 0; y < h; y++) {
+			const col = shade(h > 1 ? y / (h - 1) : 0);
+			for (let x = 0; x < w; x++) {
+				const d = (BAYER[(y & 3) * 4 + (x & 3)] + 0.5) / 16 - 0.5;
+				const i = (y * w + x) * 4;
+				img.data[i] = q(col[0], 32, d);
+				img.data[i + 1] = q(col[1], 64, d);
+				img.data[i + 2] = q(col[2], 32, d);
+				img.data[i + 3] = 255;
 			}
 		}
-		if (this.spilled >= 0) {
-			this.spilled += dt;
-			if (this.spilled > SPILLED_FOR) this.revive();
+		c.putImageData(img, 0, 0);
+		return off;
+	}
+
+	// --- Paper boxes -----------------------------------------------------------------
+
+	function corners(x, y, w, h, rand, amount) {
+		return [[x, y], [x + w, y], [x + w, y + h], [x, y + h]].map((p) =>
+			[p[0] + rand(-amount, amount), p[1] + rand(-amount, amount)]);
+	}
+
+	function path(points) {
+		ctx.beginPath();
+		ctx.moveTo(points[0][0], points[0][1]);
+		for (let i = 1; i < points.length; i++) ctx.lineTo(points[i][0], points[i][1]);
+		ctx.closePath();
+	}
+
+	// A white card with a black frame set in from its edge, each side a
+	// touch off. `fill` fills inside the frame (inverted boxes).
+	function paper(x, y, w, h, seed, margin, fill, shadow) {
+		const rand = hand(seed);
+		const wobble = Math.min(0.4 + margin * 0.18, 1.6);
+		const card = corners(x, y, w, h, rand, wobble * 0.6);
+		const l = margin * rand(0.6, 1.4), t = margin * rand(0.6, 1.4);
+		const r = margin * rand(0.6, 1.4), b = margin * rand(0.6, 1.4);
+		const inner = corners(x + l, y + t, w - l - r, h - t - b, rand, wobble);
+		if (shadow) {
+			path(card.map((p) => [p[0] + shadow, p[1] + shadow]));
+			ctx.fillStyle = "rgba(0,0,0,.85)";
+			ctx.fill();
 		}
+		path(card);
+		ctx.fillStyle = PAPER;
+		ctx.fill();
+		if (fill) {
+			path(inner);
+			ctx.fillStyle = fill;
+			ctx.fill();
+		}
+		path(inner);
+		ctx.strokeStyle = INK;
+		ctx.lineWidth = margin > 4 ? 1.4 : 1;
+		ctx.stroke();
+	}
+
+	// Words as one-bit pixel lettering: set small, every pixel either ink or
+	// nothing, so a tilted card turns them without smearing thin strokes
+	// away. Kept once made.
+	const lettering = new Map();
+
+	function letters(str, px, color) {
+		const key = str + "|" + px + "|" + color;
+		let made = lettering.get(key);
+		if (made) return made;
+		const c = document.createElement("canvas");
+		const g = c.getContext("2d");
+		g.font = font(px);
+		const base = Math.round(px * 1.05) + 1;
+		c.width = Math.ceil(g.measureText(str).width) + 2;
+		c.height = base + Math.ceil(px * 0.3) + 1;
+		g.font = font(px);
+		g.fillStyle = color;
+		g.textBaseline = "alphabetic";
+		g.fillText(str, 1, base);
+		const img = g.getImageData(0, 0, c.width, c.height);
+		const rgb = [parseInt(color.slice(1, 3), 16), parseInt(color.slice(3, 5), 16), parseInt(color.slice(5, 7), 16)];
+		for (let i = 0; i < img.data.length; i += 4) {
+			img.data[i] = rgb[0];
+			img.data[i + 1] = rgb[1];
+			img.data[i + 2] = rgb[2];
+			img.data[i + 3] = img.data[i + 3] > 64 ? 255 : 0;
+		}
+		g.putImageData(img, 0, 0);
+		made = { canvas: c, base };
+		lettering.set(key, made);
+		return made;
+	}
+
+	// `str` with its baseline at (x, y), in layout units.
+	function text(str, x, y, size, color) {
+		const made = letters(str, pixels(size), color);
+		ctx.imageSmoothingEnabled = false;
+		ctx.drawImage(made.canvas, x - 1 / U, y - made.base / U, made.canvas.width / U, made.canvas.height / U);
+	}
+
+	// A button's words, a leading ↓ or ← drawn as a little pixel arrow (the
+	// glyph is lost at this size).
+	const ARROWS = {
+		"↓": ["..#..", "..#..", "..#..", "#####", ".###.", "..#.."],
+		"←": ["..#...", ".##...", "######", ".##...", "..#..."],
 	};
 
-	Heart.prototype.draw = function () {
-		var c = this.ctx, w = this.w, h = this.h;
-		c.clearRect(0, 0, w, h);
-		var cx = this.cx, cy = this.cy, R = this.pocket;
+	function label(str, x, y, size, color) {
+		const icon = ARROWS[str[0]];
+		if (icon && str[1] === " ") {
+			ctx.fillStyle = color;
+			const top = Math.round(y - icon.length - 1);
+			icon.forEach((row, j) => {
+				for (let i = 0; i < row.length; i++) if (row[i] === "#") ctx.fillRect(Math.round(x) + i, top + j, 1, 1);
+			});
+			x += icon[0].length + 3;
+			str = str.slice(2);
+		}
+		text(str, x, y, size, color);
+	}
 
-		// The chest: a glossy blank slab with arms going down and out, lit
-		// from above left with a pink rim.
-		var top = cy - R * 2.4, left = cx - R * 3.2, right = cx + R * 2.9;
-		var body = c.createLinearGradient(left, top, right, h);
+	// --- Motion ------------------------------------------------------------------------
+
+	let now = 0;
+	const state = { hover: "", focus: "", press: "" };
+	const blob = { angle: 0.15, spin: 0 };
+	let slide = 0, shown = 0, wipeAt = -1, lastTurn = 0;
+	const pops = [];
+
+	function backOut(t) {
+		const c = 1.9;
+		return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2);
+	}
+
+	// Cards stamp down in turn: big and turned, then home with an overshoot.
+	function stamp(card) {
+		if (still) return { scale: 1, turn: 0, alpha: 1 };
+		const t = Math.max(0, Math.min(1, (now - 0.1 - card.delay) / 0.38));
+		return { scale: 1 + 0.8 * (1 - backOut(t)), turn: (1 - t) * deg(9), alpha: Math.min(1, t * 5) };
+	}
+
+	function step(dt) {
+		// The blob swings like a pendulum, pushed by a slow breeze.
+		const breeze = still ? 0 : 0.35 * Math.sin(now * 0.7) + 0.15 * Math.sin(now * 1.9);
+		blob.spin += (-16 * blob.angle - 1.1 * blob.spin + breeze) * dt;
+		blob.angle += blob.spin * dt;
+		// Pictures turn over on their own unless you're at them.
+		if (slideCount > 1 && !still && wipeAt < 0 && now - lastTurn > SLIDE_TIME && state.hover !== "prev" && state.hover !== "next") {
+			turn(1);
+		}
+		if (wipeAt >= 0 && now - wipeAt >= WIPE_TIME / 2) shown = slide;
+		if (wipeAt >= 0 && now - wipeAt >= WIPE_TIME) wipeAt = -1;
+		for (let i = pops.length - 1; i >= 0; i--) if (now - pops[i].born > 2) pops.splice(i, 1);
+	}
+
+	function turn(by) {
+		slide = (slide + by + slideCount) % slideCount;
+		lastTurn = now;
+		if (still) {
+			shown = slide;
+		} else {
+			wipeAt = now;
+		}
+		caption.textContent = "picture " + (slide + 1) + " of " + slideCount + (shots.length ? "" : ": " + STAND_INS[slide]);
+	}
+
+	function jolt(amount) {
+		if (!still) blob.spin += amount;
+	}
+
+	// --- Drawing -------------------------------------------------------------------------
+
+	function draw() {
+		ctx.setTransform(1, 0, 0, 1, 0, 0);
+		ctx.imageSmoothingEnabled = true;
+		ctx.drawImage(background, 0, 0);
+		// Everything else in layout units.
+		ctx.setTransform(U, 0, 0, U, 0, 0);
+		drawBlob();
+		drawCard(cards.logo, drawLogo);
+		drawCard(cards.pictures, drawPictures);
+		drawCard(cards.info, drawInfo);
+		drawPops();
+	}
+
+	function drawCard(card, inside) {
+		const a = stamp(card);
+		if (a.alpha <= 0) return;
+		ctx.save();
+		ctx.globalAlpha = a.alpha;
+		ctx.translate(card.x + card.w / 2, card.y + card.h / 2);
+		ctx.rotate(card.angle + a.turn);
+		ctx.scale(a.scale, a.scale);
+		ctx.translate(-card.w / 2, -card.h / 2);
+		inside(card);
+		ctx.restore();
+	}
+
+	function drawLogo(card) {
+		paper(0, 0, card.w, card.h, 11, 7);
+		text(logoText, 17, card.h / 2 + card.size * 0.36, card.size, INK);
+	}
+
+	function drawInfo(card) {
+		paper(0, 0, card.w, card.h, 23, 6);
+		card.lines.forEach((line, i) => text(line, 13, 13 + 9 + i * 12, card.textSize, INK));
+		for (const b of card.buttons) {
+			const lit = state.hover === b.name || state.focus === b.name;
+			const down = state.press === b.name;
+			const lift = lit && !down ? -1 : down ? 1 : 0;
+			paper(b.x + lift, b.y + lift, b.w, b.h, hash(b.name), 2, lit ? INK : null, lit && !down ? 2 : 0);
+			label(b.label, b.x + 7 + lift, b.y + 12 + lift, 9, lit ? PAPER : INK);
+		}
+	}
+
+	function drawPictures(card) {
+		paper(0, 0, card.w, card.h, 37, 6);
+		const r = card.image;
+		ctx.save();
+		ctx.beginPath();
+		ctx.rect(r.x, r.y, r.w, r.h);
+		ctx.clip();
+		if (shots.length && shots[shown].ready) {
+			ctx.imageSmoothingEnabled = true;
+			// Cover the frame; drawn small, so it comes out in chunky pixels.
+			const img = shots[shown];
+			const k = Math.max(r.w / img.naturalWidth, r.h / img.naturalHeight);
+			const iw = img.naturalWidth * k, ih = img.naturalHeight * k;
+			ctx.drawImage(img, r.x + (r.w - iw) / 2, r.y + (r.h - ih) / 2, iw, ih);
+		} else {
+			standIn(shown, r);
+		}
+		drawWipe(r);
+		ctx.restore();
+		ctx.strokeStyle = INK;
+		ctx.lineWidth = 1;
+		ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
+		// A dot for each picture, the one showing filled.
+		const dots = slideCount;
+		const x0 = card.w / 2 - (dots * 6 - 3) / 2;
+		for (let i = 0; i < dots; i++) {
+			ctx.fillStyle = i === slide ? INK : "#c9c9cf";
+			ctx.fillRect(Math.round(x0 + i * 6), Math.round(card.h - 10), 3, 3);
+		}
+		arrow(card.prev, -1);
+		arrow(card.next, 1);
+	}
+
+	// A chunky hand-drawn chevron, nudged out when you point at it.
+	function arrow(a, dir) {
+		const lit = state.hover === a.name || state.focus === a.name;
+		const push = (lit ? 2 : 0) + (state.press === a.name ? 2 : 0);
+		const rand = hand(hash(a.name));
+		const cx = a.x + a.w / 2 + dir * push, cy = a.y + a.h / 2;
+		const pts = [[cx - dir * 3, cy - 10], [cx + dir * 4, cy + rand(-1, 1)], [cx - dir * 3 + rand(-1, 1), cy + 10]];
+		ctx.beginPath();
+		ctx.moveTo(pts[0][0], pts[0][1]);
+		ctx.quadraticCurveTo(cx + dir * 2, cy - 4, pts[1][0], pts[1][1]);
+		ctx.quadraticCurveTo(cx + dir * 1, cy + 5, pts[2][0], pts[2][1]);
+		ctx.lineCap = "round";
+		ctx.lineJoin = "round";
+		ctx.strokeStyle = lit ? PINK : PAPER;
+		ctx.lineWidth = lit ? 2.6 : 2;
+		ctx.stroke();
+	}
+
+	// The game's scene wipe in small: black boxes pop in on a diagonal, the
+	// picture changes behind them, and they clear the same way.
+	function drawWipe(r) {
+		if (wipeAt < 0) return;
+		const p = (now - wipeAt) / WIPE_TIME;
+		const cols = 8, rows = 5;
+		const cw = r.w / cols, ch = r.h / rows;
+		ctx.fillStyle = INK;
+		for (let i = 0; i < cols; i++) {
+			for (let j = 0; j < rows; j++) {
+				const d = (i + j) / (cols + rows - 2);
+				const k = p < 0.5 ? Math.max(0, Math.min(1, (p * 2 - d * 0.6) / 0.4)) : Math.max(0, Math.min(1, 1 - ((p - 0.5) * 2 - d * 0.6) / 0.4));
+				if (k <= 0) continue;
+				const sw = cw * k, sh = ch * k;
+				ctx.fillRect(Math.floor(r.x + i * cw + (cw - sw) / 2), Math.floor(r.y + j * ch + (ch - sh) / 2), Math.ceil(sw), Math.ceil(sh));
+			}
+		}
+	}
+
+	// Stand-ins till the maps are decorated: small scenes in the game's
+	// colours, and a box saying so.
+	function standIn(i, r) {
+		if (i === 1) {
+			// A dark stage with a spotlight and a blob under it, like the menu.
+			ctx.fillStyle = "#120d18";
+			ctx.fillRect(r.x, r.y, r.w, r.h);
+			const g = ctx.createRadialGradient(r.x + r.w * 0.5, r.y + r.h * 0.95, 1, r.x + r.w * 0.5, r.y + r.h * 0.95, r.w * 0.35);
+			g.addColorStop(0, "rgba(255,240,250,.45)");
+			g.addColorStop(1, "rgba(255,240,250,0)");
+			ctx.fillStyle = g;
+			ctx.beginPath();
+			ctx.moveTo(r.x + r.w * 0.45, r.y);
+			ctx.lineTo(r.x + r.w * 0.55, r.y);
+			ctx.lineTo(r.x + r.w * 0.72, r.y + r.h);
+			ctx.lineTo(r.x + r.w * 0.28, r.y + r.h);
+			ctx.fill();
+			figure(r.x + r.w * 0.5, r.y + r.h * 0.92, r.h * 0.62, Math.sin(now * 3) * 0.06);
+		} else {
+			// The sky every map has, the sun low in it, greybox blocks.
+			const g = ctx.createLinearGradient(0, r.y, 0, r.y + r.h);
+			g.addColorStop(0, "#3d296b");
+			g.addColorStop(0.5, "#8f61b8");
+			g.addColorStop(1, "#ff8f7a");
+			ctx.fillStyle = g;
+			ctx.fillRect(r.x, r.y, r.w, r.h);
+			ctx.fillStyle = "#ffebb3";
+			ctx.beginPath();
+			ctx.arc(r.x + r.w * (i === 0 ? 0.74 : 0.26), r.y + r.h * 0.62, r.h * 0.1, 0, Math.PI * 2);
+			ctx.fill();
+			const rand = hand(101 + i);
+			let x = r.x - 4;
+			while (x < r.x + r.w) {
+				const bw = rand(8, 22), bh = rand(r.h * 0.12, r.h * (i === 0 ? 0.55 : 0.3));
+				const top = i === 0 ? r.y + r.h - bh : r.y + r.h * rand(0.35, 0.75);
+				ctx.fillStyle = rand(0, 1) > 0.5 ? "#5b4a78" : "#6d5a8e";
+				ctx.fillRect(Math.round(x), Math.round(top), Math.round(bw), Math.round(i === 0 ? bh : rand(3, 6)));
+				ctx.fillStyle = "rgba(255,255,255,.25)";
+				ctx.fillRect(Math.round(x), Math.round(top), Math.round(bw), 1);
+				x += bw + (i === 0 ? rand(0, 4) : rand(6, 18));
+			}
+			if (i === 2) figure(r.x + r.w * 0.5, r.y + r.h * 0.56, r.h * 0.4, Math.sin(now * 2) * 0.1);
+			ctx.fillStyle = "rgba(179,112,143,.35)";
+			ctx.fillRect(r.x, r.y + r.h * 0.7, r.w, r.h * 0.3);
+		}
+		const label = STAND_INS[i];
+		const size = 9;
+		const lw = Math.ceil(textWidth(label, size)) + 16;
+		const lx = Math.round(r.x + (r.w - lw) / 2), ly = Math.round(r.y + 5);
+		ctx.globalAlpha *= 0.9;
+		paper(lx, ly, lw, 14, hash(label), 2);
+		ctx.globalAlpha /= 0.9;
+		text(label, lx + 8, ly + 10.5, size, INK);
+	}
+
+	// The game's blank glossy figure, standing: a slab of a body, stubby
+	// legs, a ball of a head, and a pink heart in its chest.
+	function figure(x, feet, height, lean) {
+		ctx.save();
+		ctx.translate(x, feet);
+		ctx.rotate(lean);
+		const u = height / 10;
+		ctx.fillStyle = "#f2eef7";
+		ctx.fillRect(-2.2 * u, -3.2 * u, 1.8 * u, 3.2 * u);
+		ctx.fillRect(0.4 * u, -3.2 * u, 1.8 * u, 3.2 * u);
+		roundRect(-2.4 * u, -7.2 * u, 4.8 * u, 4.4 * u, 1.2 * u);
+		ctx.fill();
+		ctx.beginPath();
+		ctx.arc(0, -8.4 * u, 1.7 * u, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = PINK;
+		ctx.fillRect(Math.round(0.4 * u), Math.round(-6 * u), Math.max(1, Math.round(u * 0.8)), Math.max(1, Math.round(u * 0.8)));
+		ctx.restore();
+	}
+
+	function roundRect(x, y, w, h, r) {
+		ctx.beginPath();
+		ctx.moveTo(x + r, y);
+		ctx.arcTo(x + w, y, x + w, y + h, r);
+		ctx.arcTo(x + w, y + h, x, y + h, r);
+		ctx.arcTo(x, y + h, x, y, r);
+		ctx.arcTo(x, y, x + w, y, r);
+		ctx.closePath();
+	}
+
+	// The blob hanging upside down from the top of the screen: chest, neck
+	// and a ball of a head, its heart's beads going round.
+	function drawBlob() {
+		const drop = still ? 0 : Math.min(0, -60 * (1 - backOut(Math.max(0, Math.min(1, (now - 0.45) / 0.6)))));
+		ctx.save();
+		ctx.translate(blobX, 4 + drop);
+		ctx.rotate(blob.angle);
+		const body = ctx.createLinearGradient(-18, -10, 16, 44);
 		body.addColorStop(0, "#fbf8ff");
-		body.addColorStop(0.55, "#d7cfe3");
+		body.addColorStop(0.6, "#d8cfe4");
 		body.addColorStop(1, "#8f84a3");
-		c.save();
-		c.lineCap = "round";
-		c.strokeStyle = "#c9c0d8";
-		c.lineWidth = R * 1.45;
-		c.beginPath();
-		c.moveTo(left + R * 0.7, top + R * 0.9);
-		c.lineTo(left - R * 1.4, h + R);
-		c.moveTo(right - R * 0.7, top + R * 0.9);
-		c.lineTo(right + R * 1.4, h + R);
-		c.stroke();
-		c.beginPath();
-		roundRect(c, left, top, right - left, h - top + R * 2, R * 1.6);
-		// A short neck up into a big ball of a head, cut off by the frame.
-		var mid = (left + right) / 2;
-		roundRect(c, mid - R * 0.75, top - R * 1.2, R * 1.5, R * 1.6, R * 0.5);
-		c.moveTo(mid + R * 2.3, top - R * 2.35);
-		c.arc(mid, top - R * 2.35, R * 2.3, 0, Math.PI * 2);
-		c.fillStyle = body;
-		c.shadowColor = "rgba(255, 150, 200, .55)";
-		c.shadowBlur = R * 0.6;
-		c.fill("nonzero");
-		c.shadowBlur = 0;
-		var shine = c.createRadialGradient(left + R * 1.2, top + R * 0.8, 0, left + R * 1.2, top + R * 0.8, R * 2.4);
-		shine.addColorStop(0, "rgba(255,255,255,.9)");
-		shine.addColorStop(1, "rgba(255,255,255,0)");
-		c.fillStyle = shine;
-		c.fill();
-		c.restore();
-
-		// The pocket: lined pink at the rim, near black at the back.
-		var grey = this.stopped ? 1 : this.grey;
-		var lining = c.createRadialGradient(cx, cy + R * 0.12, R * 0.1, cx, cy, R);
-		lining.addColorStop(0, "#07030a");
-		lining.addColorStop(0.55, rgb([42, 10, 26], [26, 24, 28], grey));
-		lining.addColorStop(0.86, rgb([176, 37, 81], [96, 90, 100], grey));
-		lining.addColorStop(1, rgb([255, 122, 160], [190, 184, 196], grey));
-		c.beginPath();
-		c.arc(cx, cy, R, 0, Math.PI * 2);
-		c.fillStyle = lining;
-		c.fill();
-		// The lip's shadow falling into it.
-		var lip = c.createLinearGradient(cx, cy - R, cx, cy + R);
-		lip.addColorStop(0, "rgba(0,0,0,.45)");
-		lip.addColorStop(0.35, "rgba(0,0,0,0)");
-		c.fillStyle = lip;
-		c.fill();
-
-		// The beads: the lead one biggest and white-hot, the tail smaller and
-		// pinker.
-		var bead = this.ring * DOT_SIZE;
-		var dying = !this.stopped && this.spilled < 0 && this.health < DYING_BELOW;
-		for (var i = DOTS - 1; i >= 0; i--) {
-			var d = this.dots[i];
-			var t = i / (DOTS - 1);
-			var size = bead * mix(1, TAIL_SIZE, t);
-			var pink = Math.min(t * 2, 1);
-			var tint;
-			if (d.free) tint = rgb(this.flash > 0 ? HOT : PINK, DARK, d.dark);
-			else if (this.stopped) tint = rgb(GREY, DARK, t * 0.5);
-			else if (grey > 0) tint = rgb(pink < 0.5 ? HOT : PINK, GREY, grey * 0.8);
-			else tint = rgb(HOT, PINK, pink);
-			var alpha = dying && Math.random() < 0.12 ? 0.35 : 1;
-			c.globalAlpha = alpha;
-			c.beginPath();
-			c.arc(d.x, d.y, size, 0, Math.PI * 2);
-			c.fillStyle = tint;
-			c.shadowColor = this.stopped || (d.free && d.dark > 0.7) ? "transparent" : "rgba(255, 61, 115, .9)";
-			c.shadowBlur = size * 2.2;
-			c.fill();
-			c.shadowBlur = 0;
-			// A glint.
-			c.beginPath();
-			c.arc(d.x - size * 0.35, d.y - size * 0.35, size * 0.28, 0, Math.PI * 2);
-			c.fillStyle = "rgba(255,255,255," + (this.stopped ? 0.25 : 0.7) + ")";
-			c.fill();
-			c.globalAlpha = 1;
+		ctx.fillStyle = body;
+		roundRect(-19, -40, 38, 50, 10);
+		ctx.fill();
+		ctx.fillRect(-6, 6, 12, 10);
+		ctx.beginPath();
+		ctx.arc(0, 27, 13, 0, Math.PI * 2);
+		ctx.fill();
+		// A glint on the head.
+		ctx.fillStyle = "rgba(255,255,255,.9)";
+		ctx.fillRect(-7, 21, 3, 2);
+		// The heart: a dark pocket, pink at the rim, beads going round.
+		const hx = 5, hy = -4;
+		ctx.fillStyle = "#b02551";
+		ctx.beginPath();
+		ctx.arc(hx, hy, 4.5, 0, Math.PI * 2);
+		ctx.fill();
+		ctx.fillStyle = "#1a0710";
+		ctx.beginPath();
+		ctx.arc(hx, hy, 3.3, 0, Math.PI * 2);
+		ctx.fill();
+		for (let i = 0; i < 6; i++) {
+			const a = -now * Math.PI * 2 * 0.9 + i * Math.PI / 3;
+			ctx.fillStyle = i === 0 ? "#fff4f7" : PINK;
+			ctx.fillRect(Math.round(hx + Math.cos(a) * 2.2 - 0.5), Math.round(hy + Math.sin(a) * 2.2 - 0.5), 1, 1);
 		}
-
-		if (this.flash > 0) {
-			c.fillStyle = "rgba(255, 220, 235," + (this.flash * 0.35).toFixed(3) + ")";
-			c.fillRect(0, 0, w, h);
-		}
-	};
-
-	Heart.prototype.start = function () {
-		if (this.running) return;
-		this.running = true;
-		var self = this, then = performance.now();
-		var frame = function (now) {
-			var dt = Math.min((now - then) / 1000, 1 / 20);
-			then = now;
-			// Small steps keep the stiff springs steady.
-			var steps = Math.max(1, Math.ceil(dt / (1 / 240)));
-			for (var i = 0; i < steps; i++) self.step(dt / steps);
-			self.draw();
-			if (self.visible || self.spilled >= 0) requestAnimationFrame(frame);
-			else self.running = false;
-		};
-		requestAnimationFrame(frame);
-	};
-
-	function roundRect(c, x, y, w, h, r) {
-		c.moveTo(x + r, y);
-		c.arcTo(x + w, y, x + w, y + h, r);
-		c.arcTo(x + w, y + h, x, y + h, r);
-		c.arcTo(x, y + h, x, y, r);
-		c.arcTo(x, y, x + w, y, r);
-		c.closePath();
+		ctx.restore();
 	}
 
-	// A pop-up over a stage: letter tiles slam down, hold, and go.
-	function popup(stage, text) {
-		var old = stage.querySelector(".pop");
-		if (old) old.remove();
-		var pop = document.createElement("div");
-		pop.className = "pop tiles";
-		pop.setAttribute("data-tiles", "heart");
-		pop.setAttribute("role", "status");
-		pop.textContent = text;
-		stage.appendChild(pop);
-		tiles(pop);
-		paperAll(pop);
-		requestAnimationFrame(function () { pop.classList.add("in"); });
-		setTimeout(function () { pop.classList.add("out"); }, 1300);
-		setTimeout(function () { pop.remove(); }, 1700);
+	// "soon :)" in letter tiles over a button that has nowhere to go yet:
+	// they slam down, hold, then drop away.
+	function drawPops() {
+		for (const pop of pops) {
+			const age = now - pop.born;
+			let x = pop.x - (pop.text.length * 10) / 2;
+			const rand = hand(hash(pop.text) + Math.floor(pop.born * 10));
+			for (let i = 0; i < pop.text.length; i++, x += 10) {
+				const ch = pop.text[i];
+				if (ch === " ") continue;
+				const t = Math.max(0, Math.min(1, (age - i * 0.04) / 0.14));
+				if (t <= 0) continue;
+				const fall = Math.max(0, age - 1.1 - i * 0.03);
+				const scale = 1 + 1.2 * (1 - t);
+				const turn = rand(-0.12, 0.12) + (1 - t) * rand(-0.6, 0.6) + fall * rand(-6, 6);
+				ctx.save();
+				ctx.translate(x + 4.5, pop.y + 6 + fall * fall * 220);
+				ctx.rotate(turn);
+				ctx.scale(scale, scale);
+				ctx.globalAlpha = Math.min(1, t * 3) * Math.max(0, 1 - fall * 1.5);
+				paper(-5, -7, 10, 13, hash(ch) + i, 1.5, INK);
+				text(ch, -3, 3, 9, PAPER);
+				ctx.restore();
+			}
+		}
 	}
 
-	// --- Go --------------------------------------------------------------------------
+	// --- The real buttons ----------------------------------------------------------------
 
-	function start() {
-		props();
-		document.querySelectorAll("[data-tiles]").forEach(tiles);
-		document.querySelectorAll(".ammo[data-rounds]").forEach(ammo);
-		paperAll();
-		root.classList.add("drawn");
-		stagger();
-		document.querySelectorAll(".reveal, .tiles").forEach(watch);
-		document.querySelectorAll("[data-heart]").forEach(function (stage) {
-			if (!stage.querySelector("canvas") || !stage.querySelector("canvas").getContext) return;
-			var heart = new Heart(stage);
-			heart.draw();
-			heart.start();
-		});
-		// Fonts can change sizes after the first drawing.
-		if (document.fonts && document.fonts.ready) {
-			document.fonts.ready.then(function () {
-				document.querySelectorAll(".box").forEach(draw);
+	function bind() {
+		for (const el of document.querySelectorAll(".hit")) {
+			const name = el.getAttribute("data-button");
+			el.addEventListener("pointerenter", () => {
+				state.hover = name;
+				if (["pc", "mac", "server"].includes(name)) jolt(1.6);
+			});
+			el.addEventListener("pointerleave", () => {
+				if (state.hover === name) state.hover = "";
+				if (state.press === name) state.press = "";
+			});
+			el.addEventListener("pointerdown", () => { state.press = name; });
+			el.addEventListener("pointerup", () => { state.press = ""; });
+			el.addEventListener("focus", () => { state.focus = el.matches(":focus-visible") ? name : ""; });
+			el.addEventListener("blur", () => { if (state.focus === name) state.focus = ""; });
+			el.addEventListener("click", (e) => {
+				if (name === "prev" || name === "next") {
+					turn(name === "prev" ? -1 : 1);
+					return;
+				}
+				if (!el.getAttribute("href")) {
+					e.preventDefault();
+					soon(name);
+				}
 			});
 		}
+		window.addEventListener("keydown", (e) => {
+			if (e.target.closest && e.target.closest("a, button, input, textarea")) return;
+			if (e.key === "ArrowLeft") turn(-1);
+			if (e.key === "ArrowRight") turn(1);
+		});
+		window.addEventListener("resize", () => layout());
 	}
 
-	if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", start);
-	else start();
+	function soon(name) {
+		const b = cards.info.buttons.find((x) => x.name === name);
+		if (!b) return;
+		// Over the card, above the button (out of the card's turn into the
+		// screen's), where it covers no words.
+		const c = cards.info;
+		const lx = b.x + b.w / 2 - c.w / 2, ly = -c.h / 2;
+		const cos = Math.cos(c.angle), sin = Math.sin(c.angle);
+		pops.push({
+			text: "soon :)", born: now,
+			x: c.x + c.w / 2 + lx * cos - ly * sin,
+			y: c.y + c.h / 2 + lx * sin + ly * cos - 17,
+		});
+		jolt(3);
+		status.textContent = "";
+		status.textContent = "downloads soon";
+	}
+
+	// --- Go ------------------------------------------------------------------------------
+
+	let then = performance.now();
+	function frame(t) {
+		const dt = Math.min((t - then) / 1000, 1 / 20);
+		then = t;
+		now += dt;
+		step(dt);
+		draw();
+		requestAnimationFrame(frame);
+	}
+
+	function go() {
+		layout();
+		bind();
+		requestAnimationFrame((t) => {
+			then = t;
+			requestAnimationFrame(frame);
+		});
+		// Lay out again once the font's in, since the words' widths change.
+		if (window.FontFace && document.fonts) {
+			const face = new FontFace("Liberation Sans", 'local("Liberation Sans"), url("assets/LiberationSans-Regular.ttf")');
+			face.load().then((f) => {
+				document.fonts.add(f);
+				layout();
+			}).catch(() => {});
+		}
+	}
+
+	go();
 })();

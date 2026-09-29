@@ -106,7 +106,12 @@ This runs the headless movement, UI, combat, cosmetics, map, game and network te
 
 ## Website
 
-`site/` is the game's website: plain HTML, CSS and a little JavaScript, no build tools, in the game's UI style (boxes drawn by hand like the logo, letter tiles, the heart spinner you can poke). There are no screenshots yet, only stand-ins, until the maps are decorated. `tools/build_site.sh` puts it together in `_site/` with the logo, the icon and the font from `assets/`; to look at it locally:
+`site/` is the game's website: one screen, drawn small on a canvas and blown up in hard pixels like the game's 3D, with the game's boxes: the logo, what the game is, download buttons for pc, mac and the server build, and a picture card you can flip through. The words and buttons are plain HTML in `site/index.html`, laid over the canvas unseen so links, the keyboard and screen readers work, and shown as plain boxes without JavaScript.
+
+- **Downloads:** put each build's address in its button's `href`. Until then they say *soon :)*.
+- **Pictures:** list them in the picture card's `data-shots` (e.g. `shots/boulevard.png, shots/depot.png`, files in `site/shots/`). They're drawn small, so they come out pixelated like everything else. With none it shows stand-ins, until the maps are decorated.
+
+`tools/build_site.sh` puts it together in `_site/` with the logo, the icon and the font from `assets/`; to look at it locally:
 
 ```sh
 tools/build_site.sh && python3 -m http.server -d _site

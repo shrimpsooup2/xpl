@@ -4,11 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>xtrapartial</title>
-<meta name="description" content="a movement-first arena fps. short rounds on small, surreal maps, guns off the floor, and one shot to the heart ends it.">
-<meta name="theme-color" content="#3d296b">
+<meta name="description" content="a movement-first round and team shooter. new maps and weapons being added. free download.">
+<meta name="theme-color" content="#000000">
 <meta property="og:type" content="website">
 <meta property="og:title" content="xtrapartial">
-<meta property="og:description" content="a movement-first arena fps. short rounds on small, surreal maps, guns off the floor, and one shot to the heart ends it.">
+<meta property="og:description" content="a movement-first round and team shooter. new maps and weapons being added. free download.">
 <meta property="og:image" content="https://shrimpsooup2.github.io/xpl/assets/logo.png">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icon.png">
 <link rel="apple-touch-icon" href="assets/icon.png">
@@ -17,231 +17,40 @@
 <script src="site.js" defer></script>
 </head>
 <body>
-<a class="skip box" href="#main">skip to the page</a>
-<div class="sky" aria-hidden="true"><div class="sun"></div><div class="fog"></div></div>
+<!--
+	The page's words and buttons live here; site.js draws them small on the
+	canvas and blows it up in hard pixels, and lays these over it unseen so
+	links, the keyboard and screen readers still work.
 
-<header class="wrap top">
-	<span></span>
-	<nav aria-label="pages">
-		<a class="box btn inv" href="./" aria-current="page">home</a>
-		<a class="box btn" href="how-to-play.html">how to play</a>
-		<a class="box btn" href="devlog.html">devlog</a>
-		<a class="box btn" href="#get-it">get it</a>
-	</nav>
-</header>
+	Downloads: put each build's address in its href. An empty one says
+	"soon :)". Pictures: list them in data-shots, comma-separated
+	(e.g. "shots/boulevard.png, shots/depot.png"); none shows stand-ins.
+-->
+<main id="screen" class="screen">
+	<canvas id="pixels" aria-hidden="true"></canvas>
 
-<main id="main" class="wrap">
-
-<section class="hero">
-	<div>
-		<h1><img class="logo" src="assets/logo.png" alt="xtrapartial" width="753" height="216"></h1>
-		<p class="tagline"><span class="tiles" data-tiles="inv">movement-first arena fps</span></p>
-		<div class="box card pitch reveal">
-			<p class="lede">every round drops you into a new small, surreal map with a new spread of guns on the floor, and whoever moves best gets to the good ones first.</p>
-			<p>one life a round. rounds last seconds. a perfect shot to the heart ends it.</p>
-		</div>
-		<div class="row">
-			<a class="box btn inv" href="#get-it">get it</a>
-			<a class="box btn" href="how-to-play.html">how to play</a>
-			<span class="box ghost small">pre-production · pc</span>
-		</div>
+	<div class="card" data-card="logo">
+		<h1>xtrapartial</h1>
 	</div>
-	<figure class="box card reveal" style="margin:0">
-		<div class="stage" data-heart>
-			<canvas tabindex="0" role="button" aria-label="the heart: pink beads going round in a pocket in a chest. poke it."></canvas>
-			<span class="hint" aria-hidden="true">poke the heart</span>
-			<span class="box ghost small caption">the maps are being decorated · pictures soon</span>
-		</div>
-	</figure>
-</section>
 
-<section aria-labelledby="plays">
-	<h2 id="plays"><span class="tiles" data-tiles="inv">how it plays</span></h2>
-	<div class="grid two">
-		<article class="box card reveal">
-			<h3>momentum is sacred</h3>
-			<p>run, slide, slide-hop, dash, wall ride, wall jump, mantle and smashdown. every move keeps your speed or adds to it, and nothing you do with a gun slows you down. a dash at the top of a jump carries you about twice as far.</p>
-			<p><span class="box small">slide</span><span class="box small">slide-hop</span><span class="box small">dash</span><span class="box small">wall ride</span><span class="box small">wall jump</span><span class="box small">mantle</span><span class="box small inv">smashdown</span></p>
-		</article>
-		<article class="box card reveal">
-			<h3>the heartshot</h3>
-			<p>everyone has a heart: six pink beads going round in a pocket in their chest, like a loading spinner. put a shot from a precision gun through it and they're gone, whatever their health. it's small. that's the point.</p>
-			<p><span class="box small heart">♥ sp-12</span><span class="box small heart">♥ marshal .357</span><span class="box small heart">♥ heron .308</span></p>
-		</article>
-		<article class="box card reveal">
-			<h3>guns off the floor</h3>
-			<p>in free-for-all you spawn with your fists and race for the guns on the pads. there are no reloads: what's in the gun is what you get. when it runs dry, throw it at someone's face and go and find the next one.</p>
-		</article>
-		<article class="box card reveal">
-			<h3>a new map every round</h3>
-			<p>rounds last 15 to 40 seconds, and every one is on a different map, so no two play the same. read the map in the countdown, plan a route, go.</p>
-		</article>
+	<div class="card" data-card="info">
+		<ul>
+			<li>-movement first round and team shooter</li>
+			<li>-new maps + weapons being added</li>
+			<li>-free download :)</li>
+		</ul>
+		<a class="hit" data-button="pc" data-label="↓ pc" href="">download for pc</a>
+		<a class="hit" data-button="mac" data-label="↓ mac" href="">download for mac</a>
+		<a class="hit" data-button="server" data-label="↓ server" href="">download the server build</a>
 	</div>
-</section>
 
-<section aria-labelledby="ways">
-	<h2 id="ways"><span class="tiles" data-tiles="inv">two ways to play</span></h2>
-	<div class="grid two">
-		<article class="box card reveal">
-			<h3>free-for-all</h3>
-			<p class="dim">short rounds, one life each. last one standing takes the round.</p>
-			<table>
-				<tr><th>win</th><td>first to 5 rounds</td></tr>
-				<tr><th>maps</th><td>a new one every round: stack, terrace, switchback, archipelago, rift</td></tr>
-				<tr><th>you spawn with</th><td>your fists</td></tr>
-				<tr><th>guns</th><td>on pads round the map. no reloads</td></tr>
-				<tr><th>health</th><td>100, and it doesn't come back</td></tr>
-			</table>
-		</article>
-		<article class="box card reveal">
-			<h3>teams</h3>
-			<p class="dim">one long game on one map, four against four, respawning.</p>
-			<table>
-				<tr><th>win</th><td>first team to 50 kills, or ahead after 10 minutes</td></tr>
-				<tr><th>maps</th><td>boulevard, holdfast, depot</td></tr>
-				<tr><th>you spawn with</th><td>the gun you picked. change it in the countdown or while you're down (1–6)</td></tr>
-				<tr><th>ammo</th><td>ammo boxes all over the map, half a magazine each</td></tr>
-				<tr><th>health</th><td>100, back after 5 s without being hit</td></tr>
-				<tr><th>combos</th><td><span class="box small inv">double kill</span><span class="box small inv">triple kill</span><span class="box small alert">quad kill</span><span class="box small alert">penta kill</span></td></tr>
-			</table>
-		</article>
+	<div class="card" data-card="pictures" data-shots="" role="region" aria-roledescription="carousel" aria-label="pictures">
+		<p class="caption" aria-live="polite">pictures soon</p>
+		<button class="hit" data-button="prev" type="button">previous picture</button>
+		<button class="hit" data-button="next" type="button">next picture</button>
 	</div>
-	<div class="box card reveal" style="margin-top:16px">
-		<h3>alone or together</h3>
-		<p>practise against bots in either style, host a game from the menu, or run a dedicated server. the server decides everything; your own movement is predicted so it feels instant, and everyone else is smoothed out.</p>
-	</div>
-</section>
 
-<section aria-labelledby="guns">
-	<h2 id="guns"><span class="tiles" data-tiles="inv">the guns</span></h2>
-	<p class="box ghost small reveal" style="margin-bottom:16px">six to start with, each modelled on a real kind of gun and built from chunky beige plastic, gunmetal and chrome, with one part in a candy colour. every one aims down its sights, and aiming never slows you.</p>
-	<div class="grid three">
-		<article class="box card gun reveal">
-			<div class="name"><h3>sp-12</h3><span class="box small heart" title="can heartshot">♥</span></div>
-			<p class="kind dim">semi-automatic 9 mm pistol</p>
-			<div class="stats"><span class="box small"><span class="accent" style="--c:#009ebd"></span> bondi blue slide</span><span class="box small">iron sights · 1.2×</span></div>
-			<div class="ammo" data-rounds="12"></div>
-		</article>
-		<article class="box card gun reveal">
-			<div class="name"><h3>marshal .357</h3><span class="box small heart" title="can heartshot">♥</span></div>
-			<p class="kind dim">.357 revolver. hold the trigger from the hip and it fans the hammer</p>
-			<div class="stats"><span class="box small"><span class="accent" style="--c:#ff851a"></span> tangerine cylinder</span><span class="box small">iron sights · 1.3×</span></div>
-			<div class="ammo" data-rounds="6"></div>
-		</article>
-		<article class="box card gun reveal">
-			<div class="name"><h3>sx-50</h3></div>
-			<p class="kind dim">9 mm submachine gun</p>
-			<div class="stats"><span class="box small"><span class="accent" style="--c:#9452db"></span> grape magazine</span><span class="box small">dot sight · 1.25×</span></div>
-			<div class="ammo" data-rounds="50"></div>
-		</article>
-		<article class="box card gun reveal">
-			<div class="name"><h3>tr-30</h3></div>
-			<p class="kind dim">assault rifle, carry handle and banana magazine</p>
-			<div class="stats"><span class="box small"><span class="accent" style="--c:#8fd62e"></span> lime magazine</span><span class="box small">rear sight · 1.6×</span></div>
-			<div class="ammo" data-rounds="30"></div>
-		</article>
-		<article class="box card gun reveal">
-			<div class="name"><h3>warden 12</h3></div>
-			<p class="kind dim">pump-action shotgun, nine pellets a shell</p>
-			<div class="stats"><span class="box small"><span class="accent" style="--c:#ed3861"></span> strawberry pump</span><span class="box small">ghost ring · 1.15×</span></div>
-			<div class="ammo" data-rounds="8"></div>
-		</article>
-		<article class="box card gun reveal">
-			<div class="name"><h3>heron .308</h3><span class="box small heart" title="can heartshot">♥</span></div>
-			<p class="kind dim">bolt-action sniper rifle</p>
-			<div class="stats"><span class="box small"><span class="accent" style="--c:#3866f2"></span> blueberry scope</span><span class="box small">scope · 3×</span></div>
-			<div class="ammo" data-rounds="5"></div>
-		</article>
-	</div>
-	<p class="box ghost small reveal" style="margin-top:14px">the column is how the game shows ammo: as tall as the gun holds, a cell a round. ♥ can heartshot. and there are always your fists, which hit harder the faster you're going.</p>
-</section>
-
-<section aria-labelledby="maps">
-	<h2 id="maps"><span class="tiles" data-tiles="inv">the maps</span></h2>
-	<p class="box ghost small reveal" style="margin-bottom:16px">eight so far, all greybox: the layouts are done and tested, the decorating is next. pictures when they're dressed.</p>
-	<h3 class="reveal" style="margin:0 0 12px"><span class="box small inv">free-for-all</span></h3>
-	<div class="grid three">
-		<article class="box card reveal">
-			<div class="placeholder"><span class="box ghost">being decorated</span></div>
-			<div class="row" style="margin-bottom:8px"><h3>stack</h3><span class="box small ghost">22 × 22 m</span></div>
-			<p>two floors in a box: a cellar and a roof, and a shotgun at the bottom of the well, right under anyone who fancies a smashdown.</p>
-		</article>
-		<article class="box card reveal">
-			<div class="placeholder"><span class="box ghost">being decorated</span></div>
-			<div class="row" style="margin-bottom:8px"><h3>terrace</h3><span class="box small ghost">48 × 36 m</span></div>
-			<p>a close-range town against an open terrace 4 m up, the sniper on a pulpit between them.</p>
-		</article>
-		<article class="box card reveal">
-			<div class="placeholder"><span class="box ghost">being decorated</span></div>
-			<div class="row" style="margin-bottom:8px"><h3>switchback</h3><span class="box small ghost">64 × 40 m</span></div>
-			<p>four levels down a hill joined by hairpin ramps. whoever's above sees everyone below.</p>
-		</article>
-		<article class="box card reveal">
-			<div class="placeholder"><span class="box ghost">being decorated</span></div>
-			<div class="row" style="margin-bottom:8px"><h3>archipelago</h3><span class="box small ghost">190 × 200 m</span></div>
-			<p>islands in the void round a 34 m spire with a sniper nest on top, and long exposed crossings between them.</p>
-		</article>
-		<article class="box card reveal">
-			<div class="placeholder"><span class="box ghost">being decorated</span></div>
-			<div class="row" style="margin-bottom:8px"><h3>rift</h3><span class="box small ghost">200 × 88 m</span></div>
-			<p>a canyon: rims, shelves and floor, three layers and three kinds of fight. smash off a rim and the bounce throws you back up to a shelf.</p>
-		</article>
-	</div>
-	<h3 class="reveal" style="margin:28px 0 12px"><span class="box small inv">teams</span></h3>
-	<div class="grid three">
-		<article class="box card reveal">
-			<div class="placeholder"><span class="box ghost">being decorated</span></div>
-			<div class="row" style="margin-bottom:8px"><h3>boulevard</h3><span class="box small ghost">144 × 72 m</span></div>
-			<p>three lanes through a town, a building, a street and a canal, with rooftops over them.</p>
-		</article>
-		<article class="box card reveal">
-			<div class="placeholder"><span class="box ghost">being decorated</span></div>
-			<div class="row" style="margin-bottom:8px"><h3>holdfast</h3><span class="box small ghost">224 × 112 m</span></div>
-			<p>two forts across an open valley, high ground layered over the field and a hill in the middle.</p>
-		</article>
-		<article class="box card reveal">
-			<div class="placeholder"><span class="box ghost">being decorated</span></div>
-			<div class="row" style="margin-bottom:8px"><h3>depot</h3><span class="box small ghost">168 × 104 m</span></div>
-			<p>a rail yard between two warehouses: boxcar lanes below, a gantry and footbridges 7 to 10 m up.</p>
-		</article>
-	</div>
-</section>
-
-<section id="get-it" aria-labelledby="get">
-	<h2 id="get"><span class="tiles" data-tiles="inv">get it</span></h2>
-	<div class="grid two">
-		<article class="box card reveal">
-			<h3>not out yet</h3>
-			<p>xtrapartial is in pre-production. the movement, the guns, both ways to play and online play are in, on greybox maps. you can run it from the source now:</p>
-			<ol>
-				<li>install <a href="https://godotengine.org/download">godot 4.7.2</a>, the standard build (not .net).</li>
-				<li>get the source from <a href="https://github.com/shrimpsooup2/xpl">github</a>.</li>
-				<li>in godot choose <em>import</em>, pick <code>project.godot</code>, and press f5.</li>
-			</ol>
-			<div class="row" style="margin-top:14px">
-				<a class="box btn inv" href="https://github.com/shrimpsooup2/xpl">source on github</a>
-				<a class="box btn" href="https://github.com/shrimpsooup2/xpl/blob/main/docs/GDD.md">design doc</a>
-			</div>
-		</article>
-		<article class="box card reveal">
-			<h3>run a server</h3>
-			<p>no window, no player, games back to back while anyone's connected:</p>
-			<pre class="box inv small" style="display:block;overflow-x:auto;white-space:pre"><code>godot --headless --path . -- --server \
-  --mode teams --maps boulevard,depot</code></pre>
-			<p class="note">or host from the menu: <em>online → host a game</em>, and friends join at the address the lobby shows. only play on hosts you trust: whoever runs the server decides the game.</p>
-		</article>
-	</div>
-</section>
-
+	<p id="status" class="sr-only" aria-live="polite"></p>
 </main>
-
-<footer class="wrap bottom">
-	<div class="row">
-		<span class="box ghost">xtrapartial</span>
-		<span class="box ghost">made with godot</span>
-		<a class="box btn" href="https://github.com/shrimpsooup2/xpl">source</a>
-		<a class="box btn" href="devlog.html">devlog</a>
-	</div>
-</footer>
 </body>
 </html>

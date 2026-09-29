@@ -1,7 +1,6 @@
-/* xtrapartial's website, in the game's UI style (GDD §13.1): lowercase
-   Arial-style type on white cards, each with a thin black frame set in from
-   its edge and drawn by hand (site.js), monochrome but for heart pink and
-   alert red, over the game's own sky. */
+/* xtrapartial's website. With the script, the whole screen is one small
+   canvas blown up in hard pixels (site.js), and the page's words and
+   buttons sit over it unseen. Without it, the same words in plain boxes. */
 
 @font-face {
 	font-family: "Liberation Sans";
@@ -9,332 +8,50 @@
 	font-display: swap;
 }
 
-:root {
-	--paper: #fff;
-	--ink: #0d0d0f;
-	--grey: #8c8c94;
-	--heart: #ff3d73;
-	--alert: #e61f1f;
-	/* The sky and fog every map has (src/render/retro_sky.gdshader). */
-	--sky-top: #3d296b;
-	--sky-upper: #8f61b8;
-	--sky-horizon: #ff8f7a;
-	--sun: #ffebb3;
-	--fog: #b3708f;
-	--stage: #120d18;
-
-	--font: "Liberation Sans", Arial, Helvetica, sans-serif;
-	--mono: "Liberation Mono", Consolas, Menlo, monospace;
-	--gutter: 16px;
-	--wide: 1080px;
-	--spring: cubic-bezier(.34, 1.56, .64, 1);
-	--snap: cubic-bezier(.2, .9, .3, 1);
-}
-
-*, *::before, *::after { box-sizing: border-box; }
-
-html { -webkit-text-size-adjust: 100%; }
-
+html, body { margin: 0; }
 body {
-	margin: 0;
 	min-height: 100vh;
-	font: 16px/1.5 var(--font);
-	color: var(--ink);
-	background: var(--sky-upper);
-	overflow-x: hidden;
+	background: #000;
+	color: #0d0d0f;
+	font: 16px/1.4 "Liberation Sans", Arial, Helvetica, sans-serif;
 }
 
-a { color: inherit; }
-img { max-width: 100%; }
-p { margin: 0 0 .8em; }
-p:last-child { margin-bottom: 0; }
-em { font-style: italic; }
-code { font-family: var(--mono); font-size: .88em; }
-kbd { font-family: var(--font); }
-
-::selection { background: var(--ink); color: var(--paper); }
-
-:focus-visible { outline: 2px dashed var(--heart); outline-offset: 3px; }
-
-.skip {
-	position: absolute; left: 8px; top: -60px; z-index: 10;
-	background: var(--paper); padding: 8px 12px; text-decoration: none;
-}
-.skip:focus { top: 8px; }
-
-/* --- The sky --------------------------------------------------------------- */
-
-.sky {
-	position: fixed; inset: 0; z-index: -1; overflow: hidden; pointer-events: none;
-	perspective: 900px;
-	background: linear-gradient(to bottom, var(--sky-top) 0%, var(--sky-upper) 48%, var(--sky-horizon) 100%);
-}
-.sky .sun {
-	position: absolute; right: 14%; bottom: 13%;
-	width: 11vmin; height: 11vmin; border-radius: 50%;
-	background: var(--sun);
-	box-shadow: 0 0 60px 20px rgba(255, 235, 179, .35);
-}
-.sky .fog {
-	position: absolute; left: 0; right: 0; bottom: 0; height: 38%;
-	background: linear-gradient(to bottom, rgba(179, 112, 143, 0), rgba(179, 112, 143, .55));
+.sr-only, html.js .card > :not(.hit) {
+	position: absolute !important;
+	width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+	overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
 }
 
-/* Floating props: glossy boxes turning slowly in the sky. */
-.prop {
-	position: absolute; width: var(--s); height: var(--s);
-	transform-style: preserve-3d;
-	animation: turn var(--t, 40s) linear infinite;
+/* --- With the script ------------------------------------------------------ */
+
+html.js body { overflow-x: hidden; }
+html.js .screen { position: relative; overflow: hidden; min-height: 100vh; }
+html.js #pixels {
+	display: block;
+	image-rendering: pixelated;
+	image-rendering: crisp-edges;
 }
-.prop i {
-	position: absolute; inset: 0;
-	background: linear-gradient(135deg, rgba(255, 255, 255, .75) 0%, rgba(255, 255, 255, 0) 38%), var(--c);
-	box-shadow: inset 0 0 0 1px rgba(0, 0, 0, .12);
-	opacity: var(--o, 1); /* on the faces: on the box it would flatten it */
+html.js .card {
+	position: absolute; left: 0; top: 0;
+	margin: 0; padding: 0; border: 0; background: none;
+	transform-origin: 50% 50%;
 }
-.prop i:nth-child(1) { transform: translateZ(calc(var(--s) / 2)); }
-.prop i:nth-child(2) { transform: rotateY(180deg) translateZ(calc(var(--s) / 2)); filter: brightness(.7); }
-.prop i:nth-child(3) { transform: rotateY(90deg) translateZ(calc(var(--s) / 2)); filter: brightness(.85); }
-.prop i:nth-child(4) { transform: rotateY(-90deg) translateZ(calc(var(--s) / 2)); filter: brightness(.8); }
-.prop i:nth-child(5) { transform: rotateX(90deg) translateZ(calc(var(--s) / 2)); filter: brightness(1.1); }
-.prop i:nth-child(6) { transform: rotateX(-90deg) translateZ(calc(var(--s) / 2)); filter: brightness(.6); }
-@keyframes turn {
-	from { transform: translateY(0) rotateX(var(--x, 20deg)) rotateY(0deg); }
-	50% { transform: translateY(-18px) rotateX(var(--x, 20deg)) rotateY(180deg); }
-	to { transform: translateY(0) rotateX(var(--x, 20deg)) rotateY(360deg); }
+html.js .hit {
+	position: absolute; display: block;
+	margin: 0; padding: 0; border: 0; background: none;
+	color: transparent; font-size: 1px; overflow: hidden;
+	opacity: 0; cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
 }
 
-/* --- Boxes (drawn by site.js; plain CSS frames until then) ------------------ */
+/* --- Without it ------------------------------------------------------------ */
 
-.box {
-	--b-paper: var(--paper);
-	--b-fill: var(--paper);
-	--b-frame: var(--ink);
-	--b-text: var(--ink);
-	--m: 5px; /* white round the frame */
-	position: relative;
-	display: inline-block;
-	isolation: isolate;
-	padding: calc(var(--m) + 4px) calc(var(--m) + 9px);
-	color: var(--b-text);
-	background: var(--b-fill);
-	box-shadow: 0 0 0 0 transparent, inset 0 0 0 var(--m) var(--b-paper), inset 0 0 0 calc(var(--m) + 1.5px) var(--b-frame);
-	text-decoration: none;
-	line-height: 1.25;
+html:not(.js) #pixels, html:not(.js) [data-button="prev"], html:not(.js) [data-button="next"] { display: none; }
+html:not(.js) body { background: linear-gradient(#000 30%, #72304a); padding: 24px 16px; }
+html:not(.js) .card {
+	max-width: 420px; margin: 0 auto 16px; padding: 18px 20px;
+	background: #fff; box-shadow: inset 0 0 0 6px #fff, inset 0 0 0 8px #0d0d0f;
 }
-.box.inv { --b-fill: var(--ink); --b-text: var(--paper); }
-.box.heart { --b-fill: var(--heart); --b-text: var(--paper); }
-.box.alert { --b-fill: var(--alert); --b-text: var(--paper); }
-.box.ghost { --b-paper: rgba(255, 255, 255, .55); --b-fill: rgba(255, 255, 255, .55); --b-frame: var(--grey); }
-.box.small { --m: 3px; padding: calc(var(--m) + 2px) calc(var(--m) + 6px); font-size: 13px; }
-.box.card { --m: 8px; display: block; padding: calc(var(--m) + 16px) calc(var(--m) + 18px); }
-
-html.drawn .box { background: none; box-shadow: none; }
-.box > svg.paper {
-	position: absolute; left: 0; top: 0; z-index: -1;
-	overflow: visible; pointer-events: none;
-}
-svg.paper .under { fill: var(--ink); opacity: 0; transition: opacity .12s; }
-svg.paper .card { fill: var(--b-paper); }
-svg.paper .fill { fill: var(--b-fill); transition: fill .08s; }
-svg.paper .line { fill: none; stroke: var(--b-frame); stroke-width: 1.7; stroke-linejoin: round; }
-
-/* Buttons invert and lift off a shadow on hover, and press in on click. */
-.btn {
-	cursor: pointer;
-	transition: transform .22s var(--spring), color .08s;
-}
-.btn:hover, .btn:focus-visible { --b-fill: var(--ink); --b-text: var(--paper); transform: translate(-2px, -3px); }
-.btn:hover svg.paper .under, .btn:focus-visible svg.paper .under { opacity: .85; }
-.btn:active { transform: translate(1px, 1px); transition-duration: .04s; }
-.btn:active svg.paper .under { opacity: 0; }
-.btn.inv:hover, .btn.inv:focus-visible { --b-fill: var(--heart); }
-.btn:focus-visible { outline: none; }
-
-/* Letter tiles, like the game's pop-ups: each slams down in turn. */
-.tiles { display: inline-flex; flex-wrap: wrap; gap: 3px; align-items: flex-end; }
-.tiles .tile { --m: 3px; padding: calc(var(--m) + 3px) calc(var(--m) + 5px); min-width: 1.6em; text-align: center; }
-.tiles .word { display: inline-flex; gap: 3px; white-space: nowrap; }
-.tiles { column-gap: .55em; row-gap: 5px; }
-.tiles .word.joined { margin-right: calc(3px - .55em); }
-html.js .tiles:not(.in) .tile { opacity: 0; }
-.tiles.in .tile { animation: slam .32s var(--spring) both; animation-delay: calc(var(--i) * 45ms); }
-@keyframes slam {
-	from { opacity: 0; transform: scale(2.4) rotate(var(--r0, 20deg)); }
-	40% { opacity: 1; }
-	to { opacity: 1; transform: scale(1) rotate(var(--r1, 0deg)); }
-}
-
-/* A pop-up over the heart's stage, which shatters when it goes. */
-.pop {
-	position: absolute; left: 50%; top: 12%; transform: translateX(-50%);
-	justify-content: center; pointer-events: none; font-size: 20px; width: max-content; max-width: 92%;
-}
-.pop.out .tile { animation: shatter .4s ease-in both; animation-delay: calc(var(--i) * 12ms); }
-@keyframes shatter {
-	from { opacity: 1; transform: rotate(var(--r1)); }
-	to { opacity: 0; transform: translate(var(--dx), var(--dy)) rotate(var(--r2)) scale(.6); }
-}
-
-/* Things spring in as they come into view. */
-html.js .reveal { opacity: 0; transform: translateY(22px) rotate(-.6deg); }
-html.js .reveal.in {
-	opacity: 1; transform: none;
-	transition: opacity .2s linear, transform .45s var(--spring);
-	transition-delay: var(--d, 0s);
-}
-
-/* --- Layout --------------------------------------------------------------- */
-
-.wrap { width: 100%; max-width: calc(var(--wide) + 2 * var(--gutter)); margin: 0 auto; padding: 0 var(--gutter); }
-
-.top {
-	display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px;
-	padding-top: 18px; padding-bottom: 8px;
-}
-.top .home { display: block; line-height: 0; }
-.top .home img { height: 46px; width: auto; display: block; transition: transform .25s var(--spring); }
-.top .home:hover img { transform: rotate(-2deg) scale(1.05); }
-.top nav { display: flex; flex-wrap: wrap; gap: 6px; }
-.top nav .box { font-size: 15px; }
-
-main { display: block; padding-bottom: 40px; }
-
-section { margin: 72px 0 0; }
-section:first-child { margin-top: 28px; }
-h1, h2, h3 { font-weight: normal; margin: 0; line-height: 1.2; }
-h2 { font-size: 22px; margin-bottom: 20px; }
-h3 { font-size: 18px; }
-.lede { font-size: 18px; max-width: 42em; }
-.note { font-size: 13px; }
-.dim { color: #55555c; }
-
-.grid { display: grid; gap: 16px; }
-.grid.two { grid-template-columns: repeat(auto-fit, minmax(min(100%, 380px), 1fr)); }
-.grid.three { grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr)); }
-.grid.four { grid-template-columns: repeat(auto-fit, minmax(min(100%, 230px), 1fr)); }
-
-.card h3 { margin-bottom: 10px; }
-.card .box.small { margin: 0 3px 4px 0; }
-.card ul { margin: 0; padding-left: 1.1em; }
-.card li { margin: .25em 0; }
-.card ul li::marker { content: "▪  "; font-size: .8em; }
-.card ol { margin: 0; padding-left: 1.4em; }
-
-.row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-
-/* --- Hero ----------------------------------------------------------------- */
-
-.hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.15fr); gap: 28px; align-items: center; }
-.hero .logo { width: 100%; max-width: 520px; height: auto; display: block; transform-origin: 30% 60%; }
-html.js .hero .logo { animation: stamp .5s var(--spring) both, wobble 7s ease-in-out .6s infinite; }
-@keyframes stamp { from { opacity: 0; transform: scale(1.9) rotate(-6deg); } to { opacity: 1; transform: none; } }
-@keyframes wobble {
-	0%, 100% { transform: rotate(0deg) skewX(0deg); }
-	25% { transform: rotate(-.8deg) skewX(.8deg); }
-	60% { transform: rotate(.6deg) skewX(-.6deg) scale(1.01); }
-}
-.hero .tagline { margin: 18px 0 16px; }
-.hero .pitch { max-width: 34em; }
-.hero .row { margin-top: 18px; }
-.hero .row .box { font-size: 17px; }
-
-/* A stand-in for a trailer or a screenshot: a dark stage with the heart
-   loading in the middle. */
-.stage {
-	position: relative; aspect-ratio: 16 / 9; overflow: hidden;
-	background: radial-gradient(ellipse 45% 70% at 50% 42%, rgba(255, 240, 250, .16), rgba(255, 240, 250, 0) 70%), var(--stage);
-}
-.stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; display: block; cursor: pointer; touch-action: manipulation; }
-.stage .caption { position: absolute; left: 50%; bottom: 7%; transform: translateX(-50%); white-space: nowrap; }
-.stage .hint { position: absolute; right: 10px; top: 8px; color: rgba(255, 255, 255, .45); font-size: 12px; }
-
-/* A stand-in for a map picture, till the maps are decorated. */
-.placeholder {
-	position: relative; aspect-ratio: 16 / 9; margin: 0 0 14px;
-	background:
-		repeating-linear-gradient(135deg, rgba(179, 112, 143, .22) 0 2px, transparent 2px 11px),
-		linear-gradient(to bottom, #d9cde6, #f3d3cc);
-	display: grid; place-items: center;
-}
-.placeholder .box { font-size: 13px; }
-
-/* --- Guns ----------------------------------------------------------------- */
-
-.box.card.gun { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-rows: auto auto 1fr; gap: 0 18px; align-content: start; }
-.gun .name { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-.gun .name h3 { margin: 0; }
-.gun .kind { grid-column: 1; margin: 6px 0 10px; }
-.gun .stats { grid-column: 1; display: flex; flex-wrap: wrap; align-self: end; }
-.gun .accent {
-	display: inline-block; width: 14px; height: 14px; border: 1.5px solid var(--ink);
-	background: linear-gradient(135deg, rgba(255, 255, 255, .8), rgba(255, 255, 255, 0) 55%), var(--c);
-	vertical-align: -2px;
-}
-/* The HUD's ammo column: as tall as the gun holds (9 px × √rounds on the
-   game's 270 px canvas), a cell a round for small guns, a notch every ten
-   for big ones. */
-.ammo {
-	grid-column: 2; grid-row: 1 / span 3; align-self: end; margin: 22px 4px 4px 0;
-	width: 14px; height: var(--h, 40px);
-	border: 1.5px solid var(--ink);
-	background: var(--ink);
-	position: relative;
-}
-.ammo.cells { background: repeating-linear-gradient(to top, var(--ink) 0 calc(var(--cell) - 2px), var(--paper) calc(var(--cell) - 2px) var(--cell)); }
-.ammo.notched::after {
-	content: ""; position: absolute; inset: 0;
-	background: repeating-linear-gradient(to top, transparent 0 calc(var(--cell) - 2px), var(--paper) calc(var(--cell) - 2px) var(--cell));
-	opacity: .9; clip-path: inset(0 0 0 60%);
-}
-.ammo .count { position: absolute; top: -22px; left: 50%; transform: translateX(-50%); font-size: 12px; }
-
-/* --- Tables and keys ------------------------------------------------------- */
-
-table { border-collapse: collapse; width: 100%; }
-th, td { text-align: left; vertical-align: top; padding: 8px 10px 8px 0; border-top: 1.5px solid var(--ink); }
-tr:first-child th, tr:first-child td { border-top: 0; }
-th { font-weight: normal; width: 34%; }
-.keys .box { margin: 0 4px 4px 0; font-size: 13px; }
-
-.table-scroll { overflow-x: auto; }
-
-/* --- Devlog --------------------------------------------------------------- */
-
-.entry { margin-bottom: 18px; }
-.entry header { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 12px; }
-.entry header h3 { margin: 0; }
-.entry ul { margin-top: .4em; }
-
-/* --- Footer --------------------------------------------------------------- */
-
-footer.bottom { padding: 36px 0 48px; }
-footer.bottom .row { justify-content: center; }
-footer.bottom .box { font-size: 13px; }
-
-/* --- Small screens --------------------------------------------------------- */
-
-@media (max-width: 820px) {
-	.hero { grid-template-columns: minmax(0, 1fr); }
-	.hero .logo { max-width: 380px; }
-	section { margin-top: 56px; }
-}
-@media (max-width: 480px) {
-	body { font-size: 15px; }
-	.box.card { --m: 6px; padding: calc(var(--m) + 12px) calc(var(--m) + 12px); }
-	.top .home img { height: 38px; }
-	.top nav .box { font-size: 14px; }
-	.lede { font-size: 16px; }
-	th { width: 40%; }
-	.stage .caption { font-size: 12px; white-space: normal; width: 86%; text-align: center; }
-	.tiles .tile { --m: 2px; min-width: 1.35em; padding: calc(var(--m) + 2px) calc(var(--m) + 3px); }
-	.tiles .word { gap: 2px; }
-}
-
-/* ui motion 0: things still arrive, nothing moves about. */
-@media (prefers-reduced-motion: reduce) {
-	.prop, html.js .hero .logo { animation: none; }
-	.tiles.in .tile { animation: none; opacity: 1; }
-	html.js .reveal, html.js .reveal.in { opacity: 1; transform: none; transition: none; }
-	.btn, .btn:hover { transition: none; transform: none; }
-}
+html:not(.js) h1 { margin: 0; font-weight: normal; font-size: 32px; }
+html:not(.js) ul { margin: 0 0 12px; padding: 0; list-style: none; }
+html:not(.js) .hit { display: inline-block; margin-right: 8px; color: #0d0d0f; }

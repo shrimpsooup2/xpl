@@ -4,38 +4,35 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>timed out · xtrapartial</title>
-<meta name="theme-color" content="#3d296b">
+<meta name="theme-color" content="#000000">
 <link rel="icon" type="image/png" sizes="192x192" href="assets/icon.png">
 <link rel="stylesheet" href="site.css">
 <script>document.documentElement.classList.add("js")</script>
 <script src="site.js" defer></script>
 </head>
 <body>
-<div class="sky" aria-hidden="true"><div class="sun"></div><div class="fog"></div></div>
+<main id="screen" class="screen">
+	<canvas id="pixels" aria-hidden="true"></canvas>
 
-<header class="wrap top">
-	<a class="home" href="./"><img src="assets/logo.png" alt="xtrapartial, home" width="753" height="216"></a>
-	<nav aria-label="pages">
-		<a class="box btn" href="./">home</a>
-		<a class="box btn" href="how-to-play.html">how to play</a>
-		<a class="box btn" href="devlog.html">devlog</a>
-	</nav>
-</header>
-
-<main id="main" class="wrap" style="max-width:720px">
-<section>
-	<h1 style="margin-bottom:18px"><span class="tiles" data-tiles="alert">timed out</span></h1>
-	<figure class="box card reveal" style="margin:0 0 16px">
-		<div class="stage" data-heart="timed-out">
-			<canvas tabindex="0" role="button" aria-label="the heart, stopped: its beads lie grey in the bottom of the pocket. poke it to start it again."></canvas>
-			<span class="hint" aria-hidden="true">poke it</span>
-		</div>
-	</figure>
-	<div class="box card reveal">
-		<p>there's no page here. whatever it was, its heart stopped.</p>
-		<div class="row" style="margin-top:12px"><a class="box btn inv" href="./">back home</a></div>
+	<div class="card" data-card="logo">
+		<h1>xtrapartial</h1>
 	</div>
-</section>
+
+	<div class="card" data-card="info">
+		<ul>
+			<li>-nothing here</li>
+			<li>-this page timed out</li>
+		</ul>
+		<a class="hit" data-button="home" data-label="← home" href="./">back home</a>
+	</div>
+
+	<div class="card" data-card="pictures" data-shots="" role="region" aria-roledescription="carousel" aria-label="pictures">
+		<p class="caption" aria-live="polite">pictures soon</p>
+		<button class="hit" data-button="prev" type="button">previous picture</button>
+		<button class="hit" data-button="next" type="button">next picture</button>
+	</div>
+
+	<p id="status" class="sr-only" aria-live="polite"></p>
 </main>
 </body>
 </html>
