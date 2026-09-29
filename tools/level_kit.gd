@@ -91,28 +91,58 @@ func terrace(terrace_name: String, x: Vector2, z: Vector2, top: float, sides := 
 
 ## A floor slab over `area` (x, z), its top at `top`, with rectangular holes
 ## cut out of it (areas in x, z). Built from as few blocks as the holes allow.
-func floor_with_holes(floor_name: String, area: Rect2, top: float, thickness: float, holes: Array[Rect2], kind := K.FLOOR) -> void:
+func floor_with_holes(floor_name: String, area: Rect2, top: float, thickness: float, holes: Array, kind := K.FLOOR) -> void:
+	var n := 0
+	for c in _cells(area, holes):
+		span("%s_%d" % [floor_name, n], Vector3(c.position.x, top - thickness, c.position.y), Vector3(c.end.x, top, c.end.y), kind)
+		n += 1
+
+
+## A straight wall from `a` to `b` (x, z), standing from `bottom` to `top`,
+## with `openings` cut through it (doors, windows): each a Rect2 of distance
+## along the wall from `a`, height above `bottom`, width and height. Built
+## from as few blocks as the openings allow.
+func wall(wall_name: String, a: Vector2, b: Vector2, bottom: float, top: float, openings: Array = [], kind := K.WALL, thickness := 0.4) -> void:
+	var length := a.distance_to(b)
+	var dir := (b - a) / length
+	var cells := _cells(Rect2(0, 0, length, top - bottom), openings)
+	for n in cells.size():
+		var c := cells[n]
+		var along := a + dir * (c.position.x + c.end.x) * 0.5
+		var center := Vector3(along.x, bottom + (c.position.y + c.end.y) * 0.5, along.y)
+		var piece := wall_name if cells.size() == 1 else "%s_%d" % [wall_name, n]
+		if absf(dir.x) > 0.999:
+			box(piece, center, Vector3(c.size.x, c.size.y, thickness), kind)
+		elif absf(dir.y) > 0.999:
+			box(piece, center, Vector3(thickness, c.size.y, c.size.x), kind)
+		else:
+			box(piece, center, Vector3(thickness, c.size.y, c.size.x), kind, Vector3(0, rad_to_deg(atan2(dir.x, dir.y)), 0))
+
+
+## `area` minus `holes`, as rectangles: cut at every hole edge, solid cells
+## merged into runs along x.
+static func _cells(area: Rect2, holes: Array) -> Array[Rect2]:
 	var xs := [area.position.x, area.end.x]
-	var zs := [area.position.y, area.end.y]
+	var ys := [area.position.y, area.end.y]
 	for h in holes:
 		xs.append_array([h.position.x, h.end.x])
-		zs.append_array([h.position.y, h.end.y])
+		ys.append_array([h.position.y, h.end.y])
 	xs = _cuts(xs, area.position.x, area.end.x)
-	zs = _cuts(zs, area.position.y, area.end.y)
-	var n := 0
-	for j in zs.size() - 1:
+	ys = _cuts(ys, area.position.y, area.end.y)
+	var out: Array[Rect2] = []
+	for j in ys.size() - 1:
 		var run_from := -1
 		for i in xs.size():
 			var solid := false
 			if i < xs.size() - 1:
-				var mid := Vector2((xs[i] + xs[i + 1]) * 0.5, (zs[j] + zs[j + 1]) * 0.5)
+				var mid := Vector2((xs[i] + xs[i + 1]) * 0.5, (ys[j] + ys[j + 1]) * 0.5)
 				solid = not holes.any(func(h: Rect2) -> bool: return h.has_point(mid))
 			if solid and run_from < 0:
 				run_from = i
 			elif not solid and run_from >= 0:
-				span("%s_%d" % [floor_name, n], Vector3(xs[run_from], top - thickness, zs[j]), Vector3(xs[i], top, zs[j + 1]), kind)
-				n += 1
+				out.append(Rect2(xs[run_from], ys[j], xs[i] - xs[run_from], ys[j + 1] - ys[j]))
 				run_from = -1
+	return out
 
 
 static func _cuts(values: Array, lo: float, hi: float) -> Array:
@@ -148,13 +178,16 @@ func pad(pad_name: String, weapon: StringName, at: Vector3, respawn := 20.0) -> 
 	combat.add_child(p)
 
 
-## A spawn point facing along `facing` (horizontal). Returns its transform.
-func spawn(spawn_name: String, at: Vector3, facing: Vector3) -> Transform3D:
+## A spawn point facing along `facing` (horizontal), for `team` (a
+## Hats.Team, or -1 for anyone). Returns its transform.
+func spawn(spawn_name: String, at: Vector3, facing: Vector3, team := -1) -> Transform3D:
 	var m := Marker3D.new()
 	m.name = spawn_name
 	m.position = at
 	m.rotation.y = atan2(-facing.x, -facing.z)
 	m.add_to_group(&"spawn", true)
+	if team >= 0:
+		m.set_meta(&"team", team)
 	spawns.add_child(m)
 	return m.transform
 

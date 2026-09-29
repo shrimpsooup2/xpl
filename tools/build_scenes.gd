@@ -47,6 +47,9 @@ const MAPS := {
 	"Switchback": ["res://tools/maps/switchback.gd", "res://scenes/maps/switchback.tscn"],
 	"Archipelago": ["res://tools/maps/archipelago.gd", "res://scenes/maps/archipelago.tscn"],
 	"Rift": ["res://tools/maps/rift.gd", "res://scenes/maps/rift.tscn"],
+	"Boulevard": ["res://tools/maps/boulevard.gd", "res://scenes/maps/boulevard.tscn"],
+	"Holdfast": ["res://tools/maps/holdfast.gd", "res://scenes/maps/holdfast.tscn"],
+	"Depot": ["res://tools/maps/depot.gd", "res://scenes/maps/depot.tscn"],
 }
 
 var _kit: LevelKit

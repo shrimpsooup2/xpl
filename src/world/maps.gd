@@ -10,6 +10,9 @@ const ALL := [
 	{"name": "switchback", "scene": "res://scenes/maps/switchback.tscn"},
 	{"name": "archipelago", "scene": "res://scenes/maps/archipelago.tscn"},
 	{"name": "rift", "scene": "res://scenes/maps/rift.tscn"},
+	{"name": "boulevard", "scene": "res://scenes/maps/boulevard.tscn"},
+	{"name": "holdfast", "scene": "res://scenes/maps/holdfast.tscn"},
+	{"name": "depot", "scene": "res://scenes/maps/depot.tscn"},
 ]
 
 

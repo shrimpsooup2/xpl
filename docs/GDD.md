@@ -27,7 +27,7 @@
 | 1.2 | First six guns built, each modelled on a real kind of gun (§7.4), with first-person arms, third-person holds and animated actions (§11.5). Hit zones ride the animated body; dummies react to the part you hit (§5.2, §9.4). Ammo shown as a column sized by capacity and a ring around the crosshair (§13.3). Magazine sizes moved toward the real guns'. |
 | 1.3 | Weapons renamed from computing jargon to realistic-sounding model names (SP-12, Marshal .357, SX-50, TR-30, Warden 12, Heron .308…). Damage numbers merge: one number per target that adds up and grows (§10.4). |
 | 1.4 | Hats: the first cosmetic, and how teams are told apart. Sixteen hats in red or blue, or no hat and a team triangle over the head; picked on the title screen (§11.4, §13.4). Dash charges recharge slower (1.75 → 2.25 s). First-person arms sit lower and further back and carry on past the cut off screen, so no arm end ever shows. Punches mix jabs, crosses, hooks and uppercuts. UI boxes drawn like the logo: a crooked black frame set in from a white card. |
-| 1.5 | Map rules rewritten (§9.1): size varies from map to map, structure before theme, fair but not always symmetrical, long sightlines allowed on the big maps. The first five greybox maps built and tested (§9.3): Stack, Terrace, Switchback, and two spread-out maps for more players and longer rounds, Archipelago and Rift, where the sniper has a job. F9 steps through them in game. The movement sandbox moves to §9.4. |
+| 1.5 | Map rules rewritten (§9.1): size varies from map to map, structure before theme, fair but not always symmetrical, long sightlines allowed on the big maps. The first eight greybox maps built and tested (§9.3): Stack, Terrace, Switchback; two spread-out maps for more players and longer rounds, Archipelago and Rift, where the sniper has a job; and three large team maps in the traditional style, Boulevard, Holdfast and Depot. F9 steps through them in game. The movement sandbox moves to §9.4. |
 
 ---
 
@@ -568,7 +568,7 @@ Lobby → Warmup → [ Countdown → Round → Round end → Next map ] × N →
 
 ### 9.3 Built maps
 
-Five greybox maps so far, with no theme yet (rule 1). Each is a script in `tools/maps/` that lays it out from a shared kit (`tools/level_kit.gd`: blocks, ramps, terraces, floors with holes, pads, spawns); `tools/build_scenes.gd` saves them to `scenes/maps/`. **F9** in game steps to the next map. `tests/map_tests.gd` loads every map, stands a player at every spawn, checks every pad has room, and drives the routes each map is built around through the real movement code. None of them needs a new mechanic.
+Eight greybox maps so far, with no theme yet (rule 1): five for free-for-all and duels, three for teams. Each is a script in `tools/maps/` that lays it out from a shared kit (`tools/level_kit.gd`: blocks, ramps, terraces, floors with holes, pads, spawns); `tools/build_scenes.gd` saves them to `scenes/maps/`. **F9** in game steps to the next map. `tests/map_tests.gd` loads every map, stands a player at every spawn, checks every pad has room, and drives the routes each map is built around through the real movement code. None of them needs a new mechanic.
 
 | Map | Size | Heights | Spawns | What it's about |
 |---|---|---|---|---|
@@ -577,6 +577,9 @@ Five greybox maps so far, with no theme yet (rule 1). Each is a script in `tools
 | **Switchback** | 64 × 40 m | 0 to 13.5 m | 2 | Four levels down a hill, joined end to end by hairpin ramps; high ground over everything below |
 | **Archipelago** | about 190 × 200 m | −6 to 35 m | 4 | Islands in the void round a spire; long exposed crossings, a different skill for each ring link |
 | **Rift** | 200 × 88 m | 0 to 37 m | 4 | A canyon: rims, shelves and floor, three layers and three kinds of fight |
+| **Boulevard** (teams) | 144 × 72 m | −3.5 to 13 m | 4 a team | Three lanes through a town: a building, a street, a canal; rooftops over them |
+| **Holdfast** (teams) | 224 × 112 m | −3 to 17 m | 4 a team | Two forts across an open valley, high ground layered over the field |
+| **Depot** (teams) | 168 × 104 m | 0 to 11 m | 4 a team | A rail yard between two warehouses: boxcar lanes below, crossings 7 to 10 m up |
 
 **Stack** (small). Below, a dim cellar under a 4.5 m ceiling with four pillars; above, the open roof. Down is always one step away (four holes, two ramp slots); up is slow and readable: the ramps, or a crate under a hole. The shotgun sits at the bottom of the Well, the hole in the middle, so taking it puts you under anyone on the roof: they can stomp you through it (a 5 m smashdown) and bounce straight back out. Rifles on two pulpits on the roof. Rotationally symmetric.
 
@@ -587,6 +590,14 @@ Five greybox maps so far, with no theme yet (rule 1). Each is a script in `tools
 **Archipelago** (spread out). The Hub (8 m) holds the Spire, 34 m tall, with the sniper nest on top, seeing every island; the only way up is a ramp spiral round its faces, in full view of everyone. Round it: the Keep (north, a building of rooms and doors, the SMG and a shotgun, a hole in the roof to drop in by), the Terraces (south, three wide steps facing the spire, the rifle), the Ridge (east, a long high island with the second sniper and cover along its edge), the Garden (west, low, a grid of pillars, the other shotgun), and four small outposts on the diagonals with a gun each. The Hub reaches each big island by a long exposed crossing (the Causeway, the South Bridge, the Garden Slide, the Ridge Ramp): the snipers' prey. Round the outside the islands join in a ring, each link a different skill: ramps; stepping stones, hopped down or jumped and grabbed up (3 m a stone on the Garden side); and the Fin, a floating ride wall across a 19 m gap too far to jump: angle in before you jump (air control can't steer you sideways), ride it, kick off toward the Terraces.
 
 **Rift** (spread out). The Rims: the north at 28 m, the south at 20, with long sightlines down and across the canyon, a sniper tower on each (36 m and 28 m), and rifles. The Shelves: a solid ledge along each wall (12 m north, 10 m south), flanking paths between the floor and the rims, their faces rideable from the floor. The Floor: ruins, a colonnade under an overhang of the north rim, and the Arch, a block across the canyon with a tunnel through it and the shotgun inside. Getting between the layers: the end ramps (the whole floor rises at each end, to the south rim in the west and the north rim in the east: 28 m of 35° slope, the long slide down); a ramp from the floor up to each shelf and on up to its rim; the High Bridge (rim to rim) and the Mid Bridge (shelf to shelf), both crossings in the open; and the big drop: smash off a rim onto the floor (28 m) and the 22 m/s bounce throws you back up to grab the shelf.
+
+**Team maps.** Built the traditional way for team play: each team has a base at one end where it spawns out of sight, lanes run between the bases, and the middle is contested. Both halves are the same, mirrored (Boulevard, Holdfast) or turned 180° (Depot, so the lanes cross diagonally); the map script lays out one half and `tools/level_side.gd` builds it for both teams, and a test checks every spawn, every pad and 400 points of ground against their twins. Each team gets four spawns, a pistol within 2 s of them, its own sniper perch, and the heavy guns in the middle.
+
+**Boulevard.** Three lanes, each a different range. The Arcade (north): a two-storey building the length of the lane, rooms below joined by doors that zigzag so there's no line through, a long gallery above whose windows look down on the street; in the middle the Atrium, a double-height hall with the shotgun on its balcony and a skylight in its roof. Main Street (centre): long and open, parked cars for cover, the Plaza in the middle with the rifle on the fountain's plinth, a gate wall at each end so no one shoots into a yard from across the map. The Canal (south): a sunken channel 3.5 m deep with rideable walls, the revolver under the middle bridge, a slide down into it from each yard; beside it a row of kiosks whose flat roofs make a middle layer, and a walkway along the far bank. Over it all the rooftops: a ramp from each yard to the Arcade's roof and the Tower on it (the sniper, looking down the street), and the roof runs the length of the lane over the Atrium's skylight.
+
+**Holdfast.** Two forts facing each other across a valley, 160 m apart, with the open field layered with high ground. Each fort: two floors, the SMG at the second floor's windows, a roof, and a corner tower 16 m up with the sniper. The Field: rocks, hedges, a bunker and an 8 m watchtower on each half, and the Hill in the middle, a tunnel through it (the shotgun), a first tier at 5 m and the Crown at 9 m (the rifle). The Ledge (8 m) along the north cliff: a ramp up from each half of the field, a bridge from it onto each fort's roof (the flank that comes out on top of the enemy), and the Lookout in its middle, from which the Sky Bridge runs over the field onto the Crown. The River (−3 m) along the south: out of the field's sight, ramps up into each fort's yard, and the Bluff (5 m) over it with a ruined wall along it.
+
+**Depot.** A rail yard between two warehouses in opposite corners. Each team spawns in its warehouse's back room; a mezzanine along the front (the SMG) looks out over the yard; a ramp from the loading yard climbs to the roof, and skylights drop you back in. The yard: four tracks of parked boxcars make long lanes, some stacked two high, crates beside others to climb onto their roofs, and one open car each side you can run through (the shotgun). Above the lanes, a second yard: the Gantry, a crane bridge 9 m up across the middle (a ramp up at each team's corner, a stair of containers from the lanes, the rifle on the trolley in its centre), and on each side a Footbridge 7 m up across all four tracks, joined to the Signal tower (10 m, the sniper). Smash off any of them onto the cars.
 
 **Measured routes.** Times from the test pilot, which runs, jumps obstacles and grabs ledges but doesn't slide, dash or wall-ride, so a good player is faster:
 
@@ -602,6 +613,9 @@ Five greybox maps so far, with no theme yet (rule 1). Each is a script in `tools
 | Rift | North / south rim spawn → the far tower (High Bridge) | 16.1 s / 16.4 s |
 | Rift | Floor spawns → the rims (end ramps) | 8.0 s / 8.5 s |
 | Rift | West floor spawn → the shotgun / the SMG | 2.4 s / 6.1 s |
+| Boulevard | Spawn → first pistol / the Tower's sniper / the fountain's rifle | 0.9 s / 7.1 s / 8.6 s |
+| Holdfast | Spawn → first pistol / the fort tower's sniper / the Crown's rifle | 1.4 s / 16.6 s / 17.6 s |
+| Depot | Spawn → first pistol / the Gantry's rifle / the Signal tower's sniper | 2.0 s / 17.5 s / 18.8 s |
 
 Every spawn's nearest pistol is under 0.6 s away on the small maps. On the spread-out maps the first fight comes later (the Hub is about 10 s from every spawn), and rounds run longer.
 
@@ -866,7 +880,7 @@ Code: the motion kit is in `src/ui/lofi_ui.gd` (`enter`, `leave`, `pop`, `stamp`
 | 1v1 online (private lobby) | MVP | Invite or join code |
 | Movement sandbox | MVP | See [§9.4](#94-movement-sandbox) |
 | Custom rules | MVP (basic) | Rounds to win, weapon pool filters ("precision only", "melee only", "random roulette"), Heartshot on/off, round timer |
-| 2v2 | Post-MVP | Needs team-symmetric maps |
+| 2v2 | Post-MVP | Team maps built (§9.3) |
 | FFA (3–4) | Post-MVP | |
 | Ranked 1v1 | Post-MVP | Needs dedicated servers |
 | Time trials | Post-MVP | Movement courses, ghosts, leaderboards |

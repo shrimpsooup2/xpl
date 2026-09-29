@@ -11,8 +11,18 @@ const TERRACE := "res://scenes/maps/terrace.tscn"
 const SWITCHBACK := "res://scenes/maps/switchback.tscn"
 const ARCHIPELAGO := "res://scenes/maps/archipelago.tscn"
 const RIFT := "res://scenes/maps/rift.tscn"
+const BOULEVARD := "res://scenes/maps/boulevard.tscn"
+const HOLDFAST := "res://scenes/maps/holdfast.tscn"
+const DEPOT := "res://scenes/maps/depot.tscn"
 ## Map scene, and how many spawns it has.
-const MAPS := {STACK: 2, TERRACE: 2, SWITCHBACK: 2, ARCHIPELAGO: 4, RIFT: 4}
+const MAPS := {STACK: 2, TERRACE: 2, SWITCHBACK: 2, ARCHIPELAGO: 4, RIFT: 4, BOULEVARD: 8, HOLDFAST: 8, DEPOT: 8}
+## The team maps: each team's half is the other's flipped by this, and how far
+## out the map reaches (x, z).
+const TEAM_MAPS := {
+	BOULEVARD: [Vector3(-1, 1, 1), Vector2(72, 38)],
+	HOLDFAST: [Vector3(-1, 1, 1), Vector2(112, 56)],
+	DEPOT: [Vector3(-1, 1, -1), Vector2(84, 52)],
+}
 const Stack := preload("res://tools/maps/stack.gd")
 const Terrace := preload("res://tools/maps/terrace.gd")
 const Rift := preload("res://tools/maps/rift.gd")
@@ -441,3 +451,146 @@ func test_rift_bridges_cross_the_canyon() -> void:
 	await run(cmd(), 10)
 	ticks = await go(Vector3(10, 0, -14), false)
 	check(ticks >= 0 and on_floor_at(Rift.NORTH_SHELF), "the Mid Bridge, shelf to shelf (at %s)" % player.global_position)
+
+
+# --- Team maps ----------------------------------------------------------------------
+
+func test_team_maps_are_the_same_for_both_teams() -> void:
+	for path: String in TEAM_MAPS:
+		await load_map(path)
+		var flip: Vector3 = TEAM_MAPS[path][0]
+		var reach: Vector2 = TEAM_MAPS[path][1]
+		var file := path.get_file()
+		# Four spawns a team, each one's twin where the flip puts it.
+		var spawns := get_tree().get_nodes_in_group(&"spawn")
+		var red := spawns.filter(func(n: Node) -> bool: return n.get_meta(&"team", -1) == Hats.Team.RED)
+		var blue := spawns.filter(func(n: Node) -> bool: return n.get_meta(&"team", -1) == Hats.Team.BLUE)
+		check(red.size() == 4 and blue.size() == 4, "%s: four spawns a team (%d red, %d blue)" % [file, red.size(), blue.size()])
+		for r: Node3D in red:
+			check(blue.any(func(b: Node3D) -> bool: return b.global_position.distance_to(r.global_position * flip) < 0.01),
+					"%s: %s has a blue twin" % [file, r.name])
+		# Every pad's twin holds the same gun (a pad in the middle is its own).
+		var pads := level.find_children("Pad_*", "Node3D", true, false)
+		for pad: Node3D in pads:
+			var twin := pads.filter(func(o: Node3D) -> bool:
+					return o.global_position.distance_to(pad.global_position * flip) < 0.01 and o.get(&"weapon") == pad.get(&"weapon"))
+			check(twin.size() == 1, "%s: %s has a twin" % [file, pad.name])
+		# The ground: the same height at 400 points and their twins.
+		var space := player.get_world_3d().direct_space_state
+		var rng := RandomNumberGenerator.new()
+		rng.seed = 7
+		var mismatches := 0
+		for i in 400:
+			var at := Vector3(rng.randf_range(-reach.x, reach.x), 60, rng.randf_range(-reach.y, reach.y))
+			var here := space.intersect_ray(PhysicsRayQueryParameters3D.create(at, at + Vector3.DOWN * 80, 1))
+			var there := space.intersect_ray(PhysicsRayQueryParameters3D.create(at * flip, at * flip + Vector3.DOWN * 80, 1))
+			if here.is_empty() != there.is_empty() or (not here.is_empty() and absf(here.position.y - there.position.y) > 0.01):
+				mismatches += 1
+		check(mismatches == 0, "%s: the ground matches its twin (%d of 400 points don't)" % [file, mismatches])
+		_teardown()
+
+
+## Runs the waypoints in turn, checking each is reached standing at its
+## height (x, height, z). Returns the ticks taken, or -1.
+func route(waypoints: Array, what: String) -> int:
+	var total := 0
+	for w: Vector3 in waypoints:
+		var ticks := await go(w)
+		check(ticks >= 0 and on_floor_at(w.y), "%s: at %s, standing at %.1f m (at %s)" % [what, Vector2(w.x, w.z), w.y, player.global_position])
+		if ticks < 0 or not on_floor_at(w.y):
+			return -1
+		total += ticks
+	return total
+
+
+func test_boulevard_routes() -> void:
+	await load_map(BOULEVARD)
+	# The yard up the ramp to the roof and the tower.
+	place(Vector3(68, 0.05, -26), PI * 0.5)
+	await run(cmd(), 10)
+	var ticks := await route([Vector3(61, 0, -13.5), Vector3(57.5, 0, -13.5), Vector3(57.5, 9.5, -32), Vector3(53, 9.5, -31), Vector3(53, 12, -19),
+			Vector3(53, 12, -17)], "yard to tower")
+	check(ticks >= 0 and ticks * DT < 10.0, "yard to the tower in %.1f s" % (ticks * DT))
+	# Through the Arcade's rooms: street door, the zigzag of doors, the Atrium.
+	place(Vector3(55, 0.05, -10), PI * 0.5)
+	await run(cmd(), 10)
+	ticks = await route([Vector3(50.2, 0, -12), Vector3(50.2, 0, -16), Vector3(43.5, 0, -18.8), Vector3(40.5, 0, -18.8),
+			Vector3(30.5, 0, -28.8), Vector3(27.5, 0, -28.8), Vector3(17.5, 0, -24), Vector3(12, 0, -24)], "through the Arcade")
+	check(ticks >= 0, "through the Arcade's rooms to the Atrium")
+	# Up the Atrium's stair to the shotgun on the balcony.
+	ticks = await route([Vector3(14, 0, -27.5), Vector3(3, 5, -27.5), Vector3(0, 5, -31.5)], "up to the balcony")
+	check(ticks >= 0, "up to the Atrium's balcony")
+	# The canal ramp is a slide in.
+	var top_speed := await slide(Vector3(61, 0.05, 25), Vector3(30, -3.5, 25))
+	check(top_speed > 10.0, "sliding down into the canal (%.1f m/s)" % top_speed)
+	# Off the roof through the skylight.
+	place(Vector3(0, 9.55, -29), 0.0)
+	await run(cmd(), 10)
+	ticks = await go(Vector3(0, 0, -22), false)
+	check(ticks >= 0 and on_floor_at(0.0), "down through the skylight (at %s)" % player.global_position)
+
+
+func test_holdfast_routes() -> void:
+	await load_map(HOLDFAST)
+	# Spawn, in the back gate, up both stairs to the roof and the sniper.
+	place(Vector3(106, 0.05, -18), PI * 0.5)
+	await run(cmd(), 10)
+	var ticks := await route([Vector3(102, 0, 0), Vector3(97, 0, 0), Vector3(90, 0, -15), Vector3(83, 0, -21.5), Vector3(96.5, 5, -21.5),
+			Vector3(97, 5, 0), Vector3(85, 10, 0), Vector3(97, 10, 20), Vector3(85, 16, 20), Vector3(83, 16, 20)], "spawn to the tower")
+	check(ticks >= 0 and ticks * DT < 20.0, "spawn to the sniper on the fort's tower in %.1f s" % (ticks * DT))
+	# The flank: up the Ledge from the field and over the bridge onto the roof.
+	place(Vector3(66, 0.05, -24), 0.0)
+	await run(cmd(), 10)
+	ticks = await route([Vector3(66, 8, -47), Vector3(88, 8, -47), Vector3(88, 10, -21)], "the Ledge to the roof")
+	check(ticks >= 0, "up the Ledge and over the bridge onto the fort's roof")
+	# Along the Ledge to the Lookout, and over the Sky Bridge onto the Crown.
+	ticks = await route([Vector3(88, 8, -46.5), Vector3(24, 8, -50), Vector3(3, 11, -50), Vector3(0, 11, -46), Vector3(0, 9, -3)], "the Sky Bridge")
+	check(ticks >= 0, "from the Ledge over the Sky Bridge onto the Crown")
+	# Through the Hill's tunnel, then up its south face and the crate to the Crown.
+	place(Vector3(20, 0.05, 0), PI * 0.5)
+	await run(cmd(), 10)
+	ticks = await route([Vector3(-20, 0, 0), Vector3(-2, 0, 22), Vector3(0, 5, 6.5), Vector3(10, 5, 0), Vector3(7, 7, 0), Vector3(3, 9, 0)], "the Hill")
+	check(ticks >= 0, "through the tunnel, up the Hill and onto the Crown")
+
+
+func test_depot_routes() -> void:
+	await load_map(DEPOT)
+	# Spawn, out of the back room and the loading doors, up to the Gantry and
+	# onto the trolley for the rifle.
+	place(Vector3(78, 0.05, -46), PI * 0.5)
+	await run(cmd(), 10)
+	var ticks := await route([Vector3(74, 0, -48.8), Vector3(71, 0, -48.8), Vector3(71, 0, -38), Vector3(60, 0, -37), Vector3(55, 0, -40),
+			Vector3(22, 0, -48.5), Vector3(2, 9, -48.5), Vector3(0, 9, -6), Vector3(0, 11, 0)], "spawn to the trolley")
+	check(ticks >= 0 and ticks * DT < 20.0, "spawn to the rifle on the Gantry in %.1f s" % (ticks * DT))
+	# Straight through the open boxcar.
+	place(Vector3(36, 0.05, 4), PI)
+	await run(cmd(), 10)
+	ticks = await route([Vector3(36, 0, 16)], "through the open car")
+	check(ticks >= 0, "through the open boxcar's doors")
+	# A crate up onto a boxcar's roof.
+	place(Vector3(16, 0.05, -2), 0.0)
+	await run(cmd(), 10)
+	ticks = await route([Vector3(16, 2, -7.5), Vector3(16, 3.6, -10)], "onto a boxcar")
+	check(ticks >= 0, "onto a boxcar's roof from its crate")
+	# Up the Signal tower.
+	place(Vector3(50, 0.05, 49.5), PI * 0.5)
+	await run(cmd(), 10)
+	ticks = await route([Vector3(31, 10, 49.5), Vector3(30, 10, 47.5)], "the Signal tower")
+	check(ticks >= 0, "up the Signal tower to the sniper")
+	# Up the container stair onto the Gantry.
+	place(Vector3(6, 0.05, 12.5), PI)
+	await run(cmd(), 10)
+	ticks = await route([Vector3(6, 2.6, 16.75), Vector3(6, 5.2, 19.25), Vector3(6, 7.8, 21.75), Vector3(1, 9, 21.75)], "the container stair")
+	check(ticks >= 0, "up the containers onto the Gantry")
+	# The Footbridge: up its stair, across the tracks, up onto the Signal tower.
+	place(Vector3(46, 0.05, -43.5), PI * 0.5)
+	await run(cmd(), 10)
+	ticks = await route([Vector3(30, 7, -43.5), Vector3(30, 7, 36), Vector3(30, 10, 46)], "the Footbridge")
+	check(ticks >= 0, "across the Footbridge to the Signal tower")
+	# From the loading yard up onto the Warehouse roof, and down a skylight.
+	place(Vector3(57, 0.05, -3.5), PI * 0.5)
+	await run(cmd(), 10)
+	ticks = await route([Vector3(79, 10, -3.5), Vector3(81, 10, -9), Vector3(67.5, 10, -21)], "onto the roof")
+	check(ticks >= 0, "up onto the Warehouse roof")
+	ticks = await go(Vector3(67.5, 0, -24.5), false)
+	check(ticks >= 0 and on_floor_at(0.0), "down through a skylight into the hall (at %s)" % player.global_position)

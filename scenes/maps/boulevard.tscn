@@ -1,0 +1,1504 @@
+[gd_scene format=3]
+
+[ext_resource type="Shader" path="res://src/render/retro_sky.gdshader" id="1_1xtrj"]
+[ext_resource type="Script" path="res://src/world/grey_box.gd" id="2_mf1cr"]
+[ext_resource type="Script" path="res://src/combat/weapon_pad.gd" id="3_gbyk1"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="4_3s825"]
+[ext_resource type="Script" path="res://src/player/player.gd" id="5_u2dms"]
+[ext_resource type="Script" path="res://src/ui/game_ui.gd" id="6_eqiip"]
+[ext_resource type="Script" path="res://src/render/retro_screen.gd" id="7_8bxqw"]
+[ext_resource type="Script" path="res://src/debug/debug_hud.gd" id="8_7qlvj"]
+[ext_resource type="Script" path="res://src/debug/tuning_panel.gd" id="9_56yqn"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_t854c"]
+shader = ExtResource("1_1xtrj")
+shader_parameter/top_color = null
+shader_parameter/upper_color = null
+shader_parameter/horizon_color = null
+shader_parameter/ground_color = null
+shader_parameter/bands = null
+shader_parameter/sun_color = null
+shader_parameter/sun_size = null
+
+[sub_resource type="Sky" id="Sky_pialk"]
+sky_material = SubResource("ShaderMaterial_t854c")
+radiance_size = 0
+
+[sub_resource type="Environment" id="Environment_5wu04"]
+background_mode = 2
+sky = SubResource("Sky_pialk")
+ambient_light_source = 2
+ambient_light_color = Color(0.5, 0.4, 0.62, 1)
+ambient_light_energy = 0.75
+reflected_light_source = 1
+glow_enabled = true
+glow_intensity = 0.5
+fog_enabled = true
+fog_light_color = Color(0.7, 0.44, 0.58, 1)
+fog_density = 0.006
+fog_sky_affect = 0.25
+
+[node name="Boulevard" type="Node3D" unique_id=2106780643]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=883257193]
+environment = SubResource("Environment_5wu04")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1342685969]
+transform = Transform3D(0.81915206, -0.35312894, 0.45198444, 0, 0.7880108, 0.6156615, -0.57357645, -0.5043204, 0.64550066, 0, 0, 0)
+light_color = Color(1, 0.84, 0.7, 1)
+light_energy = 1.15
+shadow_enabled = true
+directional_shadow_mode = 0
+directional_shadow_max_distance = 110.0
+
+[node name="Lights" type="Node3D" parent="." unique_id=319248851]
+
+[node name="Atrium" type="OmniLight3D" parent="Lights" unique_id=1224657610]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, -24)
+light_color = Color(1, 0.75, 0.4, 1)
+light_energy = 2.2
+omni_range = 16.0
+omni_attenuation = 0.6
+
+[node name="UnderBridge" type="OmniLight3D" parent="Lights" unique_id=1237932724]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.5, 25)
+light_color = Color(0.3, 0.85, 1, 1)
+light_energy = 2.2
+omni_range = 8.0
+omni_attenuation = 0.6
+
+[node name="Yard_Red" type="OmniLight3D" parent="Lights" unique_id=476824472]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -65, 5, 0)
+light_color = Color(1, 0.35, 0.3, 1)
+light_energy = 2.2
+omni_range = 20.0
+omni_attenuation = 0.6
+
+[node name="ArcadeRooms_Red" type="OmniLight3D" parent="Lights" unique_id=29552773]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, 3.5, -24)
+light_color = Color(1, 0.8, 0.5, 1)
+light_energy = 2.2
+omni_range = 14.0
+omni_attenuation = 0.6
+
+[node name="Gallery_Red" type="OmniLight3D" parent="Lights" unique_id=174884561]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, 8, -24)
+light_color = Color(0.9, 0.7, 1, 1)
+light_energy = 2.2
+omni_range = 14.0
+omni_attenuation = 0.6
+
+[node name="KioskB_Red" type="OmniLight3D" parent="Lights" unique_id=1886848449]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, 3, 17)
+light_color = Color(1, 0.5, 0.7, 1)
+light_energy = 2.2
+omni_range = 6.0
+omni_attenuation = 0.6
+
+[node name="Yard_Blue" type="OmniLight3D" parent="Lights" unique_id=1151375170]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 65, 5, 0)
+light_color = Color(0.35, 0.55, 1, 1)
+light_energy = 2.2
+omni_range = 20.0
+omni_attenuation = 0.6
+
+[node name="ArcadeRooms_Blue" type="OmniLight3D" parent="Lights" unique_id=1632681020]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 3.5, -24)
+light_color = Color(1, 0.8, 0.5, 1)
+light_energy = 2.2
+omni_range = 14.0
+omni_attenuation = 0.6
+
+[node name="Gallery_Blue" type="OmniLight3D" parent="Lights" unique_id=1373131146]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 8, -24)
+light_color = Color(0.9, 0.7, 1, 1)
+light_energy = 2.2
+omni_range = 14.0
+omni_attenuation = 0.6
+
+[node name="KioskB_Blue" type="OmniLight3D" parent="Lights" unique_id=125694126]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 3, 17)
+light_color = Color(1, 0.5, 0.7, 1)
+light_energy = 2.2
+omni_range = 6.0
+omni_attenuation = 0.6
+
+[node name="Geometry" type="Node3D" parent="." unique_id=848465000]
+
+[node name="Ground" type="StaticBody3D" parent="Geometry" unique_id=1926133117]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.25, -7)
+script = ExtResource("2_mf1cr")
+size = Vector3(144, 5.5, 54)
+kind = 4
+
+[node name="GroundFloor" type="StaticBody3D" parent="Geometry" unique_id=312332095]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, -7)
+script = ExtResource("2_mf1cr")
+size = Vector3(144, 0.5, 54)
+kind = 0
+
+[node name="Walkway" type="StaticBody3D" parent="Geometry" unique_id=471613042]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.25, 34)
+script = ExtResource("2_mf1cr")
+size = Vector3(144, 5.5, 8)
+kind = 4
+
+[node name="WalkwayFloor" type="StaticBody3D" parent="Geometry" unique_id=27222810]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 34)
+script = ExtResource("2_mf1cr")
+size = Vector3(144, 0.5, 8)
+kind = 0
+
+[node name="CanalBed" type="StaticBody3D" parent="Geometry" unique_id=935123099]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -5, 25)
+script = ExtResource("2_mf1cr")
+size = Vector3(116, 2, 10)
+kind = 0
+
+[node name="CanalBedFloor" type="StaticBody3D" parent="Geometry" unique_id=583579391]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.75, 25)
+script = ExtResource("2_mf1cr")
+size = Vector3(116, 0.5, 10)
+kind = 0
+
+[node name="BoundaryN" type="StaticBody3D" parent="Geometry" unique_id=1996962714]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, -34.25)
+script = ExtResource("2_mf1cr")
+size = Vector3(145, 14, 0.5)
+
+[node name="BoundaryS" type="StaticBody3D" parent="Geometry" unique_id=8845839]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, 38.25)
+script = ExtResource("2_mf1cr")
+size = Vector3(145, 14, 0.5)
+
+[node name="BoundaryW" type="StaticBody3D" parent="Geometry" unique_id=163579435]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -72.25, 7, 2)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.5, 14, 72)
+
+[node name="BoundaryE" type="StaticBody3D" parent="Geometry" unique_id=1700447689]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 72.25, 7, 2)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.5, 14, 72)
+
+[node name="AtriumFront_0" type="StaticBody3D" parent="Geometry" unique_id=1829479028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -15.5, 2.25, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(1, 4.5, 0.4)
+
+[node name="AtriumFront_1" type="StaticBody3D" parent="Geometry" unique_id=228126469]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 15.5, 2.25, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(1, 4.5, 0.4)
+
+[node name="AtriumFront_2" type="StaticBody3D" parent="Geometry" unique_id=1678167476]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.3, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(32, 1.5999999, 0.4)
+
+[node name="AtriumFront_3" type="StaticBody3D" parent="Geometry" unique_id=209945311]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4, 1.2000003, 0.4)
+
+[node name="AtriumFront_4" type="StaticBody3D" parent="Geometry" unique_id=610232572]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(12, 1.2000003, 0.4)
+
+[node name="AtriumFront_5" type="StaticBody3D" parent="Geometry" unique_id=353808541]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4, 1.2000003, 0.4)
+
+[node name="AtriumFront_6" type="StaticBody3D" parent="Geometry" unique_id=189984573]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.15, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(32, 1.6999998, 0.4)
+
+[node name="AtriumPillar_-5" type="StaticBody3D" parent="Geometry" unique_id=594271825]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 2.25, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(1, 4.5, 1)
+
+[node name="AtriumPillar_5" type="StaticBody3D" parent="Geometry" unique_id=812556797]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 2.25, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(1, 4.5, 1)
+
+[node name="Balcony" type="StaticBody3D" parent="Geometry" unique_id=1990171155]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.75, -31.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(32, 0.5, 5)
+kind = 0
+
+[node name="Landing" type="StaticBody3D" parent="Geometry" unique_id=923749061]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.75, -27.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(8, 0.5, 3)
+kind = 0
+
+[node name="LandingRail" type="StaticBody3D" parent="Geometry" unique_id=1647991457]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.5, -26.15)
+script = ExtResource("2_mf1cr")
+size = Vector3(8, 1, 0.29999924)
+kind = 3
+
+[node name="AtriumRoof_0" type="StaticBody3D" parent="Geometry" unique_id=791496579]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.25, -30)
+script = ExtResource("2_mf1cr")
+size = Vector3(32, 0.5, 8)
+kind = 0
+
+[node name="AtriumRoof_1" type="StaticBody3D" parent="Geometry" unique_id=1032746588]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10.5, 9.25, -22)
+script = ExtResource("2_mf1cr")
+size = Vector3(11, 0.5, 8)
+kind = 0
+
+[node name="AtriumRoof_2" type="StaticBody3D" parent="Geometry" unique_id=1316033396]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10.5, 9.25, -22)
+script = ExtResource("2_mf1cr")
+size = Vector3(11, 0.5, 8)
+kind = 0
+
+[node name="AtriumRoof_3" type="StaticBody3D" parent="Geometry" unique_id=1865186383]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.25, -16)
+script = ExtResource("2_mf1cr")
+size = Vector3(32, 0.5, 4)
+kind = 0
+
+[node name="AtriumParapet" type="StaticBody3D" parent="Geometry" unique_id=1396333524]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, -14.25)
+script = ExtResource("2_mf1cr")
+size = Vector3(32, 1, 0.5)
+kind = 3
+
+[node name="Planter_-7" type="StaticBody3D" parent="Geometry" unique_id=48390711]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 0.55, -20)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 1.1, 2)
+kind = 3
+
+[node name="Planter_7" type="StaticBody3D" parent="Geometry" unique_id=1087675074]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 0.55, -20)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 1.1, 2)
+kind = 3
+
+[node name="BasinN" type="StaticBody3D" parent="Geometry" unique_id=1871177515]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, -1.75)
+script = ExtResource("2_mf1cr")
+size = Vector3(10, 0.8, 0.5)
+kind = 3
+
+[node name="BasinS" type="StaticBody3D" parent="Geometry" unique_id=492781912]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.4, 7.75)
+script = ExtResource("2_mf1cr")
+size = Vector3(10, 0.8, 0.5)
+kind = 3
+
+[node name="BasinW" type="StaticBody3D" parent="Geometry" unique_id=1200505298]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.75, 0.4, 3)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.5, 0.8, 9)
+kind = 3
+
+[node name="BasinE" type="StaticBody3D" parent="Geometry" unique_id=2091793353]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.75, 0.4, 3)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.5, 0.8, 9)
+kind = 3
+
+[node name="Plinth" type="StaticBody3D" parent="Geometry" unique_id=807683033]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.1, 3)
+script = ExtResource("2_mf1cr")
+size = Vector3(2, 2.2, 2)
+kind = 5
+
+[node name="MidBridge" type="StaticBody3D" parent="Geometry" unique_id=2088272984]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 25)
+script = ExtResource("2_mf1cr")
+size = Vector3(6, 0.5, 10)
+kind = 0
+
+[node name="ArcadeFront_Red_0" type="StaticBody3D" parent="Geometry" unique_id=211713513]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.6, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4, 1.2, 0.4)
+
+[node name="ArcadeFront_Red_1" type="StaticBody3D" parent="Geometry" unique_id=516490580]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.2, 0.6, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(9.6, 1.2, 0.4)
+
+[node name="ArcadeFront_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1172960573]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41.7, 0.6, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(14.6, 1.2, 0.4)
+
+[node name="ArcadeFront_Red_3" type="StaticBody3D" parent="Geometry" unique_id=1416106480]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -53.7, 0.6, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4.5999985, 1.2, 0.4)
+
+[node name="ArcadeFront_Red_4" type="StaticBody3D" parent="Geometry" unique_id=1599305873]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 1.8000001, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4, 1.2, 0.4)
+
+[node name="ArcadeFront_Red_5" type="StaticBody3D" parent="Geometry" unique_id=1489276945]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23.7, 1.8000001, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(2.6, 1.2, 0.4)
+
+[node name="ArcadeFront_Red_6" type="StaticBody3D" parent="Geometry" unique_id=885528084]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 1.8000001, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4, 1.2, 0.4)
+
+[node name="ArcadeFront_Red_7" type="StaticBody3D" parent="Geometry" unique_id=381237251]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36.2, 1.8000001, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(3.6000004, 1.2, 0.4)
+
+[node name="ArcadeFront_Red_8" type="StaticBody3D" parent="Geometry" unique_id=985993940]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -45, 1.8000001, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(8, 1.2, 0.4)
+
+[node name="ArcadeFront_Red_9" type="StaticBody3D" parent="Geometry" unique_id=2017389270]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -53.7, 1.8000001, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4.5999985, 1.2, 0.4)
+
+[node name="ArcadeFront_Red_10" type="StaticBody3D" parent="Geometry" unique_id=2037868990]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 2.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4, 0.5999999, 0.4)
+
+[node name="ArcadeFront_Red_11" type="StaticBody3D" parent="Geometry" unique_id=1125510909]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27.2, 2.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(9.6, 0.5999999, 0.4)
+
+[node name="ArcadeFront_Red_12" type="StaticBody3D" parent="Geometry" unique_id=846782269]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41.7, 2.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(14.6, 0.5999999, 0.4)
+
+[node name="ArcadeFront_Red_13" type="StaticBody3D" parent="Geometry" unique_id=1455988176]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -53.7, 2.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4.5999985, 0.5999999, 0.4)
+
+[node name="ArcadeFront_Red_14" type="StaticBody3D" parent="Geometry" unique_id=79246041]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, 4.55, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(40, 3.1, 0.4)
+
+[node name="ArcadeFront_Red_15" type="StaticBody3D" parent="Geometry" unique_id=388962107]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(2, 1.2000003, 0.4)
+
+[node name="ArcadeFront_Red_16" type="StaticBody3D" parent="Geometry" unique_id=243369573]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 1.2000003, 0.4)
+
+[node name="ArcadeFront_Red_17" type="StaticBody3D" parent="Geometry" unique_id=1639762816]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.5, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 1.2000003, 0.4)
+
+[node name="ArcadeFront_Red_18" type="StaticBody3D" parent="Geometry" unique_id=3005690]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 1.2000003, 0.4)
+
+[node name="ArcadeFront_Red_19" type="StaticBody3D" parent="Geometry" unique_id=909909997]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40.5, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 1.2000003, 0.4)
+
+[node name="ArcadeFront_Red_20" type="StaticBody3D" parent="Geometry" unique_id=714422616]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46.5, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 1.2000003, 0.4)
+
+[node name="ArcadeFront_Red_21" type="StaticBody3D" parent="Geometry" unique_id=999050428]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -53.5, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(5, 1.2000003, 0.4)
+
+[node name="ArcadeFront_Red_22" type="StaticBody3D" parent="Geometry" unique_id=1602552834]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, 8.15, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(40, 1.6999998, 0.4)
+
+[node name="ArcadeEnd_Red" type="StaticBody3D" parent="Geometry" unique_id=1174402550]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -56, 4.5, -24)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 9, 20)
+
+[node name="ArcadeMid_Red_0" type="StaticBody3D" parent="Geometry" unique_id=371089511]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 1.75, -31)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 3.5, 6)
+
+[node name="ArcadeMid_Red_1" type="StaticBody3D" parent="Geometry" unique_id=768806333]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 1.75, -17)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 3.5, 6)
+
+[node name="ArcadeMid_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1383827325]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 4.25, -24)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1.5, 20)
+
+[node name="ArcadeMid_Red_3" type="StaticBody3D" parent="Geometry" unique_id=2061367398]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 5.55, -33.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1.0999999, 1)
+
+[node name="ArcadeMid_Red_4" type="StaticBody3D" parent="Geometry" unique_id=73226089]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 5.55, -22.3)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1.0999999, 16.6)
+
+[node name="ArcadeMid_Red_5" type="StaticBody3D" parent="Geometry" unique_id=338677844]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 6.7, -33.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1.2000003, 1)
+
+[node name="ArcadeMid_Red_6" type="StaticBody3D" parent="Geometry" unique_id=2112693422]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 6.7, -28.3)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1.2000003, 4.6)
+
+[node name="ArcadeMid_Red_7" type="StaticBody3D" parent="Geometry" unique_id=111894473]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 6.7, -17)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1.2000003, 6)
+
+[node name="ArcadeMid_Red_8" type="StaticBody3D" parent="Geometry" unique_id=2051177608]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 7.65, -33.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 0.6999998, 1)
+
+[node name="ArcadeMid_Red_9" type="StaticBody3D" parent="Geometry" unique_id=1621516586]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 7.65, -22.3)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 0.6999998, 16.6)
+
+[node name="ArcadeMid_Red_10" type="StaticBody3D" parent="Geometry" unique_id=1767267363]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 8.5, -24)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1, 20)
+
+[node name="ArcadeWall1_Red_0" type="StaticBody3D" parent="Geometry" unique_id=1442830622]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 1.5, -27)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 3, 14)
+
+[node name="ArcadeWall1_Red_1" type="StaticBody3D" parent="Geometry" unique_id=1762295116]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 1.5, -15.799999)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 3, 3.6000004)
+
+[node name="ArcadeWall1_Red_2" type="StaticBody3D" parent="Geometry" unique_id=470698019]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 3.75, -24)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1.5, 20)
+
+[node name="ArcadeWall2_Red_0" type="StaticBody3D" parent="Geometry" unique_id=477646673]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29, 1.5, -32)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 3, 4)
+
+[node name="ArcadeWall2_Red_1" type="StaticBody3D" parent="Geometry" unique_id=1128695541]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29, 1.5, -20.8)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 3, 13.6)
+
+[node name="ArcadeWall2_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1162043133]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -29, 3.75, -24)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1.5, 20)
+
+[node name="ArcadeStair_Red" type="StaticBody3D" parent="Geometry" unique_id=1464567043]
+transform = Transform3D(0, 0.4856429, 0.87415725, 0, 0.87415725, -0.4856429, -1, 0, 0, -48.645695, 2.237753, -32.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 0.6, 10.29563)
+kind = 2
+
+[node name="ArcadeUpper_Red_0" type="StaticBody3D" parent="Geometry" unique_id=1272577827]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -54.5, 4.75, -32.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 0.5, 3)
+kind = 0
+
+[node name="ArcadeUpper_Red_1" type="StaticBody3D" parent="Geometry" unique_id=1296919629]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 4.75, -32.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(28, 0.5, 3)
+kind = 0
+
+[node name="ArcadeUpper_Red_2" type="StaticBody3D" parent="Geometry" unique_id=304106874]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, 4.75, -22.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(40, 0.5, 17)
+kind = 0
+
+[node name="GalleryCover1_Red" type="StaticBody3D" parent="Geometry" unique_id=1626895210]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 5.6, -20)
+script = ExtResource("2_mf1cr")
+size = Vector3(2, 1.1999998, 4)
+kind = 3
+
+[node name="GalleryCover2_Red" type="StaticBody3D" parent="Geometry" unique_id=970760888]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -39, 5.6, -28)
+script = ExtResource("2_mf1cr")
+size = Vector3(2, 1.1999998, 4)
+kind = 3
+
+[node name="ArcadeRoof_Red" type="StaticBody3D" parent="Geometry" unique_id=662485778]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, 9.25, -24)
+script = ExtResource("2_mf1cr")
+size = Vector3(40, 0.5, 20)
+kind = 0
+
+[node name="RoofParapet_Red" type="StaticBody3D" parent="Geometry" unique_id=192809325]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33, 10, -14.25)
+script = ExtResource("2_mf1cr")
+size = Vector3(34, 1, 0.5)
+kind = 3
+
+[node name="Tower_Red" type="StaticBody3D" parent="Geometry" unique_id=2122572970]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -53, 10.75, -17)
+script = ExtResource("2_mf1cr")
+size = Vector3(6, 2.5, 6)
+kind = 5
+
+[node name="TowerStair_Red" type="StaticBody3D" parent="Geometry" unique_id=1391964930]
+transform = Transform3D(-1, 0, 0, 0, 0.9701425, -0.24253562, 0, -0.24253562, -0.9701425, -53, 10.458958, -24.927238)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 0.6, 10.307764)
+kind = 2
+
+[node name="TowerParapetS_Red" type="StaticBody3D" parent="Geometry" unique_id=517423438]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -53, 12.6, -14.2)
+script = ExtResource("2_mf1cr")
+size = Vector3(6, 1.1999998, 0.39999962)
+kind = 3
+
+[node name="TowerParapetW_Red" type="StaticBody3D" parent="Geometry" unique_id=1972531056]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50.2, 12.6, -17.2)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.40000153, 1.1999998, 5.6000004)
+kind = 3
+
+[node name="RoofRamp_Red" type="StaticBody3D" parent="Geometry" unique_id=411629491]
+transform = Transform3D(1, 0, 0, 0, 0.84481907, -0.53505206, 0, 0.53505206, 0.84481907, -57.5, 1.3707237, -25.14021)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 8, 17.755281)
+kind = 2
+
+[node name="RoofLanding_Red" type="StaticBody3D" parent="Geometry" unique_id=2000553245]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -57.5, 9.25, -32.25)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 0.5, 3.5)
+kind = 0
+
+[node name="AtriumRailing_Red" type="StaticBody3D" parent="Geometry" unique_id=787794824]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 5.5, -29.15)
+script = ExtResource("2_mf1cr")
+size = Vector3(12, 1, 0.29999924)
+kind = 3
+
+[node name="AtriumStair_Red" type="StaticBody3D" parent="Geometry" unique_id=499146418]
+transform = Transform3D(0, -0.4856429, -0.87415725, 0, 0.87415725, -0.4856429, 1, 0, 0, -8.354307, 2.237753, -27.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 0.6, 10.29563)
+kind = 2
+
+[node name="Car1_Red" type="StaticBody3D" parent="Geometry" unique_id=806475641]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.25, 0.75, -4.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(4.5, 1.5, 2)
+kind = 5
+
+[node name="Car2_Red" type="StaticBody3D" parent="Geometry" unique_id=1834635018]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38.25, 0.75, 3.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(4.5, 1.5, 2)
+kind = 5
+
+[node name="Car3_Red" type="StaticBody3D" parent="Geometry" unique_id=546311189]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50.25, 0.75, -3)
+script = ExtResource("2_mf1cr")
+size = Vector3(4.5, 1.5, 2)
+kind = 5
+
+[node name="Shelter_Red" type="StaticBody3D" parent="Geometry" unique_id=1840822056]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31, 1.3, 10.8)
+script = ExtResource("2_mf1cr")
+size = Vector3(6, 2.6, 0.39999962)
+
+[node name="ShelterRoof_Red" type="StaticBody3D" parent="Geometry" unique_id=1963739945]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31, 2.75, 10)
+script = ExtResource("2_mf1cr")
+size = Vector3(6, 0.3000002, 2)
+kind = 0
+
+[node name="Gate_Red_0" type="StaticBody3D" parent="Geometry" unique_id=1755416416]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58.5, 2.25, -8)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.8, 4.5, 8)
+
+[node name="Gate_Red_1" type="StaticBody3D" parent="Geometry" unique_id=1238001794]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58.5, 2.25, 9)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.8, 4.5, 10)
+
+[node name="Gate_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1029640839]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58.5, 5.75, 1)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.8, 2.5, 26)
+
+[node name="KioskA_Red" type="StaticBody3D" parent="Geometry" unique_id=818502457]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 2, 17)
+script = ExtResource("2_mf1cr")
+size = Vector3(12, 4, 6)
+kind = 3
+
+[node name="KioskACrate_Red" type="StaticBody3D" parent="Geometry" unique_id=360722805]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -23, 1, 13.25)
+script = ExtResource("2_mf1cr")
+size = Vector3(2, 2, 1.5)
+kind = 3
+
+[node name="KioskBFront_Red_0" type="StaticBody3D" parent="Geometry" unique_id=2130857018]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 0.6, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(5, 1.2, 0.4)
+
+[node name="KioskBFront_Red_1" type="StaticBody3D" parent="Geometry" unique_id=1583514356]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41.7, 0.6, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4.6, 1.2, 0.4)
+
+[node name="KioskBFront_Red_2" type="StaticBody3D" parent="Geometry" unique_id=558942466]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.75, 1.8000001, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(1.5, 1.2, 0.4)
+
+[node name="KioskBFront_Red_3" type="StaticBody3D" parent="Geometry" unique_id=203856242]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36.5, 1.8000001, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(1, 1.2, 0.4)
+
+[node name="KioskBFront_Red_4" type="StaticBody3D" parent="Geometry" unique_id=1465554573]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -39.95, 1.8000001, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(1.0999999, 1.2, 0.4)
+
+[node name="KioskBFront_Red_5" type="StaticBody3D" parent="Geometry" unique_id=1946769660]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -43.5, 1.8000001, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(1, 1.2, 0.4)
+
+[node name="KioskBFront_Red_6" type="StaticBody3D" parent="Geometry" unique_id=44974314]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.5, 2.7, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(5, 0.5999999, 0.4)
+
+[node name="KioskBFront_Red_7" type="StaticBody3D" parent="Geometry" unique_id=1179711422]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -41.7, 2.7, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4.6, 0.5999999, 0.4)
+
+[node name="KioskBFront_Red_8" type="StaticBody3D" parent="Geometry" unique_id=2029774012]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, 3.25, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(12, 0.5, 0.4)
+
+[node name="KioskBBack_Red_0" type="StaticBody3D" parent="Geometry" unique_id=524191737]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -33.5, 1.5, 20)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 3, 0.4)
+
+[node name="KioskBBack_Red_1" type="StaticBody3D" parent="Geometry" unique_id=999149527]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40.7, 1.5, 20)
+script = ExtResource("2_mf1cr")
+size = Vector3(6.6, 3, 0.4)
+
+[node name="KioskBBack_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1195803336]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, 3.25, 20)
+script = ExtResource("2_mf1cr")
+size = Vector3(12, 0.5, 0.4)
+
+[node name="KioskBW_Red" type="StaticBody3D" parent="Geometry" unique_id=1537132366]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32, 1.75, 17)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 3.5, 6)
+
+[node name="KioskBE_Red" type="StaticBody3D" parent="Geometry" unique_id=666657950]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -44, 1.75, 17)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 3.5, 6)
+
+[node name="KioskBRoof_Red" type="StaticBody3D" parent="Geometry" unique_id=384270112]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, 3.75, 17)
+script = ExtResource("2_mf1cr")
+size = Vector3(12, 0.5, 6)
+kind = 0
+
+[node name="KioskC_Red" type="StaticBody3D" parent="Geometry" unique_id=932194204]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -52, 2, 17)
+script = ExtResource("2_mf1cr")
+size = Vector3(8, 4, 6)
+kind = 3
+
+[node name="KioskCCrate_Red" type="StaticBody3D" parent="Geometry" unique_id=1806789854]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -52, 1, 13.25)
+script = ExtResource("2_mf1cr")
+size = Vector3(2, 2, 1.5)
+kind = 3
+
+[node name="CanalRamp_Red" type="StaticBody3D" parent="Geometry" unique_id=227944726]
+transform = Transform3D(0, 0.28, 0.96, 0, 0.96, -0.28, -1, 0, 0, -52.504, -3.478, 25)
+script = ExtResource("2_mf1cr")
+size = Vector3(10, 3.6, 12.5)
+kind = 2
+
+[node name="YardCanalEnd_Red" type="StaticBody3D" parent="Geometry" unique_id=773184627]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -65, -3.25, 25)
+script = ExtResource("2_mf1cr")
+size = Vector3(14, 5.5, 10)
+kind = 4
+
+[node name="YardCanalEnd_RedFloor" type="StaticBody3D" parent="Geometry" unique_id=536076209]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -65, -0.25, 25)
+script = ExtResource("2_mf1cr")
+size = Vector3(14, 0.5, 10)
+kind = 0
+
+[node name="Bridge_Red" type="StaticBody3D" parent="Geometry" unique_id=1998112040]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, -0.25, 25)
+script = ExtResource("2_mf1cr")
+size = Vector3(4, 0.5, 10)
+kind = 0
+
+[node name="WalkwayCover1_Red" type="StaticBody3D" parent="Geometry" unique_id=929906461]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 0.6, 33.2)
+script = ExtResource("2_mf1cr")
+size = Vector3(4, 1.2, 0.40000153)
+kind = 3
+
+[node name="WalkwayCover2_Red" type="StaticBody3D" parent="Geometry" unique_id=1777467356]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46, 0.6, 35.2)
+script = ExtResource("2_mf1cr")
+size = Vector3(4, 1.2, 0.40000153)
+kind = 3
+
+[node name="YardCrate1_Red" type="StaticBody3D" parent="Geometry" unique_id=974610531]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -63, 0.75, 0)
+script = ExtResource("2_mf1cr")
+size = Vector3(2, 1.5, 4)
+kind = 3
+
+[node name="YardCrate2_Red" type="StaticBody3D" parent="Geometry" unique_id=1641896296]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -64, 0.75, 26)
+script = ExtResource("2_mf1cr")
+size = Vector3(2, 1.5, 2)
+kind = 3
+
+[node name="ArcadeFront_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=2002938363]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 0.6, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4, 1.2, 0.4)
+
+[node name="ArcadeFront_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=264627872]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.2, 0.6, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(9.6, 1.2, 0.4)
+
+[node name="ArcadeFront_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=1327158014]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 41.7, 0.6, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(14.6, 1.2, 0.4)
+
+[node name="ArcadeFront_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=897859005]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53.7, 0.6, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4.5999985, 1.2, 0.4)
+
+[node name="ArcadeFront_Blue_4" type="StaticBody3D" parent="Geometry" unique_id=618205154]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 1.8000001, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4, 1.2, 0.4)
+
+[node name="ArcadeFront_Blue_5" type="StaticBody3D" parent="Geometry" unique_id=1511114124]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23.7, 1.8000001, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(2.6, 1.2, 0.4)
+
+[node name="ArcadeFront_Blue_6" type="StaticBody3D" parent="Geometry" unique_id=1239673132]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 1.8000001, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4, 1.2, 0.4)
+
+[node name="ArcadeFront_Blue_7" type="StaticBody3D" parent="Geometry" unique_id=1039542658]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36.2, 1.8000001, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(3.6000004, 1.2, 0.4)
+
+[node name="ArcadeFront_Blue_8" type="StaticBody3D" parent="Geometry" unique_id=41304925]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45, 1.8000001, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(8, 1.2, 0.4)
+
+[node name="ArcadeFront_Blue_9" type="StaticBody3D" parent="Geometry" unique_id=1930045328]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53.7, 1.8000001, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4.5999985, 1.2, 0.4)
+
+[node name="ArcadeFront_Blue_10" type="StaticBody3D" parent="Geometry" unique_id=1036419428]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 2.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4, 0.5999999, 0.4)
+
+[node name="ArcadeFront_Blue_11" type="StaticBody3D" parent="Geometry" unique_id=1749692669]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 27.2, 2.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(9.6, 0.5999999, 0.4)
+
+[node name="ArcadeFront_Blue_12" type="StaticBody3D" parent="Geometry" unique_id=1937918721]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 41.7, 2.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(14.6, 0.5999999, 0.4)
+
+[node name="ArcadeFront_Blue_13" type="StaticBody3D" parent="Geometry" unique_id=1039878326]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53.7, 2.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4.5999985, 0.5999999, 0.4)
+
+[node name="ArcadeFront_Blue_14" type="StaticBody3D" parent="Geometry" unique_id=2058371959]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 4.55, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(40, 3.1, 0.4)
+
+[node name="ArcadeFront_Blue_15" type="StaticBody3D" parent="Geometry" unique_id=2060820681]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 17, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(2, 1.2000003, 0.4)
+
+[node name="ArcadeFront_Blue_16" type="StaticBody3D" parent="Geometry" unique_id=459510719]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 1.2000003, 0.4)
+
+[node name="ArcadeFront_Blue_17" type="StaticBody3D" parent="Geometry" unique_id=2045540484]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.5, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 1.2000003, 0.4)
+
+[node name="ArcadeFront_Blue_18" type="StaticBody3D" parent="Geometry" unique_id=1043750590]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34.5, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 1.2000003, 0.4)
+
+[node name="ArcadeFront_Blue_19" type="StaticBody3D" parent="Geometry" unique_id=1712775977]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40.5, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 1.2000003, 0.4)
+
+[node name="ArcadeFront_Blue_20" type="StaticBody3D" parent="Geometry" unique_id=809385377]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46.5, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 1.2000003, 0.4)
+
+[node name="ArcadeFront_Blue_21" type="StaticBody3D" parent="Geometry" unique_id=1420210816]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53.5, 6.7, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(5, 1.2000003, 0.4)
+
+[node name="ArcadeFront_Blue_22" type="StaticBody3D" parent="Geometry" unique_id=232649373]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 8.15, -14)
+script = ExtResource("2_mf1cr")
+size = Vector3(40, 1.6999998, 0.4)
+
+[node name="ArcadeEnd_Blue" type="StaticBody3D" parent="Geometry" unique_id=1847701756]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 56, 4.5, -24)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 9, 20)
+
+[node name="ArcadeMid_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=1774335432]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 1.75, -31)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 3.5, 6)
+
+[node name="ArcadeMid_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=713506158]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 1.75, -17)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 3.5, 6)
+
+[node name="ArcadeMid_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=1142845652]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 4.25, -24)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1.5, 20)
+
+[node name="ArcadeMid_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=228470942]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 5.55, -33.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1.0999999, 1)
+
+[node name="ArcadeMid_Blue_4" type="StaticBody3D" parent="Geometry" unique_id=1620306618]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 5.55, -22.3)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1.0999999, 16.6)
+
+[node name="ArcadeMid_Blue_5" type="StaticBody3D" parent="Geometry" unique_id=575507702]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 6.7, -33.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1.2000003, 1)
+
+[node name="ArcadeMid_Blue_6" type="StaticBody3D" parent="Geometry" unique_id=1894091753]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 6.7, -28.3)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1.2000003, 4.6)
+
+[node name="ArcadeMid_Blue_7" type="StaticBody3D" parent="Geometry" unique_id=317213070]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 6.7, -17)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1.2000003, 6)
+
+[node name="ArcadeMid_Blue_8" type="StaticBody3D" parent="Geometry" unique_id=1846149237]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 7.65, -33.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 0.6999998, 1)
+
+[node name="ArcadeMid_Blue_9" type="StaticBody3D" parent="Geometry" unique_id=305212013]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 7.65, -22.3)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 0.6999998, 16.6)
+
+[node name="ArcadeMid_Blue_10" type="StaticBody3D" parent="Geometry" unique_id=390188973]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 8.5, -24)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1, 20)
+
+[node name="ArcadeWall1_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=436118158]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 1.5, -27)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 3, 14)
+
+[node name="ArcadeWall1_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=920066831]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 1.5, -15.799999)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 3, 3.6000004)
+
+[node name="ArcadeWall1_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=1553656490]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 3.75, -24)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1.5, 20)
+
+[node name="ArcadeWall2_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=73798186]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29, 1.5, -32)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 3, 4)
+
+[node name="ArcadeWall2_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1540264423]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29, 1.5, -20.8)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 3, 13.6)
+
+[node name="ArcadeWall2_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=763908404]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 29, 3.75, -24)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 1.5, 20)
+
+[node name="ArcadeStair_Blue" type="StaticBody3D" parent="Geometry" unique_id=545593010]
+transform = Transform3D(0, -0.4856429, -0.87415725, 0, 0.87415725, -0.4856429, 1, 0, 0, 48.645695, 2.237753, -32.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 0.6, 10.29563)
+kind = 2
+
+[node name="ArcadeUpper_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=936620430]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 4.75, -32.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(28, 0.5, 3)
+kind = 0
+
+[node name="ArcadeUpper_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1513438768]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 54.5, 4.75, -32.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 0.5, 3)
+kind = 0
+
+[node name="ArcadeUpper_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=351128219]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 4.75, -22.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(40, 0.5, 17)
+kind = 0
+
+[node name="GalleryCover1_Blue" type="StaticBody3D" parent="Geometry" unique_id=1108085084]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 5.6, -20)
+script = ExtResource("2_mf1cr")
+size = Vector3(2, 1.1999998, 4)
+kind = 3
+
+[node name="GalleryCover2_Blue" type="StaticBody3D" parent="Geometry" unique_id=1871919732]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39, 5.6, -28)
+script = ExtResource("2_mf1cr")
+size = Vector3(2, 1.1999998, 4)
+kind = 3
+
+[node name="ArcadeRoof_Blue" type="StaticBody3D" parent="Geometry" unique_id=1602010438]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 9.25, -24)
+script = ExtResource("2_mf1cr")
+size = Vector3(40, 0.5, 20)
+kind = 0
+
+[node name="RoofParapet_Blue" type="StaticBody3D" parent="Geometry" unique_id=893649160]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33, 10, -14.25)
+script = ExtResource("2_mf1cr")
+size = Vector3(34, 1, 0.5)
+kind = 3
+
+[node name="Tower_Blue" type="StaticBody3D" parent="Geometry" unique_id=177051618]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53, 10.75, -17)
+script = ExtResource("2_mf1cr")
+size = Vector3(6, 2.5, 6)
+kind = 5
+
+[node name="TowerStair_Blue" type="StaticBody3D" parent="Geometry" unique_id=514689304]
+transform = Transform3D(-1, 0, 0, 0, 0.9701425, -0.24253562, 0, -0.24253562, -0.9701425, 53, 10.458958, -24.927238)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 0.6, 10.307764)
+kind = 2
+
+[node name="TowerParapetS_Blue" type="StaticBody3D" parent="Geometry" unique_id=325563548]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53, 12.6, -14.2)
+script = ExtResource("2_mf1cr")
+size = Vector3(6, 1.1999998, 0.39999962)
+kind = 3
+
+[node name="TowerParapetW_Blue" type="StaticBody3D" parent="Geometry" unique_id=1125691372]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50.2, 12.6, -17.2)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.40000153, 1.1999998, 5.6000004)
+kind = 3
+
+[node name="RoofRamp_Blue" type="StaticBody3D" parent="Geometry" unique_id=1359225135]
+transform = Transform3D(1, 0, 0, 0, 0.84481907, -0.53505206, 0, 0.53505206, 0.84481907, 57.5, 1.3707237, -25.14021)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 8, 17.755281)
+kind = 2
+
+[node name="RoofLanding_Blue" type="StaticBody3D" parent="Geometry" unique_id=1854532944]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 57.5, 9.25, -32.25)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 0.5, 3.5)
+kind = 0
+
+[node name="AtriumRailing_Blue" type="StaticBody3D" parent="Geometry" unique_id=759839314]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 5.5, -29.15)
+script = ExtResource("2_mf1cr")
+size = Vector3(12, 1, 0.29999924)
+kind = 3
+
+[node name="AtriumStair_Blue" type="StaticBody3D" parent="Geometry" unique_id=1630043165]
+transform = Transform3D(0, 0.4856429, 0.87415725, 0, 0.87415725, -0.4856429, -1, 0, 0, 8.354307, 2.237753, -27.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 0.6, 10.29563)
+kind = 2
+
+[node name="Car1_Blue" type="StaticBody3D" parent="Geometry" unique_id=1204167952]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.25, 0.75, -4.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(4.5, 1.5, 2)
+kind = 5
+
+[node name="Car2_Blue" type="StaticBody3D" parent="Geometry" unique_id=1082611717]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38.25, 0.75, 3.5)
+script = ExtResource("2_mf1cr")
+size = Vector3(4.5, 1.5, 2)
+kind = 5
+
+[node name="Car3_Blue" type="StaticBody3D" parent="Geometry" unique_id=925801669]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50.25, 0.75, -3)
+script = ExtResource("2_mf1cr")
+size = Vector3(4.5, 1.5, 2)
+kind = 5
+
+[node name="Shelter_Blue" type="StaticBody3D" parent="Geometry" unique_id=707230301]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31, 1.3, 10.8)
+script = ExtResource("2_mf1cr")
+size = Vector3(6, 2.6, 0.39999962)
+
+[node name="ShelterRoof_Blue" type="StaticBody3D" parent="Geometry" unique_id=90168340]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31, 2.75, 10)
+script = ExtResource("2_mf1cr")
+size = Vector3(6, 0.3000002, 2)
+kind = 0
+
+[node name="Gate_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=1133992622]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58.5, 2.25, -8)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.8, 4.5, 8)
+
+[node name="Gate_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1627028302]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58.5, 2.25, 9)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.8, 4.5, 10)
+
+[node name="Gate_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=568139079]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58.5, 5.75, 1)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.8, 2.5, 26)
+
+[node name="KioskA_Blue" type="StaticBody3D" parent="Geometry" unique_id=1328449339]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 2, 17)
+script = ExtResource("2_mf1cr")
+size = Vector3(12, 4, 6)
+kind = 3
+
+[node name="KioskACrate_Blue" type="StaticBody3D" parent="Geometry" unique_id=1950758825]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 23, 1, 13.25)
+script = ExtResource("2_mf1cr")
+size = Vector3(2, 2, 1.5)
+kind = 3
+
+[node name="KioskBFront_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=1624242986]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34.5, 0.6, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(5, 1.2, 0.4)
+
+[node name="KioskBFront_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1395044834]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 41.7, 0.6, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4.6, 1.2, 0.4)
+
+[node name="KioskBFront_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=1099314368]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.75, 1.8000001, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(1.5, 1.2, 0.4)
+
+[node name="KioskBFront_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=1417013108]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36.5, 1.8000001, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(1, 1.2, 0.4)
+
+[node name="KioskBFront_Blue_4" type="StaticBody3D" parent="Geometry" unique_id=403494796]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39.95, 1.8000001, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(1.0999999, 1.2, 0.4)
+
+[node name="KioskBFront_Blue_5" type="StaticBody3D" parent="Geometry" unique_id=675003311]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 43.5, 1.8000001, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(1, 1.2, 0.4)
+
+[node name="KioskBFront_Blue_6" type="StaticBody3D" parent="Geometry" unique_id=752764884]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34.5, 2.7, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(5, 0.5999999, 0.4)
+
+[node name="KioskBFront_Blue_7" type="StaticBody3D" parent="Geometry" unique_id=1489278399]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 41.7, 2.7, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(4.6, 0.5999999, 0.4)
+
+[node name="KioskBFront_Blue_8" type="StaticBody3D" parent="Geometry" unique_id=1755035614]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 3.25, 14)
+script = ExtResource("2_mf1cr")
+size = Vector3(12, 0.5, 0.4)
+
+[node name="KioskBBack_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=1716304044]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 33.5, 1.5, 20)
+script = ExtResource("2_mf1cr")
+size = Vector3(3, 3, 0.4)
+
+[node name="KioskBBack_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1577754279]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40.7, 1.5, 20)
+script = ExtResource("2_mf1cr")
+size = Vector3(6.6, 3, 0.4)
+
+[node name="KioskBBack_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=156583741]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 3.25, 20)
+script = ExtResource("2_mf1cr")
+size = Vector3(12, 0.5, 0.4)
+
+[node name="KioskBW_Blue" type="StaticBody3D" parent="Geometry" unique_id=1143445305]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32, 1.75, 17)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 3.5, 6)
+
+[node name="KioskBE_Blue" type="StaticBody3D" parent="Geometry" unique_id=352096697]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44, 1.75, 17)
+script = ExtResource("2_mf1cr")
+size = Vector3(0.4, 3.5, 6)
+
+[node name="KioskBRoof_Blue" type="StaticBody3D" parent="Geometry" unique_id=318729264]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 3.75, 17)
+script = ExtResource("2_mf1cr")
+size = Vector3(12, 0.5, 6)
+kind = 0
+
+[node name="KioskC_Blue" type="StaticBody3D" parent="Geometry" unique_id=60897950]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 2, 17)
+script = ExtResource("2_mf1cr")
+size = Vector3(8, 4, 6)
+kind = 3
+
+[node name="KioskCCrate_Blue" type="StaticBody3D" parent="Geometry" unique_id=1832591311]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 1, 13.25)
+script = ExtResource("2_mf1cr")
+size = Vector3(2, 2, 1.5)
+kind = 3
+
+[node name="CanalRamp_Blue" type="StaticBody3D" parent="Geometry" unique_id=1018742547]
+transform = Transform3D(0, -0.28, -0.96, 0, 0.96, -0.28, 1, 0, 0, 52.504, -3.478, 25)
+script = ExtResource("2_mf1cr")
+size = Vector3(10, 3.6, 12.5)
+kind = 2
+
+[node name="YardCanalEnd_Blue" type="StaticBody3D" parent="Geometry" unique_id=2055829626]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 65, -3.25, 25)
+script = ExtResource("2_mf1cr")
+size = Vector3(14, 5.5, 10)
+kind = 4
+
+[node name="YardCanalEnd_BlueFloor" type="StaticBody3D" parent="Geometry" unique_id=1047979501]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 65, -0.25, 25)
+script = ExtResource("2_mf1cr")
+size = Vector3(14, 0.5, 10)
+kind = 0
+
+[node name="Bridge_Blue" type="StaticBody3D" parent="Geometry" unique_id=1894830105]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, -0.25, 25)
+script = ExtResource("2_mf1cr")
+size = Vector3(4, 0.5, 10)
+kind = 0
+
+[node name="WalkwayCover1_Blue" type="StaticBody3D" parent="Geometry" unique_id=598025891]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 0.6, 33.2)
+script = ExtResource("2_mf1cr")
+size = Vector3(4, 1.2, 0.40000153)
+kind = 3
+
+[node name="WalkwayCover2_Blue" type="StaticBody3D" parent="Geometry" unique_id=609387755]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46, 0.6, 35.2)
+script = ExtResource("2_mf1cr")
+size = Vector3(4, 1.2, 0.40000153)
+kind = 3
+
+[node name="YardCrate1_Blue" type="StaticBody3D" parent="Geometry" unique_id=294915831]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 63, 0.75, 0)
+script = ExtResource("2_mf1cr")
+size = Vector3(2, 1.5, 4)
+kind = 3
+
+[node name="YardCrate2_Blue" type="StaticBody3D" parent="Geometry" unique_id=691140212]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 64, 0.75, 26)
+script = ExtResource("2_mf1cr")
+size = Vector3(2, 1.5, 2)
+kind = 3
+
+[node name="Labels" type="Node3D" parent="." unique_id=1974997878]
+
+[node name="ATRIUM" type="Label3D" parent="Labels" unique_id=1268722445 groups=["debug_labels"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12, -24)
+pixel_size = 0.01
+billboard = 2
+texture_filter = 0
+outline_modulate = Color(0.15, 0.1, 0.25, 1)
+text = "ATRIUM"
+font_size = 64
+outline_size = 16
+
+[node name="PLAZA" type="Label3D" parent="Labels" unique_id=1671018925 groups=["debug_labels"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6, 3)
+pixel_size = 0.01
+billboard = 2
+texture_filter = 0
+outline_modulate = Color(0.15, 0.1, 0.25, 1)
+text = "PLAZA"
+font_size = 64
+outline_size = 16
+
+[node name="CANAL" type="Label3D" parent="Labels" unique_id=2110519098 groups=["debug_labels"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2, 25)
+pixel_size = 0.01
+billboard = 2
+texture_filter = 0
+outline_modulate = Color(0.15, 0.1, 0.25, 1)
+text = "CANAL"
+font_size = 64
+outline_size = 16
+
+[node name="RED_YARD" type="Label3D" parent="Labels" unique_id=1996263187 groups=["debug_labels"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -65, 6, 0)
+pixel_size = 0.01
+billboard = 2
+texture_filter = 0
+outline_modulate = Color(0.15, 0.1, 0.25, 1)
+text = "RED YARD"
+font_size = 64
+outline_size = 16
+
+[node name="RED_TOWER" type="Label3D" parent="Labels" unique_id=308276886 groups=["debug_labels"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -53, 16, -17)
+pixel_size = 0.01
+billboard = 2
+texture_filter = 0
+outline_modulate = Color(0.15, 0.1, 0.25, 1)
+text = "RED TOWER"
+font_size = 64
+outline_size = 16
+
+[node name="BLUE_YARD" type="Label3D" parent="Labels" unique_id=997620223 groups=["debug_labels"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 65, 6, 0)
+pixel_size = 0.01
+billboard = 2
+texture_filter = 0
+outline_modulate = Color(0.15, 0.1, 0.25, 1)
+text = "BLUE YARD"
+font_size = 64
+outline_size = 16
+
+[node name="BLUE_TOWER" type="Label3D" parent="Labels" unique_id=581643394 groups=["debug_labels"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53, 16, -17)
+pixel_size = 0.01
+billboard = 2
+texture_filter = 0
+outline_modulate = Color(0.15, 0.1, 0.25, 1)
+text = "BLUE TOWER"
+font_size = 64
+outline_size = 16
+
+[node name="Combat" type="Node3D" parent="." unique_id=616659677]
+
+[node name="Pad_Rifle" type="Node3D" parent="Combat" unique_id=1669168922]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.2, 3)
+script = ExtResource("3_gbyk1")
+weapon = &"rifle"
+
+[node name="Pad_Shotgun" type="Node3D" parent="Combat" unique_id=1432649123]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5, -31.5)
+script = ExtResource("3_gbyk1")
+weapon = &"shotgun"
+
+[node name="Pad_Revolver" type="Node3D" parent="Combat" unique_id=1568612142]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.5, 25)
+script = ExtResource("3_gbyk1")
+weapon = &"revolver"
+
+[node name="Pad_Pistol_Red" type="Node3D" parent="Combat" unique_id=1870357776]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -66, 0, -18)
+script = ExtResource("3_gbyk1")
+
+[node name="Pad_Pistol2_Red" type="Node3D" parent="Combat" unique_id=133900878]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -66, 0, 16)
+script = ExtResource("3_gbyk1")
+
+[node name="Pad_PistolWalkway_Red" type="Node3D" parent="Combat" unique_id=373054290]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 0, 34)
+script = ExtResource("3_gbyk1")
+
+[node name="Pad_Revolver_Red" type="Node3D" parent="Combat" unique_id=1771887577]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -35.5, 0, -24)
+script = ExtResource("3_gbyk1")
+weapon = &"revolver"
+
+[node name="Pad_SMG_Red" type="Node3D" parent="Combat" unique_id=1356442823]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, 0, 17)
+script = ExtResource("3_gbyk1")
+weapon = &"smg"
+
+[node name="Pad_Sniper_Red" type="Node3D" parent="Combat" unique_id=1351932799]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -53, 12, -17)
+script = ExtResource("3_gbyk1")
+weapon = &"sniper"
+respawn_time = 0.0
+
+[node name="Pad_Pistol_Blue" type="Node3D" parent="Combat" unique_id=411379700]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 66, 0, -18)
+script = ExtResource("3_gbyk1")
+
+[node name="Pad_Pistol2_Blue" type="Node3D" parent="Combat" unique_id=133153872]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 66, 0, 16)
+script = ExtResource("3_gbyk1")
+
+[node name="Pad_PistolWalkway_Blue" type="Node3D" parent="Combat" unique_id=774847343]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 0, 34)
+script = ExtResource("3_gbyk1")
+
+[node name="Pad_Revolver_Blue" type="Node3D" parent="Combat" unique_id=10060196]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 35.5, 0, -24)
+script = ExtResource("3_gbyk1")
+weapon = &"revolver"
+
+[node name="Pad_SMG_Blue" type="Node3D" parent="Combat" unique_id=35089266]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 0, 17)
+script = ExtResource("3_gbyk1")
+weapon = &"smg"
+
+[node name="Pad_Sniper_Blue" type="Node3D" parent="Combat" unique_id=1360908432]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53, 12, -17)
+script = ExtResource("3_gbyk1")
+weapon = &"sniper"
+respawn_time = 0.0
+
+[node name="Spawns" type="Node3D" parent="." unique_id=436674744]
+
+[node name="SpawnA_Red" type="Marker3D" parent="Spawns" unique_id=1037120037 groups=["spawn"]]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -68, 0, -26)
+metadata/team = 0
+
+[node name="SpawnB_Red" type="Marker3D" parent="Spawns" unique_id=761305905 groups=["spawn"]]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -68, 0, -10)
+metadata/team = 0
+
+[node name="SpawnC_Red" type="Marker3D" parent="Spawns" unique_id=996191151 groups=["spawn"]]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -68, 0, 10)
+metadata/team = 0
+
+[node name="SpawnD_Red" type="Marker3D" parent="Spawns" unique_id=234346747 groups=["spawn"]]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -68, 0, 34)
+metadata/team = 0
+
+[node name="SpawnA_Blue" type="Marker3D" parent="Spawns" unique_id=852168000 groups=["spawn"]]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 68, 0, -26)
+metadata/team = 1
+
+[node name="SpawnB_Blue" type="Marker3D" parent="Spawns" unique_id=812526228 groups=["spawn"]]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 68, 0, -10)
+metadata/team = 1
+
+[node name="SpawnC_Blue" type="Marker3D" parent="Spawns" unique_id=1305388021 groups=["spawn"]]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 68, 0, 10)
+metadata/team = 1
+
+[node name="SpawnD_Blue" type="Marker3D" parent="Spawns" unique_id=272138641 groups=["spawn"]]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 68, 0, 34)
+metadata/team = 1
+
+[node name="Player" type="CharacterBody3D" parent="." unique_id=883433510 instance=ExtResource("4_3s825")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -68, 0, -26)
+script = ExtResource("5_u2dms")
+
+[node name="GameUI" type="Node" parent="." unique_id=489420560]
+script = ExtResource("6_eqiip")
+
+[node name="RetroScreen" type="CanvasLayer" parent="." unique_id=30766679]
+script = ExtResource("7_8bxqw")
+
+[node name="DebugHUD" type="CanvasLayer" parent="." unique_id=1668823965]
+script = ExtResource("8_7qlvj")
+
+[node name="TuningPanel" type="CanvasLayer" parent="." unique_id=2024530575]
+script = ExtResource("9_56yqn")

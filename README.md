@@ -12,7 +12,7 @@ A round-based, movement-first arena FPS. Two players duel through short rounds o
 
 1. Install **Godot 4.7.2**, the standard build (not .NET): <https://godotengine.org/download>
 2. Clone this repo, open Godot, choose **Import**, and select `project.godot`.
-3. Press **F5** to play. The main menu opens; choose **play** to enter the movement test course. The small arrows in the bottom-right corner of the menu change your hat, which is saved and worn in the match. The gun pads are just to your left, and the shooting range is beyond them; its dummies play for blue. Press **F9** to step through the maps: Stack, Terrace, Switchback, Archipelago and Rift (greybox, [GDD §9.3](docs/GDD.md#93-built-maps)).
+3. Press **F5** to play. The main menu opens; choose **play** to enter the movement test course. The small arrows in the bottom-right corner of the menu change your hat, which is saved and worn in the match. The gun pads are just to your left, and the shooting range is beyond them; its dummies play for blue. Press **F9** to step through the maps: Stack, Terrace, Switchback, Archipelago and Rift, then the team maps Boulevard, Holdfast and Depot (greybox, [GDD §9.3](docs/GDD.md#93-built-maps)).
 
 ### Controls
 
@@ -63,7 +63,7 @@ The **View → Look** section of the panel controls the render: `pixel height` i
 | `data/` | Tuning resources |
 | `scenes/` | `main_menu.tscn` (main scene), `test_course.tscn`, `player.tscn`, and the maps in `maps/` |
 | `tests/` | Headless movement, UI, combat, cosmetics and map tests |
-| `tools/` | Test runner, the scene generator, the level kit and the map layouts (`maps/`) |
+| `tools/` | Test runner, the scene generator, the level kit (with `level_side.gd` for symmetric team maps) and the map layouts (`maps/`) |
 
 ## Tests
 
