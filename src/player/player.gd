@@ -25,6 +25,11 @@ const DIP_RECOVER := 1.2  # m/s
 ## Falling below this height kills you.
 const KILL_Y := -40.0
 ## Debug third-person camera (F6): distance behind and height above the eyes.
+## The camera is swept out from inside the capsule to where the view wants
+## it as a ball this big (it covers the near plane at the widest FOV), and
+## stops short of the world; it comes back out this fast once clear.
+const CAMERA_PROBE := 0.15
+const CAMERA_RECOVER := 4.0
 const THIRD_PERSON_DISTANCE := 3.4
 const THIRD_PERSON_HEIGHT := 0.5
 ## Camera punch (punch_camera()), at strength 1 and default screen shake:
@@ -147,6 +152,8 @@ var _slide_side := 1.0
 var _smash_look := 0.0  # -1 hang .. 1 descent.
 var _shake_time := 0.0
 var _smash_marker: MeshInstance3D
+var _camera_reach := 1.0
+var _probe := SphereShape3D.new()
 
 @onready var camera: Camera3D = $Camera
 @onready var model: PlayerModel = $Model
@@ -560,13 +567,38 @@ func _process(delta: float) -> void:
 	# These only move the view; aim still follows yaw and pitch.
 	var basis := Basis.from_euler(Vector3(pitch + _kick.y, yaw, _roll + _kick.z) + _punch_rot * punch + shake_rot)
 	var eye := pos + Vector3.UP * (_eye_height - _dip - _kick.w)
+	# Sweep out from a point surely inside the capsule (below its top, which
+	# drops at once when crouching while the eye takes a moment).
+	var capsule_top := movement_params.crouch_height if state.crouched else movement_params.stand_height
+	var anchor := pos + Vector3.UP * clampf(eye.y - pos.y, CAMERA_PROBE + 0.05, capsule_top - CAMERA_PROBE - 0.05)
 	if third_person:
 		eye += basis * Vector3(0.0, THIRD_PERSON_HEIGHT, THIRD_PERSON_DISTANCE)
 	# Shoved back and a little down by an impact frame's hit.
 	var push := Vector3(0.0, -0.4, 1.0) * PUNCH_PUSH * _punch_push * punch
-	camera.global_transform = Transform3D(basis, eye + basis * (shake_offset + push))
+	var want := eye + basis * (shake_offset + push)
+	# Bumps against walls and ceilings instead of going through: pulled in
+	# at once, easing back out.
+	var reach := reach_toward(anchor, want)
+	_camera_reach = reach if reach < _camera_reach else move_toward(_camera_reach, reach, CAMERA_RECOVER * delta)
+	camera.global_transform = Transform3D(basis, anchor.lerp(want, _camera_reach))
 	if viewmodel and viewmodel.visible:
 		viewmodel.follow(camera, delta)
+
+
+## How far (0..1) a camera can move from `from` toward `to` before it would
+## touch the world (see CAMERA_PROBE). 1 when the way is clear.
+func reach_toward(from: Vector3, to: Vector3) -> float:
+	if from.is_equal_approx(to) or not is_inside_tree():
+		return 1.0
+	_probe.radius = CAMERA_PROBE
+	var q := PhysicsShapeQueryParameters3D.new()
+	q.shape = _probe
+	q.transform = Transform3D(Basis.IDENTITY, from)
+	q.motion = to - from
+	q.collision_mask = 1
+	q.exclude = [get_rid()]
+	var r := get_world_3d().direct_space_state.cast_motion(q)
+	return r[0] if r.size() == 2 else 1.0
 
 
 ## Snaps the view into a zoom and twists it, then lets it spring back past

@@ -588,3 +588,85 @@ func test_falling_out_of_the_world_kills() -> void:
 	place(Vector3(0, Player.KILL_Y + 1.0, 0) + Vector3(300, 0, 0))
 	await run(cmd(), 30)
 	check(player.is_dead, "died below the kill height")
+
+
+# --- Camera ---------------------------------------------------------------------
+
+## Whether a camera-sized ball at the camera would be inside the world.
+func camera_in_wall() -> bool:
+	var q := PhysicsShapeQueryParameters3D.new()
+	var ball := SphereShape3D.new()
+	ball.radius = Player.CAMERA_PROBE * 0.8
+	q.shape = ball
+	q.transform = Transform3D(Basis.IDENTITY, player.camera.global_position)
+	q.collision_mask = 1
+	q.exclude = [player.get_rid()]
+	return not player.get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty()
+
+
+func test_the_third_person_camera_bumps_against_a_wall_behind() -> void:
+	box(Vector3(0, 2, 1.2), Vector3(10, 4, 0.5))  # A wall 1 m behind (the camera sits behind, +Z).
+	place(Vector3(0, 0.05, 0))
+	player.set_process(true)
+	player.set_third_person(true)
+	await run(cmd(), 10)
+	await get_tree().process_frame
+	var cam := player.camera.global_position
+	check(not camera_in_wall(), "the camera isn't in the wall (at %s)" % cam)
+	check(cam.z < 0.95 and cam.z > 0.0, "it's pulled in on this side of it (z %.2f)" % cam.z)
+	# Wall gone: it eases back out to full distance.
+	for c in world.get_children():
+		if c is StaticBody3D and c.position.z > 1.0:
+			c.free()
+	for i in 90:
+		await get_tree().process_frame
+	check(player.camera.global_position.z > 3.0, "and back out once it's clear (z %.2f)" % player.camera.global_position.z)
+	player.set_third_person(false)
+
+
+func test_the_eye_never_ends_up_in_a_low_ceiling() -> void:
+	# Duck under a 1.2 m slab at the last moment: the capsule shrinks at
+	# once and the eye drops over a moment (quickly enough on its own; the
+	# camera sweep is there if it ever isn't). It must stay under the slab.
+	box(Vector3(0, 1.45, -8), Vector3(6, 0.5, 8))  # Underside at 1.2 m, from z -4 to -12.
+	place(Vector3(0, 0.05, 8))
+	player.set_process(true)
+	# Run at it and only duck at the last moment, at the mouth.
+	for i in 120:
+		await run(cmd(Vector2(0, 1)))
+		if player.global_position.z < -3.55:
+			break
+	var slide := cmd(Vector2(0, 1))
+	slide.crouch_pressed = true
+	slide.crouch_held = true
+	var worst := 0.0
+	for i in 60:
+		await run(slide)
+		slide.crouch_held = true
+		await get_tree().process_frame
+		if player.camera.global_position.z < -4.0:  # Under the slab.
+			worst = maxf(worst, player.camera.global_position.y)
+	check(player.global_position.z < -5.0, "slid in under it (z %.1f)" % player.global_position.z)
+	check(worst > 0.0 and worst < 1.2 - Player.CAMERA_PROBE * 0.5, "the camera stayed under the ceiling (highest %.2f m)" % worst)
+
+
+func test_the_death_camera_stays_out_of_walls() -> void:
+	# Die facing a wall 1.5 m away: the death camera's spot (3 m in front)
+	# is inside it, so it stops short.
+	player.queue_free()
+	await get_tree().process_frame
+	player = load("res://scenes/player.tscn").instantiate()
+	player.movement_params = MovementParams.new()
+	player.view_settings = ViewSettings.new()
+	world.add_child(player)
+	box(Vector3(0, 2, -1.9), Vector3(10, 4, 0.8))  # Front face at z -1.5.
+	player.spawn_at(Transform3D(Basis.IDENTITY, Vector3(0, 0.05, 0)))
+	await get_tree().physics_frame
+	player.die()
+	var worst_in := false
+	for i in 90:
+		await get_tree().process_frame
+		worst_in = worst_in or camera_in_wall()
+	check(player.camera.global_position.z > -1.5 + Player.CAMERA_PROBE * 0.5, "the camera stays this side of the wall (z %.2f)" % player.camera.global_position.z)
+	check(not worst_in, "never inside it")
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

@@ -124,6 +124,9 @@ func _process(delta: float) -> void:
 	var look := _feet + Vector3.UP * lerpf(LOOK_HEIGHT, HEAP_LOOK_HEIGHT, tilt)
 	var creep := ease(clampf(_elapsed / DOLLY_TIME, 0.0, 1.0), 0.6) * DOLLY
 	var from := _camera_position() - _facing * creep
+	# Never inside a wall: swept out from over the body, stopping short.
+	var over := _feet + Vector3.UP * CAMERA_HEIGHT
+	from = over.lerp(from, player.reach_toward(over, from))
 	player.camera.global_transform = Transform3D(Basis.looking_at(look - from, Vector3.UP), from)
 
 
