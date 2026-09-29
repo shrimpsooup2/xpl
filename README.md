@@ -47,7 +47,7 @@ Wall ride and mantle are automatic: jump along a wall to ride it, and move into 
 
 - **controls:** sensitivity, aim sensitivity, invert look, toggle aim.
 - **keys:** rebind every action, two keys each. Click a slot and press a key or mouse button; Esc cancels, Backspace clears.
-- **video:** window mode, vsync, frame cap, pixels (the 3D picture's height: 360 by default, *screen* for native), colours (an optional 16-bit colour and dither mode), and the heart's look (the tiny TV or the loading spinner, both on trial).
+- **video:** window mode, vsync, frame cap, pixels (the 3D picture's height: 360 by default, *screen* for native), and colours (an optional 16-bit colour and dither mode).
 - **camera:** field of view, speed FOV, camera motion, smoothing, screen shake, wall ride tilt, UI motion, landing dip, speed lines, impact frames.
 - **sound:** volume. There are no sounds yet.
 
@@ -78,7 +78,7 @@ Both ways run the same server-authoritative game ([how it works, and its safety 
 | Path | Contents |
 |---|---|
 | `src/movement/` | The movement simulation: `MovementSim` (one fixed tick), `MovementState`, `MovementParams`, `InputCommand` |
-| `src/player/` | `Player` (input, camera interpolated between ticks), `PlayerModel` (the body, its holds, hit reactions and crumble), `BodyLayers` (clips over some bones, arm IK, hit flinches), `Viewmodel` (first-person arms and gun), `BodyShape` (proportions and shape), `DeathSequence` (the death cinematic), `HeartScreen` (the heart: a tiny CRT in the chest), `ViewSettings` |
+| `src/player/` | `Player` (input, camera interpolated between ticks), `PlayerModel` (the body, its holds, hit reactions and crumble), `BodyLayers` (clips over some bones, arm IK, hit flinches), `Viewmodel` (first-person arms and gun), `BodyShape` (proportions and shape), `DeathSequence` (the death cinematic), `Heart` (the heart: glowing beads going round in a pocket in the chest), `ViewSettings` |
 | `src/cosmetics/` | `Hats` (every hat, built from primitives in team colours, and the no-hat team triangle) and `Cosmetics` (the saved pick) |
 | `src/combat/` | The roster (`Weapons`, `WeaponDef`), gun models (`WeaponModel`), a player's hands (`WeaponHolder`: firing, pickups, throwing), shots in flight (`Ballistics`), hit zones (`HitShapes`), pickups and pads, `TargetDummy`, and shooting effects |
 | `src/ui/` | The UI: style and motion kit (`LofiUI`, `LofiSlider`), low-res canvas (`LofiLayer`), HUD and its ammo column, crosshair and ammo ring, overlays, pause and main menus, the online page and lobby (`OnlineMenu`), the settings page (`SettingsMenu`) and what it saves (`Settings`), scene wipe |

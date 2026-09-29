@@ -41,9 +41,6 @@ extends Resource
 ## Optional colour-depth cut with ordered dither (32 ≈ 16-bit colour). 0 is off.
 @export_range(0, 256, 1) var color_levels: int = 0
 @export_range(0.0, 1.0, 0.05) var dither: float = 1.0
-## The hearts' look, on trial (GDD §6.4): 0 the tiny TV, 1 the loading
-## spinner. Every heart you see changes at once.
-@export_range(0, 1, 1) var heart_style: int = 0
 
 @export_group("Experimental")
 ## Anime-style impact frames on kills and hard smashdowns: a beat of stark

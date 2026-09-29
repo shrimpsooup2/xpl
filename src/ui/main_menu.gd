@@ -106,7 +106,6 @@ func _process(delta: float) -> void:
 	var settings := Settings.view()
 	LofiUI.motion = settings.ui_motion
 	LofiUI.smoothing = settings.camera_smoothing
-	HeartScreen.style = settings.heart_style as HeartScreen.Style
 	# A slow drift around the stage, leaning toward the mouse.
 	var view := get_viewport().get_visible_rect().size
 	var mouse := (get_viewport().get_mouse_position() / view - Vector2(0.5, 0.5)) * 2.0

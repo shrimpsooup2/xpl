@@ -84,9 +84,9 @@ static var _combined := {}
 var anim: AnimationPlayer
 var skeleton: Skeleton3D
 var body: MeshInstance3D
-## The heart: a tiny CRT in the chest (HeartScreen). Its origin is the
+## The heart: a tiny CRT in the chest (Heart). Its origin is the
 ## heart's hit centre.
-var heart: HeartScreen
+var heart: Heart
 var layers: BodyLayers
 var hits: HitShapes
 ## The weapon in its hands (third person), or null.
@@ -674,9 +674,9 @@ func _pop_heart(look_from: Vector3) -> void:
 	piece.physics_material_override.bounce = 0.6
 	piece.mass = 0.2
 	var col := CollisionShape3D.new()
-	var box := BoxShape3D.new()
-	box.size = HeartScreen.SIZE
-	col.shape = box
+	var ball := SphereShape3D.new()
+	ball.radius = Heart.RING_RADIUS + Heart.DOT_RADIUS
+	col.shape = ball
 	piece.add_child(col)
 	_fragment_parent().add_child(piece)
 	piece.global_transform = heart.global_transform
@@ -710,7 +710,7 @@ func _build_heart() -> void:
 	_heart_mount.name = "HeartMount"
 	_heart_mount.bone_name = BodyShape.HEART_BONE
 	skeleton.add_child(_heart_mount)
-	heart = HeartScreen.new()
+	heart = Heart.new()
 	heart.name = "Heart"
 	heart.drop_into = _fragment_parent
 	_heart_rest = rest.affine_inverse() * Transform3D(Basis.IDENTITY, rest.origin + BodyShape.HEART_OFFSET)

@@ -662,8 +662,6 @@ func _process(delta: float) -> void:
 	model.follow(pos, yaw)
 	model.animate_movement(state, velocity)
 	model.set_health(health / max_health)
-	if human_controlled:
-		HeartScreen.style = view_settings.heart_style as HeartScreen.Style
 	model.aim(pitch, weapons.current.is_fists())
 
 	var smooth := v.camera_smoothing

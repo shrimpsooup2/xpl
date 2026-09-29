@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 2.2 (draft) |
+| **Version** | 2.3 (draft) |
 | **Date** | 2026-09-29 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -34,7 +34,8 @@
 | 1.9 | The heart becomes a tiny CRT set into the chest (§6.4): its screen glows heart pink with a pixel heart beating on it, faster at speed and racing near death. Hits tear the picture, near death it rolls. A heartshot switches the set off (the picture collapses to a white-hot line, then a dot) and cracks the glass; any other death loses the signal to static. The set pops out of the crumbling body still showing how it ended. The hit sphere is unchanged. |
 | 2.0 | Timed hops are replaced by dash momentum (§4.3): a dash keeps part of its burst, 35% on the ground (where the extra fades over 0.6 s instead of stopping dead) and 75% in the air, where it ends with a little lift and carries you twice as far. A second look for the heart is on trial (§6.4): a loading spinner, picked in View → Look → *heart style*. |
 | 2.1 | Every gun aims down its sights (§5.4, §7.4): right mouse held zooms by the gun's own amount and tightens its spread, never slowing you. Iron sights, a dot sight on the SX-50, a rear sight on the TR-30's carry handle, a ghost ring on the Warden 12, the Heron's scope. The revolver now fans when you hold the trigger from the hip. Turning slows with the zoom (*aim sensitivity*), and aiming can be a toggle. Bots aim at range. |
-| 2.2 | The settings page is built (§13.4), from the title screen and the pause menu: controls (sensitivity, aim sensitivity, invert, toggle aim), keys (two per action, rebindable), video (window, vsync, frame cap, pixels, colours, heart), camera (field of view and every camera and UI motion setting, impact frames) and sound (volume). Saved as you change them, only what differs from the defaults. |
+| 2.2 | The settings page is built (§13.4), from the title screen and the pause menu: controls (sensitivity, aim sensitivity, invert, toggle aim), keys (two per action, rebindable), video (window, vsync, frame cap, pixels, colours), camera (field of view and every camera and UI motion setting, impact frames) and sound (volume). Saved as you change them, only what differs from the defaults. |
+| 2.3 | The heart is only the loading spinner now, made of real beads floating in a pocket in the chest (§6.4): the body's shape has the pocket scooped out, lined pink at the rim and dark at the back. Each bead is on its own spring, so they lag and rattle; a heartshot spills them out of the chest across the floor, any other death lets them settle, grey, in the bottom. The TV heart is gone, and so is the *heart style* setting. After dying in a game you watch someone instead of a black screen (§10.5), and the death camera looks up at you from low down, further back and off to one side. |
 
 ---
 
@@ -352,7 +353,7 @@ Everything is rebindable. Crouch supports hold or toggle.
 It can, if a few conditions hold. Instant-kill zones work when they feel **earned**, and they fail when they feel **random**. These rules exist to keep it earned:
 
 1. **Only precision weapons can heartshot.** No pellets, explosions, beams, flames, bouncing projectiles, melee, or thrown weapons, and nothing that fires faster than one shot every 0.3 s. If an SMG could heartshot, spraying center mass would sometimes "win the lottery," and that would ruin the mechanic.
-2. **The heart is visible.** It glows on the character's chest: a tiny TV whose screen shows it beating (§6.4). It is a target you choose to aim at, not a hidden bonus.
+2. **The heart is visible.** It glows on the character's chest: a loading spinner of pink beads floating in a pocket in the chest (§6.4). It is a target you choose to aim at, not a hidden bonus.
 3. **Small, but not microscopic.** With a 0.07 m radius, the heart is about 11 px wide at 10 m, 6 px at 20 m, and 3 px at 40 m (1080p, 100° FOV). For comparison, the head is about 10 px wide at 20 m. That is very hard on a moving target, but possible on a predictable one (a wall ride, the arc after a knockup, a player who stops moving).
 4. **Hitboxes agree everywhere.** The heart is attached to the simulated capsule, not to client-side animated bones, so the server and every client agree exactly on where it is. A heartshot that looks clean on your screen must register.
 5. **It is a highlight, not the main way to win.** The target is **3–8% of kills**. Telemetry decides the final size.
@@ -377,29 +378,22 @@ Rounds are one life and 15–40 s long, so an instant death costs little. It is 
 
 ### 6.4 The heart itself
 
-The heart is a tiny CRT set into the chest: a rounded dark set, about 12 × 10 cm, with bulging glass that glows heart pink, scanlines, and a pixel heart beating on it (lub-dub). It is a small TV rather than an anatomical heart or a ♥ shape because it fits the early-2000s surreal world (looping TVs, CRT desktops) and because a screen can *show* things. In a fight it's a few pixels wide, so it reads by its pink glow and its pulse; up close (the title screen, the death camera) the detail shows.
+The heart is a loading spinner made of real beads, floating in a round pocket in the chest. The body's shape has the pocket scooped out round the heart (10 cm across, a little to the left of the chest's middle, with a rounded lip; `BodyShape.SOCKET_RADIUS`), so it's a real hollow in the mesh, and its crumble pieces have it too. The pocket is lined pink at the rim, fading to near black at the back, so it reads as a hollow up close and as a pink spot from across a map. In it float six glowing beads going round, like a buffering wheel you could reach in and touch: the lead one biggest and white-hot, the tail smaller and pinker. It's a loading spinner because the world is early-2000s surreal, and a heart that's "loading" is a funny thing to shoot.
 
-| State | What the screen does |
+Each bead hangs on its own spring, so they move on their own: they lag when you move, and rattle against the pocket's wall when you're hit.
+
+| State | What the beads do |
 |---|---|
-| Alive | The pixel heart beats: 72 bpm at rest, up to 140 at full speed, racing toward 190 below 35% health. Each thump swells it by a pixel and brightens the glass. |
-| Hit | The picture tears sideways and snows for about 0.35 s. |
-| Near death | The picture rolls and flickers with snow, worse the lower the health. |
-| Heartshot | Switches off: the picture squashes to a white-hot line, then to a dot, then black (0.45 s); the glass cracks from where the shot went in. |
-| Any other death | The signal's lost: the picture dissolves into static. |
-| Crumbled | The set pops out of the body and bounces, still showing its ending: cracked black glass after a heartshot, static otherwise. |
+| Alive | Go round once a second at rest, up to 2.4 times at full speed, bobbing a little. |
+| Hit | Rattle in the pocket; the spin hitches for 0.25 s and the pocket greys, like lag. |
+| Near death | The spin stutters, holding for a moment now and then; the ring sags and flickers. |
+| Heartshot | Flash white and spill out of the chest ("not responding"): little bodies that bounce about the floor, go dark, and are gone after 8 s. |
+| Any other death | Slow to a stop, grey, and settle in a heap in the bottom of the pocket ("timed out"). |
+| Crumbled | The heart pops out of the body; the beads go with it. |
 
-The hit sphere (0.07 m, §6.2) is unchanged and centred on the set. All the glass that glows lies inside it seen from the front, so what glows is what counts. Every client shows the same beat speed and ending: health and heartshots come from the server.
+The hit sphere (0.07 m, §6.2) is unchanged and centred in the pocket, and the ring of beads lies inside it, so what glows is what counts. Every client shows the same speed and ending: health and heartshots come from the server. Code: `src/player/heart.gd`.
 
-**On trial: the loading spinner.** A second look, picked in View → Look → *heart style* (every heart you see changes at once): a round dark puck whose round glass glows heart pink, with eight chunky light dots stepping round it like an old buffering wheel: the lead dot white, the tail smaller and fading back into the pink.
-
-| State | What the spinner does |
-|---|---|
-| Alive | Turns once a second at rest, up to 2.4 times at full speed; below 35% health it stutters, holding for a moment now and then. |
-| Hit | Hitches: freezes for 0.25 s and greys, like lag. |
-| Heartshot | Flashes white, the dots drop out of the ring one after another, and a dim pink ✕ is left ("not responding"). |
-| Any other death | Greys out as it winds down to a stop ("timed out"). |
-
-Both glow pink from afar (a first try at the spinner with a dark face nearly vanished at 12 m, so its face is lit too). Up close the TV says more (the beat, the picture tearing); the spinner is simpler and funnier. One of them stays. Code: `src/player/heart_screen.gd`, `src/render/heart_screen.gdshader`, `src/render/heart_spinner.gdshader`.
+(Tried and dropped: a tiny CRT set into the chest with a pixel heart beating on it, and a first spinner that was dots drawn on a little screen.)
 
 ### 6.5 Tuning levers
 
@@ -764,7 +758,7 @@ The camera is **never** driven by the fixed tick directly. Mouse look is applied
 
 Dying is slightly over the top and silly on purpose. The body turns out to have been diced all along.
 
-**What everyone sees:** the body takes the hit, freezes, hairline cuts open up across it, and it crumbles into a heap of chunks (about 90–100 pieces, pre-cut along a randomly rotated grid, with flat pale cut faces). The heart (the little TV, §6.4) pops out and bounces, still showing how it ended.
+**What everyone sees:** the body takes the hit, freezes, hairline cuts open up across it, and it crumbles into a heap of chunks (about 90–100 pieces, pre-cut along a randomly rotated grid, with flat pale cut faces). The heart (§6.4) pops out: after a heartshot its beads have already spilled out across the floor; otherwise they lie greyed in it.
 
 **What the dead player sees** (about 5 s):
 
@@ -810,7 +804,7 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 
 ### 11.3 Readability rules (Pillar 4)
 - **Players:** glossy, featureless figures with a strong rim light and emissive player color. They must separate from any background at any distance.
-- **The heart:** a tiny TV in the chest whose screen glows heart pink (§6.4). It is never hidden by cosmetics.
+- **The heart:** pink beads going round in a pocket in the chest (§6.4). It is never hidden by cosmetics.
 - **Teams:** told apart by the hat. Every hat's main mass is the team colour (red or blue), and a player with no hat has a team-coloured triangle over the head instead (§11.4).
 - **Weapons in hand:** chunky silhouettes, identifiable at 30 m.
 - **Weapon pickups:** float and rotate above glowing pads, arena-shooter style. Pad color shows the tier (Standard, Heavy, Power). Respawn timers are shown on the pad.
@@ -819,13 +813,13 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 - **Fog** never hides a player inside the maximum sightline.
 
 ### 11.4 Characters
-- Base figure: a blank, glossy white blob of a person, in the spirit of Meccha Chameleon's figures. One seamless smooth shape with **no visible joints**: a big ball head on a short neck, one flat slab of a torso, long tube arms with no hands, and short stubby legs (crotch at about a third of the height) with no feet. A tiny glowing TV is set into the chest: the heart (§6.4). Uncanny but friendly.
+- Base figure: a blank, glossy white blob of a person, in the spirit of Meccha Chameleon's figures. One seamless smooth shape with **no visible joints**: a big ball head on a short neck, one flat slab of a torso, long tube arms with no hands, and short stubby legs (crotch at about a third of the height) with no feet. A round pocket in the chest holds the heart, glowing beads going round in it (§6.4). Uncanny but friendly.
 - The body is one skinned mesh generated from a smooth signed-distance shape (`src/player/body_shape.gd`, `tools/gen_body.gd`), so proportions are tuned in code, not in a modeling tool.
 - It must never read as lumpy. Nothing is glued on: the legs are the bottom of the torso slab split by a slit, each arm is one tapered tube, and every join is a wide C2 blend. The mesh is built in an A-pose (arms 45° down, where they spend most of their time), so skinning never bends a shoulder far.
 - Animation comes from Quaternius's Universal Animation Library (CC0). Its human rig is reshaped at load time to the body's proportions (shorter legs, longer spine, A-pose rest), and the hips motion is scaled to match.
 - **Hats** are the first cosmetic, and they carry the wearer's colour: the team's in teams, and in free-for-all a colour each player picks from ten (red, orange, yellow, lime, green, teal, sky, blue, violet, pink). Sixteen, built like the guns from glossy primitives listed as data (`src/cosmetics/hats.gd`): top hat, cap, beanie, cowboy hat, bowler, party hat, crown, fez, propeller cap, chef hat, viking helmet, hard hat, bucket hat, mortarboard, wizard hat, halo. Each one's main mass is the wearer's team colour (red or blue) with trim in black, white, gold or metal, so one glance at the head says whose side someone is on. **No hat** is a choice too: a team-coloured triangle, pointing down at the head with a dark outline, hovers over the head and turns to face whoever looks. The hat rides the head bone, flies off when the body falls apart, and is back on respawn. You pick yours on the title screen, and that is the hat you wear in every match until you change it (it's saved, `src/cosmetics/cosmetics.gd`). Your team comes from the match, not the menu. Practice dummies play for blue, each in a different hat.
 - **Names** float over everyone's head but your own, in their colour, small and the same size at any distance, gone past 70 m and while the body is in pieces. A teammate's shows through walls; anyone else's only while you can see their head. You type yours on the title screen (up to 16 characters, cleaned of anything unprintable), next to the hat and colour pickers.
-- Cosmetics (post-MVP): more hats, surface materials (chrome, marble, carpet, TV static), heart channels (what the heart's screen shows, always the same size and glow), weapon skins. Cosmetics can never change hitboxes or hide the heart, and hats are never hit shapes.
+- Cosmetics (post-MVP): more hats, surface materials (chrome, marble, carpet, TV static), heart styles (the beads' colours and shapes, always the same size and glow), weapon skins. Cosmetics can never change hitboxes or hide the heart, and hats are never hit shapes.
 - **Layered animation** (`src/player/body_layers.gd`): on top of the locomotion clip, clips can be laid over some bones (the arms aim while the legs run), played once over some bones (a hit, a punch), arms reach for targets by two-bone IK, and bones can be knocked on springs.
 
 ### 11.5 Weapons in hand
@@ -922,7 +916,7 @@ The HUD hides during your death sequence and springs back in on respawn. Code: `
 | Scoreboard (hold Tab) | Built (preview) | One boxed table: rounds, kills, ♥ heartshots, ping. |
 | Match end | Built (preview) | *you won* / *you lost*, final score, and a list of every round: map, winner, and how. |
 | Death | Built | See §10.5. Caption in the same boxed style. |
-| Settings | Built | From the title screen (in place of the buttons, the logo stepping aside) and the pause menu (in its place); esc comes back. Tabs, each a white card of rows, a name then a slider (a bar filled black to the value, arrows either side, the value after) or a `<` choice `>`: **controls** (sensitivity, aim sensitivity, invert look, toggle aim), **keys** (every action with two slots: click one, press a key or mouse button; esc cancels, backspace clears; a key taken off another action says so and that row shakes), **video** (window: windowed / fullscreen / exclusive, vsync, frame cap, pixels: the 3D picture's height, colours, the heart's look), **camera** (field of view, speed fov, camera motion, smoothing, screen shake, wall ride tilt, ui motion, landing dip, speed lines, impact frames) and **sound** (volume, ready for when there are sounds). Everything takes effect at once and is saved as it changes, only what differs from the defaults (`user://settings.cfg`), so a default tuned later still reaches you; *defaults* puts the open tab back. Code: `src/ui/settings.gd`, `src/ui/settings_menu.gd`. |
+| Settings | Built | From the title screen (in place of the buttons, the logo stepping aside) and the pause menu (in its place); esc comes back. Tabs, each a white card of rows, a name then a slider (a bar filled black to the value, arrows either side, the value after) or a `<` choice `>`: **controls** (sensitivity, aim sensitivity, invert look, toggle aim), **keys** (every action with two slots: click one, press a key or mouse button; esc cancels, backspace clears; a key taken off another action says so and that row shakes), **video** (window: windowed / fullscreen / exclusive, vsync, frame cap, pixels: the 3D picture's height, colours), **camera** (field of view, speed fov, camera motion, smoothing, screen shake, wall ride tilt, ui motion, landing dip, speed lines, impact frames) and **sound** (volume, ready for when there are sounds). Everything takes effect at once and is saved as it changes, only what differs from the defaults (`user://settings.cfg`), so a default tuned later still reaches you; *defaults* puts the open tab back. Code: `src/ui/settings.gd`, `src/ui/settings_menu.gd`. |
 | Lobby | Planned (M3) | Invite / join code, ready-up. |
 
 "Preview" screens run on made-up data (press **F8** in the test course to cycle them) until rounds exist in M3. Code: `src/ui/overlays.gd`, `src/ui/pause_menu.gd`, `src/ui/main_menu.gd`, `src/ui/settings_menu.gd`, wired together by `src/ui/game_ui.gd`.

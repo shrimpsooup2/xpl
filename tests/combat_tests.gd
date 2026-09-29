@@ -156,32 +156,7 @@ func test_heartshot_kills_with_a_precision_gun() -> void:
 	check(player.weapons.ammo == 11, "one round spent (%d left)" % player.weapons.ammo)
 
 
-func test_the_heart_is_a_tiny_tv_that_ends_the_way_it_died() -> void:
-	var heart: HeartScreen = dummy.model.heart
-	check(heart.ending() == &"on" and heart.is_visible_in_tree(), "on, and showing")
-	check((HeartScreen.GLASS * 0.5).length() < HitShapes.HEART_RADIUS, "all the glass that glows is inside the heart's hit sphere")
-	check(heart.casing.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "it casts no shadow down the chest")
-	# The beat: quicker at speed, racing near death.
-	var rate := func(speed: float, health: float) -> float:
-		heart.speed = speed
-		heart.health = health
-		var from := heart.beat()
-		heart._process(0.05)
-		return fposmod(heart.beat() - from, 1.0) / 0.05 * 60.0
-	var rest: float = rate.call(0.0, 1.0)
-	var fast: float = rate.call(HeartScreen.FAST_SPEED, 1.0)
-	var dying: float = rate.call(0.0, 0.05)
-	near(rest, HeartScreen.BPM_REST, 1.0, "resting beats per minute")
-	check(fast > rest + 30.0 and dying > fast, "faster at speed (%d), racing near death (%d)" % [fast, dying])
-	# A death through the body loses the signal; back together, it's on again.
-	dummy.take_hit({"damage": 500.0, "zone": &"body", "part": &"chest", "point": heart.global_position,
-			"normal": Vector3.BACK, "direction": Vector3.FORWARD, "heartshot": false, "attacker": null})
-	check(dummy.dead and heart.ending() == &"lost", "killed through the body: the signal's lost")
-	dummy.model.reassemble()
-	check(heart.ending() == &"on" and heart.get_parent().name == &"HeartMount", "back together: on again, in the chest")
-
-
-func test_the_heart_sits_in_a_socket_in_the_chest() -> void:
+func test_the_heart_sits_in_a_pocket_in_the_chest() -> void:
 	# The body's shape has a round pocket scooped out round the heart, and
 	# the body's mesh follows it.
 	var sk := dummy.model.skeleton
@@ -196,26 +171,24 @@ func test_the_heart_sits_in_a_socket_in_the_chest() -> void:
 	near(nearest, BodyShape.SOCKET_RADIUS, 0.006, "the body's mesh has the pocket: nearest to the heart")
 
 
-func test_the_heart_can_be_a_loading_spinner_of_real_beads() -> void:
-	var heart: HeartScreen = dummy.model.heart
-	HeartScreen.style = HeartScreen.Style.SPINNER
-	heart._process(0.01)
-	check(heart.built == HeartScreen.Style.SPINNER and heart.dots.size() == HeartScreen.DOTS and heart.casing == null and heart.lining.visible,
-			"switching the style rebuilds the heart as beads in a lined socket")
+func test_the_heart_is_a_spinner_of_real_beads_floating_in_the_chest() -> void:
+	var heart: Heart = dummy.model.heart
+	check(heart.dots.size() == Heart.DOTS and heart.lining.visible and heart.ending() == &"on", "beads in a lined pocket, going")
+	check(heart.lining.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "it casts no shadow down the chest")
 	await frames(2)
 	var inside := true
 	for bead in heart.dots:
 		var local := heart.global_transform.affine_inverse() * bead.global_position
-		inside = inside and local.length() + HeartScreen.DOT_RADIUS < HitShapes.HEART_RADIUS \
-				and local.length() + HeartScreen.DOT_RADIUS < HeartScreen.LINING_RADIUS and local.z < 0.0
-	check(inside, "every bead floats inside the chest's socket, inside the hit sphere")
+		inside = inside and local.length() + Heart.DOT_RADIUS < HitShapes.HEART_RADIUS \
+				and local.length() + Heart.DOT_RADIUS < Heart.LINING_RADIUS and local.z < 0.0
+	check(inside, "every bead floats inside the chest's pocket, inside the hit sphere")
 	var turns := func(speed: float) -> float:
 		heart.speed = speed
 		var from := heart.spin()
 		heart._process(0.05)
 		return fposmod(heart.spin() - from, TAU) / TAU / 0.05
-	near(turns.call(0.0), HeartScreen.SPIN_REST, 0.05, "turns per second at rest")
-	check(turns.call(HeartScreen.FAST_SPEED) > HeartScreen.SPIN_REST * 2.0, "faster at speed")
+	near(turns.call(0.0), Heart.SPIN_REST, 0.05, "turns per second at rest")
+	check(turns.call(Heart.FAST_SPEED) > Heart.SPIN_REST * 2.0, "faster at speed")
 	# Each bead on its own spring: a hit rattles them.
 	var before: Array[Vector3] = []
 	for bead in heart.dots:
@@ -227,16 +200,24 @@ func test_the_heart_can_be_a_loading_spinner_of_real_beads() -> void:
 	for i in heart.dots.size():
 		if heart.dots[i].global_position.distance_to(before[i]) > 0.002:
 			moved += 1
-	check(moved == HeartScreen.DOTS, "a hit rattles every bead (%d moved)" % moved)
+	check(moved == Heart.DOTS, "a hit rattles every bead (%d moved)" % moved)
 	check(heart.spin() == held, "and makes the spin hitch")
-	heart._process(HeartScreen.HITCH_TIME)
+	heart._process(Heart.HITCH_TIME)
 	heart._process(0.05)
 	check(heart.spin() != held, "then it carries on")
+	# A death through the body times it out; back together, it's going again.
+	dummy.take_hit({"damage": 500.0, "zone": &"body", "part": &"chest", "point": heart.global_position,
+			"normal": Vector3.BACK, "direction": Vector3.FORWARD, "heartshot": false, "attacker": null})
+	check(dummy.dead and heart.ending() == &"lost" and heart.dots.size() == Heart.DOTS, "killed through the body: timed out, beads kept")
+	dummy._respawn()
+	check(heart.ending() == &"on" and heart.get_parent().name == &"HeartMount" and heart.lining.visible,
+			"back together: going again, in the chest")
+	await frames(2)
 	# A heartshot spills them out of the chest.
 	var at := heart.global_position
 	dummy.take_hit({"damage": 5.0, "zone": &"heart", "part": &"chest", "point": at,
 			"normal": Vector3.BACK, "direction": Vector3.FORWARD, "heartshot": true, "attacker": null})
-	check(heart.ending() == &"off" and heart.dots.is_empty() and heart.spilled().size() == HeartScreen.DOTS,
+	check(heart.ending() == &"off" and heart.dots.is_empty() and heart.spilled().size() == Heart.DOTS,
 			"a heartshot spills every bead")
 	for i in 40:
 		await get_tree().physics_frame
@@ -244,29 +225,22 @@ func test_the_heart_can_be_a_loading_spinner_of_real_beads() -> void:
 	for body in heart.spilled():
 		furthest = maxf(furthest, body.global_position.distance_to(at))
 	check(furthest > 0.3, "out of the chest and away (%.2f m)" % furthest)
-	HeartScreen.style = HeartScreen.Style.CRT
-	heart._process(0.01)
-	check(heart.built == HeartScreen.Style.CRT and heart.ending() == &"off", "and back to the TV, keeping its ending")
-	dummy.model.reassemble()
+	dummy._respawn()
 	await frames(2)
-	check(heart.spilled().is_empty(), "back together, the spilled beads are cleared away")
+	check(heart.spilled().is_empty() and heart.dots.size() == Heart.DOTS, "back together: the spilled beads cleared, new ones in")
 
 
-func test_timed_out_the_beads_settle_in_the_bottom_of_the_socket() -> void:
-	var heart: HeartScreen = dummy.model.heart
-	HeartScreen.style = HeartScreen.Style.SPINNER
-	heart._process(0.01)
+func test_timed_out_the_beads_settle_in_the_bottom_of_the_pocket() -> void:
+	var heart: Heart = dummy.model.heart
 	heart.stop(false)
 	for i in 60:
 		heart._process(1.0 / 60.0)
 	var low := true
 	for bead in heart.dots:
 		var local := heart.global_transform.affine_inverse() * bead.global_position
-		low = low and local.y < -HeartScreen.RING_RADIUS * 0.8
-	check(heart.ending() == &"lost" and low, "timed out: they sink to the bottom of the socket")
-	HeartScreen.style = HeartScreen.Style.CRT
+		low = low and local.y < -Heart.RING_RADIUS * 0.8
+	check(heart.ending() == &"lost" and low, "timed out: they sink to the bottom of the pocket")
 	heart.revive()
-	heart._process(0.01)
 
 
 func test_automatic_guns_cannot_heartshot() -> void:

@@ -20,10 +20,9 @@ const WINDOW_NAMES := ["windowed", "fullscreen", "exclusive"]
 ## The 3D picture's height in pixels (0: the screen's own), and colours.
 const PIXELS := [180, 240, 270, 360, 480, 540, 720, 0]
 const COLOURS := [0, 64, 32, 16, 8]
-const HEARTS := ["tv", "spinner"]
 ## The settings each tab's *defaults* puts back.
 const CONTROL_KEYS := ["sensitivity", "aim_sensitivity", "invert_y", "toggle_aim"]
-const VIDEO_KEYS := ["pixel_height", "color_levels", "heart_style"]
+const VIDEO_KEYS := ["pixel_height", "color_levels"]
 const CAMERA_KEYS := ["fov_horizontal", "speed_fov_kick", "camera_motion", "camera_smoothing", "screen_shake",
 		"wallride_tilt", "landing_dip", "speed_lines", "impact_frames", "ui_motion"]
 
@@ -214,7 +213,6 @@ func _video() -> Control:
 				func(i: int) -> void: _set_view("pixel_height", PIXELS[i]))),
 		_row("colours", _choice(colour_names, maxi(COLOURS.find(view.color_levels), 0),
 				func(i: int) -> void: _set_view("color_levels", COLOURS[i]))),
-		_row("heart", _choice(HEARTS, view.heart_style, func(i: int) -> void: _set_view("heart_style", i))),
 	])
 
 
