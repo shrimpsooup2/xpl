@@ -12,6 +12,10 @@ extends Control
 ## Aiming down the sights the ticks close in and fade, leaving the dot on
 ## the sights (heart pink through a dot sight, like its reticle); a scope,
 ## once up, swaps it all for the scope.
+##
+## Further out, where you're being hit from: a red arc on a ring round it for
+## each shooter, pointing at them (up is ahead, down is behind) and turning
+## as you turn or they move, wider for harder hits, fading.
 
 const GAP := 4.0
 const TICK := 5.0
@@ -29,6 +33,16 @@ const CYCLE_RADIUS := 16.0
 ## Guns slower than this show the cycle arc.
 const CYCLE_SHOWN_FROM := 0.45
 const SPENT_TIME := 0.2
+## Damage direction: the ring's radius, how long an arc lasts, and its width
+## (radians) and thickness for a light hit and for HURT_FULL damage or more.
+const HURT_RADIUS := 50.0
+const HURT_TIME := 1.4
+const HURT_SPAN := Vector2(0.5, 1.0)
+const HURT_THICK := Vector2(5.0, 8.0)
+const HURT_FULL := 40.0
+## An arc lands this far out and snaps in to the ring.
+const HURT_PUNCH := 12.0
+const HURT_PUNCH_TIME := 0.12
 
 var _mark_time := 0.0
 var _mark_length := 0.0
@@ -44,6 +58,11 @@ var _cycle := 1.0  # 0..1 through the gun's cycle; 1 is ready.
 var _cycle_shown := false
 var _aim := 0.0
 var _sight := WeaponDef.Sight.IRON
+## The view the damage arcs are worked out from.
+var camera: Camera3D
+# One per shooter: {from: Vector3, source: Player or null, left: seconds,
+# strength: 0..1}.
+var _hurts: Array[Dictionary] = []
 
 
 func _ready() -> void:
@@ -117,6 +136,51 @@ func scoped() -> bool:
 	return _sight == WeaponDef.Sight.SCOPE and _aim > Viewmodel.SCOPE_CUT
 
 
+## A hit from `from` (Player.hurt_from): an arc pointing that way. Another
+## hit from the same shooter renews theirs.
+func hurt_from(from: Vector3, amount: float, source: Player = null) -> void:
+	var strength := clampf(amount / HURT_FULL, 0.0, 1.0)
+	for h in _hurts:
+		if source != null and h.source == source:
+			h.from = from
+			h.left = HURT_TIME
+			h.strength = maxf(h.strength, strength)
+			h.landed = 0.0
+			queue_redraw()
+			return
+	_hurts.append({"from": from, "source": source, "left": HURT_TIME, "strength": strength, "landed": 0.0})
+	queue_redraw()
+
+
+## Puts the damage arcs away (you respawned).
+func clear_hurts() -> void:
+	_hurts.clear()
+	queue_redraw()
+
+
+## Where each damage arc points, clockwise from straight ahead (0: in front,
+## PI / 2: right, PI: behind), for tests.
+func hurt_angles() -> Array[float]:
+	var out: Array[float] = []
+	for h in _hurts:
+		out.append(_hurt_angle(h.from))
+	return out
+
+
+# Clockwise from ahead, seen from above: only which way you face counts,
+# not how far up or down you look.
+func _hurt_angle(from: Vector3) -> float:
+	if camera == null or not is_instance_valid(camera):
+		return 0.0
+	var to := from - camera.global_position
+	var forward := -camera.global_basis.z
+	forward.y = 0.0
+	to.y = 0.0
+	if forward.length_squared() < 0.0001 or to.length_squared() < 0.0001:
+		return 0.0
+	return forward.normalized().signed_angle_to(to.normalized(), Vector3.DOWN)
+
+
 ## Spreads the ticks for a moment; strength 1 is a hard landing.
 func bump(strength: float) -> void:
 	_bump = maxf(_bump, clampf(strength, 0.0, 1.5) * LofiUI.motion)
@@ -149,13 +213,28 @@ func _process(delta: float) -> void:
 		_spent = maxf(_spent - delta, 0.0)
 		_blink = maxf(_blink - delta * 3.0, 0.0)
 		queue_redraw()
+	if not _hurts.is_empty():
+		for h in _hurts:
+			h.left -= delta
+			h.landed += delta
+			# Follows whoever it was as they move.
+			if h.source != null and is_instance_valid(h.source) and not (h.source as Player).is_dead:
+				h.from = (h.source as Player).global_position + Vector3.UP * 1.4
+		var kept: Array[Dictionary] = []
+		for h in _hurts:
+			if h.left > 0.0:
+				kept.append(h)
+		_hurts = kept
+		queue_redraw()
 
 
 func _draw() -> void:
 	var c := (size * 0.5).floor()
 	if scoped():
 		_draw_scope(c)
+		_draw_hurts(c)
 		return
+	_draw_hurts(c)
 	_draw_ring(c)
 	var outline := Color(0, 0, 0, 0.8)
 	var ticks := 1.0 - _aim
@@ -216,6 +295,27 @@ func _draw_ring(c: Vector2) -> void:
 	if _cycle_shown and _cycle < 1.0:
 		draw_arc(c, CYCLE_RADIUS, -PI * 0.5, -PI * 0.5 + TAU * _cycle, 32, Color(0, 0, 0, 0.6), 3.0)
 		draw_arc(c, CYCLE_RADIUS, -PI * 0.5, -PI * 0.5 + TAU * _cycle, 32, Color(1, 1, 1, 0.85), 1.5)
+
+
+## Each shooter's arc: snaps in from further out, holds, fades at the end.
+func _draw_hurts(c: Vector2) -> void:
+	for h in _hurts:
+		var s: float = h.strength
+		var mid := _hurt_angle(h.from) - PI * 0.5  # Screen angles start at the right.
+		var half := lerpf(HURT_SPAN.x, HURT_SPAN.y, s) * 0.5
+		var thick := lerpf(HURT_THICK.x, HURT_THICK.y, s)
+		var landing := clampf(h.landed / HURT_PUNCH_TIME, 0.0, 1.0)
+		var r := HURT_RADIUS + HURT_PUNCH * (1.0 - landing) * (1.0 - landing)
+		var fade := clampf(h.left / (HURT_TIME * 0.4), 0.0, 1.0)
+		var points := maxi(6, int(half * 2.0 * r / 3.0))
+		draw_arc(c, r, mid - half, mid + half, points, Color(0, 0, 0, 0.7 * fade), thick + 2.0)
+		draw_arc(c, r, mid - half, mid + half, points, Color(LofiUI.ALERT, fade), thick)
+		# A notch in the middle, pointing out at them.
+		var d := Vector2(cos(mid), sin(mid))
+		var tip := c + d * (r + thick * 0.5 + 5.0)
+		var side := d.orthogonal() * (thick * 0.5 + 2.0)
+		var base := c + d * (r + thick * 0.5 - 0.5)
+		draw_colored_polygon(PackedVector2Array([tip, base + side, base - side]), Color(LofiUI.ALERT, fade))
 
 
 ## One arc, with a dark outline when lit so it reads on bright skies.

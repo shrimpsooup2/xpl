@@ -14,6 +14,9 @@ signal respawned
 signal health_changed(health: float)
 ## It took a hit (the hit as Ballistics landed it, and the damage done).
 signal hurt(hit: Dictionary, amount: float)
+## A hit landed on it from `from` (where the shooter was), by `source` if
+## there was one: for the HUD's damage direction. Online too (show_hurt).
+signal hurt_from(from: Vector3, amount: float, source: Player)
 ## It died: {attacker: Player or null, weapon: WeaponDef or null, heartshot}.
 ## A fall counts as the last hit's if that was recent (KNOCKED_OFF_TIME).
 signal killed(info: Dictionary)
@@ -328,11 +331,12 @@ func apply_puppet(at: Vector3, vel: Vector3, look_yaw: float, look_pitch: float,
 ## A hit the server says this player took (a client): health, the flinch,
 ## and (for `numbers`, your own hits) the damage number.
 func show_hurt(new_health: float, amount: float, point: Vector3, direction: Vector3, zone: StringName, part: StringName,
-		heartshot: bool, numbers := false) -> void:
+		heartshot: bool, numbers := false, attacker: Player = null) -> void:
 	health = new_health
 	# So a death the server sends next knows how it went (the heart's ending).
 	_last_hit = {"attacker": null, "weapon": null, "heartshot": heartshot, "time": Time.get_ticks_msec()}
 	health_changed.emit(health)
+	hurt_from.emit(hit_origin(attacker, point, direction), amount, attacker)
 	if numbers:
 		DamageNumber.add(get_parent(), self, point, amount, &"heart" if heartshot else zone)
 	if health > 0.0:
@@ -386,6 +390,7 @@ func take_hit(hit: Dictionary) -> Dictionary:
 	_last_hit = {"attacker": attacker, "weapon": hit.get("weapon"), "heartshot": lethal, "time": Time.get_ticks_msec()}
 	health_changed.emit(health)
 	hurt.emit(hit, amount)
+	hurt_from.emit(hit_origin(attacker, hit.point, hit.get("direction", Vector3.FORWARD)), amount, attacker)
 	DamageNumber.add(get_parent(), self, hit.point, amount, &"heart" if lethal else hit.zone)
 	var killed_now := health <= 0.0
 	if killed_now:
@@ -402,6 +407,14 @@ func take_hit(hit: Dictionary) -> Dictionary:
 		"killed": killed_now,
 		"weapon": hit.get("weapon"),
 	}
+
+
+## Where a hit came from: the shooter's eyes, or (nobody's) back along the
+## shot from where it landed.
+static func hit_origin(attacker: Player, point: Vector3, direction: Vector3) -> Vector3:
+	if attacker and is_instance_valid(attacker):
+		return attacker.global_position + Vector3.UP * 1.4
+	return point - direction.normalized() * 5.0
 
 
 ## Gains `amount` health, up to its maximum.

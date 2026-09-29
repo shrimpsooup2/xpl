@@ -522,6 +522,40 @@ func test_hits_and_kills_reach_the_crosshair_and_killfeed() -> void:
 	check(ui.hud._killfeed.get_child_count() == 1, "and a killfeed line")
 
 
+
+func test_hits_point_round_the_crosshair_to_whoever_shot() -> void:
+	var shooter: Player = load("res://scenes/player.tscn").instantiate()
+	shooter.human_controlled = false
+	shooter.movement_params = MovementParams.new()
+	shooter.view_settings = ViewSettings.new()
+	world.add_child(shooter)
+	shooter.global_position = player.global_position + Vector3(8, 0, 0)  # On your right (you face -z).
+	await frames(3)
+	var shot := func() -> void:
+		player.take_hit({"damage": 10.0, "zone": &"body", "part": &"chest", "point": player.global_position + Vector3.UP,
+				"normal": Vector3.RIGHT, "direction": Vector3.LEFT, "attacker": shooter, "weapon": Weapons.get_def(Weapons.PISTOL)})
+	shot.call()
+	var angles := ui.crosshair.hurt_angles()
+	check(angles.size() == 1, "a hit puts an arc round the crosshair")
+	near(angles[0], PI * 0.5, 0.1, "on the right, where they are")
+	player.yaw -= PI * 0.5  # Turn right, to face them.
+	await frames(2)
+	near(ui.crosshair.hurt_angles()[0], 0.0, 0.1, "turn to face them and it points straight up")
+	shooter.global_position = player.global_position + Vector3(-8, 0, 0)
+	await frames(2)
+	check(absf(ui.crosshair.hurt_angles()[0]) > PI - 0.1, "they go round behind you, and it follows them down")
+	shot.call()
+	check(ui.crosshair.hurt_angles().size() == 1, "another hit from them renews theirs, no second arc")
+	player.show_hurt(70.0, 10.0, player.global_position + Vector3.UP, Vector3.BACK, &"body", &"chest", false)
+	check(ui.crosshair.hurt_angles().size() == 2, "a hit the server sends (nobody's) gets one too")
+	near(ui.crosshair.hurt_angles()[1], -PI * 0.5, 0.1, "back along the shot: from the left of you")
+	await frames(int((Crosshair.HURT_TIME + 0.1) * 60.0))
+	check(ui.crosshair.hurt_angles().is_empty(), "and they fade")
+	shot.call()
+	player.respawned.emit()
+	check(ui.crosshair.hurt_angles().is_empty(), "back from the dead, none left over")
+
+
 func test_boxes_are_drawn_like_the_logo() -> void:
 	var a := LofiUI.box("hi")
 	var style := a.get_theme_stylebox(&"panel") as PaperBox

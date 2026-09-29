@@ -452,7 +452,8 @@ func _hurt(serial: int, id: int, attacker_id: int, health: float, amount: float,
 	var body := info.player
 	var attacker := match_ref.info_by_id(attacker_id)
 	body.show_hurt(clampf(health, 0.0, body.max_health), clampf(amount, 0.0, 1000.0), point, direction,
-			StringName(zone.left(16)), StringName(part.left(16)), heartshot, attacker != null and attacker.local)
+			StringName(zone.left(16)), StringName(part.left(16)), heartshot, attacker != null and attacker.local,
+			attacker.player if attacker else null)
 	if attacker and attacker.local and attacker.player:
 		# Your hit: the server says it landed.
 		attacker.player.weapons.confirm_hit({"target": body, "name": info.player_name, "damage": amount, "zone": StringName(zone.left(16)),

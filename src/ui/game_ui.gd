@@ -83,6 +83,9 @@ func _ready() -> void:
 		player.movement_event.connect(hud.on_movement_event)
 		player.movement_event.connect(crosshair.on_movement_event)
 		player.health_changed.connect(func(h: float) -> void: hud.set_health(ceili(h)))
+		# Where you're being hit from, round the crosshair.
+		crosshair.camera = player.camera
+		player.hurt_from.connect(crosshair.hurt_from)
 		impact.settings = player.view_settings
 		player.movement_event.connect(_impact_on_movement)
 		impact.fired.connect(func(strength: float, point: Vector2) -> void:
@@ -390,6 +393,7 @@ func _show_watching() -> void:
 func _set_alive_ui(alive: bool) -> void:
 	hud.visible = alive
 	crosshair.visible = alive
+	crosshair.clear_hurts()
 	if not alive:
 		pause.close()
 
