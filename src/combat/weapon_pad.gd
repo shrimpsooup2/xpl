@@ -7,6 +7,9 @@ extends Node3D
 const HOVER := 0.95
 const RADIUS := 0.7
 
+## Its gun was taken (false) or is back (true).
+signal changed(ready: bool)
+
 @export var weapon: StringName = Weapons.PISTOL
 @export var respawn_time := 20.0
 
@@ -51,6 +54,16 @@ func taken(_by: WeaponPickup) -> void:
 	pickup = null
 	_timer = respawn_time if respawn_time > 0.0 else -1.0
 	_ring.set_instance_shader_parameter(&"glow", 0.0)
+	changed.emit(false)
+
+
+## A client: the server's pad was taken (false) or is back (true).
+func set_ready(ready: bool) -> void:
+	if ready and pickup == null:
+		_spawn(true)
+	elif not ready and pickup:
+		pickup.queue_free()
+		taken(null)
 
 
 func _process(delta: float) -> void:
@@ -61,7 +74,8 @@ func _process(delta: float) -> void:
 	_ring.scale = Vector3(lerpf(0.3, 1.0, filled), 0.3, lerpf(0.3, 1.0, filled))
 	if _timer <= 0.0:
 		_timer = -1.0
-		_spawn(true)
+		if NetSession.authority():  # A client waits for the server to say.
+			_spawn(true)
 
 
 func _spawn(pop: bool) -> void:
@@ -73,3 +87,4 @@ func _spawn(pop: bool) -> void:
 	_ring.scale = Vector3(1, 0.3, 1)
 	if pop:
 		pickup.pop_in()
+	changed.emit(true)

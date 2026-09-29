@@ -40,6 +40,10 @@ const PUNCH_KINDS := {&"straight": 0.5, &"hook": 0.28, &"uppercut": 0.22}
 var player: Player
 ## Off during a countdown: no firing, throwing or picking up (GDD §8.3).
 var enabled := true
+## Decides what its shots, punches and pickups do: true offline and on a
+## server. A client's hands only show its shots (the server says what they
+## hit) and never take, top up, throw or drop anything themselves.
+var authority := true
 var fists: WeaponDef = Weapons.get_def(Weapons.FISTS)
 var primary: WeaponDef
 var primary_ammo := 0
@@ -101,6 +105,30 @@ func give(def: WeaponDef, rounds := -1) -> void:
 	_equip()
 
 
+## Someone else's shot as the server saw it (a client): the tracers,
+## flashes and impacts, and the body's recoil, but no damage.
+func show_shot(def: WeaponDef, origin: Vector3, direction: Vector3, fanned: bool) -> void:
+	if player == null or player.is_dead:
+		return
+	var basis := Basis.looking_at(direction, Vector3.UP if absf(direction.y) < 0.99 else Vector3.BACK)
+	var visual := player.muzzle_position()
+	var exclude: Array[RID] = [player.get_rid()]
+	var ballistics := Ballistics.of(player.get_parent())
+	var cone := deg_to_rad(def.spread)
+	for i in def.pellets:
+		var dir := basis * _spread_direction(cone, i, def.pellets)
+		if def.delivery == WeaponDef.Delivery.HITSCAN:
+			ballistics.fire_hitscan(self, def, origin, dir, visual, 0.0, false, exclude)
+		else:
+			ballistics.fire_projectile(self, def, origin, dir, visual, 0.0, false, exclude)
+	fired.emit(def, {"fanned": fanned, "ammo": primary_ammo})
+
+
+## Holds the primary (true) or the fists.
+func set_using_primary(on: bool) -> void:
+	_switch(on and primary != null)
+
+
 ## Fills the gun in hand back to a full magazine (a resupply crate, in games
 ## that have them). False if there was nothing to fill.
 func refill() -> bool:
@@ -151,7 +179,7 @@ func tick(cmd: InputCommand, delta: float) -> void:
 			_switch(false)
 		3:
 			_switch(not using_primary)
-	if cmd.throw_pressed and primary:
+	if cmd.throw_pressed and primary and authority:
 		throw_primary()
 	_update_pickups(cmd.interact_pressed)
 	def = current
@@ -227,7 +255,7 @@ func throw_primary() -> void:
 
 ## On death the primary drops where you fell, with what's left in it.
 func drop_on_death() -> void:
-	if primary and primary_ammo > 0:
+	if primary and primary_ammo > 0 and authority:
 		var drop := WeaponPickup.create(primary, primary_ammo)
 		player.get_parent().add_child(drop)
 		drop.throw_from(player.global_position + Vector3.UP * 1.0, Vector3.UP * 2.0 + player.velocity * 0.3, null, player)
@@ -374,8 +402,10 @@ func _land_punch() -> void:
 		"attacker": player,
 		"knockback": fists.knockback,
 	}
-	var result: Dictionary = hit.target.take_hit(info)
 	CombatFx.body_hit(player.get_parent(), hit.point, dir, false, 1.3)
+	if not authority:
+		return  # The server says what the punch did.
+	var result: Dictionary = hit.target.take_hit(info)
 	if not result.is_empty():
 		confirm_hit(result)
 
@@ -410,7 +440,7 @@ func _update_pickups(interact: bool) -> void:
 		if d > PICKUP_RADIUS:
 			continue
 		# Same gun: top up (GDD §7.1), up to a full gun.
-		if primary and pickup.def == primary and primary_ammo < primary.ammo and pickup.ammo > 0:
+		if authority and primary and pickup.def == primary and primary_ammo < primary.ammo and pickup.ammo > 0:
 			var taken := mini(pickup.ammo, primary.ammo - primary_ammo)
 			primary_ammo += taken
 			pickup.take(taken)
@@ -423,7 +453,7 @@ func _update_pickups(interact: bool) -> void:
 			nearest = pickup
 			nearest_distance = d
 	swap_candidate = nearest if nearest and primary and primary_ammo > 0 else null
-	if nearest == null:
+	if nearest == null or not authority:
 		return
 	if primary == null or primary_ammo <= 0:
 		_take(nearest, &"auto")

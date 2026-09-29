@@ -25,6 +25,14 @@ var throw_pressed: bool = false
 var switch_to: int = 0
 
 
+func copy() -> InputCommand:
+	var c := InputCommand.new()
+	for prop in get_property_list():
+		if prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE:
+			c.set(prop.name, get(prop.name))
+	return c
+
+
 func clear_presses() -> void:
 	jump_pressed = false
 	crouch_pressed = false

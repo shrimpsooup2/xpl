@@ -161,6 +161,46 @@ static func button(text: String, on_pressed: Callable) -> Button:
 	return b
 
 
+## [<] [label] [>]: the label box wide enough for the longest of `texts`,
+## so the arrows never jump; the arrows call `step` with -1 and 1.
+static func stepper(texts: Array, step: Callable) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_END
+	row.add_theme_constant_override(&"separation", 1)
+	var ghost := stylebox(Style.GHOST, SMALL, randi())
+	for by in [-1, 1]:
+		var arrow := button("<" if by < 0 else ">", step.bind(by))
+		arrow.add_theme_font_size_override(&"font_size", SMALL)
+		arrow.add_theme_stylebox_override(&"normal", ghost)
+		arrow.add_theme_color_override(&"font_color", GREY)
+		row.add_child(arrow)
+	var label := box("", SMALL, Style.GHOST)
+	for text: String in texts:
+		var width := FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, SMALL).x
+		label.custom_minimum_size.x = maxf(label.custom_minimum_size.x, ceilf(width) + 10.0)
+	label_of(label).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	row.add_child(label)
+	row.move_child(label, 1)
+	return row
+
+
+## A small text field: a ghost box that firms up while you type in it. Enter
+## lets go of it. `secret` hides what's typed (passwords).
+static func field(text: String, width: float, max_length := 64, secret := false) -> LineEdit:
+	var f := LineEdit.new()
+	f.text = text
+	f.max_length = max_length
+	f.secret = secret
+	f.custom_minimum_size.x = width
+	f.add_theme_font_size_override(&"font_size", SMALL)
+	f.add_theme_stylebox_override(&"normal", stylebox(Style.GHOST, SMALL, randi()))
+	f.add_theme_stylebox_override(&"focus", stylebox(Style.NORMAL, SMALL, randi()))
+	f.add_theme_color_override(&"font_color", BLACK)
+	f.add_theme_color_override(&"font_placeholder_color", GREY)
+	f.text_submitted.connect(func(_t: String) -> void: f.release_focus())
+	return f
+
+
 ## A row of letter tiles, one box per character: for big banners that
 ## should land letter by letter (see tiles_in()).
 static func tiles(text: String, size := HUGE, style := Style.INVERTED) -> HBoxContainer:
@@ -310,11 +350,12 @@ static func shake(control: Control, amount := 3.0, time := 0.25) -> void:
 	amount *= motion
 	if amount <= 0.0:
 		return
-	var start := control.position
-	var t := control.create_tween()
-	for i in 5:
-		t.tween_property(control, "position", start + Vector2(randf_range(-amount, amount), 0), time / 6.0)
-	t.tween_property(control, "position", start, time / 6.0)
+	_after_layout(control, func() -> void:
+		var start := control.position.x
+		var t := control.create_tween()
+		for i in 5:
+			t.tween_property(control, "position:x", start + randf_range(-amount, amount), time / 6.0)
+		t.tween_property(control, "position:x", start, time / 6.0))
 
 
 ## Drops a row of letter tiles in one after another, then kicks the layer.
@@ -402,13 +443,19 @@ static func settle(t: Tween, target: Object, property: String, rest: Variant) ->
 # Skipped if the control is freed first (held weakly, so a freed control
 # never reaches the callback).
 static func _after_layout(control: Control, fn: Callable) -> void:
-	if control.is_inside_tree():
-		var ref: WeakRef = weakref(control)
-		control.get_tree().process_frame.connect(func() -> void:
-			if ref.get_ref() != null:
-				fn.call(), CONNECT_ONE_SHOT)
-	else:
+	if not control.is_inside_tree():
 		control.ready.connect(_after_layout.bind(control, fn), CONNECT_ONE_SHOT)
+		return
+	var ref: WeakRef = weakref(control)
+	var tree := control.get_tree()
+	var asked_on := Engine.get_process_frames()
+	await tree.process_frame
+	# Asked before this frame's process_frame (from a network message, say:
+	# they're read first)? Containers sort at the end of the frame: one more.
+	if Engine.get_process_frames() == asked_on:
+		await tree.process_frame
+	if ref.get_ref() != null:
+		fn.call()
 
 
 # Moves a control from `from` to `to` (offsets from where layout put it).

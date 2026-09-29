@@ -258,6 +258,63 @@ func test_the_title_screen_picker_steps_through_the_hats() -> void:
 	await frames(1)
 
 
+func test_the_title_screen_online_page_hosts_and_shows_the_lobby() -> void:
+	OnlineMenu.prefs_path = "user://test_online.cfg"
+	Cosmetics.set_player_name("hostess")
+	var menu: Node = load("res://scenes/main_menu.tscn").instantiate()
+	world.add_child(menu)
+	await frames(2)
+	menu.open_online()
+	await frames(2)
+	var page: OnlineMenu = menu.get(&"_online")
+	check(page != null and page.is_visible_in_tree(), "online opens its page")
+	var shown := func(text: String) -> bool:
+		return menu.find_children("*", "Button", true, false).any(func(b: Button) -> bool: return b.text == text and b.is_visible_in_tree())
+	check(shown.call("host") and shown.call("join") and not shown.call("free-for-all"), "host and join in place of the menu's buttons")
+	var status: PanelContainer = page.get(&"_status")
+	page.get(&"_address_field").text = "no such:address:here"
+	page.call(&"_join")
+	check(status.visible and LofiUI.style_of(status) == LofiUI.Style.ALERT and not NetSession.active(), "a bad address says so, and goes nowhere")
+	page.get(&"_port_field").text = "80"
+	page.call(&"_host")
+	check(LofiUI.label_of(status).text.contains("1024") and not NetSession.active(), "so does a port it can't use")
+	page.get(&"_port_field").text = "27982"
+	page.call(&"_host")
+	await frames(3)
+	var s := NetSession.current
+	check(NetSession.active() and s.role == NetSession.Role.HOST, "host starts hosting")
+	var texts := func() -> PackedStringArray:
+		var out := PackedStringArray()
+		for l: Label in page.find_children("*", "Label", true, false):
+			if l.is_visible_in_tree() and not l.get_parent().is_queued_for_deletion():
+				out.append(l.text)
+		return out
+	check("your game" in texts.call() and "hostess  (host, you)" in texts.call(), "the lobby: your game, with you in it (%s)" % [texts.call()])
+	check(not (menu.get(&"_pickers") as Control).visible, "your look is set by now: the pickers go")
+	page.call(&"_step_bots", 1)
+	page.call(&"_step_bots", 1)
+	await frames(2)
+	check(s.bot_count() == 2 and "bot 1  (bot)" in texts.call() and "bot 2  (bot)" in texts.call(), "bots join the roster")
+	check("2 bots" in texts.call(), "and the count says so")
+	page.call(&"_step_bots", -1)
+	await frames(2)
+	check(s.bot_count() == 1 and not "bot 2  (bot)" in texts.call(), "and leave it")
+	page.call(&"_step_style", 1)
+	await frames(2)
+	check(s.rules.is_teams() and "teams" in texts.call(), "the style goes to teams")
+	check(texts.call().has("hostess  (red, host, you)") or texts.call().has("hostess  (blue, host, you)"), "and the roster shows sides")
+	page.call(&"_leave")
+	await frames(2)
+	check(not NetSession.active() and shown.call("host"), "closing the game goes back to host and join")
+	menu.close_online()
+	await frames(2)
+	check(shown.call("free-for-all") and menu.get(&"_online") == null, "back shows the menu's buttons again")
+	menu.queue_free()
+	await frames(1)
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(OnlineMenu.prefs_path))
+	OnlineMenu.prefs_path = "user://online.cfg"
+
+
 func test_the_title_screen_blob_is_red_or_blue_at_random() -> void:
 	var teams := {}
 	for k in 6:

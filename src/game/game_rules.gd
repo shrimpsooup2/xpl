@@ -96,3 +96,44 @@ static func teams() -> GameRules:
 
 func is_teams() -> bool:
 	return kind == Kind.TEAMS
+
+
+## Every rule as plain data, for the network.
+func to_dict() -> Dictionary:
+	var d := {}
+	for prop in get_property_list():
+		if prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE:
+			d[prop.name] = get(prop.name)
+	return d
+
+
+## Rules from to_dict() data that came off the network: every value must
+## have its rule's type and a sensible range, and maps must be the game's
+## own; anything else keeps the default (the style's preset). Never null.
+static func from_dict(d: Dictionary) -> GameRules:
+	var r := teams() if is_same(d.get("kind"), Kind.TEAMS) else free_for_all()
+	for prop in r.get_property_list():
+		if not prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE or prop.name == "kind" or not d.has(prop.name):
+			continue
+		var v: Variant = d[prop.name]
+		var have: Variant = r.get(prop.name)
+		if typeof(v) != typeof(have):
+			continue
+		if v is float and (not is_finite(v) or v < 0.0 or v > 100000.0):
+			continue
+		if v is int and (v < 0 or v > 100000):
+			continue
+		if v is String:
+			v = (v as String).left(32)
+		if prop.name == "spawn_weapon" and v != &"" and not v in Weapons.GUNS:
+			continue
+		if v is PackedStringArray:
+			var maps := PackedStringArray()
+			for m in v:
+				if Maps.scene_of(m) != "" and maps.size() < 32:
+					maps.append(m)
+			if maps.is_empty():
+				continue
+			v = maps
+		r.set(prop.name, v)
+	return r

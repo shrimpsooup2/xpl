@@ -303,7 +303,7 @@ func _try_start_wallride(body: CharacterBody3D, st: MovementState) -> void:
 	if col == null:
 		return
 	var n := horizontal(col.get_normal()).normalized()
-	var id := col.get_collider_id()
+	var id := wall_key(col)
 	if st.used_wall_id == id and st.used_wall_normal.dot(n) > 0.95:
 		return
 	var v := body.velocity
@@ -318,6 +318,14 @@ func _try_start_wallride(body: CharacterBody3D, st: MovementState) -> void:
 	st.used_wall_id = id
 	body.velocity = along + Vector3.UP * clampf(v.y, p.wallride_attach_min_vy, p.wallride_attach_max_vy)
 	_event(st, &"wallride_start", {"normal": n})
+
+
+## Which wall this is, the same on every machine (the hash of its node's
+## path, as levels are built the same everywhere), so the remembered wall
+## survives the trip to a client for prediction.
+static func wall_key(col: KinematicCollision3D) -> int:
+	var node := col.get_collider() as Node
+	return str(node.get_path()).hash() if node else col.get_collider_id()
 
 
 func _tick_wallride(body: CharacterBody3D, st: MovementState, wish: Vector3, dt: float) -> void:

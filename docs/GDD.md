@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 1.6 (draft) |
+| **Version** | 1.7 (draft) |
 | **Date** | 2026-09-29 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -29,6 +29,7 @@
 | 1.4 | Hats: the first cosmetic, and how teams are told apart. Sixteen hats in red or blue, or no hat and a team triangle over the head; picked on the title screen (§11.4, §13.4). Dash charges recharge slower (1.75 → 2.25 s). First-person arms sit lower and further back and carry on past the cut off screen, so no arm end ever shows. Punches mix jabs, crosses, hooks and uppercuts. UI boxes drawn like the logo: a crooked black frame set in from a white card. |
 | 1.5 | Map rules rewritten (§9.1): size varies from map to map, structure before theme, fair but not always symmetrical, long sightlines allowed on the big maps. The first eight greybox maps built and tested (§9.3): Stack, Terrace, Switchback; two spread-out maps for more players and longer rounds, Archipelago and Rift, where the sniper has a job; and three large team maps in the traditional style, Boulevard, Holdfast and Depot. F9 steps through them in game. The movement sandbox moves to §9.4. |
 | 1.6 | The two game styles built (§8.5): free-for-all in short rounds (last one standing, first to five, a new map each round) and teams as one long game (respawns, kill target, time limit), run by a server-side match, with practice bots. Ammo by style (§7.2): teams keep "no reloads" but add resupply crates, faster pads and a spawn pistol. Players take damage and die like the dummies, kills go to whoever hit them last (§5.1). In free-for-all everyone picks their colour; names float over heads (§11.4). |
+| 1.7 | Online play built (§15.2, [NETWORKING.md](NETWORKING.md)): host a game from the menu (a listen server, with UPnP) or run a headless dedicated server, join by address, a lobby before and between games. Server-authoritative over Godot's ENet: clients send numbered commands, the server runs them and sends snapshots and events; your own movement is predicted and reconciled, everyone else is interpolated. A handshake (version, password, room), every message checked, junk and floods kicked, and the risks we can't remove written down. The camera bumps against walls instead of going through them. |
 
 ---
 
@@ -942,9 +943,11 @@ Movement is a custom kinematic controller on top of `CharacterBody3D`, with our 
 
 ### 15.2 Simulation and netcode
 
+The plan, the choices behind it, what's built and the security model are in [NETWORKING.md](NETWORKING.md). In short: both a listen server (a player hosts from the menu) and a headless dedicated server run the same server-authoritative code over Godot's own ENet networking. Built so far: the authority, tick, local player, remote player, pickup and validation rows below (interpolation is 100 ms, with no extrapolation yet); lag compensation and projectiles are next.
+
 | Topic | Plan |
 |---|---|
-| Authority | Server-authoritative. MVP uses a listen server (host) over a relay (such as Steam Networking Sockets). The server code stays headless-capable for future dedicated servers. |
+| Authority | Server-authoritative. A listen server (a player hosts) or a dedicated headless server, the same code; direct connections now, a relay (Steam Networking Sockets, or noray) later to get through NAT and hide addresses. |
 | Tick rate | 60 Hz fixed simulation and send rate (configurable to 120 Hz) |
 | Local player | Client-side prediction of movement, firing, pickups, and throws, with server reconciliation (rewind and replay unacknowledged inputs) |
 | Remote players | Interpolated about 2 ticks behind, with extrapolation capped at 100 ms on packet loss |

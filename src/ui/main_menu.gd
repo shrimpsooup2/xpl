@@ -12,13 +12,17 @@ extends Node3D
 ## them; all saved, and what you wear and go by in a game (GDD §11.4).
 ## Hovering free-for-all shows your colour; hovering teams, a team's.
 ##
-## Free-for-all and teams start a practice game against bots (Game); the
-## sandbox is the movement course.
+## Free-for-all and teams start a practice game against bots (Game); online
+## opens the host/join page and the lobby in place of the buttons
+## (OnlineMenu), and a networked game comes back to that lobby when it ends;
+## the sandbox is the movement course.
 
 const PLAY_SCENE := "res://scenes/test_course.tscn"
 const FFA_BOTS := 3
 const TEAM_BOTS := 7
 const LOGO := preload("res://assets/ui/logo_small.png")
+const LOGO_SCALE := 1.6
+const LOGO_ONLINE := 1.0
 const DANCE_EVERY := Vector2(5.0, 9.0)
 ## Camera lean toward the mouse, in meters at the screen edge.
 const MOUSE_LEAN := Vector2(0.35, 0.18)
@@ -52,11 +56,20 @@ var _hat_name: PanelContainer
 var _color_name: PanelContainer
 var _name_field: LineEdit
 var _team := Hats.Team.RED
+var _buttons: VBoxContainer
+var _pickers: Control
+var _online: OnlineMenu
 ## What the blob is wearing now: a team's colour or your free-for-all one.
 var _tint := Color.WHITE
 
 
 func _ready() -> void:
+	if DedicatedServer.requested():
+		# A dedicated server has no menu: it serves games from here on.
+		if DedicatedServer.run(get_tree()) != OK:
+			get_tree().quit(1)
+		queue_free()
+		return
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 	RenderingServer.global_shader_parameter_set(&"world_light", 1.0)
 	Cosmetics.load_saved()
@@ -65,6 +78,8 @@ func _ready() -> void:
 	_build_stage()
 	_build_menu()
 	_show_hat(false)
+	if NetSession.active() or NetSession.last_reason != "":
+		open_online()  # Back from a networked game, or thrown out of one.
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -102,6 +117,8 @@ func _process(delta: float) -> void:
 		_ticker_label.position.x -= TICKER_SPEED * delta
 		if _ticker_label.position.x <= -_ticker_width:
 			_ticker_label.position.x += _ticker_width
+	# Your look is sent when you join: changing it in a lobby wouldn't show.
+	_pickers.visible = not NetSession.active()
 
 
 func _build_stage() -> void:
@@ -161,9 +178,10 @@ func _build_menu() -> void:
 	col.add_theme_constant_override(&"separation", 3)
 	col.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	root.add_child(col)
+	_buttons = col
 	_logo = TextureRect.new()
 	_logo.texture = LOGO
-	_logo.custom_minimum_size = LOGO.get_size() * 1.6
+	_logo.custom_minimum_size = LOGO.get_size() * LOGO_SCALE
 	_logo.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	_logo.stretch_mode = TextureRect.STRETCH_SCALE
 	col.add_child(_logo)
@@ -180,6 +198,9 @@ func _build_menu() -> void:
 		_react(&"Punch_Cross", 0.8)
 		_wear(Hats.team_color(_team)))
 	col.add_child(teams)
+	var online := LofiUI.button("online", open_online)
+	online.mouse_entered.connect(_react.bind(&"Punch_Cross", 0.8))
+	col.add_child(online)
 	var sandbox := LofiUI.button("sandbox", _play.bind(&"sandbox"))
 	sandbox.mouse_entered.connect(_react.bind(&"Punch_Jab", 0.8))
 	col.add_child(sandbox)
@@ -195,6 +216,7 @@ func _build_menu() -> void:
 	footer.size_flags_vertical = Control.SIZE_SHRINK_END
 	footer.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	var picker := _build_pickers()
+	_pickers = picker
 	picker.size_flags_vertical = Control.SIZE_SHRINK_END
 	picker.size_flags_horizontal = Control.SIZE_EXPAND | Control.SIZE_SHRINK_END
 	var bottom := HBoxContainer.new()
@@ -226,15 +248,7 @@ func _build_pickers() -> VBoxContainer:
 	name_row.add_theme_constant_override(&"separation", 1)
 	var name_label := LofiUI.box("name:", LofiUI.SMALL, LofiUI.Style.GHOST)
 	name_row.add_child(name_label)
-	_name_field = LineEdit.new()
-	_name_field.text = Cosmetics.player_name
-	_name_field.max_length = Cosmetics.NAME_LENGTH
-	_name_field.custom_minimum_size.x = 84
-	_name_field.add_theme_font_size_override(&"font_size", LofiUI.SMALL)
-	_name_field.add_theme_stylebox_override(&"normal", LofiUI.stylebox(LofiUI.Style.GHOST, LofiUI.SMALL, randi()))
-	_name_field.add_theme_stylebox_override(&"focus", LofiUI.stylebox(LofiUI.Style.NORMAL, LofiUI.SMALL, randi()))
-	_name_field.add_theme_color_override(&"font_color", LofiUI.BLACK)
-	_name_field.text_submitted.connect(func(_t: String) -> void: _name_field.release_focus())
+	_name_field = LofiUI.field(Cosmetics.player_name, 84, Cosmetics.NAME_LENGTH)
 	_name_field.focus_exited.connect(func() -> void:
 		Cosmetics.set_player_name(_name_field.text)
 		_name_field.text = Cosmetics.player_name)
@@ -243,39 +257,16 @@ func _build_pickers() -> VBoxContainer:
 	var hats: Array = []
 	for id: StringName in Hats.ALL:
 		hats.append("hat: " + Hats.NAMES[id])
-	var hat_row := _stepper(hats, cycle_hat)
+	var hat_row := LofiUI.stepper(hats, cycle_hat)
 	_hat_name = hat_row.get_child(1)
 	col.add_child(hat_row)
 	var colors: Array = []
 	for key: StringName in Hats.PALETTE:
 		colors.append("colour: " + String(key))
-	var color_row := _stepper(colors, cycle_color)
+	var color_row := LofiUI.stepper(colors, cycle_color)
 	_color_name = color_row.get_child(1)
 	col.add_child(color_row)
 	return col
-
-
-## [<] [label] [>]: the label box wide enough for the longest of `texts`,
-## so the arrows never jump; the arrows call `step` with -1 and 1.
-func _stepper(texts: Array, step: Callable) -> HBoxContainer:
-	var row := HBoxContainer.new()
-	row.alignment = BoxContainer.ALIGNMENT_END
-	row.add_theme_constant_override(&"separation", 1)
-	var ghost := LofiUI.stylebox(LofiUI.Style.GHOST, LofiUI.SMALL, randi())
-	for by in [-1, 1]:
-		var arrow := LofiUI.button("<" if by < 0 else ">", step.bind(by))
-		arrow.add_theme_font_size_override(&"font_size", LofiUI.SMALL)
-		arrow.add_theme_stylebox_override(&"normal", ghost)
-		arrow.add_theme_color_override(&"font_color", LofiUI.GREY)
-		row.add_child(arrow)
-	var label := LofiUI.box("", LofiUI.SMALL, LofiUI.Style.GHOST)
-	for text: String in texts:
-		var width := LofiUI.FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, LofiUI.SMALL).x
-		label.custom_minimum_size.x = maxf(label.custom_minimum_size.x, ceilf(width) + 10.0)
-	LofiUI.label_of(label).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	row.add_child(label)
-	row.move_child(label, 1)
-	return row
 
 
 ## Steps `by` through the hats, saves the pick, and drops it on the blob.
@@ -370,6 +361,43 @@ func _react(clip: StringName, length: float) -> void:
 		if mine == _reaction and not _leaving:
 			_reaction = 0
 			_model.anim.play(PlayerModel.ANIM_IDLE, 0.3))
+
+
+## The online page in place of the menu's buttons.
+func open_online() -> void:
+	if _online or _leaving:
+		return
+	if _name_field:
+		Cosmetics.set_player_name(_name_field.text)
+	for c in _buttons.get_children():
+		if c is Button:
+			c.visible = false
+	_online = OnlineMenu.new()
+	_online.back.connect(close_online)
+	_buttons.add_child(_online)
+	_size_logo(LOGO_ONLINE)
+
+
+## Back from the online page (leaving any game being hosted or joined).
+func close_online() -> void:
+	if _online == null:
+		return
+	NetSession.leave(get_tree())
+	_online.queue_free()
+	_online = null
+	var i := 0
+	for c in _buttons.get_children():
+		if c is Button:
+			c.visible = true
+			LofiUI.enter(c, Vector2(-40, 0), i * 0.05, 0.25)
+			i += 1
+	_size_logo(LOGO_SCALE)
+
+
+## Eases the logo to `scale` (smaller on the online page, to make room).
+func _size_logo(scale: float) -> void:
+	create_tween().tween_property(_logo, "custom_minimum_size", LOGO.get_size() * scale, 0.2) \
+			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
 ## Starts `mode`: a practice game of free-for-all or teams against bots, or

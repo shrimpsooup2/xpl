@@ -51,8 +51,18 @@ func _ready() -> void:
 		e.action = &"debug_tuning"
 		e.pressed = true
 		Input.parse_input_event(e)))
-	col.add_child(LofiUI.button("leave game" if Game.current else "main menu", func() -> void:
-		if Game.current:
+	var online := NetSession.active()
+	var hosting := online and NetSession.current.role == NetSession.Role.HOST
+	if hosting and Game.current:
+		col.add_child(LofiUI.button("end game (to the lobby)", func() -> void:
+			close()
+			NetSession.current.game_over()))
+	var leave_text := "close the game" if hosting else "leave server" if online else "leave game" if Game.current else "main menu"
+	col.add_child(LofiUI.button(leave_text, func() -> void:
+		if NetSession.active():
+			NetSession.leave(get_tree())
+			Wipe.change_scene(get_tree(), MAIN_MENU)
+		elif Game.current:
 			Game.end(get_tree())
 		else:
 			Wipe.change_scene(get_tree(), MAIN_MENU)))

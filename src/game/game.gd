@@ -4,7 +4,8 @@ extends RefCounted
 ## tree's root, outside any level, so it lives through map changes; each map
 ## it loads, it fills with the game's players. Only the match's machine (the
 ## host or server; offline, this one) decides anything: damage, deaths,
-## scores, respawns.
+## scores, respawns. In a networked game a client follows the server's match
+## (Game.follow, docs/NETWORKING.md).
 
 const MENU_SCENE := "res://scenes/main_menu.tscn"
 
@@ -12,26 +13,70 @@ const MENU_SCENE := "res://scenes/main_menu.tscn"
 static var current: Match
 
 
-## Starts a game of `rules` for `players` (see PlayerInfo): loads its first
-## map, and it runs from there, back to the menu when it's over.
+## Starts a game of `rules` for `players` (see PlayerInfo) on this machine,
+## which decides it: loads its first map, and runs from there. Offline it
+## goes back to the menu when it's over; a server tells its clients, and
+## what happens next is the session's (NetSession.game_over).
 static func start(tree: SceneTree, rules: GameRules, players: Array[PlayerInfo]) -> Match:
 	end(tree, false)
 	var m := Match.new()
 	m.name = "Match"
 	m.rules = rules
 	m.infos = players
+	m.finished.connect(_on_finished.bind(tree))
 	current = m
+	if NetSession.active() and NetSession.current.is_server():
+		NetSession.current.announce_game(rules)
 	tree.root.add_child(m)  # It loads its first map once it's in the tree.
+	return m
+
+
+## A client joins the server's game: a match that loads the maps the server
+## names and takes its state from it.
+static func follow(tree: SceneTree, rules: GameRules, players: Array[PlayerInfo]) -> Match:
+	end(tree, false)
+	var m := Match.new()
+	m.name = "Match"
+	m.rules = rules
+	m.infos = players
+	m.authority = false
+	current = m
+	tree.root.add_child(m)
 	return m
 
 
 ## Ends the game in progress and (with `to_menu`) goes back to the menu.
 static func end(tree: SceneTree, to_menu := true) -> void:
 	if current and is_instance_valid(current):
+		current.name = "EndedMatch"  # Frees its name for the next one straight away.
 		current.queue_free()
 	current = null
 	if to_menu:
 		Wipe.change_scene(tree, MENU_SCENE)
+
+
+static func _on_finished(tree: SceneTree) -> void:
+	if NetSession.active():
+		NetSession.current.game_over()
+	else:
+		end(tree)
+
+
+## Someone joined the server mid-game: they're in it from now on.
+static func on_peer_joined(id: int) -> void:
+	if current and is_instance_valid(current) and current.authority and NetSession.active():
+		var info: PlayerInfo = NetSession.current.roster.get(id)
+		if info:
+			NetSession.current.announce_game(current.rules, id)
+			current.add_player(info)
+			if current.sync:
+				current.sync.catch_up(id)
+
+
+## Someone left the server.
+static func on_peer_left(id: int) -> void:
+	if current and is_instance_valid(current):
+		current.remove_player(id)
 
 
 ## Whether `attacker` can hurt `victim`: always, but for teammates when the

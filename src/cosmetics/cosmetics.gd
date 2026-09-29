@@ -57,8 +57,8 @@ static func set_player_name(text: String) -> void:
 
 
 ## A name fit to show over a head: printable characters only, spaces
-## squeezed, at most NAME_LENGTH long; nothing left is the default.
-static func clean_name(text: Variant) -> String:
+## squeezed, at most `limit` long; nothing left is the default.
+static func clean_name(text: Variant, limit := NAME_LENGTH) -> String:
 	var out := ""
 	for ch in str(text).strip_edges():
 		var code := ch.unicode_at(0)
@@ -67,7 +67,7 @@ static func clean_name(text: Variant) -> String:
 		if ch == " " and out.ends_with(" "):
 			continue
 		out += ch
-	out = out.strip_edges().left(NAME_LENGTH).strip_edges()
+	out = out.strip_edges().left(limit).strip_edges()
 	return out if not out.is_empty() else DEFAULT_NAME
 
 

@@ -73,7 +73,7 @@ static func from_dict(d: Dictionary) -> PlayerInfo:
 	info.color = c if Hats.PALETTE.has(c) else Cosmetics.DEFAULT_COLOR
 	var h := StringName(str(d.get("hat", "")))
 	info.hat = h if h in Hats.ALL else Cosmetics.DEFAULT_HAT
-	info.bot = d.get("bot", false) is bool and d.bot
+	info.bot = is_same(d.get("bot"), true)
 	for key in ["kills", "deaths", "heartshots", "round_wins"]:
 		var v: Variant = d.get(key, 0)
 		info.set(key, clampi(v, -9999, 9999) if v is int else 0)

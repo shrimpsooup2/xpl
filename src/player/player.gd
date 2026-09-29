@@ -12,6 +12,8 @@ signal died
 signal respawned
 ## Health went up or down (hits, healing, respawning).
 signal health_changed(health: float)
+## It took a hit (the hit as Ballistics landed it, and the damage done).
+signal hurt(hit: Dictionary, amount: float)
 ## It died: {attacker: Player or null, weapon: WeaponDef or null, heartshot}.
 ## A fall counts as the last hit's if that was recent (KNOCKED_OFF_TIME).
 signal killed(info: Dictionary)
@@ -114,6 +116,18 @@ var regen_rate := 25.0
 var auto_respawn := true
 var _since_hit := INF
 var _last_hit := {}
+## Networking (docs/NETWORKING.md). On a server, a client's player runs on
+## the commands that client sent: `input_source` gives this tick's (none,
+## one, or two to catch up). On a client, your own player tells its
+## Prediction about every tick it ran (`after_tick`).
+var input_source: Callable
+var after_tick: Callable
+## Replaces the keyboard and mouse for the person's own player (tests drive
+## a networked client's player with it): returns this tick's command.
+var input_override: Callable
+## Where the body is drawn relative to where it is, after prediction was
+## corrected: eased away so a correction glides instead of jumping.
+var _correction := Vector3.ZERO
 ## The local player's death cinematic; null for bots, remote players and tests.
 var death: DeathSequence
 var weapons: WeaponHolder
@@ -247,7 +261,65 @@ func _unhandled_input(event: InputEvent) -> void:
 
 
 func _physics_process(delta: float) -> void:
-	tick(_sample_command(), delta)
+	if input_source.is_valid():
+		for cmd: InputCommand in input_source.call():
+			yaw = cmd.yaw  # Where they look and aim, as their client had it.
+			pitch = cmd.pitch
+			tick(cmd, delta)
+		return
+	var cmd: InputCommand = input_override.call() if input_override.is_valid() else _sample_command()
+	var alive := not is_dead
+	tick(cmd, delta)
+	if alive and after_tick.is_valid():
+		after_tick.call(cmd)
+
+
+## Runs this player on commands from `source` every physics tick (a server,
+## for a client's player): source() returns the tick's commands.
+func drive_with(source: Callable) -> void:
+	input_source = source
+	set_physics_process(true)
+
+
+## Runs the movement alone for one command: no weapons, no events, no
+## effects. Prediction replays inputs with it after going back to where
+## the server had this player.
+func replay(cmd: InputCommand, delta: float) -> void:
+	sim.step(self, state, cmd, delta)
+	state.events.clear()
+	_prev_position = global_position
+	_curr_position = global_position
+
+
+## Prediction was corrected by `offset` (where it was drawn minus where it is
+## now): drawn there at first, gliding to the right place.
+func smooth_correction(offset: Vector3) -> void:
+	_correction = (_correction + offset).limit_length(2.0) if offset.length() < 2.0 else Vector3.ZERO
+
+
+## Someone else's player on a client, where the server's snapshots put it.
+func apply_puppet(at: Vector3, vel: Vector3, look_yaw: float, look_pitch: float, mode: int, flags: int) -> void:
+	global_position = at
+	_prev_position = at
+	_curr_position = at
+	velocity = vel
+	yaw = look_yaw
+	pitch = look_pitch
+	state.mode = mode as MovementState.Mode
+	state.on_ground = flags & NetCodec.FLAG_ON_GROUND != 0
+	state.crouched = flags & NetCodec.FLAG_CROUCHED != 0
+
+
+## A hit the server says this player took (a client): health, the flinch,
+## and (for `numbers`, your own hits) the damage number.
+func show_hurt(new_health: float, amount: float, point: Vector3, direction: Vector3, zone: StringName, part: StringName,
+		heartshot: bool, numbers := false) -> void:
+	health = new_health
+	health_changed.emit(health)
+	if numbers:
+		DamageNumber.add(get_parent(), self, point, amount, &"heart" if heartshot else zone)
+	if health > 0.0:
+		model.react_to_hit(part, point, direction, amount / 40.0)
 
 
 ## Runs one simulation tick with the given command.
@@ -296,6 +368,7 @@ func take_hit(hit: Dictionary) -> Dictionary:
 	_since_hit = 0.0
 	_last_hit = {"attacker": attacker, "weapon": hit.get("weapon"), "heartshot": lethal, "time": Time.get_ticks_msec()}
 	health_changed.emit(health)
+	hurt.emit(hit, amount)
 	DamageNumber.add(get_parent(), self, hit.point, amount, &"heart" if lethal else hit.zone)
 	var killed_now := health <= 0.0
 	if killed_now:
@@ -493,7 +566,8 @@ func _process(delta: float) -> void:
 	var p := movement_params
 	var v := view_settings
 	var f := Engine.get_physics_interpolation_fraction()
-	var pos := _prev_position.lerp(_curr_position, f)
+	_correction = _correction.lerp(Vector3.ZERO, 1.0 - exp(-12.0 * delta))
+	var pos := _prev_position.lerp(_curr_position, f) + _correction
 	model.follow(pos, yaw)
 	model.animate_movement(state, velocity)
 	model.aim(pitch, weapons.current.is_fists())

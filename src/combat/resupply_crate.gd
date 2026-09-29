@@ -58,8 +58,8 @@ func _physics_process(delta: float) -> void:
 		_used[p] -= delta
 		if _used[p] <= 0.0 or not is_instance_valid(p):
 			_used.erase(p)
-	if not enabled:
-		return
+	if not enabled or not NetSession.authority():
+		return  # A client's crates are just to look at: the server fills guns.
 	for n: Node in get_tree().get_nodes_in_group(Ballistics.GROUP):
 		var p := n as Player
 		if p == null or p.is_dead or _used.has(p):

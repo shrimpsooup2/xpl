@@ -185,6 +185,11 @@ func _land(hit: Dictionary, holder: WeaponHolder, def: WeaponDef, damage: float,
 		"attacker": holder.player if holder else null,
 		"knockback": def.knockback,
 	}
+	if holder and not holder.authority:
+		# A client's shot, or someone else's shown on a client: the server
+		# decides what it did.
+		CombatFx.body_hit(world, hit.point, direction, false)
+		return {}
 	var result: Dictionary = target.take_hit(info)
 	CombatFx.body_hit(world, hit.point, direction, heartshot)
 	if holder and not result.is_empty():

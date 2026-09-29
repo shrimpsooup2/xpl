@@ -8,11 +8,15 @@ extends Node
 ##     left (or time runs out: nobody wins it); in teams the dead respawn and
 ##     the game ends at the kill target or the time limit;
 ##   round end, a short beat, then the next round (a new map in free-for-all)
-##     or the match end, then back to the menu.
+##     or the match end, then `finished` (back to the menu, or the lobby).
 ## It also sets the level up for the rules: pad respawn times, resupply
 ## crates, what you spawn holding, health regeneration, friendly fire.
-## Everything that decides the game happens here, on the machine that runs
-## the match; the UI listens to the signals.
+##
+## Only a match with `authority` (offline, or the server of a networked
+## game) decides anything. On a client the match follows (docs/NETWORKING.md):
+## it loads the maps the server names, gives you a predicted body and
+## everyone else a puppet, and takes its state from the server (MatchSync),
+## firing the same signals so the UI works the same either way.
 
 signal state_changed(state: State)
 signal scores_changed
@@ -23,13 +27,24 @@ signal round_decided(winner: PlayerInfo)
 ## team -1 and null for a draw.
 signal match_decided(winner: PlayerInfo, team: int)
 signal level_ready(level: Node)
+## The next map is about to load (its name, and the level's serial number).
+signal map_changing(map: String, serial: int)
+## `info`'s player was (re)spawned at `at`.
+signal spawned(info: PlayerInfo, at: Transform3D)
+## The match is over and its closing pause done.
+signal finished
 
 enum State { LOADING, COUNTDOWN, LIVE, ROUND_END, MATCH_END }
 
 const PLAYER_SCENE := "res://scenes/player.tscn"
+## Networked: seconds the server waits for every client to load a map before
+## starting without the slow ones.
+const LOAD_WAIT := 8.0
 
 var rules: GameRules
 var infos: Array[PlayerInfo] = []
+## Decides the game (offline, or the server); false: follows a server.
+var authority := true
 var state := State.LOADING
 ## Seconds left: of the countdown, the round or game (when it has a limit),
 ## or the pause after a round or the match.
@@ -37,19 +52,29 @@ var timer := 0.0
 var round_number := 0
 var team_scores := [0, 0]
 var map_name := ""
+## Counts the levels loaded, so messages about an old level are ignored.
+var serial := 0
 var level: Node
 ## [map, winner's name ("" for a draw)] per round played.
 var history: Array = []
+var sync: MatchSync
 
 var _maps := PackedStringArray()
 ## The scene being left for the next map (it may be the same map again).
 var _leaving: Node
 var _limited := false
 var _respawns := {}
+var _load_wait := 0.0
+## A late joiner being sat out of the round in progress (not a death).
+var _benching: PlayerInfo
 
 
 func _ready() -> void:
-	if map_name == "":
+	if NetSession.active():
+		sync = MatchSync.new()
+		sync.name = "Sync"
+		add_child(sync)
+	if authority and map_name == "":
 		next_map.call_deferred()
 
 
@@ -58,8 +83,17 @@ func _ready() -> void:
 func next_map() -> void:
 	if _maps.is_empty():
 		_maps = _shuffled_pool()
-	map_name = _maps[0]
+	serial += 1
+	var m := _maps[0]
 	_maps.remove_at(0)
+	map_changing.emit(m, serial)
+	load_map(m, serial)
+
+
+## Loads map `m` as level number `new_serial` (a client: when the server says).
+func load_map(m: String, new_serial: int) -> void:
+	map_name = m
+	serial = new_serial
 	_leaving = get_tree().current_scene if is_inside_tree() else null
 	level = null
 	_enter(State.LOADING)
@@ -77,7 +111,8 @@ func _shuffled_pool() -> PackedStringArray:
 
 
 func _process(_delta: float) -> void:
-	if state != State.LOADING or not is_inside_tree():
+	# A client may already be told the round's on while its map still loads.
+	if level != null or map_name == "" or not is_inside_tree():
 		return
 	var scene := get_tree().current_scene
 	if scene and scene != level and scene != _leaving and scene.scene_file_path == Maps.scene_of(map_name) and scene.is_node_ready():
@@ -85,25 +120,13 @@ func _process(_delta: float) -> void:
 
 
 ## Puts the game's players in `scene` and sets it up for the rules, then
-## starts the first round (or the game).
+## (with authority) starts the first round, or the game.
 func setup_level(scene: Node) -> void:
 	level = scene
 	var baked := scene.get_node_or_null(^"Player") as Player
 	var has_local := infos.any(func(i: PlayerInfo) -> bool: return i.local)
-	var local_team := Hats.Team.RED
 	for info in infos:
-		if info.local:
-			local_team = info.team
-	for info in infos:
-		var body: Player
-		if info.local and baked:
-			body = baked
-		else:
-			body = (load(PLAYER_SCENE) as PackedScene).instantiate()
-			body.human_controlled = false
-			body.name = "Player_%s" % (("bot%d" % -info.id) if info.id < 0 else str(info.id))
-			scene.add_child(body)
-		_configure(body, info, local_team)
+		_add_body(info, baked if info.local else null)
 	if baked and not has_local:
 		baked.queue_free()
 	for pad in _all_of(scene, "WeaponPad"):
@@ -116,10 +139,25 @@ func setup_level(scene: Node) -> void:
 		crate.set(&"enabled", rules.resupply)
 		crate.set(&"cooldown", rules.resupply_cooldown)
 	level_ready.emit(scene)
-	_start_round()
+	if not authority:
+		if sync:
+			sync.level_loaded()
+	elif sync:
+		_load_wait = LOAD_WAIT  # Starts once the clients have it too.
+	else:
+		_start_round()
 
 
-func _configure(body: Player, info: PlayerInfo, local_team: Hats.Team) -> void:
+## Gives `info` a body in the level (`use`, or a new one) and sets it up.
+func _add_body(info: PlayerInfo, use: Player = null) -> Player:
+	var body := use
+	if body == null:
+		body = (load(PLAYER_SCENE) as PackedScene).instantiate()
+		body.human_controlled = false
+		body.name = body_name(info)
+		level.add_child(body)
+	else:
+		body.name = body_name(info)
 	info.player = body
 	body.team = info.team
 	body.hat = info.hat
@@ -129,14 +167,86 @@ func _configure(body: Player, info: PlayerInfo, local_team: Hats.Team) -> void:
 	body.regen_delay = rules.regen_delay
 	body.regen_rate = rules.regen_rate
 	body.auto_respawn = false
-	body.refresh_look(rules.is_teams() and info.team == local_team and not info.local)
-	body.killed.connect(_on_killed.bind(info))
-	if info.bot:
-		var brain := BotBrain.new()
-		brain.name = "Brain"
-		brain.player = body
-		brain.match_ref = self
-		body.add_child(brain)
+	var me := local_info()
+	body.refresh_look(rules.is_teams() and me != null and info.team == me.team and not info.local)
+	if authority:
+		body.killed.connect(_on_killed.bind(info))
+		if info.bot:
+			var brain := BotBrain.new()
+			brain.name = "Brain"
+			brain.player = body
+			brain.match_ref = self
+			body.add_child(brain)
+	else:
+		# A client: nothing it does here decides anything.
+		body.weapons.authority = false
+		if info.local:
+			var pred := Prediction.new()
+			pred.name = "Prediction"
+			pred.player = body
+			pred.sync = sync
+			body.add_child(pred)
+		else:
+			var puppet := Puppet.new()
+			puppet.name = "Puppet"
+			puppet.player = body
+			body.add_child(puppet)
+	return body
+
+
+## Every machine names a player's body the same, so messages find it.
+static func body_name(info: PlayerInfo) -> String:
+	return "Player_%s" % (("bot%d" % -info.id) if info.id < 0 else str(info.id))
+
+
+## A client: someone new is in the game. A body for them on this map
+## (placed by the server's snapshots).
+func add_body_for(info: PlayerInfo) -> void:
+	if info_by_id(info.id):
+		return
+	infos.append(info)
+	if level:
+		_add_body(info)
+
+
+## Someone joined a game in progress (the server): a body on this map, at a
+## spawn if they may play now.
+func add_player(info: PlayerInfo) -> void:
+	if not authority:
+		add_body_for(info)
+		return
+	if info_by_id(info.id):
+		return
+	infos.append(info)
+	if level == null:
+		return
+	var body := _add_body(info)
+	if sync:
+		sync.on_body_added(info)
+	_spawn(info, [])
+	if rules.rounds and state == State.LIVE:
+		_benching = info  # A round in progress: they're in the next one.
+		body.die()
+		_benching = null
+	body.weapons.enabled = state == State.LIVE
+	scores_changed.emit()
+
+
+## Someone left: their body goes, and the game goes on.
+func remove_player(id: int) -> void:
+	var info := info_by_id(id)
+	if info == null:
+		return
+	infos.erase(info)
+	_respawns.erase(info)
+	if info.player and is_instance_valid(info.player):
+		info.player.queue_free()
+	info.player = null
+	scores_changed.emit()
+	if authority and rules.rounds and state == State.LIVE:
+		var alive := infos.filter(func(i: PlayerInfo) -> bool: return i.alive())
+		if alive.size() <= 1 and infos.size() > 1:
+			_end_round.call_deferred(alive[0] if alive.size() == 1 else null)
 
 
 func _start_round() -> void:
@@ -152,17 +262,31 @@ func _start_round() -> void:
 
 
 func _go_live() -> void:
-	for info in infos:
-		if info.player and is_instance_valid(info.player):
-			info.player.weapons.enabled = true
+	_arm(true)
 	var limit := rules.round_time if rules.rounds else rules.time_limit
 	_limited = limit > 0.0
 	timer = limit
 	_enter(State.LIVE)
 
 
+func _arm(on: bool) -> void:
+	for info in infos:
+		if info.player and is_instance_valid(info.player):
+			info.player.weapons.enabled = on
+
+
 func _physics_process(delta: float) -> void:
+	if not authority:
+		if state == State.COUNTDOWN or (state == State.LIVE and _limited) or state == State.ROUND_END or state == State.MATCH_END:
+			timer = maxf(timer - delta, 0.0)  # Just for the clock on screen.
+		return
 	match state:
+		State.LOADING:
+			if level and _load_wait > 0.0:
+				_load_wait -= delta
+				if _load_wait <= 0.0 or (sync and sync.everyone_loaded()):
+					_load_wait = 0.0
+					_start_round()
 		State.COUNTDOWN:
 			timer -= delta
 			if timer <= 0.0:
@@ -189,7 +313,8 @@ func _physics_process(delta: float) -> void:
 		State.MATCH_END:
 			timer -= delta
 			if timer <= 0.0:
-				Game.end(get_tree())
+				state = State.LOADING
+				finished.emit()
 
 
 ## Puts `info`'s player at the best spawn for them: their team's, as far as
@@ -213,6 +338,7 @@ func _spawn(info: PlayerInfo, used: Array) -> Node3D:
 	body.spawn_at(at)
 	if rules.spawn_weapon != &"":
 		body.weapons.give(Weapons.get_def(rules.spawn_weapon))
+	spawned.emit(info, at)
 	return best
 
 
@@ -230,7 +356,7 @@ func spawns_for(info: PlayerInfo) -> Array:
 
 
 func _on_killed(kill: Dictionary, victim: PlayerInfo) -> void:
-	if state != State.LIVE:
+	if state != State.LIVE or victim == _benching:
 		return
 	victim.deaths += 1
 	var killer := info_of(kill.get("attacker"))
@@ -296,9 +422,7 @@ func _end_on_time() -> void:
 func _end_match(winner: PlayerInfo, team: int) -> void:
 	if state == State.MATCH_END:
 		return
-	for info in infos:
-		if info.player and is_instance_valid(info.player):
-			info.player.weapons.enabled = false
+	_arm(false)
 	timer = rules.match_end_time
 	_enter(State.MATCH_END)
 	match_decided.emit(winner, team)
@@ -307,6 +431,29 @@ func _end_match(winner: PlayerInfo, team: int) -> void:
 func _enter(new_state: State) -> void:
 	state = new_state
 	state_changed.emit(new_state)
+
+
+## A client: the server's state, as MatchSync received it (already checked).
+## scores: [id, kills, deaths, heartshots, round wins] per player.
+func apply_state(new_state: State, new_timer: float, new_round: int, new_team_scores: Array, scores: Array, new_history: Array) -> void:
+	timer = new_timer
+	round_number = new_round
+	team_scores = new_team_scores
+	history = new_history
+	_limited = (rules.round_time if rules.rounds else rules.time_limit) > 0.0
+	for s: Array in scores:
+		var info := info_by_id(s[0])
+		if info:
+			info.kills = s[1]
+			info.deaths = s[2]
+			info.heartshots = s[3]
+			info.round_wins = s[4]
+	var me := local_info()
+	if me and me.player and is_instance_valid(me.player):
+		me.player.weapons.enabled = new_state == State.LIVE
+	if new_state != state:
+		_enter(new_state)
+	scores_changed.emit()
 
 
 ## Whether `attacker` can hurt `victim` right now: only while live, and
@@ -327,6 +474,16 @@ func info_of(body: Variant) -> PlayerInfo:
 		return null
 	for info in infos:
 		if info.player == body:
+			return info
+	return null
+
+
+## The PlayerInfo with network id `id`, or null.
+func info_by_id(id: int) -> PlayerInfo:
+	if id == 0:
+		return null
+	for info in infos:
+		if info.id == id:
 			return info
 	return null
 
