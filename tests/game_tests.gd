@@ -407,6 +407,53 @@ func test_teams_have_ammo_boxes_instead_of_guns_on_the_map() -> void:
 	check(box.available, "a full gun leaves it where it is")
 
 
+func test_kill_combos_chain_within_the_window_and_streaks_until_you_die() -> void:
+	var c := KillCombos.new()
+	var a := PlayerInfo.new()
+	var b := PlayerInfo.new()
+	var made := c.record(a, b, 10.0)
+	check(made.combo == 1 and made.combo_name == "" and made.streak == 1, "a kill on its own")
+	made = c.record(a, b, 12.0)
+	check(made.combo == 2 and made.combo_name == "double kill", "another within %.0f s: a double kill" % KillCombos.WINDOW)
+	made = c.record(a, b, 15.9)
+	check(made.combo == 3 and made.combo_name == "triple kill" and made.streak_name == "on a roll", "a triple kill, and a streak of three: on a roll")
+	near(c.time_left(a, 16.9), KillCombos.WINDOW - 1.0, 0.001, "time left to chain the next")
+	made = c.record(a, b, 21.0)
+	check(made.combo == 1 and made.streak == 4, "too slow: the combo starts over, the streak goes on")
+	for i in 5:
+		made = c.record(a, b, 22.0 + i)
+	check(made.combo == 6 and made.combo_name == "combo ×6", "past a penta kill it counts")
+	c.record(b, a, 28.0)
+	made = c.record(a, b, 28.5)
+	check(made.combo == 1 and made.streak == 1, "dying ends both")
+	check(c.record(null, a, 29.0).is_empty() and c.record(a, a, 29.0).is_empty(), "a fall or yourself makes nothing")
+
+
+func test_in_teams_your_combos_pop_up_and_fill_the_meter() -> void:
+	var rules := quick(GameRules.teams(), "boulevard")
+	var infos := people(6)
+	infos[0].local = true
+	var m := Game.start(get_tree(), rules, infos)
+	check(await until_state(m, Match.State.LIVE), "live")
+	var ui: GameUI = m.level.find_children("*", "GameUI", true, false)[0]
+	var me := infos[0]
+	infos[1].player.take_hit(hit(me.player, 200.0))
+	await frames(10)
+	check(ui.hud.combo_shown() == 1, "a kill: the combo meter comes up (×%d)" % ui.hud.combo_shown())
+	infos[3].player.take_hit(hit(me.player, 200.0))
+	await frames(10)
+	check(ui.hud.combo_shown() == 2 and ui.hud.last_popup == "double kill", "another straight after: double kill (%s)" % ui.hud.last_popup)
+	infos[5].player.take_hit(hit(me.player, 200.0))
+	await frames(10)
+	check(ui.hud.combo_shown() == 3 and ui.hud.last_popup == "triple kill", "and a triple (%s)" % ui.hud.last_popup)
+	var feed: Control = ui.hud._killfeed.get_child(0)
+	check(feed.get_children().any(func(b: Node) -> bool: return b is PanelContainer and LofiUI.label_of(b).text == "×3"),
+			"the killfeed marks it ×3")
+	await physics(int((KillCombos.WINDOW + 0.5) * 60.0))
+	check(ui.hud.combo_shown() == 0, "the window runs out and the meter goes")
+	Game.end(get_tree(), false)
+
+
 # --- Looks, names and tags --------------------------------------------------------------
 
 func test_colours_and_names_are_saved_and_cleaned_up() -> void:

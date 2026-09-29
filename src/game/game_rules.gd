@@ -67,6 +67,11 @@ enum Kind { FFA, TEAMS }
 @export var ammo_share := 0.5
 @export var ammo_respawn := 10.0
 
+@export_group("Show")
+## Kill combos and streaks (KillCombos): pop-ups, a combo meter by the
+## crosshair, and combos marked in the killfeed.
+@export var kill_combos := false
+
 @export_group("Maps")
 ## Map names (Maps) played, in a shuffled order without repeats.
 @export var map_pool := PackedStringArray()
@@ -97,6 +102,7 @@ static func teams() -> GameRules:
 	r.regen_delay = 5.0
 	r.loadout = true
 	r.ammo_boxes = true
+	r.kill_combos = true
 	r.map_pool = PackedStringArray(["boulevard", "holdfast", "depot"])
 	r.map_each_round = false
 	return r

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 2.5 (draft) |
+| **Version** | 2.6 (draft) |
 | **Date** | 2026-09-29 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -38,6 +38,7 @@
 | 2.3 | The heart is only the loading spinner now, made of real beads floating in a pocket in the chest (§6.4): the body's shape has the pocket scooped out, lined pink at the rim and dark at the back. Each bead is on its own spring, so they lag and rattle; a heartshot spills them out of the chest across the floor, any other death lets them settle, grey, in the bottom. The TV heart is gone, and so is the *heart style* setting. After dying in a game you watch someone instead of a black screen (§10.5), and the death camera looks up at you from low down, further back and off to one side. |
 | 2.4 | Empty guns no longer disappear (§7.2): one stays in your hands until you throw it or take another, is dropped rather than lost, and lasts until the next gun from the pad it came off is taken. Bots with an empty gun switch to fists and go looking for another. |
 | 2.5 | Teams play like Shell Shockers (§7.2, §8.5): you pick your gun from the six and spawn with it, changing it in the countdown or while you're down (1–6); there are no guns on the map, just ammo boxes where the pads and crates were, each topping your gun up by half a magazine. |
+| 2.6 | Kill combos in teams (§8.5, §13.3): kills within 4 s of each other chain into a *double kill*, *triple kill*, *quad kill*, *penta kill*, each one popping up bigger, kicking the UI and punching the camera harder; a meter by the crosshair shows the count and drains until the chain breaks. Kills without dying make a streak, and some have names (*on a roll* at 3, *heating up* at 5, *unstoppable* at 8, *untouchable* at 12). The killfeed marks anyone's combo, ×2 after the killer. |
 
 ---
 
@@ -375,7 +376,7 @@ Rounds are one life and 15–40 s long, so an instant death costs little. It is 
 ### 6.3 Feedback
 
 - **Shooter:** a unique sound (a heartbeat that stops on a glass chime), a distinct hitmarker, a short white flash on the crosshair.
-- **Victim:** the heart's screen switches off, the picture collapsing to a white-hot line and then a dot, and its glass cracks (§6.4). The death camera shows the shooter and the shot's path, so the kill reads as skill, not luck.
+- **Victim:** the heart's beads flash white and spill out of the chest across the floor (§6.4). The death camera shows the shooter and the shot's path, so the kill reads as skill, not luck.
 - **Everyone:** a Heartshot icon in the killfeed, and a stat on the match recap screen.
 
 ### 6.4 The heart itself
@@ -599,12 +600,15 @@ Two styles, each a `GameRules` preset (`src/game/game_rules.gd`), run by a `Matc
 | Health | 100, no regeneration | 100, back after 5 s untouched |
 | Friendly fire | — | Off |
 | Colours | Everyone picks their own (§11.4) | Red and blue |
+| Kill combos | — | Kills within 4 s of each other chain (*double kill* to *penta kill*, then *combo ×6*...); kills without dying make a streak, named at 3, 5, 8 and 12. Dying ends both (below) |
+
+**Kill combos** (`src/game/kill_combos.gd`, `GameRules.kill_combos`) are counted from the match's killfeed, so they come out the same offline and online, for everyone. Each kill gives the killer 4 s to get the next one and keep the combo going; each kill without dying adds to their streak; dying ends both. Your own combos set off the effects (§13.3, §13.5): the combo meter by the crosshair from your first kill, then from a double kill a pop-up whose kick, crosshair jump and camera punch grow with the count, red from a quad. A named streak (*on a roll*, *heating up*, *unstoppable*, *untouchable*) pops up on a kill that isn't part of a combo. A heartshot's pop-up goes first and the combo's follows it. Everyone's combos show in the killfeed.
 
 The flow: loading (the Match finds the new level and puts everyone in it: the local person in the level's own Player, everyone else in a new one), countdown (the round card's "go" lands on the moment weapons come on), live, round end (a result card), then the next round or the match end (the winner, the rounds) and back to the menu. The HUD follows along: the score (your side on the left), the round or game timer, a killfeed of every kill, and a real scoreboard on Tab.
 
 **Practice bots** (`src/game/bot_brain.gd`) make both styles playable offline: free-for-all against three, teams four against four. A bot drives its Player through the same input commands a person does: to the nearest gun when empty-handed, then at the nearest enemy it can see, strafing and shooting (down the sights beyond 12 m) with a reaction time and aim error, jumping what's in the way and refusing to walk into the void. They don't navigate (no navigation mesh yet), so on multi-level maps they can get stuck.
 
-*Not built yet:* warmup, the map unloading (sudden death), spectating while dead, the barrier at spawn during the countdown, a rematch vote.
+*Not built yet:* warmup, the map unloading (sudden death), the barrier at spawn during the countdown, a rematch vote.
 
 ---
 
@@ -891,9 +895,10 @@ Code: `src/ui/lofi_ui.gd` (style kit), `src/ui/lofi_layer.gd` (the low-res canva
 | Position | Contents |
 |---|---|
 | Top centre | Your score · round timer (inverted) · their score. Map name in a ghost box below. Alerts (e.g. *the map is unloading*) in red below that. |
-| Top right | Killfeed: `killer [weapon] victim`, newest on top, five at most, five seconds each. A heartshot kill shows a pink ♥ instead of the weapon. |
+| Top right | Killfeed: `killer [weapon] victim`, newest on top, five at most, five seconds each. A heartshot kill shows a pink ♥ instead of the weapon. In teams a kill in a combo gets its count after the killer, `killer ×2 [weapon] victim` (red from ×4). |
 | Centre | The sharp crosshair. Hit markers: white (hit), yellow (head), red (kill), big pink (heartshot). Around it, a ring of the gun's rounds (below). Aiming down the sights, its ticks close in and fade, leaving the dot on the sights (pink through a dot sight); scoped, it becomes the scope. |
-| Above the crosshair | Pop-ups: *heartshot* (pink), later *double kill* etc. |
+| Above the crosshair | Pop-ups: *heartshot* (pink); in teams *double kill*, *triple kill* (inverted), *quad kill*, *penta kill* (red), and named streaks. |
+| Right of the crosshair | In teams, the combo meter: ×count in a small box (ghost for one kill, inverted from 2, red from 4) over a bar that drains over the 4 s you have for the next kill. It pops and shakes on every kill and leaves when the window runs out or you die. |
 | Below the crosshair | Pickup prompt: `e  swap for rl-5 (5)`. Never covers the crosshair. Auto-pickups only flash the name. |
 | Bottom left | `hp` + health. Turns red and shakes at 30 or below. |
 | Bottom centre | Speed meter: a row of cells that get taller left to right (volume-meter style), lit black up to your speed, a grey cell marking the recent peak, jittering past the soft cap. Your speed in a box to its left, inverted above run speed. Dash charges underneath as small boxes: black when ready, filling grey while recharging; a used charge flashes, a recharged one pops. |
@@ -936,6 +941,7 @@ The boxes are plain, so the motion carries the energy. The UI should feel as ali
 | Killfeed | Rows slide in from the right with an overshoot (a heartshot's ♥ pops) and slide back out when they expire. |
 | Pop-ups | One letter tile per character, each slamming down from big and crooked in quick succession, then a kick. A heartshot gets a black ♥ tile in front and beats twice like a heart. They drift up while they hold, then shatter: every tile tumbles off in its own direction. |
 | Impact frames | When one fires (§10.4) the HUD takes the hit with the camera: it punches in on the camera's spring and recoils past rest, every group rattles loose and wobbles back, and the crosshair blows wide open. |
+| Combos | Each kill pops the combo meter in and refills its bar, which drains; from a double kill the count shakes. The pop-up lands like any other, then the UI kicks, the crosshair jumps and the camera punches, harder the bigger the combo (a quad kill hits about as hard as a heartshot). |
 | Alerts | Stamp in, then blink red/black. |
 | Map card | The map name types itself into a box that flips open; the load cells pop as they fill. Countdown numbers stamp down, *go* bursts. |
 | Banners | *round won*, *you won* land one letter tile at a time, then kick; the winner's score rolls up. |

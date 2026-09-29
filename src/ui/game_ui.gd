@@ -25,6 +25,12 @@ var overlays: Overlays
 var watch_box: PanelContainer
 ## Games where you pick your gun: the picker (countdown, and while down).
 var gun_picker: GunPicker
+## Kill combos and streaks, from the match's killfeed (GameRules.kill_combos).
+var combos := KillCombos.new()
+## A heartshot's pop-up has the screen until then (a combo's waits for it).
+var _heartshot_until := 0.0
+## Game time (seconds), for the combos' window.
+var _clock := 0.0
 var pause: PauseMenu
 var impact: ImpactFrames
 var speed_lines: SpeedLines
@@ -97,7 +103,8 @@ func _ready() -> void:
 		overlays.round_card(_map_name, 0, false)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_clock += delta
 	# Live, so the tuning panel's slider takes effect straight away.
 	if player and player.view_settings:
 		LofiUI.motion = player.view_settings.ui_motion
@@ -179,10 +186,19 @@ func _follow_match() -> void:
 	game.state_changed.connect(_on_match_state)
 	game.scores_changed.connect(_show_scores)
 	game.kill_feed.connect(func(killer: PlayerInfo, victim: PlayerInfo, weapon_name: String, heartshot: bool) -> void:
+		var made := combos.record(killer, victim, _now())
+		var show := game.rules.kill_combos
 		if killer == null or killer == victim:
 			hud.add_kill(_who(victim), _who(victim), weapon_name if weapon_name != "" else "fell", false)
 		else:
-			hud.add_kill(_who(killer), _who(victim), weapon_name, heartshot))
+			hud.add_kill(_who(killer), _who(victim), weapon_name, heartshot, made.get("combo", 0) if show else 0)
+		var me := game.local_info()
+		if show and me and victim == me:
+			hud.hide_combo()
+		elif show and me and killer == me and not made.is_empty():
+			# A moment later, so a heartshot's pop-up (its hit may come
+			# after the killfeed) has its turn first.
+			get_tree().create_timer(0.05).timeout.connect(_combo_effects.bind(made)))
 	game.round_decided.connect(func(winner: PlayerInfo) -> void:
 		var me := game.local_info()
 		var scores := _score_pair()
@@ -255,6 +271,7 @@ func _who(info: PlayerInfo) -> String:
 ## the kill marker, and an impact frame, pink for a heartshot.
 func kill_confirmed(heartshot := false) -> void:
 	if heartshot:
+		_heartshot_until = _now() + 0.7
 		crosshair.hit(&"heart")
 		hud.popup("heartshot", LofiUI.Style.HEART)
 		ImpactFrames.hit(get_tree(), 1.0, Vector2(0.5, 0.5), LofiUI.HEART)
@@ -276,6 +293,39 @@ func _screen_point(world: Vector3) -> Vector2:
 	if cam == null or cam.is_position_behind(world):
 		return Vector2(0.5, 0.5)
 	return cam.unproject_position(world) / get_viewport().get_visible_rect().size
+
+
+## Your kill in a combo or a streak (KillCombos): the combo meter by the
+## crosshair; from a double kill a pop-up (red from a quad) and a hit that
+## grows with the combo: the UI kicks, the crosshair jumps, the camera
+## punches. A named streak gets a pop-up of its own when there's no combo.
+func _combo_effects(made: Dictionary) -> void:
+	if player == null or player.is_dead:
+		return
+	var count: int = made.combo
+	hud.show_combo(count, KillCombos.WINDOW)
+	var named: String = made.combo_name
+	var text: String = named if named != "" else made.streak_name
+	if text == "":
+		return
+	var strength := clampf(0.25 + 0.2 * (count - 1), 0.3, 1.2) if named != "" else 0.35
+	var style := LofiUI.Style.ALERT if count >= 4 else LofiUI.Style.INVERTED
+	var go := func() -> void:
+		if player == null or player.is_dead:
+			return
+		hud.popup(text, style, 1.1 + 0.1 * count)
+		LofiUI.kick(hud, strength)
+		crosshair.bump(strength)
+		player.punch_camera(strength * 0.6)
+	var wait := _heartshot_until - _now()
+	if wait > 0.0:
+		get_tree().create_timer(wait).timeout.connect(go)
+	else:
+		go.call()
+
+
+func _now() -> float:
+	return _clock
 
 
 ## Picking your gun: in the countdown, and while you're down.
