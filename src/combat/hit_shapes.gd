@@ -88,7 +88,9 @@ func ray_test(from: Vector3, to: Vector3) -> Dictionary:
 	if best == INF:
 		return {}
 	var zone := &"head" if best_part == &"head" else &"body"
-	if heart and heart.is_visible_in_tree():
+	# The heart's own flag, not the body's: yours is hidden from you in first
+	# person, but it's still there to be shot.
+	if heart and heart.visible:
 		var th := ray_sphere(from, dir, heart.global_position, HEART_RADIUS)
 		if th >= 0.0 and th <= length:
 			zone = &"heart"

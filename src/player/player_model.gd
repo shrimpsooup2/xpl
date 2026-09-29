@@ -321,8 +321,10 @@ func _pop_hat(look_from: Vector3) -> void:
 # --- Hits --------------------------------------------------------------------
 
 ## The body part the segment from → to hits first, or {} (see HitShapes).
+## Hidden or not: your own body is hidden from you in first person, and
+## everyone else can still shoot it.
 func ray_test(from: Vector3, to: Vector3) -> Dictionary:
-	if _falling or not visible:
+	if _falling:
 		return {}
 	return hits.ray_test(from, to)
 

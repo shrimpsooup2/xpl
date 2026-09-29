@@ -49,8 +49,9 @@ func physics(n: int) -> void:
 		await get_tree().physics_frame
 
 
-## A script-driven player standing in `world` at `at`, facing `yaw`.
-func make_player(at: Vector3, yaw := 0.0) -> Player:
+## A script-driven player standing in `world` at `at`, facing `yaw`; with
+## `human`, the one you play (in first person: its body hidden from you).
+func make_player(at: Vector3, yaw := 0.0, human := false) -> Player:
 	if world.get_node_or_null(^"Floor") == null:
 		var floor_body := StaticBody3D.new()
 		floor_body.name = "Floor"
@@ -62,7 +63,7 @@ func make_player(at: Vector3, yaw := 0.0) -> Player:
 		floor_body.position = Vector3(0, -0.5, 0)
 		world.add_child(floor_body)
 	var p: Player = load("res://scenes/player.tscn").instantiate()
-	p.human_controlled = false
+	p.human_controlled = human
 	p.movement_params = MovementParams.new()
 	p.view_settings = ViewSettings.new()
 	world.add_child(p)
@@ -139,6 +140,59 @@ func test_a_real_shot_hurts_another_player_and_kills_them_at_zero() -> void:
 	check(target.is_dead and target.health == 0.0, "shot until dead")
 	check(deaths.size() == 1 and deaths[0].attacker == shooter and deaths[0].weapon == Weapons.get_def(Weapons.RIFLE),
 			"the kill is the shooter's, with the rifle")
+
+
+func test_you_can_be_shot_in_first_person() -> void:
+	# Your own body is hidden from you, not from everyone else's guns.
+	var shooter := make_player(Vector3(0, 0.05, 0), 0.0)
+	var you := make_player(Vector3(0, 0.05, -8), PI, true)
+	you.set_physics_process(false)  # Driven by the test, not the keyboard.
+	await physics(10)
+	check(not you.model.visible, "your body is hidden from you in first person")
+	var eye := shooter.weapons.eye_position()
+	var aim := func(point: Vector3) -> void:
+		shooter.pitch = atan2(point.y - eye.y, eye.distance_to(Vector3(point.x, eye.y, point.z)))
+	# Fires (every few frames, as a player clicking) until a shot lands.
+	var shoot := func(frames: int) -> void:
+		var before := you.health
+		for i in frames:
+			var c := InputCommand.new()
+			c.yaw = shooter.yaw
+			c.pitch = shooter.pitch
+			c.fire_held = true
+			c.fire_pressed = i % 6 == 0
+			await get_tree().physics_frame
+			shooter.tick(c, DT)
+			you.tick(InputCommand.new(), DT)
+			if you.health < before:
+				return
+	shooter.weapons.give(Weapons.get_def(Weapons.RIFLE))
+	aim.call(you.global_position + Vector3.UP * 1.25)
+	await shoot.call(60)
+	check(you.health < Player.MAX_HEALTH and not you.is_dead, "a shot to your chest hurts (%.0f left)" % you.health)
+	# Crouched, your hit shapes go down with you: a shot at standing head
+	# height goes over.
+	you.set_process(true)  # It animates the body.
+	await frames(2)
+	var standing_head := you.global_position + Vector3.UP * 1.55
+	var over := eye + (standing_head - eye) * 1.5
+	check(you.ray_test(eye, over).get("part") == &"head", "standing, a shot at head height hits your head")
+	for i in 30:
+		var c := InputCommand.new()
+		c.crouch_held = true
+		c.crouch_pressed = i == 0
+		await get_tree().physics_frame
+		you.tick(c, DT)
+	await frames(2)
+	check(you.ray_test(eye, over).is_empty(), "crouched, a shot at standing head height misses")
+	you.respawn()
+	shooter.weapons.give(Weapons.get_def(Weapons.PISTOL))
+	await physics(60)  # Stood back up, and the pistol's ready.
+	var deaths := []
+	you.killed.connect(func(info: Dictionary) -> void: deaths.append(info))
+	aim.call(you.model.heart.global_position)
+	await shoot.call(30)  # Until the first shot lands.
+	check(you.is_dead and deaths.size() == 1 and deaths[0].heartshot, "and through the heart, it's a heartshot")
 
 
 func test_a_heartshot_kills_outright_and_a_fall_after_a_hit_is_the_hitters() -> void:
