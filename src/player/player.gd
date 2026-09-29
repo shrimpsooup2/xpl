@@ -315,6 +315,8 @@ func apply_puppet(at: Vector3, vel: Vector3, look_yaw: float, look_pitch: float,
 func show_hurt(new_health: float, amount: float, point: Vector3, direction: Vector3, zone: StringName, part: StringName,
 		heartshot: bool, numbers := false) -> void:
 	health = new_health
+	# So a death the server sends next knows how it went (the heart's ending).
+	_last_hit = {"attacker": null, "weapon": null, "heartshot": heartshot, "time": Time.get_ticks_msec()}
 	health_changed.emit(health)
 	if numbers:
 		DamageNumber.add(get_parent(), self, point, amount, &"heart" if heartshot else zone)
@@ -414,6 +416,7 @@ func die() -> void:
 	model.visible = true
 	if viewmodel:
 		viewmodel.visible = false
+	model.heart_stops(info.heartshot)
 	killed.emit(info)
 	died.emit()
 	if death:
@@ -570,6 +573,7 @@ func _process(delta: float) -> void:
 	var pos := _prev_position.lerp(_curr_position, f) + _correction
 	model.follow(pos, yaw)
 	model.animate_movement(state, velocity)
+	model.set_health(health / max_health)
 	model.aim(pitch, weapons.current.is_fists())
 
 	var smooth := v.camera_smoothing

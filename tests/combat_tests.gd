@@ -151,8 +151,34 @@ func test_heartshot_kills_with_a_precision_gun() -> void:
 	await fire_once()
 	await settle_shots()
 	check(dummy.dead, "one heartshot kills")
+	check(dummy.model.heart.ending() == &"off", "and switches its heart off")
 	check(confirmed.size() == 1 and confirmed[0].get("heartshot", false), "the shooter hears it was a heartshot")
 	check(player.weapons.ammo == 11, "one round spent (%d left)" % player.weapons.ammo)
+
+
+func test_the_heart_is_a_tiny_tv_that_ends_the_way_it_died() -> void:
+	var heart: HeartScreen = dummy.model.heart
+	check(heart.ending() == &"on" and heart.is_visible_in_tree(), "on, and showing")
+	check((HeartScreen.GLASS * 0.5).length() < HitShapes.HEART_RADIUS, "all the glass that glows is inside the heart's hit sphere")
+	check(heart.casing.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "it casts no shadow down the chest")
+	# The beat: quicker at speed, racing near death.
+	var rate := func(speed: float, health: float) -> float:
+		heart.speed = speed
+		heart.health = health
+		var from := heart.beat()
+		heart._process(0.05)
+		return fposmod(heart.beat() - from, 1.0) / 0.05 * 60.0
+	var rest: float = rate.call(0.0, 1.0)
+	var fast: float = rate.call(HeartScreen.FAST_SPEED, 1.0)
+	var dying: float = rate.call(0.0, 0.05)
+	near(rest, HeartScreen.BPM_REST, 1.0, "resting beats per minute")
+	check(fast > rest + 30.0 and dying > fast, "faster at speed (%d), racing near death (%d)" % [fast, dying])
+	# A death through the body loses the signal; back together, it's on again.
+	dummy.take_hit({"damage": 500.0, "zone": &"body", "part": &"chest", "point": heart.global_position,
+			"normal": Vector3.BACK, "direction": Vector3.FORWARD, "heartshot": false, "attacker": null})
+	check(dummy.dead and heart.ending() == &"lost", "killed through the body: the signal's lost")
+	dummy.model.reassemble()
+	check(heart.ending() == &"on" and heart.get_parent().name == &"HeartMount", "back together: on again, in the chest")
 
 
 func test_automatic_guns_cannot_heartshot() -> void:

@@ -84,7 +84,9 @@ static var _combined := {}
 var anim: AnimationPlayer
 var skeleton: Skeleton3D
 var body: MeshInstance3D
-var heart: MeshInstance3D
+## The heart: a tiny CRT in the chest (HeartScreen). Its origin is the
+## heart's hit centre.
+var heart: HeartScreen
 var layers: BodyLayers
 var hits: HitShapes
 ## The weapon in its hands (third person), or null.
@@ -106,7 +108,8 @@ var _falling := false
 var _fall_tween: Tween
 var _body_material := StandardMaterial3D.new()
 var _cut_material := StandardMaterial3D.new()
-var _heart_material := StandardMaterial3D.new()
+var _heart_mount: BoneAttachment3D
+var _heart_rest := Transform3D.IDENTITY
 var _fragment_physics := PhysicsMaterial.new()
 var _aim_pitch := 0.0
 var _aim_yaw := 0.0
@@ -135,10 +138,6 @@ func _ready() -> void:
 	_body_material.rim = 0.3
 	_cut_material.albedo_color = CUT_COLOR
 	_cut_material.roughness = 0.6
-	_heart_material.albedo_color = HEART_COLOR
-	_heart_material.emission_enabled = true
-	_heart_material.emission = HEART_COLOR
-	_heart_material.emission_energy_multiplier = 2.5
 	_fragment_physics.bounce = 0.25
 	_fragment_physics.friction = 0.9
 
@@ -177,6 +176,7 @@ func animate_movement(state: MovementState, velocity: Vector3) -> void:
 	if _falling:
 		return
 	var speed := Vector2(velocity.x, velocity.z).length()
+	heart.speed = speed
 	var clip := ANIM_IDLE
 	var rate := 1.0
 	match state.mode:
@@ -335,6 +335,7 @@ func ray_test(from: Vector3, to: Vector3) -> Dictionary:
 func react_to_hit(part: StringName, point: Vector3, direction: Vector3, strength: float) -> void:
 	if _falling:
 		return
+	heart.hurt()
 	var s := clampf(sqrt(maxf(strength, 0.0)), 0.35, 1.4)
 	var dir := direction.normalized()
 	var clip_weight := clampf(0.45 + s * 0.4, 0.0, 1.0)
@@ -510,13 +511,19 @@ func reassemble() -> void:
 	if _fall_tween:
 		_fall_tween.kill()
 		_fall_tween = null
+	if heart.get_parent() != _heart_mount:
+		heart.reparent(_heart_mount, false)  # Before the fragment carrying it goes.
 	for f in _fragments:
 		if is_instance_valid(f):
 			f.queue_free()
 	_fragments.clear()
 	_rig.position = Vector3.ZERO
 	body.visible = true
+	if heart.get_parent() != _heart_mount:
+		heart.reparent(_heart_mount, false)  # Out of the fragment that carried it.
+	heart.transform = _heart_rest
 	heart.visible = true
+	heart.revive()
 	_falling = false
 	anim.speed_scale = 1.0
 	anim.play(ANIM_IDLE)
@@ -642,7 +649,18 @@ func _crumble(look_from: Vector3) -> void:
 	_pop_hat(look_from)
 
 
-## The heart pops out and bounces toward whoever is watching.
+## Its owner's health (0..1), for the heart's beat and picture.
+func set_health(fraction: float) -> void:
+	heart.health = clampf(fraction, 0.0, 1.0)
+
+
+## Its owner died: the heart switches off (a heartshot) or loses its signal.
+func heart_stops(heartshot: bool) -> void:
+	heart.stop(heartshot)
+
+
+## The heart pops out and bounces toward whoever is watching, still showing
+## how it ended.
 func _pop_heart(look_from: Vector3) -> void:
 	var toward := look_from - heart.global_position
 	toward.y = 0.0
@@ -654,19 +672,15 @@ func _pop_heart(look_from: Vector3) -> void:
 	piece.physics_material_override.bounce = 0.6
 	piece.mass = 0.2
 	var col := CollisionShape3D.new()
-	var sphere := SphereShape3D.new()
-	sphere.radius = BodyShape.HEART_RADIUS
-	col.shape = sphere
+	var box := BoxShape3D.new()
+	box.size = HeartScreen.SIZE
+	col.shape = box
 	piece.add_child(col)
-	var mi := MeshInstance3D.new()
-	mi.mesh = heart.mesh
-	mi.material_override = _heart_material
-	piece.add_child(mi)
 	_fragment_parent().add_child(piece)
-	piece.global_position = heart.global_position
+	piece.global_transform = heart.global_transform
+	heart.reparent(piece, true)
 	piece.linear_velocity = toward * 2.4 + Vector3.UP * 3.8
 	piece.angular_velocity = Vector3(randf(), randf(), randf()) * 6.0
-	heart.visible = false
 	_fragments.append(piece)
 
 
@@ -689,21 +703,15 @@ func _skinned_instance(mesh: Mesh) -> MeshInstance3D:
 func _build_heart() -> void:
 	var bone := skeleton.find_bone(BodyShape.HEART_BONE)
 	var rest := skeleton.get_bone_global_rest(bone)
-	var attach := BoneAttachment3D.new()
-	attach.bone_name = BodyShape.HEART_BONE
-	skeleton.add_child(attach)
-	var sphere := SphereMesh.new()
-	sphere.radius = BodyShape.HEART_RADIUS
-	sphere.height = BodyShape.HEART_RADIUS * 2.0
-	sphere.radial_segments = 12
-	sphere.rings = 6
-	heart = MeshInstance3D.new()
+	_heart_mount = BoneAttachment3D.new()
+	_heart_mount.name = "HeartMount"
+	_heart_mount.bone_name = BodyShape.HEART_BONE
+	skeleton.add_child(_heart_mount)
+	heart = HeartScreen.new()
 	heart.name = "Heart"
-	heart.mesh = sphere
-	heart.material_override = _heart_material
-	var xform := Transform3D(Basis.from_scale(Vector3(1.0, 1.0, 0.8)), rest.origin + BodyShape.HEART_OFFSET)
-	heart.transform = rest.affine_inverse() * xform
-	attach.add_child(heart)
+	_heart_rest = rest.affine_inverse() * Transform3D(Basis.IDENTITY, rest.origin + BodyShape.HEART_OFFSET)
+	heart.transform = _heart_rest
+	_heart_mount.add_child(heart)
 
 
 static func _combined_for(index: int) -> Dictionary:

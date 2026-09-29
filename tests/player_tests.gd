@@ -643,6 +643,8 @@ func test_respawn_mid_collapse_reassembles_cleanly() -> void:
 	check(not player.is_dead, "alive after respawn")
 	check(player.model.fragments().is_empty(), "no fragments after respawn (%d)" % player.model.fragments().size())
 	check(player.model.body.visible and player.model.heart.visible, "body and heart back")
+	check(player.model.heart.ending() == &"on" and player.model.heart.get_parent().name == &"HeartMount",
+			"the heart back in the chest and on")
 	await run(cmd(Vector2(0, 1)), 30)
 	check(hspeed() > 5.0, "can move again after respawn")
 

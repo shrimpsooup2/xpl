@@ -84,6 +84,7 @@ func _process(delta: float) -> void:
 	_bar_shown = move_toward(_bar_shown, 1.0 if health < MAX_HEALTH and not dead else 0.0, delta * 6.0)
 	_bar.visible = _bar_shown > 0.01
 	_bar_fill.scale.x = maxf(health / MAX_HEALTH, 0.001)
+	model.set_health(health / MAX_HEALTH)
 	_bar_fill.position.x = -BAR_WIDTH * 0.5 * (1.0 - _bar_fill.scale.x)
 	var cam := get_viewport().get_camera_3d()
 	if cam and _bar.visible:
@@ -148,6 +149,7 @@ func _die(hit: Dictionary, heartshot: bool) -> void:
 	_body.process_mode = Node.PROCESS_MODE_DISABLED
 	var attacker: Node3D = hit.get("attacker")
 	var look_from: Vector3 = attacker.global_position if attacker else global_position - (hit.direction as Vector3) * 3.0
+	model.heart_stops(heartshot)
 	model.fall_apart(false, look_from)
 	killed.emit(heartshot)
 	var t := create_tween()
