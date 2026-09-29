@@ -29,6 +29,7 @@ const KEY_ACTIONS := {
 	&"debug_third_person": [KEY_F6],
 	&"debug_die": [KEY_F7],
 	&"debug_preview_ui": [KEY_F8],
+	&"debug_next_map": [KEY_F9],
 }
 const MOUSE_ACTIONS := {
 	&"fire": [MOUSE_BUTTON_LEFT],
@@ -38,11 +39,17 @@ const MOUSE_ACTIONS := {
 }
 
 const K := GreyBox.Kind
+const LevelKit := preload("res://tools/level_kit.gd")
+## The maps (GDD §9.3): each script's build(kit) lays it out and returns spawn A.
+const MAPS := {
+	"Stack": ["res://tools/maps/stack.gd", "res://scenes/maps/stack.tscn"],
+	"Terrace": ["res://tools/maps/terrace.gd", "res://scenes/maps/terrace.tscn"],
+	"Switchback": ["res://tools/maps/switchback.gd", "res://scenes/maps/switchback.tscn"],
+	"Archipelago": ["res://tools/maps/archipelago.gd", "res://scenes/maps/archipelago.tscn"],
+	"Rift": ["res://tools/maps/rift.gd", "res://scenes/maps/rift.tscn"],
+}
 
-var _root: Node3D
-var _geometry: Node3D
-var _labels: Node3D
-var _combat: Node3D
+var _kit: LevelKit
 
 
 func _initialize() -> void:
@@ -53,6 +60,11 @@ func _initialize() -> void:
 	_save_scene(_build_player(), "res://scenes/player.tscn")
 	if not "--skip-course" in OS.get_cmdline_user_args():
 		_save_scene(_build_test_course(), "res://scenes/test_course.tscn")
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://scenes/maps"))
+	for map_name: String in MAPS:
+		var kit := LevelKit.new(map_name, _make_environment())
+		var spawn: Transform3D = load(MAPS[map_name][0]).build(kit)
+		_save_scene(kit.finish(spawn), MAPS[map_name][1])
 	_save_scene(_build_main_menu(), "res://scenes/main_menu.tscn")
 	ProjectSettings.set_setting("application/run/main_scene", "res://scenes/main_menu.tscn")
 	ProjectSettings.save()
@@ -115,12 +127,6 @@ func _save_scene(root: Node, path: String) -> void:
 	root.free()
 
 
-func _own(node: Node) -> void:
-	for child in node.get_children():
-		child.owner = _root if _root else node
-		_own(child)
-
-
 # --- Player -----------------------------------------------------------------
 
 func _build_player() -> Node:
@@ -166,52 +172,12 @@ func _build_main_menu() -> Node:
 # --- Test course --------------------------------------------------------------
 
 func _build_test_course() -> Node:
-	_root = Node3D.new()
-	_root.name = "TestCourse"
-
-	var env := WorldEnvironment.new()
-	env.name = "WorldEnvironment"
-	env.environment = _make_environment()
-	_root.add_child(env)
-
-	var sun := DirectionalLight3D.new()
-	sun.name = "Sun"
-	sun.rotation_degrees = Vector3(-38, 35, 0)
-	sun.light_color = Color(1.0, 0.84, 0.70)
-	sun.light_energy = 1.15
-	sun.shadow_enabled = true
-	sun.directional_shadow_mode = DirectionalLight3D.SHADOW_ORTHOGONAL
-	sun.directional_shadow_max_distance = 80.0
-	_root.add_child(sun)
-
+	_kit = LevelKit.new("TestCourse", _make_environment())
 	# Coloured pools of light: harsh, unshadowed, period-accurate "bad" lighting.
-	var lights_node := Node3D.new()
-	lights_node.name = "Lights"
-	_root.add_child(lights_node)
-	for l: Array in [
-			["PinkLamp", Vector3(0, 4, 18), Color(1.0, 0.35, 0.65), 16.0],
-			["CyanLamp", Vector3(38.5, 5, -18), Color(0.3, 0.9, 1.0), 20.0],
-			["AmberLamp", Vector3(-28, 4, 17), Color(1.0, 0.7, 0.25), 16.0],
-			["VioletLamp", Vector3(-18, 3, -10), Color(0.6, 0.4, 1.0), 14.0]]:
-		var omni := OmniLight3D.new()
-		omni.name = l[0]
-		omni.position = l[1]
-		omni.light_color = l[2]
-		omni.omni_range = l[3]
-		omni.light_energy = 2.2
-		omni.omni_attenuation = 0.6
-		lights_node.add_child(omni)
-
-
-	_geometry = Node3D.new()
-	_geometry.name = "Geometry"
-	_root.add_child(_geometry)
-	_labels = Node3D.new()
-	_labels.name = "Labels"
-	_root.add_child(_labels)
-	_combat = Node3D.new()
-	_combat.name = "Combat"
-	_root.add_child(_combat)
+	_kit.light("PinkLamp", Vector3(0, 4, 18), Color(1.0, 0.35, 0.65), 16.0)
+	_kit.light("CyanLamp", Vector3(38.5, 5, -18), Color(0.3, 0.9, 1.0), 20.0)
+	_kit.light("AmberLamp", Vector3(-28, 4, 17), Color(1.0, 0.7, 0.25), 16.0)
+	_kit.light("VioletLamp", Vector3(-18, 3, -10), Color(0.6, 0.4, 1.0), 14.0)
 
 	_box("Floor", Vector3(0, -0.5, 0), Vector3(200, 1, 200), K.FLOOR)
 	_run_lane()
@@ -226,38 +192,9 @@ func _build_test_course() -> Node:
 	_low_tunnel()
 	_armory()
 	_shooting_range()
-
-	var player: Node3D = load("res://scenes/player.tscn").instantiate()
-	player.name = "Player"
-	_root.add_child(player)
-
-	var game_ui := Node.new()
-	game_ui.name = "GameUI"
-	game_ui.set_script(load("res://src/ui/game_ui.gd"))
-	_root.add_child(game_ui)
-
-	var retro := CanvasLayer.new()
-	retro.name = "RetroScreen"
-	retro.set_script(load("res://src/render/retro_screen.gd"))
-	_root.add_child(retro)
-
-	var hud := CanvasLayer.new()
-	hud.name = "DebugHUD"
-	hud.set_script(load("res://src/debug/debug_hud.gd"))
-	_root.add_child(hud)
-
-	var tuning := CanvasLayer.new()
-	tuning.name = "TuningPanel"
-	tuning.set_script(load("res://src/debug/tuning_panel.gd"))
-	_root.add_child(tuning)
-
-	for child in _root.get_children():
-		child.owner = _root
-		if child != player:
-			_own(child)
-	var r := _root
-	_root = null
-	return r
+	var course := _kit.finish(Transform3D.IDENTITY)
+	_kit = null
+	return course
 
 
 ## Flat coloured ambient, no sky reflections (surfaces fake their own),
@@ -288,37 +225,17 @@ func _make_environment() -> Environment:
 
 
 func _box(box_name: String, center: Vector3, size: Vector3, kind: GreyBox.Kind, rot_deg := Vector3.ZERO) -> void:
-	var b := StaticBody3D.new()
-	b.set_script(load("res://src/world/grey_box.gd"))
-	b.name = box_name
-	b.position = center
-	b.rotation_degrees = rot_deg
-	b.set(&"size", size)
-	b.set(&"kind", kind)
-	_geometry.add_child(b)
+	_kit.box(box_name, center, size, kind, rot_deg)
 
 
 ## A rotated box placed by the midpoint of its top surface, so slopes meet
 ## the ground and platforms exactly.
 func _slab(box_name: String, top_mid: Vector3, size: Vector3, kind: GreyBox.Kind, rot_deg: Vector3) -> void:
-	var up := Basis.from_euler(rot_deg * (PI / 180.0)) * Vector3.UP
-	_box(box_name, top_mid - up * size.y * 0.5, size, kind, rot_deg)
+	_kit.slab(box_name, top_mid, size, kind, rot_deg)
 
 
 func _label(text: String, pos: Vector3) -> void:
-	var l := Label3D.new()
-	l.name = text.validate_node_name().replace(" ", "_")
-	l.text = text
-	l.position = pos
-	l.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	l.font_size = 64
-	l.pixel_size = 0.01
-	l.outline_size = 16
-	l.modulate = Color(1, 1, 1)
-	l.outline_modulate = Color(0.15, 0.1, 0.25)
-	l.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
-	l.add_to_group(&"debug_labels", true)
-	_labels.add_child(l)
+	_kit.label(text, pos)
 
 
 ## Distance poles every 10 m straight ahead of spawn, for reading speed.
@@ -416,13 +333,8 @@ func _low_tunnel() -> void:
 func _armory() -> void:
 	_label("ARMORY  (walk over a gun · E swap · Q throw · 1/2 switch)", Vector3(-4, 3.2, -3))
 	for i in Weapons.GUNS.size():
-		var pad := Node3D.new()
-		pad.set_script(load("res://src/combat/weapon_pad.gd"))
-		pad.name = "Pad_%s" % String(Weapons.GUNS[i]).capitalize().replace(" ", "")
-		pad.position = Vector3(-4, 0, 2.5 - 2.2 * i)
-		pad.set(&"weapon", Weapons.GUNS[i])
-		pad.set(&"respawn_time", 3.0)
-		_combat.add_child(pad)
+		_kit.pad("Pad_%s" % String(Weapons.GUNS[i]).capitalize().replace(" ", ""), Weapons.GUNS[i],
+				Vector3(-4, 0, 2.5 - 2.2 * i), 3.0)
 
 
 ## Dummies to shoot, facing back toward the armory: standing at 7, 12, 22
@@ -446,6 +358,6 @@ func _shooting_range() -> void:
 		dummy.set(&"patrol_speed", d[3] if d[3] > 0.0 else 2.0)
 		dummy.set(&"facing", face)
 		dummy.set(&"hat", d[4])
-		_combat.add_child(dummy)
+		_kit.combat.add_child(dummy)
 	_box("DummyBlock", Vector3(-32, 1.5, 5), Vector3(3, 3, 3), K.LEDGE)
 	_box("RangeBackstop", Vector3(-60, 4, -1), Vector3(1, 8, 26), K.WALL)

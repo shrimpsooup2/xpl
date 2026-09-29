@@ -5,7 +5,8 @@ extends Node
 ## and the (experimental, off by default) impact frames. Hides the HUD while the
 ## local player is dead.
 ##
-## Debug: F8 previews each overlay; hold Tab for the scoreboard.
+## Debug: F8 previews each overlay, F9 goes to the next map; hold Tab for the
+## scoreboard.
 
 ## Only hard smashdowns get an impact frame: from this drop up, growing to
 ## full strength at SMASH_IMPACT_FULL.
@@ -22,6 +23,7 @@ var speed_lines: SpeedLines
 var player: Player
 
 var _preview_step := -1
+var _map_name := "test course"
 var _prompt := ""
 
 
@@ -67,7 +69,12 @@ func _ready() -> void:
 			crosshair.bump(1.5 * strength)
 			LofiUI.kick(hud, strength))
 		_connect_weapons(player.weapons)
-	overlays.round_card("test course", 0, false)
+	var scene := get_tree().current_scene
+	var map_name := Maps.name_of(scene.scene_file_path) if scene else ""
+	if map_name != "":
+		_map_name = map_name
+	hud.set_map(_map_name)
+	overlays.round_card(_map_name, 0, false)
 
 
 func _process(_delta: float) -> void:
@@ -128,6 +135,9 @@ func _unhandled_input(event: InputEvent) -> void:
 		pause.toggle()
 	elif event.is_action_pressed(&"debug_preview_ui"):
 		_preview()
+	elif event.is_action_pressed(&"debug_next_map"):
+		var scene := get_tree().current_scene
+		Wipe.change_scene(get_tree(), Maps.after(scene.scene_file_path if scene else ""))
 	elif event.is_action_pressed(&"scoreboard"):
 		overlays.show_scoreboard([["you", 0, 0, 0, 0]])
 	elif event.is_action_released(&"scoreboard"):
@@ -195,7 +205,7 @@ func _preview() -> void:
 		5:
 			hud.set_scores("", 0, "", 0)
 			hud.set_timer(-1.0)
-			hud.set_map("test course")
+			hud.set_map(_map_name)
 			hud.set_health(100)
 			hud.set_weapon("fists")
 			hud.set_throwable("", 0)

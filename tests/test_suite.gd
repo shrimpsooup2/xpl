@@ -17,9 +17,11 @@ func _ready() -> void:
 
 
 func _run() -> void:
+	# TEST_ONLY=<text> runs just the tests whose names contain it.
+	var only := OS.get_environment("TEST_ONLY")
 	var tests: PackedStringArray = []
 	for m in get_method_list():
-		if String(m.name).begins_with("test_"):
+		if String(m.name).begins_with("test_") and (only.is_empty() or only in String(m.name)):
 			tests.append(m.name)
 	for t in tests:
 		_current = t

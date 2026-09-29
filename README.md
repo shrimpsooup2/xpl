@@ -12,7 +12,7 @@ A round-based, movement-first arena FPS. Two players duel through short rounds o
 
 1. Install **Godot 4.7.2**, the standard build (not .NET): <https://godotengine.org/download>
 2. Clone this repo, open Godot, choose **Import**, and select `project.godot`.
-3. Press **F5** to play. The main menu opens; choose **play** to enter the movement test course. The small arrows in the bottom-right corner of the menu change your hat, which is saved and worn in the match. The gun pads are just to your left, and the shooting range is beyond them; its dummies play for blue.
+3. Press **F5** to play. The main menu opens; choose **play** to enter the movement test course. The small arrows in the bottom-right corner of the menu change your hat, which is saved and worn in the match. The gun pads are just to your left, and the shooting range is beyond them; its dummies play for blue. Press **F9** to step through the maps: Stack, Terrace, Switchback, Archipelago and Rift (greybox, [GDD §9.3](docs/GDD.md#93-built-maps)).
 
 ### Controls
 
@@ -35,6 +35,7 @@ A round-based, movement-first arena FPS. Two players duel through short rounds o
 | Third-person camera (debug) | F6 |
 | Die (debug, to see the death sequence) | F7 |
 | Preview UI overlays (debug) | F8 |
+| Next map | F9 |
 | Scoreboard | Hold Tab |
 | Pause menu | Esc |
 
@@ -55,14 +56,14 @@ The **View → Look** section of the panel controls the render: `pixel height` i
 | `src/cosmetics/` | `Hats` (every hat, built from primitives in team colours, and the no-hat team triangle) and `Cosmetics` (the saved pick) |
 | `src/combat/` | The roster (`Weapons`, `WeaponDef`), gun models (`WeaponModel`), a player's hands (`WeaponHolder`: firing, pickups, throwing), shots in flight (`Ballistics`), hit zones (`HitShapes`), pickups and pads, `TargetDummy`, and shooting effects |
 | `src/ui/` | The UI: style and motion kit (`LofiUI`), low-res canvas (`LofiLayer`), HUD and its ammo column, crosshair and ammo ring, overlays, pause and main menus, scene wipe |
-| `src/world/` | `GreyBox` blocks (size and surface kind) |
+| `src/world/` | `GreyBox` blocks (size and surface kind) and `Maps` (the map list F9 steps through) |
 | `src/render/` | Surface, sky, screen, prop and viewmodel shaders, and `RetroScreen` (low-res rendering) |
 | `assets/` | Pixel textures, the reflection map, the logo, the generated body and chunk meshes, and third-party assets |
 | `src/debug/` | Debug HUD and the live tuning panel |
 | `data/` | Tuning resources |
-| `scenes/` | `main_menu.tscn` (main scene), `test_course.tscn`, and `player.tscn` |
-| `tests/` | Headless movement, UI, combat and cosmetics tests |
-| `tools/` | Test runner and the scene generator |
+| `scenes/` | `main_menu.tscn` (main scene), `test_course.tscn`, `player.tscn`, and the maps in `maps/` |
+| `tests/` | Headless movement, UI, combat, cosmetics and map tests |
+| `tools/` | Test runner, the scene generator, the level kit and the map layouts (`maps/`) |
 
 ## Tests
 
@@ -70,9 +71,9 @@ The **View → Look** section of the panel controls the render: `pixel height` i
 tools/run_tests.sh
 ```
 
-This runs the headless movement, UI and combat tests. It uses `$GODOT` or `godot` on your PATH; on Linux x86_64 it downloads Godot 4.7.2 into `.tools/` if neither is found.
+This runs the headless movement, UI, combat, cosmetics and map tests (the map tests drive a player through each map's routes). Set `TEST_ONLY` to part of a test's name to run just those. It uses `$GODOT` or `godot` on your PATH; on Linux x86_64 it downloads Godot 4.7.2 into `.tools/` if neither is found.
 
-`tools/build_scenes.gd` regenerates the input map, `player.tscn`, and the greybox test course. Once you edit the course by hand in the editor, stop regenerating it (pass `-- --skip-course`). `tools/gen_textures.gd` and `tools/gen_logo.gd` regenerate the placeholder textures and the logo; paint over the PNGs freely instead. `tools/gen_body.gd` regenerates the player's body and its pre-diced chunks from `src/player/body_shape.gd` (about a minute; add `-- --body-only` to skip the dicing while tuning the shape).
+`tools/build_scenes.gd` regenerates the input map, `player.tscn`, the greybox test course, and the maps (each laid out by a script in `tools/maps/` with the kit in `tools/level_kit.gd`). Once you edit the course by hand in the editor, stop regenerating it (pass `-- --skip-course`). `tools/gen_textures.gd` and `tools/gen_logo.gd` regenerate the placeholder textures and the logo; paint over the PNGs freely instead. `tools/gen_body.gd` regenerates the player's body and its pre-diced chunks from `src/player/body_shape.gd` (about a minute; add `-- --body-only` to skip the dicing while tuning the shape).
 
 ## Credits
 

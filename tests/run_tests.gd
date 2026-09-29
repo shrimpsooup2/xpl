@@ -7,7 +7,7 @@ extends SceneTree
 ## otherwise.
 
 const SUITES := ["res://tests/player_tests.gd", "res://tests/ui_tests.gd", "res://tests/combat_tests.gd",
-		"res://tests/cosmetics_tests.gd"]
+		"res://tests/cosmetics_tests.gd", "res://tests/map_tests.gd"]
 
 
 func _initialize() -> void:

@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| **Version** | 1.4 (draft) |
-| **Date** | 2026-09-28 |
+| **Version** | 1.5 (draft) |
+| **Date** | 2026-09-29 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
 | **Platform** | PC (Windows / Linux, Steam Deck compatible), mouse & keyboard first |
@@ -24,9 +24,10 @@
 | 0.9 | Experimental impact frames on kills and hard smashdowns, with a camera punch the HUD rides too, off by default (§10.4). Pop-ups land letter by letter and shatter (§13.5). |
 | 1.0 | Movement feel pass: constant slide friction (slides carry, hills speed you up), heavier smashdown (0.1 s hang, shockwave ring, landing tell), stronger slam bounce (9 + 0.75 × drop, max 22, plus a 3 m/s kick). A camera that reacts to every movement (§10.3), speed lines (§10.4). |
 | 1.1 | Camera and HUD reactions are fast and jerky by default (snap in, drop off, stepped jitter, flickering speed lines); new *camera smoothing* setting for the smooth feel. |
-| 1.2 | First six guns built, each modelled on a real kind of gun (§7.4), with first-person arms, third-person holds and animated actions (§11.5). Hit zones ride the animated body; dummies react to the part you hit (§5.2, §9.3). Ammo shown as a column sized by capacity and a ring around the crosshair (§13.3). Magazine sizes moved toward the real guns'. |
+| 1.2 | First six guns built, each modelled on a real kind of gun (§7.4), with first-person arms, third-person holds and animated actions (§11.5). Hit zones ride the animated body; dummies react to the part you hit (§5.2, §9.4). Ammo shown as a column sized by capacity and a ring around the crosshair (§13.3). Magazine sizes moved toward the real guns'. |
 | 1.3 | Weapons renamed from computing jargon to realistic-sounding model names (SP-12, Marshal .357, SX-50, TR-30, Warden 12, Heron .308…). Damage numbers merge: one number per target that adds up and grows (§10.4). |
 | 1.4 | Hats: the first cosmetic, and how teams are told apart. Sixteen hats in red or blue, or no hat and a team triangle over the head; picked on the title screen (§11.4, §13.4). Dash charges recharge slower (1.75 → 2.25 s). First-person arms sit lower and further back and carry on past the cut off screen, so no arm end ever shows. Punches mix jabs, crosses, hooks and uppercuts. UI boxes drawn like the logo: a crooked black frame set in from a white card. |
+| 1.5 | Map rules rewritten (§9.1): size varies from map to map, structure before theme, fair but not always symmetrical, long sightlines allowed on the big maps. The first five greybox maps built and tested (§9.3): Stack, Terrace, Switchback, and two spread-out maps for more players and longer rounds, Archipelago and Rift, where the sniper has a job. F9 steps through them in game. The movement sandbox moves to §9.4. |
 
 ---
 
@@ -537,15 +538,18 @@ Lobby → Warmup → [ Countdown → Round → Round end → Next map ] × N →
 
 ### 9.1 Design rules
 
-1. **Small and vertical.** Playable footprint between 25 × 25 m and 45 × 45 m, with at least 2 height layers. Spawns are about 3 s of travel apart at run speed.
-2. **Built for lines.** Every map has at least one continuous "flow loop": a route you can run at speed using slides, wall rides, and hops without breaking momentum.
-3. **Weapon routes.** Weapon pads sit on the flow loop. Every spawn has a Standard pad within about 1.5 s of travel, so the fists-only opening is a short race, not a brawl. Heavy pads are contested in the middle. The Power pad needs movement tech to reach quickly.
-4. **No dead ends.** Every area has at least two exits, one of them vertical.
-5. **Controlled sightlines.** The longest open sightline is about 40 m. Long lanes have cover breaks.
-6. **Readable surfaces.** Wall-rideable surfaces share one consistent visual language across all maps (for example, a distinct tile or panel pattern). Players should never guess.
-7. **Symmetrical for 1v1**, rotational or mirrored, including weapon pads. Asymmetry only in visual dressing.
-8. **Unloading-ready.** Each map defines its collapse rings for sudden death ([§8.3](#83-round)).
-9. **Cheap to build.** Rotation needs many maps, so each should be buildable from a shared modular kit plus a few signature props.
+1. **Structure before theme.** A map is its layout first: what fights it creates, how you get around it, and how getting around changes the fights. Theme and dressing come after, on a layout that already plays well.
+2. **Size varies.** Maps range from short concentrated spaces (about 20 × 20 m, first contact in two seconds) through large winding ones (about 60 × 40 m) to spread-out maps (about 200 × 200 m) for more players and longer rounds. Every map has at least two height layers, and the rotation should mix sizes.
+3. **Built for lines.** Every map has at least one continuous "flow loop": a route you can run at speed using slides, wall rides, and hops without breaking momentum.
+4. **Weapon routes.** Weapon pads sit on the flow loop. Every spawn has a Standard pad within about 1.5 s of travel, so the fists-only opening is a short race, not a brawl. Heavy pads are contested in the middle. The Power pad needs movement tech, or a long exposed route, to reach.
+5. **No dead ends.** Every area has at least two exits, one of them vertical.
+6. **Sightlines fit the map.** On small maps the longest open sightline is about 40 m, with cover breaks. Big maps have long ones on purpose, so the sniper has a job, but every long line has cover along it and a way under or around it.
+7. **Up is a choice.** Down is always quick (drop, slide, smash). Each way up trades speed against exposure: a slow readable ramp, a quick climb in the open, a hidden skill route (wall jumps, a fin to ride, stepping stones).
+8. **Readable surfaces.** Wall-rideable surfaces share one consistent visual language across all maps (for example, a distinct tile or panel pattern). Players should never guess.
+9. **Fair, not always symmetrical.** Mirrored or rotated layouts are the easy way to be fair, not the only one. An asymmetric map is fair when every spawn is about as far from the power weapon as the others (measured, see §9.3) and each side has its own advantages.
+10. **Void edges.** Spread-out maps can float in the void: falling off is death. Edges are clear and bridges are wide enough to fight on.
+11. **Unloading-ready.** Each map defines its collapse rings for sudden death ([§8.3](#83-round)).
+12. **Cheap to build.** Rotation needs many maps, so each should be buildable from a shared modular kit plus a few signature props.
 
 ### 9.2 Map concepts
 
@@ -562,7 +566,46 @@ Lobby → Warmup → [ Countdown → Round → Round end → Next map ] × N →
 
 **MVP:** 8 greybox maps, 1 of them art-complete for the vertical slice. The long-term goal is a rotation of 20+ maps.
 
-### 9.3 Movement sandbox
+### 9.3 Built maps
+
+Five greybox maps so far, with no theme yet (rule 1). Each is a script in `tools/maps/` that lays it out from a shared kit (`tools/level_kit.gd`: blocks, ramps, terraces, floors with holes, pads, spawns); `tools/build_scenes.gd` saves them to `scenes/maps/`. **F9** in game steps to the next map. `tests/map_tests.gd` loads every map, stands a player at every spawn, checks every pad has room, and drives the routes each map is built around through the real movement code. None of them needs a new mechanic.
+
+| Map | Size | Heights | Spawns | What it's about |
+|---|---|---|---|---|
+| **Stack** | 22 × 22 m | 0 to 8 m | 2 | Two floors in a box: a cellar and a roof, a shotgun at the bottom of the Well |
+| **Terrace** | 48 × 36 m | 0 to 6 m | 2 | Asymmetric: a close-range town against an open high terrace, the sniper on a pulpit between them |
+| **Switchback** | 64 × 40 m | 0 to 13.5 m | 2 | Four levels down a hill, joined end to end by hairpin ramps; high ground over everything below |
+| **Archipelago** | about 190 × 200 m | −6 to 35 m | 4 | Islands in the void round a spire; long exposed crossings, a different skill for each ring link |
+| **Rift** | 200 × 88 m | 0 to 37 m | 4 | A canyon: rims, shelves and floor, three layers and three kinds of fight |
+
+**Stack** (small). Below, a dim cellar under a 4.5 m ceiling with four pillars; above, the open roof. Down is always one step away (four holes, two ramp slots); up is slow and readable: the ramps, or a crate under a hole. The shotgun sits at the bottom of the Well, the hole in the middle, so taking it puts you under anyone on the roof: they can stomp you through it (a 5 m smashdown) and bounce straight back out. Rifles on two pulpits on the roof. Rotationally symmetric.
+
+**Terrace** (medium, asymmetric). West, the Town: dense blocks, short sightlines, the SMG, shotgun and revolver. East, the Terrace, an open plateau 4 m up with the rifle. The Peninsula sticks out of the terrace into the town with the sniper on its Pulpit, seeing down the town's long street and across the terrace, and shot at from both. Ways between, from fast and open to slow and hidden: the Slide (20°, the fast way into town), the Overpass (a bridge onto Block A's roof), the Stairs, crates up the peninsula, and the Alley (a 2.5 m gap to wall-jump up).
+
+**Switchback** (large, winding). Each level's edge is a 4 m drop onto the next, so everyone above looks down on everyone below. Down is easy: drop, slide a hairpin, or smash onto someone and bounce back up (a 4 m smashdown bounces about 3.6 m, enough to grab the edge you came from). Up is the question: the hairpins (long, but you keep your speed), the Ladder (a crate against each cliff up the middle, quick and in the open), or a hut roof. The sniper waits on the Overlook at the top.
+
+**Archipelago** (spread out). The Hub (8 m) holds the Spire, 34 m tall, with the sniper nest on top, seeing every island; the only way up is a ramp spiral round its faces, in full view of everyone. Round it: the Keep (north, a building of rooms and doors, the SMG and a shotgun, a hole in the roof to drop in by), the Terraces (south, three wide steps facing the spire, the rifle), the Ridge (east, a long high island with the second sniper and cover along its edge), the Garden (west, low, a grid of pillars, the other shotgun), and four small outposts on the diagonals with a gun each. The Hub reaches each big island by a long exposed crossing (the Causeway, the South Bridge, the Garden Slide, the Ridge Ramp): the snipers' prey. Round the outside the islands join in a ring, each link a different skill: ramps; stepping stones, hopped down or jumped and grabbed up (3 m a stone on the Garden side); and the Fin, a floating ride wall across a 19 m gap too far to jump: angle in before you jump (air control can't steer you sideways), ride it, kick off toward the Terraces.
+
+**Rift** (spread out). The Rims: the north at 28 m, the south at 20, with long sightlines down and across the canyon, a sniper tower on each (36 m and 28 m), and rifles. The Shelves: a solid ledge along each wall (12 m north, 10 m south), flanking paths between the floor and the rims, their faces rideable from the floor. The Floor: ruins, a colonnade under an overhang of the north rim, and the Arch, a block across the canyon with a tunnel through it and the shotgun inside. Getting between the layers: the end ramps (the whole floor rises at each end, to the south rim in the west and the north rim in the east: 28 m of 35° slope, the long slide down); a ramp from the floor up to each shelf and on up to its rim; the High Bridge (rim to rim) and the Mid Bridge (shelf to shelf), both crossings in the open; and the big drop: smash off a rim onto the floor (28 m) and the 22 m/s bounce throws you back up to grab the shelf.
+
+**Measured routes.** Times from the test pilot, which runs, jumps obstacles and grabs ledges but doesn't slide, dash or wall-ride, so a good player is faster:
+
+| Map | Route | Time |
+|---|---|---|
+| Stack | A → shotgun / rifle pulpit | 1.5 s / 2.0 s |
+| Terrace | A / B → the sniper's pulpit | 3.9 s / 3.5 s |
+| Switchback | A / B → the Overlook | 4.8 s / 5.3 s |
+| Archipelago | Keep / Terraces / Ridge spawn → the Hub | 9.3 s / 11.0 s / 9.9 s |
+| Archipelago | Keep / Terraces spawn → the Spire's nest | 19.4 s / 20.2 s |
+| Archipelago | Ridge spawn → the Ridge sniper | 6.6 s |
+| Rift | North / south rim spawn → its own tower | 11.1 s / 11.1 s |
+| Rift | North / south rim spawn → the far tower (High Bridge) | 16.1 s / 16.4 s |
+| Rift | Floor spawns → the rims (end ramps) | 8.0 s / 8.5 s |
+| Rift | West floor spawn → the shotgun / the SMG | 2.4 s / 6.1 s |
+
+Every spawn's nearest pistol is under 0.6 s away on the small maps. On the spread-out maps the first fight comes later (the Hub is about 10 s from every spawn), and rounds run longer.
+
+### 9.4 Movement sandbox
 A dedicated training map with a speedometer, a ghost replay of your last run, movement challenges, a weapon range with every weapon, and target dummies that can move on rails (for heartshot practice). For a movement-first game this is a core feature, not a menu extra.
 
 **In the prototype** the test course has it started: an armory of weapon pads (one per gun, back in 3 s) next to spawn, and a shooting range of dummies at 7, 12, 22 and 42 m, one up on a block, one walking and one jogging across. Dummies are the player's own body on a little stand: they take hits by zone (§5.2), show damage numbers and a health bar, fall apart like a player on a kill, pull themselves back together 2.5 s later, and heal after 2 s untouched. Code: `src/combat/target_dummy.gd`.
@@ -821,7 +864,7 @@ Code: the motion kit is in `src/ui/lofi_ui.gd` (`enter`, `leave`, `pop`, `stamp`
 | Mode | Phase | Notes |
 |---|---|---|
 | 1v1 online (private lobby) | MVP | Invite or join code |
-| Movement sandbox | MVP | See [§9.3](#93-movement-sandbox) |
+| Movement sandbox | MVP | See [§9.4](#94-movement-sandbox) |
 | Custom rules | MVP (basic) | Rounds to win, weapon pool filters ("precision only", "melee only", "random roulette"), Heartshot on/off, round timer |
 | 2v2 | Post-MVP | Needs team-symmetric maps |
 | FFA (3–4) | Post-MVP | |

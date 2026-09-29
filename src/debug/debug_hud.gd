@@ -121,7 +121,7 @@ func _build() -> void:
 	help.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	help.offset_top = -34
 	help.offset_left = 16
-	help.text = "F1 tuning   F2 respawn   F3 vsync   F4 readout   F6 third person   F7 die   F8 preview ui   Tab scores   Esc menu"
+	help.text = "F1 tuning   F2 respawn   F3 vsync   F4 readout   F6 third person   F7 die   F8 preview ui   F9 next map   Tab scores   Esc menu"
 
 
 func _label(parent: Control, font_size: int, align: HorizontalAlignment) -> Label:
