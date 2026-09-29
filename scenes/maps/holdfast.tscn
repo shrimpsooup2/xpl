@@ -1,0 +1,1682 @@
+[gd_scene format=3]
+
+[ext_resource type="Shader" path="res://src/render/retro_sky.gdshader" id="1_tnjhp"]
+[ext_resource type="Script" path="res://src/world/grey_box.gd" id="2_qruef"]
+[ext_resource type="Script" path="res://src/combat/weapon_pad.gd" id="3_lajqq"]
+[ext_resource type="Script" path="res://src/combat/resupply_crate.gd" id="4_fma3b"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="5_7r01s"]
+[ext_resource type="Script" path="res://src/player/player.gd" id="6_hbvsd"]
+[ext_resource type="Script" path="res://src/ui/game_ui.gd" id="7_gyp7f"]
+[ext_resource type="Script" path="res://src/render/retro_screen.gd" id="8_blm1f"]
+[ext_resource type="Script" path="res://src/debug/debug_hud.gd" id="9_4aabq"]
+[ext_resource type="Script" path="res://src/debug/tuning_panel.gd" id="10_37fra"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_evp7p"]
+shader = ExtResource("1_tnjhp")
+shader_parameter/top_color = null
+shader_parameter/upper_color = null
+shader_parameter/horizon_color = null
+shader_parameter/ground_color = null
+shader_parameter/bands = null
+shader_parameter/sun_color = null
+shader_parameter/sun_size = null
+
+[sub_resource type="Sky" id="Sky_glah3"]
+sky_material = SubResource("ShaderMaterial_evp7p")
+radiance_size = 0
+
+[sub_resource type="Environment" id="Environment_ul4ev"]
+background_mode = 2
+sky = SubResource("Sky_glah3")
+ambient_light_source = 2
+ambient_light_color = Color(0.5, 0.4, 0.62, 1)
+ambient_light_energy = 0.75
+reflected_light_source = 1
+glow_enabled = true
+glow_intensity = 0.5
+fog_enabled = true
+fog_light_color = Color(0.7, 0.44, 0.58, 1)
+fog_density = 0.004
+fog_sky_affect = 0.25
+
+[node name="Holdfast" type="Node3D" unique_id=29564912]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2003513532]
+environment = SubResource("Environment_ul4ev")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1362496385]
+transform = Transform3D(0.81915206, -0.35312894, 0.45198444, 0, 0.7880108, 0.6156615, -0.57357645, -0.5043204, 0.64550066, 0, 0, 0)
+light_color = Color(1, 0.84, 0.7, 1)
+light_energy = 1.15
+shadow_enabled = true
+directional_shadow_mode = 0
+directional_shadow_max_distance = 160.0
+
+[node name="Lights" type="Node3D" parent="." unique_id=876828307]
+
+[node name="Tunnel" type="OmniLight3D" parent="Lights" unique_id=237413976]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.4, 0)
+light_color = Color(1, 0.7, 0.3, 1)
+light_energy = 2.2
+omni_range = 12.0
+omni_attenuation = 0.6
+
+[node name="UnderBridge" type="OmniLight3D" parent="Lights" unique_id=1544187654]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1, 40)
+light_color = Color(0.3, 0.85, 1, 1)
+light_energy = 2.2
+omni_range = 8.0
+omni_attenuation = 0.6
+
+[node name="FortHall_Red" type="OmniLight3D" parent="Lights" unique_id=53805417]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90, 3.5, 0)
+light_color = Color(1, 0.35, 0.3, 1)
+light_energy = 2.2
+omni_range = 16.0
+omni_attenuation = 0.6
+
+[node name="FortFloor2_Red" type="OmniLight3D" parent="Lights" unique_id=2099543005]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90, 8.5, 0)
+light_color = Color(1, 0.8, 0.5, 1)
+light_energy = 2.2
+omni_range = 16.0
+omni_attenuation = 0.6
+
+[node name="Bunker_Red" type="OmniLight3D" parent="Lights" unique_id=533908913]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 2.4, 0)
+light_color = Color(1, 0.6, 0.3, 1)
+light_energy = 2.2
+omni_range = 6.0
+omni_attenuation = 0.6
+
+[node name="FortHall_Blue" type="OmniLight3D" parent="Lights" unique_id=851038773]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 3.5, 0)
+light_color = Color(0.35, 0.55, 1, 1)
+light_energy = 2.2
+omni_range = 16.0
+omni_attenuation = 0.6
+
+[node name="FortFloor2_Blue" type="OmniLight3D" parent="Lights" unique_id=604582627]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 8.5, 0)
+light_color = Color(1, 0.8, 0.5, 1)
+light_energy = 2.2
+omni_range = 16.0
+omni_attenuation = 0.6
+
+[node name="Bunker_Blue" type="OmniLight3D" parent="Lights" unique_id=986740342]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 2.4, 0)
+light_color = Color(1, 0.6, 0.3, 1)
+light_energy = 2.2
+omni_range = 6.0
+omni_attenuation = 0.6
+
+[node name="Geometry" type="Node3D" parent="." unique_id=1015445436]
+
+[node name="Field" type="StaticBody3D" parent="Geometry" unique_id=1377810834]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -4.25, -5)
+script = ExtResource("2_qruef")
+size = Vector3(224, 7.5, 78)
+kind = 4
+
+[node name="FieldFloor" type="StaticBody3D" parent="Geometry" unique_id=749270013]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, -5)
+script = ExtResource("2_qruef")
+size = Vector3(224, 0.5, 78)
+kind = 0
+
+[node name="Ledge" type="StaticBody3D" parent="Geometry" unique_id=1700999761]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, -50)
+script = ExtResource("2_qruef")
+size = Vector3(200, 15.5, 12)
+kind = 4
+
+[node name="LedgeFloor" type="StaticBody3D" parent="Geometry" unique_id=1103301884]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.75, -50)
+script = ExtResource("2_qruef")
+size = Vector3(200, 0.5, 12)
+kind = 0
+
+[node name="RiverBed" type="StaticBody3D" parent="Geometry" unique_id=930823070]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -5.75, 40)
+script = ExtResource("2_qruef")
+size = Vector3(192, 4.5, 12)
+kind = 0
+
+[node name="RiverBedFloor" type="StaticBody3D" parent="Geometry" unique_id=567381880]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3.25, 40)
+script = ExtResource("2_qruef")
+size = Vector3(192, 0.5, 12)
+kind = 0
+
+[node name="SouthBank" type="StaticBody3D" parent="Geometry" unique_id=709366775]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -1.75, 51)
+script = ExtResource("2_qruef")
+size = Vector3(224, 12.5, 10)
+kind = 4
+
+[node name="SouthBankFloor" type="StaticBody3D" parent="Geometry" unique_id=1820123836]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.75, 51)
+script = ExtResource("2_qruef")
+size = Vector3(224, 0.5, 10)
+kind = 0
+
+[node name="CliffN" type="StaticBody3D" parent="Geometry" unique_id=1769240488]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12, -56.5)
+script = ExtResource("2_qruef")
+size = Vector3(226, 24, 1)
+kind = 4
+
+[node name="CliffS" type="StaticBody3D" parent="Geometry" unique_id=1638722221]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 12, 56.5)
+script = ExtResource("2_qruef")
+size = Vector3(226, 24, 1)
+kind = 4
+
+[node name="CliffW" type="StaticBody3D" parent="Geometry" unique_id=1063343106]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -112.5, 12, 0)
+script = ExtResource("2_qruef")
+size = Vector3(1, 24, 112)
+kind = 4
+
+[node name="CliffE" type="StaticBody3D" parent="Geometry" unique_id=992675435]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 112.5, 12, 0)
+script = ExtResource("2_qruef")
+size = Vector3(1, 24, 112)
+kind = 4
+
+[node name="HillN" type="StaticBody3D" parent="Geometry" unique_id=2083337418]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, -5.25)
+script = ExtResource("2_qruef")
+size = Vector3(24, 5, 5.5)
+kind = 4
+
+[node name="HillS" type="StaticBody3D" parent="Geometry" unique_id=2093741981]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 2.5, 5.25)
+script = ExtResource("2_qruef")
+size = Vector3(24, 5, 5.5)
+kind = 4
+
+[node name="HillRoof" type="StaticBody3D" parent="Geometry" unique_id=392143267]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 0)
+script = ExtResource("2_qruef")
+size = Vector3(24, 2, 5)
+kind = 4
+
+[node name="HillTop" type="StaticBody3D" parent="Geometry" unique_id=263705919]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4.75, 0)
+script = ExtResource("2_qruef")
+size = Vector3(24, 0.5, 16)
+kind = 0
+
+[node name="HillRampN" type="StaticBody3D" parent="Geometry" unique_id=892199569]
+transform = Transform3D(-1, 0, 0, 0, 0.8944272, -0.4472136, 0, -0.4472136, -0.8944272, 0, 0.4875388, -11.99377)
+script = ExtResource("2_qruef")
+size = Vector3(14, 4.5, 11.18034)
+kind = 2
+
+[node name="HillRampS" type="StaticBody3D" parent="Geometry" unique_id=27059862]
+transform = Transform3D(1, 0, 0, 0, 0.8944272, -0.4472136, 0, 0.4472136, 0.8944272, 0, 0.4875388, 11.99377)
+script = ExtResource("2_qruef")
+size = Vector3(14, 4.5, 11.18034)
+kind = 2
+
+[node name="Crown" type="StaticBody3D" parent="Geometry" unique_id=136772343]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 6.75, 0)
+script = ExtResource("2_qruef")
+size = Vector3(12, 3.5, 10)
+kind = 4
+
+[node name="CrownTop" type="StaticBody3D" parent="Geometry" unique_id=1300867546]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.75, 0)
+script = ExtResource("2_qruef")
+size = Vector3(12, 0.5, 10)
+kind = 0
+
+[node name="CrownWallW" type="StaticBody3D" parent="Geometry" unique_id=779437442]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5.7, 9.6, 0)
+script = ExtResource("2_qruef")
+size = Vector3(0.5999999, 1.1999998, 6)
+kind = 3
+
+[node name="CrownWallE" type="StaticBody3D" parent="Geometry" unique_id=676427369]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5.7, 9.6, 0)
+script = ExtResource("2_qruef")
+size = Vector3(0.5999999, 1.1999998, 6)
+kind = 3
+
+[node name="Lookout" type="StaticBody3D" parent="Geometry" unique_id=1383822416]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9.5, -50)
+script = ExtResource("2_qruef")
+size = Vector3(16, 3, 12)
+kind = 5
+
+[node name="LookoutParapetW" type="StaticBody3D" parent="Geometry" unique_id=1376153993]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4.75, 11.6, -44.2)
+script = ExtResource("2_qruef")
+size = Vector3(6.5, 1.1999998, 0.40000153)
+kind = 3
+
+[node name="LookoutParapetE" type="StaticBody3D" parent="Geometry" unique_id=1983824094]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 4.75, 11.6, -44.2)
+script = ExtResource("2_qruef")
+size = Vector3(6.5, 1.1999998, 0.40000153)
+kind = 3
+
+[node name="SkyBridge" type="StaticBody3D" parent="Geometry" unique_id=1061533263]
+transform = Transform3D(1, 0, 0, 0, 0.9986877, -0.051214755, 0, 0.051214755, 0.9986877, 0, 9.700394, -24.515364)
+script = ExtResource("2_qruef")
+size = Vector3(3, 0.6, 39.051247)
+kind = 0
+
+[node name="RiverBridge" type="StaticBody3D" parent="Geometry" unique_id=1265025385]
+transform = Transform3D(-1, 0, 0, 0, 0.9230769, -0.3846154, 0, -0.3846154, -0.9230769, 0, 2.2230768, 40.115383)
+script = ExtResource("2_qruef")
+size = Vector3(6, 0.6, 13)
+kind = 0
+
+[node name="FortFront_Red_0" type="StaticBody3D" parent="Geometry" unique_id=845012595]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 0.6, -13.5)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.2, 21)
+
+[node name="FortFront_Red_1" type="StaticBody3D" parent="Geometry" unique_id=2111500342]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 0.6, 13.5)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.2, 21)
+
+[node name="FortFront_Red_2" type="StaticBody3D" parent="Geometry" unique_id=551347518]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 1.8000001, -20)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.2, 8)
+
+[node name="FortFront_Red_3" type="StaticBody3D" parent="Geometry" unique_id=2077775026]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 1.8000001, -8)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.2, 10)
+
+[node name="FortFront_Red_4" type="StaticBody3D" parent="Geometry" unique_id=73333179]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 1.8000001, 8)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.2, 10)
+
+[node name="FortFront_Red_5" type="StaticBody3D" parent="Geometry" unique_id=692471059]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 1.8000001, 20)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.2, 8)
+
+[node name="FortFront_Red_6" type="StaticBody3D" parent="Geometry" unique_id=1902182271]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 3.2, -13.5)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.5999999, 21)
+
+[node name="FortFront_Red_7" type="StaticBody3D" parent="Geometry" unique_id=1755675857]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 3.2, 13.5)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.5999999, 21)
+
+[node name="FortFront_Red_8" type="StaticBody3D" parent="Geometry" unique_id=57326148]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 5.1, 0)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 2.1999998, 48)
+
+[node name="FortFront_Red_9" type="StaticBody3D" parent="Geometry" unique_id=1153409627]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 6.7999997, -22)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.1999998, 4)
+
+[node name="FortFront_Red_10" type="StaticBody3D" parent="Geometry" unique_id=583796013]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 6.7999997, -14)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.1999998, 4)
+
+[node name="FortFront_Red_11" type="StaticBody3D" parent="Geometry" unique_id=576237804]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 6.7999997, 0)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.1999998, 16)
+
+[node name="FortFront_Red_12" type="StaticBody3D" parent="Geometry" unique_id=1932276759]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 6.7999997, 14)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.1999998, 4)
+
+[node name="FortFront_Red_13" type="StaticBody3D" parent="Geometry" unique_id=137265404]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 6.7999997, 22)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.1999998, 4)
+
+[node name="FortFront_Red_14" type="StaticBody3D" parent="Geometry" unique_id=118780754]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 8.7, 0)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 2.6000004, 48)
+
+[node name="FortBack_Red_0" type="StaticBody3D" parent="Geometry" unique_id=787304138]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100, 1.75, -13)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 3.5, 22)
+
+[node name="FortBack_Red_1" type="StaticBody3D" parent="Geometry" unique_id=857551025]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100, 1.75, 13)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 3.5, 22)
+
+[node name="FortBack_Red_2" type="StaticBody3D" parent="Geometry" unique_id=665662584]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -100, 6.75, 0)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 6.5, 48)
+
+[node name="FortN_Red_0" type="StaticBody3D" parent="Geometry" unique_id=568777734]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -81.5, 1.5, -24)
+script = ExtResource("2_qruef")
+size = Vector3(3, 3, 0.6)
+
+[node name="FortN_Red_1" type="StaticBody3D" parent="Geometry" unique_id=2031258367]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -92.7, 1.5, -24)
+script = ExtResource("2_qruef")
+size = Vector3(14.6, 3, 0.6)
+
+[node name="FortN_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1414034979]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90, 4.6, -24)
+script = ExtResource("2_qruef")
+size = Vector3(20, 3.1999998, 0.6)
+
+[node name="FortN_Red_3" type="StaticBody3D" parent="Geometry" unique_id=1350891393]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -84, 6.7999997, -24)
+script = ExtResource("2_qruef")
+size = Vector3(8, 1.1999998, 0.6)
+
+[node name="FortN_Red_4" type="StaticBody3D" parent="Geometry" unique_id=650575021]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -95.5, 6.7999997, -24)
+script = ExtResource("2_qruef")
+size = Vector3(9, 1.1999998, 0.6)
+
+[node name="FortN_Red_5" type="StaticBody3D" parent="Geometry" unique_id=1629372358]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90, 8.7, -24)
+script = ExtResource("2_qruef")
+size = Vector3(20, 2.6000004, 0.6)
+
+[node name="FortS_Red_0" type="StaticBody3D" parent="Geometry" unique_id=386183546]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -81.5, 1.5, 24)
+script = ExtResource("2_qruef")
+size = Vector3(3, 3, 0.6)
+
+[node name="FortS_Red_1" type="StaticBody3D" parent="Geometry" unique_id=360356346]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -92.7, 1.5, 24)
+script = ExtResource("2_qruef")
+size = Vector3(14.6, 3, 0.6)
+
+[node name="FortS_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1950278004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90, 4.6, 24)
+script = ExtResource("2_qruef")
+size = Vector3(20, 3.1999998, 0.6)
+
+[node name="FortS_Red_3" type="StaticBody3D" parent="Geometry" unique_id=1707993114]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -84, 6.7999997, 24)
+script = ExtResource("2_qruef")
+size = Vector3(8, 1.1999998, 0.6)
+
+[node name="FortS_Red_4" type="StaticBody3D" parent="Geometry" unique_id=945265597]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -95.5, 6.7999997, 24)
+script = ExtResource("2_qruef")
+size = Vector3(9, 1.1999998, 0.6)
+
+[node name="FortS_Red_5" type="StaticBody3D" parent="Geometry" unique_id=1115472119]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90, 8.7, 24)
+script = ExtResource("2_qruef")
+size = Vector3(20, 2.6000004, 0.6)
+
+[node name="FortStairN_Red" type="StaticBody3D" parent="Geometry" unique_id=1463133353]
+transform = Transform3D(0, 0.41380295, 0.9103665, 0, 0.9103665, -0.41380295, -1, 0, 0, -89.62414, 2.22689, -21.5)
+script = ExtResource("2_qruef")
+size = Vector3(3, 0.6, 12.083046)
+kind = 2
+
+[node name="FortStairS_Red" type="StaticBody3D" parent="Geometry" unique_id=166442965]
+transform = Transform3D(0, 0.41380295, 0.9103665, 0, 0.9103665, -0.41380295, -1, 0, 0, -89.62414, 2.22689, 21.5)
+script = ExtResource("2_qruef")
+size = Vector3(3, 0.6, 12.083046)
+kind = 2
+
+[node name="FortFloor2_Red_0" type="StaticBody3D" parent="Geometry" unique_id=2114051527]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90, 4.75, -23.5)
+script = ExtResource("2_qruef")
+size = Vector3(20, 0.5, 1)
+kind = 0
+
+[node name="FortFloor2_Red_1" type="StaticBody3D" parent="Geometry" unique_id=983820980]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -97.5, 4.75, -21.5)
+script = ExtResource("2_qruef")
+size = Vector3(5, 0.5, 3)
+kind = 0
+
+[node name="FortFloor2_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1696729979]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -82, 4.75, -21.5)
+script = ExtResource("2_qruef")
+size = Vector3(4, 0.5, 3)
+kind = 0
+
+[node name="FortFloor2_Red_3" type="StaticBody3D" parent="Geometry" unique_id=821366984]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90, 4.75, 0)
+script = ExtResource("2_qruef")
+size = Vector3(20, 0.5, 40)
+kind = 0
+
+[node name="FortFloor2_Red_4" type="StaticBody3D" parent="Geometry" unique_id=1389328231]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -97.5, 4.75, 21.5)
+script = ExtResource("2_qruef")
+size = Vector3(5, 0.5, 3)
+kind = 0
+
+[node name="FortFloor2_Red_5" type="StaticBody3D" parent="Geometry" unique_id=548048068]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -82, 4.75, 21.5)
+script = ExtResource("2_qruef")
+size = Vector3(4, 0.5, 3)
+kind = 0
+
+[node name="FortFloor2_Red_6" type="StaticBody3D" parent="Geometry" unique_id=1999376530]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90, 4.75, 23.5)
+script = ExtResource("2_qruef")
+size = Vector3(20, 0.5, 1)
+kind = 0
+
+[node name="FortRoofStair_Red" type="StaticBody3D" parent="Geometry" unique_id=1183062775]
+transform = Transform3D(0, -0.4472136, -0.8944272, 0, 0.8944272, -0.4472136, 1, 0, 0, -90.86584, 7.231672, 0)
+script = ExtResource("2_qruef")
+size = Vector3(3, 0.6, 11.18034)
+kind = 2
+
+[node name="FortRoof_Red_0" type="StaticBody3D" parent="Geometry" unique_id=1532814855]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90, 9.75, -12.75)
+script = ExtResource("2_qruef")
+size = Vector3(20, 0.5, 22.5)
+kind = 0
+
+[node name="FortRoof_Red_1" type="StaticBody3D" parent="Geometry" unique_id=1825181095]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -98, 9.75, 0)
+script = ExtResource("2_qruef")
+size = Vector3(4, 0.5, 3)
+kind = 0
+
+[node name="FortRoof_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1567854398]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -83, 9.75, 0)
+script = ExtResource("2_qruef")
+size = Vector3(6, 0.5, 3)
+kind = 0
+
+[node name="FortRoof_Red_3" type="StaticBody3D" parent="Geometry" unique_id=615428469]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90, 9.75, 12.75)
+script = ExtResource("2_qruef")
+size = Vector3(20, 0.5, 22.5)
+kind = 0
+
+[node name="FortParapetFront_Red" type="StaticBody3D" parent="Geometry" unique_id=1458112664]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80.3, 10.6, -4)
+script = ExtResource("2_qruef")
+size = Vector3(0.5999985, 1.1999998, 40)
+kind = 3
+
+[node name="FortParapetS_Red" type="StaticBody3D" parent="Geometry" unique_id=2051452953]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -93, 10.6, 23.7)
+script = ExtResource("2_qruef")
+size = Vector3(14, 1.1999998, 0.6000004)
+kind = 3
+
+[node name="FortTower_Red" type="StaticBody3D" parent="Geometry" unique_id=948752867]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -83, 13, 20)
+script = ExtResource("2_qruef")
+size = Vector3(6, 6, 8)
+kind = 5
+
+[node name="FortTowerRamp_Red" type="StaticBody3D" parent="Geometry" unique_id=107339623]
+transform = Transform3D(0, -0.5144958, -0.857493, 0, 0.857493, -0.5144958, 1, 0, 0, -90.84565, 12.742752, 20)
+script = ExtResource("2_qruef")
+size = Vector3(3, 0.6, 11.661903)
+kind = 2
+
+[node name="FortTowerParapetW_Red" type="StaticBody3D" parent="Geometry" unique_id=1475251033]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80.2, 16.6, 20)
+script = ExtResource("2_qruef")
+size = Vector3(0.40000153, 1.2000008, 8)
+kind = 3
+
+[node name="FortTowerParapetN_Red" type="StaticBody3D" parent="Geometry" unique_id=1375974268]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -83.2, 16.6, 16.2)
+script = ExtResource("2_qruef")
+size = Vector3(5.5999985, 1.2000008, 0.39999962)
+kind = 3
+
+[node name="FortParapetN1_Red" type="StaticBody3D" parent="Geometry" unique_id=1462144665]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -83.55, 10.6, -23.7)
+script = ExtResource("2_qruef")
+size = Vector3(5.9000015, 1.1999998, 0.6000004)
+kind = 3
+
+[node name="FortParapetN2_Red" type="StaticBody3D" parent="Geometry" unique_id=1035949714]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -94.75, 10.6, -23.7)
+script = ExtResource("2_qruef")
+size = Vector3(10.5, 1.1999998, 0.6000004)
+kind = 3
+
+[node name="FortPillar_86_-8_Red" type="StaticBody3D" parent="Geometry" unique_id=971378037]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -86, 2.25, -8)
+script = ExtResource("2_qruef")
+size = Vector3(1, 4.5, 1)
+
+[node name="FortPillar_86_8_Red" type="StaticBody3D" parent="Geometry" unique_id=561255525]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -86, 2.25, 8)
+script = ExtResource("2_qruef")
+size = Vector3(1, 4.5, 1)
+
+[node name="FortPillar_94_-8_Red" type="StaticBody3D" parent="Geometry" unique_id=1361392318]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -94, 2.25, -8)
+script = ExtResource("2_qruef")
+size = Vector3(1, 4.5, 1)
+
+[node name="FortPillar_94_8_Red" type="StaticBody3D" parent="Geometry" unique_id=487069621]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -94, 2.25, 8)
+script = ExtResource("2_qruef")
+size = Vector3(1, 4.5, 1)
+
+[node name="FortCover2_Red" type="StaticBody3D" parent="Geometry" unique_id=1208180600]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -85, 5.6, -10)
+script = ExtResource("2_qruef")
+size = Vector3(2, 1.1999998, 4)
+kind = 3
+
+[node name="FortCover2b_Red" type="StaticBody3D" parent="Geometry" unique_id=1510454271]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -85, 5.6, 10)
+script = ExtResource("2_qruef")
+size = Vector3(2, 1.1999998, 4)
+kind = 3
+
+[node name="LedgeRamp_Red" type="StaticBody3D" parent="Geometry" unique_id=1053694141]
+transform = Transform3D(1, 0, 0, 0, 0.86824316, -0.49613893, 0, 0.49613893, 0.86824316, -66, 1.004561, -38.711678)
+script = ExtResource("2_qruef")
+size = Vector3(4, 6.9, 16.124516)
+kind = 2
+
+[node name="LedgeBridge_Red" type="StaticBody3D" parent="Geometry" unique_id=1255010173]
+transform = Transform3D(-1, 0, 0, 0, 0.9950372, -0.099503726, 0, -0.099503726, -0.9950372, -88, 8.7014885, -33.97015)
+script = ExtResource("2_qruef")
+size = Vector3(3, 0.6, 20.09975)
+kind = 0
+
+[node name="LookoutRamp_Red" type="StaticBody3D" parent="Geometry" unique_id=265643038]
+transform = Transform3D(0, -0.24253562, -0.9701425, 0, 0.9701425, -0.24253562, 1, 0, 0, -13.927239, 9.208958, -50)
+script = ExtResource("2_qruef")
+size = Vector3(4, 0.6, 12.369317)
+kind = 2
+
+[node name="LedgeRock_32_Red" type="StaticBody3D" parent="Geometry" unique_id=1102135484]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32, 8.6, -48)
+script = ExtResource("2_qruef")
+size = Vector3(2, 1.1999998, 2)
+kind = 3
+
+[node name="LedgeRock_50_Red" type="StaticBody3D" parent="Geometry" unique_id=713550031]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 8.6, -52)
+script = ExtResource("2_qruef")
+size = Vector3(2, 1.1999998, 2)
+kind = 3
+
+[node name="LedgeRock_78_Red" type="StaticBody3D" parent="Geometry" unique_id=1086089621]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -78, 8.6, -48)
+script = ExtResource("2_qruef")
+size = Vector3(2, 1.1999998, 2)
+kind = 3
+
+[node name="CrownCrate_Red" type="StaticBody3D" parent="Geometry" unique_id=1002530553]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -7, 6, 0)
+script = ExtResource("2_qruef")
+size = Vector3(2, 2, 2)
+kind = 3
+
+[node name="Rock_30_-30_Red" type="StaticBody3D" parent="Geometry" unique_id=573410022]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 1.1, -30)
+script = ExtResource("2_qruef")
+size = Vector3(3, 2.2, 3)
+kind = 5
+
+[node name="Rock_44_-14_Red" type="StaticBody3D" parent="Geometry" unique_id=728368192]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -44, 0.7, -14)
+script = ExtResource("2_qruef")
+size = Vector3(3, 1.4, 3)
+kind = 5
+
+[node name="Rock_34_22_Red" type="StaticBody3D" parent="Geometry" unique_id=1489469652]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34, 1.1, 22)
+script = ExtResource("2_qruef")
+size = Vector3(3, 2.2, 3)
+kind = 5
+
+[node name="Rock_60_14_Red" type="StaticBody3D" parent="Geometry" unique_id=1687746196]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 0.7, 14)
+script = ExtResource("2_qruef")
+size = Vector3(3, 1.4, 3)
+kind = 5
+
+[node name="Rock_64_-20_Red" type="StaticBody3D" parent="Geometry" unique_id=311389567]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -64, 1.1, -20)
+script = ExtResource("2_qruef")
+size = Vector3(3, 2.2, 3)
+kind = 5
+
+[node name="Rock_20_28_Red" type="StaticBody3D" parent="Geometry" unique_id=1773215951]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 0.7, 28)
+script = ExtResource("2_qruef")
+size = Vector3(3, 1.4, 3)
+kind = 5
+
+[node name="HedgeN_Red" type="StaticBody3D" parent="Geometry" unique_id=1187874092]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36.3, 0.6, -18)
+script = ExtResource("2_qruef")
+size = Vector3(0.5999985, 1.2, 12)
+kind = 3
+
+[node name="HedgeS_Red" type="StaticBody3D" parent="Geometry" unique_id=1431901195]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36.3, 0.6, 18)
+script = ExtResource("2_qruef")
+size = Vector3(0.5999985, 1.2, 12)
+kind = 3
+
+[node name="BunkerFront_Red_0" type="StaticBody3D" parent="Geometry" unique_id=535052977]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46, 0.65, 0)
+script = ExtResource("2_qruef")
+size = Vector3(0.5, 1.3, 10)
+
+[node name="BunkerFront_Red_1" type="StaticBody3D" parent="Geometry" unique_id=1468539962]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46, 1.5999999, -4)
+script = ExtResource("2_qruef")
+size = Vector3(0.5, 0.6, 2)
+
+[node name="BunkerFront_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1425633099]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46, 1.5999999, 4)
+script = ExtResource("2_qruef")
+size = Vector3(0.5, 0.6, 2)
+
+[node name="BunkerFront_Red_3" type="StaticBody3D" parent="Geometry" unique_id=24116225]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46, 2.45, 0)
+script = ExtResource("2_qruef")
+size = Vector3(0.5, 1.1, 10)
+
+[node name="BunkerBack_Red_0" type="StaticBody3D" parent="Geometry" unique_id=134626582]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -54, 1.2, -3)
+script = ExtResource("2_qruef")
+size = Vector3(0.5, 2.4, 4)
+
+[node name="BunkerBack_Red_1" type="StaticBody3D" parent="Geometry" unique_id=671070946]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -54, 1.2, 3.1999998)
+script = ExtResource("2_qruef")
+size = Vector3(0.5, 2.4, 3.6)
+
+[node name="BunkerBack_Red_2" type="StaticBody3D" parent="Geometry" unique_id=256055229]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -54, 2.7, 0)
+script = ExtResource("2_qruef")
+size = Vector3(0.5, 0.5999999, 10)
+
+[node name="BunkerN_Red_0" type="StaticBody3D" parent="Geometry" unique_id=1102975718]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 0.65, -5)
+script = ExtResource("2_qruef")
+size = Vector3(8, 1.3, 0.5)
+
+[node name="BunkerN_Red_1" type="StaticBody3D" parent="Geometry" unique_id=918992409]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -47, 1.5999999, -5)
+script = ExtResource("2_qruef")
+size = Vector3(2, 0.6, 0.5)
+
+[node name="BunkerN_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1932729316]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -53, 1.5999999, -5)
+script = ExtResource("2_qruef")
+size = Vector3(2, 0.6, 0.5)
+
+[node name="BunkerN_Red_3" type="StaticBody3D" parent="Geometry" unique_id=567910265]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 2.45, -5)
+script = ExtResource("2_qruef")
+size = Vector3(8, 1.1, 0.5)
+
+[node name="BunkerS_Red_0" type="StaticBody3D" parent="Geometry" unique_id=1770874274]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -47.5, 1.2, 5)
+script = ExtResource("2_qruef")
+size = Vector3(3, 2.4, 0.5)
+
+[node name="BunkerS_Red_1" type="StaticBody3D" parent="Geometry" unique_id=6744054]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -52.7, 1.2, 5)
+script = ExtResource("2_qruef")
+size = Vector3(2.6, 2.4, 0.5)
+
+[node name="BunkerS_Red_2" type="StaticBody3D" parent="Geometry" unique_id=472531693]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 2.7, 5)
+script = ExtResource("2_qruef")
+size = Vector3(8, 0.5999999, 0.5)
+
+[node name="BunkerRoof_Red" type="StaticBody3D" parent="Geometry" unique_id=1870329647]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 3.15, 0)
+script = ExtResource("2_qruef")
+size = Vector3(8.5, 0.29999995, 10.5)
+kind = 0
+
+[node name="BunkerCrate_Red" type="StaticBody3D" parent="Geometry" unique_id=1363466376]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -56, 1, 3)
+script = ExtResource("2_qruef")
+size = Vector3(2, 2, 2)
+kind = 3
+
+[node name="Watchtower_Red" type="StaticBody3D" parent="Geometry" unique_id=1149144791]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 4, 24)
+script = ExtResource("2_qruef")
+size = Vector3(4, 8, 4)
+kind = 5
+
+[node name="WatchtowerRamp_Red" type="StaticBody3D" parent="Geometry" unique_id=1028245839]
+transform = Transform3D(0, -0.5547002, -0.8320503, 0, 0.8320503, -0.5547002, 1, 0, 0, -49.83359, 3.7503848, 24)
+script = ExtResource("2_qruef")
+size = Vector3(3, 0.6, 14.422205)
+kind = 2
+
+[node name="WatchtowerParapetW_Red" type="StaticBody3D" parent="Geometry" unique_id=39631485]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40.2, 8.6, 24)
+script = ExtResource("2_qruef")
+size = Vector3(0.40000153, 1.1999998, 4)
+kind = 3
+
+[node name="WatchtowerParapetN_Red" type="StaticBody3D" parent="Geometry" unique_id=1274519326]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42.2, 8.6, 22.2)
+script = ExtResource("2_qruef")
+size = Vector3(3.5999985, 1.1999998, 0.39999962)
+kind = 3
+
+[node name="RiverRamp_Red" type="StaticBody3D" parent="Geometry" unique_id=31542030]
+transform = Transform3D(0, 0.28734788, 0.95782626, 0, 0.95782626, -0.28734788, -1, 0, 0, -91.43102, -2.9367394, 40)
+script = ExtResource("2_qruef")
+size = Vector3(12, 3, 10.440307)
+kind = 2
+
+[node name="RiverEnd_Red" type="StaticBody3D" parent="Geometry" unique_id=1308948554]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -104, -4.25, 40)
+script = ExtResource("2_qruef")
+size = Vector3(16, 7.5, 12)
+kind = 4
+
+[node name="RiverEnd_RedFloor" type="StaticBody3D" parent="Geometry" unique_id=1133815830]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -104, -0.25, 40)
+script = ExtResource("2_qruef")
+size = Vector3(16, 0.5, 12)
+kind = 0
+
+[node name="RiverBridge_Red" type="StaticBody3D" parent="Geometry" unique_id=258076358]
+transform = Transform3D(-1, 0, 0, 0, 0.9230769, -0.3846154, 0, -0.3846154, -0.9230769, -60, 2.2230768, 40.115383)
+script = ExtResource("2_qruef")
+size = Vector3(4, 0.6, 13)
+kind = 0
+
+[node name="BluffRamp_Red" type="StaticBody3D" parent="Geometry" unique_id=10753597]
+transform = Transform3D(-1, 0, 0, 0, 0.87415725, -0.4856429, 0, -0.4856429, -0.87415725, -104, 2.237753, 41.645695)
+script = ExtResource("2_qruef")
+size = Vector3(4, 0.6, 10.29563)
+kind = 2
+
+[node name="RiverRock1_Red" type="StaticBody3D" parent="Geometry" unique_id=1999762743]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -39, -2.3, 38)
+script = ExtResource("2_qruef")
+size = Vector3(2, 1.4, 2)
+kind = 5
+
+[node name="RiverRock2_Red" type="StaticBody3D" parent="Geometry" unique_id=861477484]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -71, -2.3, 42)
+script = ExtResource("2_qruef")
+size = Vector3(2, 1.4, 2)
+kind = 5
+
+[node name="BankCover_Red" type="StaticBody3D" parent="Geometry" unique_id=2090845161]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 5.6, 50.2)
+script = ExtResource("2_qruef")
+size = Vector3(4, 1.1999998, 0.40000153)
+kind = 3
+
+[node name="BluffRuin_Red_0" type="StaticBody3D" parent="Geometry" unique_id=544981886]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 5.6, 48.5)
+script = ExtResource("2_qruef")
+size = Vector3(9, 1.2, 0.6)
+kind = 3
+
+[node name="BluffRuin_Red_1" type="StaticBody3D" parent="Geometry" unique_id=711996256]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.7, 5.6, 48.5)
+script = ExtResource("2_qruef")
+size = Vector3(4.6000004, 1.2, 0.6)
+kind = 3
+
+[node name="BluffRuin_Red_2" type="StaticBody3D" parent="Geometry" unique_id=963308962]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -19.5, 6.8, 48.5)
+script = ExtResource("2_qruef")
+size = Vector3(3, 1.2, 0.6)
+kind = 3
+
+[node name="BluffRuin_Red_3" type="StaticBody3D" parent="Geometry" unique_id=1131436265]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.5, 6.8, 48.5)
+script = ExtResource("2_qruef")
+size = Vector3(3, 1.2, 0.6)
+kind = 3
+
+[node name="BluffRuin_Red_4" type="StaticBody3D" parent="Geometry" unique_id=1464724335]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.7, 6.8, 48.5)
+script = ExtResource("2_qruef")
+size = Vector3(4.6000004, 1.2, 0.6)
+kind = 3
+
+[node name="BluffRuin_Red_5" type="StaticBody3D" parent="Geometry" unique_id=435909732]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22.5, 7.5, 48.5)
+script = ExtResource("2_qruef")
+size = Vector3(9, 0.19999981, 0.6)
+kind = 3
+
+[node name="BluffRuin_Red_6" type="StaticBody3D" parent="Geometry" unique_id=1614913986]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.7, 7.5, 48.5)
+script = ExtResource("2_qruef")
+size = Vector3(4.6000004, 0.19999981, 0.6)
+kind = 3
+
+[node name="BluffRuin_Red_7" type="StaticBody3D" parent="Geometry" unique_id=1713255953]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 8.05, 48.5)
+script = ExtResource("2_qruef")
+size = Vector3(16, 0.9000001, 0.6)
+kind = 3
+
+[node name="FortFront_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=1746060865]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 0.6, -13.5)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.2, 21)
+
+[node name="FortFront_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=175813367]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 0.6, 13.5)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.2, 21)
+
+[node name="FortFront_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=1654456693]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 1.8000001, -20)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.2, 8)
+
+[node name="FortFront_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=1187715772]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 1.8000001, -8)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.2, 10)
+
+[node name="FortFront_Blue_4" type="StaticBody3D" parent="Geometry" unique_id=622523434]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 1.8000001, 8)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.2, 10)
+
+[node name="FortFront_Blue_5" type="StaticBody3D" parent="Geometry" unique_id=1742316431]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 1.8000001, 20)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.2, 8)
+
+[node name="FortFront_Blue_6" type="StaticBody3D" parent="Geometry" unique_id=769700022]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 3.2, -13.5)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.5999999, 21)
+
+[node name="FortFront_Blue_7" type="StaticBody3D" parent="Geometry" unique_id=1862072399]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 3.2, 13.5)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.5999999, 21)
+
+[node name="FortFront_Blue_8" type="StaticBody3D" parent="Geometry" unique_id=847877239]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 5.1, 0)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 2.1999998, 48)
+
+[node name="FortFront_Blue_9" type="StaticBody3D" parent="Geometry" unique_id=1760273509]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 6.7999997, -22)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.1999998, 4)
+
+[node name="FortFront_Blue_10" type="StaticBody3D" parent="Geometry" unique_id=1871720616]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 6.7999997, -14)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.1999998, 4)
+
+[node name="FortFront_Blue_11" type="StaticBody3D" parent="Geometry" unique_id=505577207]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 6.7999997, 0)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.1999998, 16)
+
+[node name="FortFront_Blue_12" type="StaticBody3D" parent="Geometry" unique_id=12019949]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 6.7999997, 14)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.1999998, 4)
+
+[node name="FortFront_Blue_13" type="StaticBody3D" parent="Geometry" unique_id=603246061]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 6.7999997, 22)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 1.1999998, 4)
+
+[node name="FortFront_Blue_14" type="StaticBody3D" parent="Geometry" unique_id=563417454]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 8.7, 0)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 2.6000004, 48)
+
+[node name="FortBack_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=155304673]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100, 1.75, -13)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 3.5, 22)
+
+[node name="FortBack_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1736294728]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100, 1.75, 13)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 3.5, 22)
+
+[node name="FortBack_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=1548044169]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 100, 6.75, 0)
+script = ExtResource("2_qruef")
+size = Vector3(0.6, 6.5, 48)
+
+[node name="FortN_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=658262307]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 81.5, 1.5, -24)
+script = ExtResource("2_qruef")
+size = Vector3(3, 3, 0.6)
+
+[node name="FortN_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1390469148]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 92.7, 1.5, -24)
+script = ExtResource("2_qruef")
+size = Vector3(14.6, 3, 0.6)
+
+[node name="FortN_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=1750348316]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 4.6, -24)
+script = ExtResource("2_qruef")
+size = Vector3(20, 3.1999998, 0.6)
+
+[node name="FortN_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=1274426797]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 84, 6.7999997, -24)
+script = ExtResource("2_qruef")
+size = Vector3(8, 1.1999998, 0.6)
+
+[node name="FortN_Blue_4" type="StaticBody3D" parent="Geometry" unique_id=179343637]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 95.5, 6.7999997, -24)
+script = ExtResource("2_qruef")
+size = Vector3(9, 1.1999998, 0.6)
+
+[node name="FortN_Blue_5" type="StaticBody3D" parent="Geometry" unique_id=407936549]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 8.7, -24)
+script = ExtResource("2_qruef")
+size = Vector3(20, 2.6000004, 0.6)
+
+[node name="FortS_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=1382900486]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 81.5, 1.5, 24)
+script = ExtResource("2_qruef")
+size = Vector3(3, 3, 0.6)
+
+[node name="FortS_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1262251806]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 92.7, 1.5, 24)
+script = ExtResource("2_qruef")
+size = Vector3(14.6, 3, 0.6)
+
+[node name="FortS_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=1565664326]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 4.6, 24)
+script = ExtResource("2_qruef")
+size = Vector3(20, 3.1999998, 0.6)
+
+[node name="FortS_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=1854186385]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 84, 6.7999997, 24)
+script = ExtResource("2_qruef")
+size = Vector3(8, 1.1999998, 0.6)
+
+[node name="FortS_Blue_4" type="StaticBody3D" parent="Geometry" unique_id=529354980]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 95.5, 6.7999997, 24)
+script = ExtResource("2_qruef")
+size = Vector3(9, 1.1999998, 0.6)
+
+[node name="FortS_Blue_5" type="StaticBody3D" parent="Geometry" unique_id=1992608548]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 8.7, 24)
+script = ExtResource("2_qruef")
+size = Vector3(20, 2.6000004, 0.6)
+
+[node name="FortStairN_Blue" type="StaticBody3D" parent="Geometry" unique_id=1050362327]
+transform = Transform3D(0, -0.41380295, -0.9103665, 0, 0.9103665, -0.41380295, 1, 0, 0, 89.62414, 2.22689, -21.5)
+script = ExtResource("2_qruef")
+size = Vector3(3, 0.6, 12.083046)
+kind = 2
+
+[node name="FortStairS_Blue" type="StaticBody3D" parent="Geometry" unique_id=1888517413]
+transform = Transform3D(0, -0.41380295, -0.9103665, 0, 0.9103665, -0.41380295, 1, 0, 0, 89.62414, 2.22689, 21.5)
+script = ExtResource("2_qruef")
+size = Vector3(3, 0.6, 12.083046)
+kind = 2
+
+[node name="FortFloor2_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=1657179610]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 4.75, -23.5)
+script = ExtResource("2_qruef")
+size = Vector3(20, 0.5, 1)
+kind = 0
+
+[node name="FortFloor2_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=676460031]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 82, 4.75, -21.5)
+script = ExtResource("2_qruef")
+size = Vector3(4, 0.5, 3)
+kind = 0
+
+[node name="FortFloor2_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=2108306686]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 97.5, 4.75, -21.5)
+script = ExtResource("2_qruef")
+size = Vector3(5, 0.5, 3)
+kind = 0
+
+[node name="FortFloor2_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=1818095108]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 4.75, 0)
+script = ExtResource("2_qruef")
+size = Vector3(20, 0.5, 40)
+kind = 0
+
+[node name="FortFloor2_Blue_4" type="StaticBody3D" parent="Geometry" unique_id=1572614166]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 82, 4.75, 21.5)
+script = ExtResource("2_qruef")
+size = Vector3(4, 0.5, 3)
+kind = 0
+
+[node name="FortFloor2_Blue_5" type="StaticBody3D" parent="Geometry" unique_id=288261616]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 97.5, 4.75, 21.5)
+script = ExtResource("2_qruef")
+size = Vector3(5, 0.5, 3)
+kind = 0
+
+[node name="FortFloor2_Blue_6" type="StaticBody3D" parent="Geometry" unique_id=540850834]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 4.75, 23.5)
+script = ExtResource("2_qruef")
+size = Vector3(20, 0.5, 1)
+kind = 0
+
+[node name="FortRoofStair_Blue" type="StaticBody3D" parent="Geometry" unique_id=360595671]
+transform = Transform3D(0, 0.4472136, 0.8944272, 0, 0.8944272, -0.4472136, -1, 0, 0, 90.86584, 7.231672, 0)
+script = ExtResource("2_qruef")
+size = Vector3(3, 0.6, 11.18034)
+kind = 2
+
+[node name="FortRoof_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=844485933]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 9.75, -12.75)
+script = ExtResource("2_qruef")
+size = Vector3(20, 0.5, 22.5)
+kind = 0
+
+[node name="FortRoof_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1081522111]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 83, 9.75, 0)
+script = ExtResource("2_qruef")
+size = Vector3(6, 0.5, 3)
+kind = 0
+
+[node name="FortRoof_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=2179178]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 98, 9.75, 0)
+script = ExtResource("2_qruef")
+size = Vector3(4, 0.5, 3)
+kind = 0
+
+[node name="FortRoof_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=1251268183]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 9.75, 12.75)
+script = ExtResource("2_qruef")
+size = Vector3(20, 0.5, 22.5)
+kind = 0
+
+[node name="FortParapetFront_Blue" type="StaticBody3D" parent="Geometry" unique_id=982017873]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80.3, 10.6, -4)
+script = ExtResource("2_qruef")
+size = Vector3(0.5999985, 1.1999998, 40)
+kind = 3
+
+[node name="FortParapetS_Blue" type="StaticBody3D" parent="Geometry" unique_id=701671633]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 93, 10.6, 23.7)
+script = ExtResource("2_qruef")
+size = Vector3(14, 1.1999998, 0.6000004)
+kind = 3
+
+[node name="FortTower_Blue" type="StaticBody3D" parent="Geometry" unique_id=841495589]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 83, 13, 20)
+script = ExtResource("2_qruef")
+size = Vector3(6, 6, 8)
+kind = 5
+
+[node name="FortTowerRamp_Blue" type="StaticBody3D" parent="Geometry" unique_id=885944133]
+transform = Transform3D(0, 0.5144958, 0.857493, 0, 0.857493, -0.5144958, -1, 0, 0, 90.84565, 12.742752, 20)
+script = ExtResource("2_qruef")
+size = Vector3(3, 0.6, 11.661903)
+kind = 2
+
+[node name="FortTowerParapetW_Blue" type="StaticBody3D" parent="Geometry" unique_id=1667831769]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80.2, 16.6, 20)
+script = ExtResource("2_qruef")
+size = Vector3(0.40000153, 1.2000008, 8)
+kind = 3
+
+[node name="FortTowerParapetN_Blue" type="StaticBody3D" parent="Geometry" unique_id=413663307]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 83.2, 16.6, 16.2)
+script = ExtResource("2_qruef")
+size = Vector3(5.5999985, 1.2000008, 0.39999962)
+kind = 3
+
+[node name="FortParapetN1_Blue" type="StaticBody3D" parent="Geometry" unique_id=690742197]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 83.55, 10.6, -23.7)
+script = ExtResource("2_qruef")
+size = Vector3(5.9000015, 1.1999998, 0.6000004)
+kind = 3
+
+[node name="FortParapetN2_Blue" type="StaticBody3D" parent="Geometry" unique_id=1777773120]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 94.75, 10.6, -23.7)
+script = ExtResource("2_qruef")
+size = Vector3(10.5, 1.1999998, 0.6000004)
+kind = 3
+
+[node name="FortPillar_86_-8_Blue" type="StaticBody3D" parent="Geometry" unique_id=1480847353]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 86, 2.25, -8)
+script = ExtResource("2_qruef")
+size = Vector3(1, 4.5, 1)
+
+[node name="FortPillar_86_8_Blue" type="StaticBody3D" parent="Geometry" unique_id=1368736812]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 86, 2.25, 8)
+script = ExtResource("2_qruef")
+size = Vector3(1, 4.5, 1)
+
+[node name="FortPillar_94_-8_Blue" type="StaticBody3D" parent="Geometry" unique_id=1620926331]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 94, 2.25, -8)
+script = ExtResource("2_qruef")
+size = Vector3(1, 4.5, 1)
+
+[node name="FortPillar_94_8_Blue" type="StaticBody3D" parent="Geometry" unique_id=150633257]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 94, 2.25, 8)
+script = ExtResource("2_qruef")
+size = Vector3(1, 4.5, 1)
+
+[node name="FortCover2_Blue" type="StaticBody3D" parent="Geometry" unique_id=157523782]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 85, 5.6, -10)
+script = ExtResource("2_qruef")
+size = Vector3(2, 1.1999998, 4)
+kind = 3
+
+[node name="FortCover2b_Blue" type="StaticBody3D" parent="Geometry" unique_id=2108304088]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 85, 5.6, 10)
+script = ExtResource("2_qruef")
+size = Vector3(2, 1.1999998, 4)
+kind = 3
+
+[node name="LedgeRamp_Blue" type="StaticBody3D" parent="Geometry" unique_id=1318524637]
+transform = Transform3D(1, 0, 0, 0, 0.86824316, -0.49613893, 0, 0.49613893, 0.86824316, 66, 1.004561, -38.711678)
+script = ExtResource("2_qruef")
+size = Vector3(4, 6.9, 16.124516)
+kind = 2
+
+[node name="LedgeBridge_Blue" type="StaticBody3D" parent="Geometry" unique_id=1367872348]
+transform = Transform3D(-1, 0, 0, 0, 0.9950372, -0.099503726, 0, -0.099503726, -0.9950372, 88, 8.7014885, -33.97015)
+script = ExtResource("2_qruef")
+size = Vector3(3, 0.6, 20.09975)
+kind = 0
+
+[node name="LookoutRamp_Blue" type="StaticBody3D" parent="Geometry" unique_id=489561790]
+transform = Transform3D(0, 0.24253562, 0.9701425, 0, 0.9701425, -0.24253562, -1, 0, 0, 13.927239, 9.208958, -50)
+script = ExtResource("2_qruef")
+size = Vector3(4, 0.6, 12.369317)
+kind = 2
+
+[node name="LedgeRock_32_Blue" type="StaticBody3D" parent="Geometry" unique_id=621423271]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32, 8.6, -48)
+script = ExtResource("2_qruef")
+size = Vector3(2, 1.1999998, 2)
+kind = 3
+
+[node name="LedgeRock_50_Blue" type="StaticBody3D" parent="Geometry" unique_id=941078654]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 8.6, -52)
+script = ExtResource("2_qruef")
+size = Vector3(2, 1.1999998, 2)
+kind = 3
+
+[node name="LedgeRock_78_Blue" type="StaticBody3D" parent="Geometry" unique_id=1441487441]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 78, 8.6, -48)
+script = ExtResource("2_qruef")
+size = Vector3(2, 1.1999998, 2)
+kind = 3
+
+[node name="CrownCrate_Blue" type="StaticBody3D" parent="Geometry" unique_id=1733341709]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 7, 6, 0)
+script = ExtResource("2_qruef")
+size = Vector3(2, 2, 2)
+kind = 3
+
+[node name="Rock_30_-30_Blue" type="StaticBody3D" parent="Geometry" unique_id=2127896683]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 1.1, -30)
+script = ExtResource("2_qruef")
+size = Vector3(3, 2.2, 3)
+kind = 5
+
+[node name="Rock_44_-14_Blue" type="StaticBody3D" parent="Geometry" unique_id=2012098278]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 44, 0.7, -14)
+script = ExtResource("2_qruef")
+size = Vector3(3, 1.4, 3)
+kind = 5
+
+[node name="Rock_34_22_Blue" type="StaticBody3D" parent="Geometry" unique_id=1587352683]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 1.1, 22)
+script = ExtResource("2_qruef")
+size = Vector3(3, 2.2, 3)
+kind = 5
+
+[node name="Rock_60_14_Blue" type="StaticBody3D" parent="Geometry" unique_id=871178567]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 0.7, 14)
+script = ExtResource("2_qruef")
+size = Vector3(3, 1.4, 3)
+kind = 5
+
+[node name="Rock_64_-20_Blue" type="StaticBody3D" parent="Geometry" unique_id=1518097754]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 64, 1.1, -20)
+script = ExtResource("2_qruef")
+size = Vector3(3, 2.2, 3)
+kind = 5
+
+[node name="Rock_20_28_Blue" type="StaticBody3D" parent="Geometry" unique_id=787524485]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 0.7, 28)
+script = ExtResource("2_qruef")
+size = Vector3(3, 1.4, 3)
+kind = 5
+
+[node name="HedgeN_Blue" type="StaticBody3D" parent="Geometry" unique_id=925238768]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36.3, 0.6, -18)
+script = ExtResource("2_qruef")
+size = Vector3(0.5999985, 1.2, 12)
+kind = 3
+
+[node name="HedgeS_Blue" type="StaticBody3D" parent="Geometry" unique_id=40750284]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36.3, 0.6, 18)
+script = ExtResource("2_qruef")
+size = Vector3(0.5999985, 1.2, 12)
+kind = 3
+
+[node name="BunkerFront_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=1613166421]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46, 0.65, 0)
+script = ExtResource("2_qruef")
+size = Vector3(0.5, 1.3, 10)
+
+[node name="BunkerFront_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1686884144]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46, 1.5999999, -4)
+script = ExtResource("2_qruef")
+size = Vector3(0.5, 0.6, 2)
+
+[node name="BunkerFront_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=1243906038]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46, 1.5999999, 4)
+script = ExtResource("2_qruef")
+size = Vector3(0.5, 0.6, 2)
+
+[node name="BunkerFront_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=266248745]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46, 2.45, 0)
+script = ExtResource("2_qruef")
+size = Vector3(0.5, 1.1, 10)
+
+[node name="BunkerBack_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=2103955128]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 54, 1.2, -3)
+script = ExtResource("2_qruef")
+size = Vector3(0.5, 2.4, 4)
+
+[node name="BunkerBack_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1610929468]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 54, 1.2, 3.1999998)
+script = ExtResource("2_qruef")
+size = Vector3(0.5, 2.4, 3.6)
+
+[node name="BunkerBack_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=1923510716]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 54, 2.7, 0)
+script = ExtResource("2_qruef")
+size = Vector3(0.5, 0.5999999, 10)
+
+[node name="BunkerN_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=2026672974]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 0.65, -5)
+script = ExtResource("2_qruef")
+size = Vector3(8, 1.3, 0.5)
+
+[node name="BunkerN_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=2124257590]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 47, 1.5999999, -5)
+script = ExtResource("2_qruef")
+size = Vector3(2, 0.6, 0.5)
+
+[node name="BunkerN_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=311337781]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 53, 1.5999999, -5)
+script = ExtResource("2_qruef")
+size = Vector3(2, 0.6, 0.5)
+
+[node name="BunkerN_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=1917161888]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 2.45, -5)
+script = ExtResource("2_qruef")
+size = Vector3(8, 1.1, 0.5)
+
+[node name="BunkerS_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=4116914]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 47.5, 1.2, 5)
+script = ExtResource("2_qruef")
+size = Vector3(3, 2.4, 0.5)
+
+[node name="BunkerS_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1945839453]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52.7, 1.2, 5)
+script = ExtResource("2_qruef")
+size = Vector3(2.6, 2.4, 0.5)
+
+[node name="BunkerS_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=1536994476]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 2.7, 5)
+script = ExtResource("2_qruef")
+size = Vector3(8, 0.5999999, 0.5)
+
+[node name="BunkerRoof_Blue" type="StaticBody3D" parent="Geometry" unique_id=822763035]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 3.15, 0)
+script = ExtResource("2_qruef")
+size = Vector3(8.5, 0.29999995, 10.5)
+kind = 0
+
+[node name="BunkerCrate_Blue" type="StaticBody3D" parent="Geometry" unique_id=220947179]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 56, 1, 3)
+script = ExtResource("2_qruef")
+size = Vector3(2, 2, 2)
+kind = 3
+
+[node name="Watchtower_Blue" type="StaticBody3D" parent="Geometry" unique_id=1004247041]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 4, 24)
+script = ExtResource("2_qruef")
+size = Vector3(4, 8, 4)
+kind = 5
+
+[node name="WatchtowerRamp_Blue" type="StaticBody3D" parent="Geometry" unique_id=1542074743]
+transform = Transform3D(0, 0.5547002, 0.8320503, 0, 0.8320503, -0.5547002, -1, 0, 0, 49.83359, 3.7503848, 24)
+script = ExtResource("2_qruef")
+size = Vector3(3, 0.6, 14.422205)
+kind = 2
+
+[node name="WatchtowerParapetW_Blue" type="StaticBody3D" parent="Geometry" unique_id=778191730]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40.2, 8.6, 24)
+script = ExtResource("2_qruef")
+size = Vector3(0.40000153, 1.1999998, 4)
+kind = 3
+
+[node name="WatchtowerParapetN_Blue" type="StaticBody3D" parent="Geometry" unique_id=588244968]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42.2, 8.6, 22.2)
+script = ExtResource("2_qruef")
+size = Vector3(3.5999985, 1.1999998, 0.39999962)
+kind = 3
+
+[node name="RiverRamp_Blue" type="StaticBody3D" parent="Geometry" unique_id=427477128]
+transform = Transform3D(0, -0.28734788, -0.95782626, 0, 0.95782626, -0.28734788, 1, 0, 0, 91.43102, -2.9367394, 40)
+script = ExtResource("2_qruef")
+size = Vector3(12, 3, 10.440307)
+kind = 2
+
+[node name="RiverEnd_Blue" type="StaticBody3D" parent="Geometry" unique_id=695805978]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 104, -4.25, 40)
+script = ExtResource("2_qruef")
+size = Vector3(16, 7.5, 12)
+kind = 4
+
+[node name="RiverEnd_BlueFloor" type="StaticBody3D" parent="Geometry" unique_id=1597015061]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 104, -0.25, 40)
+script = ExtResource("2_qruef")
+size = Vector3(16, 0.5, 12)
+kind = 0
+
+[node name="RiverBridge_Blue" type="StaticBody3D" parent="Geometry" unique_id=315472886]
+transform = Transform3D(-1, 0, 0, 0, 0.9230769, -0.3846154, 0, -0.3846154, -0.9230769, 60, 2.2230768, 40.115383)
+script = ExtResource("2_qruef")
+size = Vector3(4, 0.6, 13)
+kind = 0
+
+[node name="BluffRamp_Blue" type="StaticBody3D" parent="Geometry" unique_id=1451583282]
+transform = Transform3D(-1, 0, 0, 0, 0.87415725, -0.4856429, 0, -0.4856429, -0.87415725, 104, 2.237753, 41.645695)
+script = ExtResource("2_qruef")
+size = Vector3(4, 0.6, 10.29563)
+kind = 2
+
+[node name="RiverRock1_Blue" type="StaticBody3D" parent="Geometry" unique_id=1215011207]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39, -2.3, 38)
+script = ExtResource("2_qruef")
+size = Vector3(2, 1.4, 2)
+kind = 5
+
+[node name="RiverRock2_Blue" type="StaticBody3D" parent="Geometry" unique_id=412652004]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 71, -2.3, 42)
+script = ExtResource("2_qruef")
+size = Vector3(2, 1.4, 2)
+kind = 5
+
+[node name="BankCover_Blue" type="StaticBody3D" parent="Geometry" unique_id=1765135174]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 5.6, 50.2)
+script = ExtResource("2_qruef")
+size = Vector3(4, 1.1999998, 0.40000153)
+kind = 3
+
+[node name="BluffRuin_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=1257080781]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 5.6, 48.5)
+script = ExtResource("2_qruef")
+size = Vector3(9, 1.2, 0.6)
+kind = 3
+
+[node name="BluffRuin_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=2046907028]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.7, 5.6, 48.5)
+script = ExtResource("2_qruef")
+size = Vector3(4.6000004, 1.2, 0.6)
+kind = 3
+
+[node name="BluffRuin_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=1987854244]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19.5, 6.8, 48.5)
+script = ExtResource("2_qruef")
+size = Vector3(3, 1.2, 0.6)
+kind = 3
+
+[node name="BluffRuin_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=714328246]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25.5, 6.8, 48.5)
+script = ExtResource("2_qruef")
+size = Vector3(3, 1.2, 0.6)
+kind = 3
+
+[node name="BluffRuin_Blue_4" type="StaticBody3D" parent="Geometry" unique_id=1529197058]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.7, 6.8, 48.5)
+script = ExtResource("2_qruef")
+size = Vector3(4.6000004, 1.2, 0.6)
+kind = 3
+
+[node name="BluffRuin_Blue_5" type="StaticBody3D" parent="Geometry" unique_id=1303776724]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22.5, 7.5, 48.5)
+script = ExtResource("2_qruef")
+size = Vector3(9, 0.19999981, 0.6)
+kind = 3
+
+[node name="BluffRuin_Blue_6" type="StaticBody3D" parent="Geometry" unique_id=95991851]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.7, 7.5, 48.5)
+script = ExtResource("2_qruef")
+size = Vector3(4.6000004, 0.19999981, 0.6)
+kind = 3
+
+[node name="BluffRuin_Blue_7" type="StaticBody3D" parent="Geometry" unique_id=1219853499]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 8.05, 48.5)
+script = ExtResource("2_qruef")
+size = Vector3(16, 0.9000001, 0.6)
+kind = 3
+
+[node name="Labels" type="Node3D" parent="." unique_id=1942353898]
+
+[node name="HILL" type="Label3D" parent="Labels" unique_id=1636141454 groups=["debug_labels"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 13, 0)
+pixel_size = 0.01
+billboard = 2
+texture_filter = 0
+outline_modulate = Color(0.15, 0.1, 0.25, 1)
+text = "HILL"
+font_size = 64
+outline_size = 16
+
+[node name="LEDGE" type="Label3D" parent="Labels" unique_id=1988239980 groups=["debug_labels"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 16, -50)
+pixel_size = 0.01
+billboard = 2
+texture_filter = 0
+outline_modulate = Color(0.15, 0.1, 0.25, 1)
+text = "LEDGE"
+font_size = 64
+outline_size = 16
+
+[node name="RIVER" type="Label3D" parent="Labels" unique_id=1316223594 groups=["debug_labels"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 40)
+pixel_size = 0.01
+billboard = 2
+texture_filter = 0
+outline_modulate = Color(0.15, 0.1, 0.25, 1)
+text = "RIVER"
+font_size = 64
+outline_size = 16
+
+[node name="RED_FORT" type="Label3D" parent="Labels" unique_id=1798035331 groups=["debug_labels"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -90, 15, 0)
+pixel_size = 0.01
+billboard = 2
+texture_filter = 0
+outline_modulate = Color(0.15, 0.1, 0.25, 1)
+text = "RED FORT"
+font_size = 64
+outline_size = 16
+
+[node name="BLUE_FORT" type="Label3D" parent="Labels" unique_id=1000079966 groups=["debug_labels"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 90, 15, 0)
+pixel_size = 0.01
+billboard = 2
+texture_filter = 0
+outline_modulate = Color(0.15, 0.1, 0.25, 1)
+text = "BLUE FORT"
+font_size = 64
+outline_size = 16
+
+[node name="Combat" type="Node3D" parent="." unique_id=1276149260]
+
+[node name="Pad_Rifle" type="Node3D" parent="Combat" unique_id=1000684536]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 9, 0)
+script = ExtResource("3_lajqq")
+weapon = &"rifle"
+
+[node name="Pad_Shotgun" type="Node3D" parent="Combat" unique_id=1365002696]
+script = ExtResource("3_lajqq")
+weapon = &"shotgun"
+
+[node name="Pad_RevolverLookout" type="Node3D" parent="Combat" unique_id=1254424835]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 11, -50)
+script = ExtResource("3_lajqq")
+weapon = &"revolver"
+
+[node name="Pad_SMGRiver" type="Node3D" parent="Combat" unique_id=68269941]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -3, 40)
+script = ExtResource("3_lajqq")
+weapon = &"smg"
+
+[node name="Pad_Pistol_Red" type="Node3D" parent="Combat" unique_id=1063936131]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -96, 0, 10)
+script = ExtResource("3_lajqq")
+
+[node name="Pad_PistolSpawn_Red" type="Node3D" parent="Combat" unique_id=1053030745]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -106, 0, -30)
+script = ExtResource("3_lajqq")
+
+[node name="Pad_SMG_Red" type="Node3D" parent="Combat" unique_id=1701652544]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -84, 5, 0)
+script = ExtResource("3_lajqq")
+weapon = &"smg"
+
+[node name="Pad_Sniper_Red" type="Node3D" parent="Combat" unique_id=991769910]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -83, 16, 20)
+script = ExtResource("3_lajqq")
+weapon = &"sniper"
+respawn_time = 0.0
+
+[node name="Resupply_Spawn_Red" type="Node3D" parent="Combat" unique_id=98493626]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -104, 0, 12)
+script = ExtResource("4_fma3b")
+
+[node name="Resupply_Fort_Red" type="Node3D" parent="Combat" unique_id=118112323]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -96, 5, -8)
+script = ExtResource("4_fma3b")
+
+[node name="Resupply_Bunker_Red" type="Node3D" parent="Combat" unique_id=1325132748]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -52.5, 0, -3)
+script = ExtResource("4_fma3b")
+
+[node name="Pad_Revolver_Red" type="Node3D" parent="Combat" unique_id=1028043225]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 0, 0)
+script = ExtResource("3_lajqq")
+weapon = &"revolver"
+
+[node name="Pad_Pistol_Blue" type="Node3D" parent="Combat" unique_id=1576962738]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 96, 0, 10)
+script = ExtResource("3_lajqq")
+
+[node name="Pad_PistolSpawn_Blue" type="Node3D" parent="Combat" unique_id=1873262359]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 106, 0, -30)
+script = ExtResource("3_lajqq")
+
+[node name="Pad_SMG_Blue" type="Node3D" parent="Combat" unique_id=915161273]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 84, 5, 0)
+script = ExtResource("3_lajqq")
+weapon = &"smg"
+
+[node name="Pad_Sniper_Blue" type="Node3D" parent="Combat" unique_id=756794614]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 83, 16, 20)
+script = ExtResource("3_lajqq")
+weapon = &"sniper"
+respawn_time = 0.0
+
+[node name="Resupply_Spawn_Blue" type="Node3D" parent="Combat" unique_id=293214412]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 104, 0, 12)
+script = ExtResource("4_fma3b")
+
+[node name="Resupply_Fort_Blue" type="Node3D" parent="Combat" unique_id=203187941]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 96, 5, -8)
+script = ExtResource("4_fma3b")
+
+[node name="Resupply_Bunker_Blue" type="Node3D" parent="Combat" unique_id=164352773]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52.5, 0, -3)
+script = ExtResource("4_fma3b")
+
+[node name="Pad_Revolver_Blue" type="Node3D" parent="Combat" unique_id=458825974]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 0, 0)
+script = ExtResource("3_lajqq")
+weapon = &"revolver"
+
+[node name="Spawns" type="Node3D" parent="." unique_id=1664779803]
+
+[node name="SpawnA_Red" type="Marker3D" parent="Spawns" unique_id=1027758741 groups=["spawn"]]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -106, 0, -18)
+metadata/team = 0
+
+[node name="SpawnB_Red" type="Marker3D" parent="Spawns" unique_id=531379970 groups=["spawn"]]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -106, 0, -6)
+metadata/team = 0
+
+[node name="SpawnC_Red" type="Marker3D" parent="Spawns" unique_id=1730223441 groups=["spawn"]]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -106, 0, 6)
+metadata/team = 0
+
+[node name="SpawnD_Red" type="Marker3D" parent="Spawns" unique_id=1466100986 groups=["spawn"]]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -106, 0, 18)
+metadata/team = 0
+
+[node name="SpawnA_Blue" type="Marker3D" parent="Spawns" unique_id=991135856 groups=["spawn"]]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 106, 0, -18)
+metadata/team = 1
+
+[node name="SpawnB_Blue" type="Marker3D" parent="Spawns" unique_id=982062972 groups=["spawn"]]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 106, 0, -6)
+metadata/team = 1
+
+[node name="SpawnC_Blue" type="Marker3D" parent="Spawns" unique_id=933903232 groups=["spawn"]]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 106, 0, 6)
+metadata/team = 1
+
+[node name="SpawnD_Blue" type="Marker3D" parent="Spawns" unique_id=1242193098 groups=["spawn"]]
+transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 106, 0, 18)
+metadata/team = 1
+
+[node name="Player" type="CharacterBody3D" parent="." unique_id=380101126 instance=ExtResource("5_7r01s")]
+transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -106, 0, -18)
+script = ExtResource("6_hbvsd")
+
+[node name="GameUI" type="Node" parent="." unique_id=1738296489]
+script = ExtResource("7_gyp7f")
+
+[node name="RetroScreen" type="CanvasLayer" parent="." unique_id=2019211831]
+script = ExtResource("8_blm1f")
+
+[node name="DebugHUD" type="CanvasLayer" parent="." unique_id=665701150]
+script = ExtResource("9_4aabq")
+
+[node name="TuningPanel" type="CanvasLayer" parent="." unique_id=1621067151]
+script = ExtResource("10_37fra")

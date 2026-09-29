@@ -58,6 +58,43 @@ var pre_move_velocity: Vector3 = Vector3.ZERO
 var events: Array[Dictionary] = []
 
 
+## Every field but the events, in declaration order: what the server sends a
+## client about its own player, so prediction can go back to it (NetCodec).
+func to_array() -> Array:
+	var out := []
+	for prop in _fields():
+		out.append(get(prop))
+	return out
+
+
+## Sets every field from to_array() data. The data may be junk off the
+## network: nothing is set unless it's the right length and every value has
+## its field's type (a mode in range, finite numbers). Returns whether it took.
+func from_array(values: Array) -> bool:
+	var names := _fields()
+	if values.size() != names.size():
+		return false
+	for i in names.size():
+		var v: Variant = values[i]
+		if typeof(v) != typeof(get(names[i])):
+			return false
+		if (v is float and not is_finite(v)) or (v is Vector3 and not (v as Vector3).is_finite()):
+			return false
+	if int(values[names.find("mode")]) < 0 or int(values[names.find("mode")]) >= Mode.size():
+		return false
+	for i in names.size():
+		set(names[i], values[i])
+	return true
+
+
+func _fields() -> PackedStringArray:
+	var out := PackedStringArray()
+	for prop in get_property_list():
+		if prop.usage & PROPERTY_USAGE_SCRIPT_VARIABLE and prop.name != "events":
+			out.append(prop.name)
+	return out
+
+
 func reset(params: MovementParams) -> void:
 	var fresh := MovementState.new()
 	for prop in get_property_list():

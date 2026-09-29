@@ -1,4 +1,4 @@
-extends Node
+extends "res://tests/test_suite.gd"
 ## Movement tests. Each test builds a small world, drives a Player with
 ## scripted InputCommands one physics tick at a time, and checks the result
 ## against the numbers in GDD §4.
@@ -9,31 +9,6 @@ const Mode := MovementState.Mode
 var world: Node3D
 var player: Player
 var p: MovementParams
-var _failures: PackedStringArray = []
-var _current := ""
-var _checks := 0
-
-
-func _ready() -> void:
-	_run.call_deferred()
-
-
-func _run() -> void:
-	var tests: PackedStringArray = []
-	for m in get_method_list():
-		if String(m.name).begins_with("test_"):
-			tests.append(m.name)
-	for t in tests:
-		_current = t
-		var before := _failures.size()
-		await _setup()
-		await Callable(self, t).call()
-		_teardown()
-		print("%s %s" % ["PASS" if _failures.size() == before else "FAIL", t])
-	print("\n%d tests, %d checks, %d failures" % [tests.size(), _checks, _failures.size()])
-	for f in _failures:
-		print("  ✗ ", f)
-	get_tree().quit(1 if _failures.size() > 0 else 0)
 
 
 # --- Harness ----------------------------------------------------------------
@@ -100,16 +75,6 @@ func settle() -> void:
 
 func hspeed() -> float:
 	return player.horizontal_speed()
-
-
-func check(cond: bool, what: String) -> void:
-	_checks += 1
-	if not cond:
-		_failures.append("%s: %s" % [_current, what])
-
-
-func near(actual: float, expected: float, tol: float, what: String) -> void:
-	check(absf(actual - expected) <= tol, "%s = %.3f, expected %.3f ± %.3f" % [what, actual, expected, tol])
 
 
 # --- Ground -----------------------------------------------------------------
@@ -189,6 +154,21 @@ func test_coyote_jump_after_leaving_ledge() -> void:
 
 
 # --- Slide ------------------------------------------------------------------
+
+func test_slide_holds_its_speed() -> void:
+	place(Vector3.ZERO, Vector3(0, 0, -12))
+	player.state.mode = Mode.GROUND
+	await run(cmd(), 2)
+	var c := cmd()
+	c.crouch_pressed = true
+	c.crouch_held = true
+	await run(c)
+	c.crouch_pressed = false
+	check(player.state.mode == Mode.SLIDE, "sliding")
+	var start := hspeed()
+	await run(c, 30)
+	near(start - hspeed(), p.slide_friction * 0.5, 0.2, "speed lost over 0.5 s (%.2f -> %.2f)" % [start, hspeed()])
+
 
 func test_slide_boost_decay_and_cooldown() -> void:
 	place(Vector3.ZERO)
@@ -488,6 +468,7 @@ func test_smashdown_banks_speed_and_bounces() -> void:
 	await run(c)
 	var expected := minf(p.smash_bounce_base + p.smash_bounce_per_meter * float(impact.drop), p.smash_bounce_max)
 	near(player.velocity.y, expected - p.gravity * DT, 0.1, "slam bounce velocity")
+	near(hspeed(), 8.0 + p.smash_bounce_boost, 0.1, "bounce kicks you on")
 
 
 func test_smashdown_slam_slide() -> void:
@@ -551,3 +532,141 @@ func test_stays_crouched_under_low_ceiling() -> void:
 	await run(c, 180)
 	check(player.global_position.z < -12.5, "came out the other side (z %.2f)" % player.global_position.z)
 	check(not player.state.crouched, "stood up after the tunnel")
+
+
+# --- Death --------------------------------------------------------------------
+
+## Enough pieces to read as "diced", not just a few limbs.
+const MIN_PIECES := 40
+
+
+func _wait_for_pieces(max_frames := 240) -> void:
+	for i in max_frames:
+		await get_tree().physics_frame
+		if player.model.fragments().size() >= MIN_PIECES:
+			return
+
+
+func test_death_stops_player_and_body_falls_apart() -> void:
+	place(Vector3.ZERO)
+	await settle()
+	player.die()
+	check(player.is_dead, "dead after die()")
+	var start := player.global_position
+	await run(cmd(Vector2(0, 1)), 10)
+	check(player.global_position.is_equal_approx(start), "no movement while dead")
+	await _wait_for_pieces()
+	check(player.model.fragments().size() >= MIN_PIECES,
+			"diced into lots of pieces: %d" % player.model.fragments().size())
+	check(not player.model.body.visible, "the whole body was swapped for pieces")
+	for i in 150:
+		await get_tree().physics_frame
+	var resting := 0
+	for f in player.model.fragments():
+		if f.global_position.y > -0.2 and f.global_position.y < 2.5:
+			resting += 1
+	check(resting == player.model.fragments().size(), "pieces landed on the floor (%d resting)" % resting)
+
+
+func test_respawn_mid_collapse_reassembles_cleanly() -> void:
+	place(Vector3.ZERO)
+	await settle()
+	player.die()
+	for i in 12:
+		await get_tree().physics_frame
+	player.respawn()
+	for i in 120:
+		await get_tree().physics_frame  # Long enough for any leftover pops.
+	check(not player.is_dead, "alive after respawn")
+	check(player.model.fragments().is_empty(), "no fragments after respawn (%d)" % player.model.fragments().size())
+	check(player.model.body.visible and player.model.heart.visible, "body and heart back")
+	await run(cmd(Vector2(0, 1)), 30)
+	check(hspeed() > 5.0, "can move again after respawn")
+
+
+func test_falling_out_of_the_world_kills() -> void:
+	place(Vector3(0, Player.KILL_Y + 1.0, 0) + Vector3(300, 0, 0))
+	await run(cmd(), 30)
+	check(player.is_dead, "died below the kill height")
+
+
+# --- Camera ---------------------------------------------------------------------
+
+## Whether a camera-sized ball at the camera would be inside the world.
+func camera_in_wall() -> bool:
+	var q := PhysicsShapeQueryParameters3D.new()
+	var ball := SphereShape3D.new()
+	ball.radius = Player.CAMERA_PROBE * 0.8
+	q.shape = ball
+	q.transform = Transform3D(Basis.IDENTITY, player.camera.global_position)
+	q.collision_mask = 1
+	q.exclude = [player.get_rid()]
+	return not player.get_world_3d().direct_space_state.intersect_shape(q, 1).is_empty()
+
+
+func test_the_third_person_camera_bumps_against_a_wall_behind() -> void:
+	box(Vector3(0, 2, 1.2), Vector3(10, 4, 0.5))  # A wall 1 m behind (the camera sits behind, +Z).
+	place(Vector3(0, 0.05, 0))
+	player.set_process(true)
+	player.set_third_person(true)
+	await run(cmd(), 10)
+	await get_tree().process_frame
+	var cam := player.camera.global_position
+	check(not camera_in_wall(), "the camera isn't in the wall (at %s)" % cam)
+	check(cam.z < 0.95 and cam.z > 0.0, "it's pulled in on this side of it (z %.2f)" % cam.z)
+	# Wall gone: it eases back out to full distance.
+	for c in world.get_children():
+		if c is StaticBody3D and c.position.z > 1.0:
+			c.free()
+	for i in 90:
+		await get_tree().process_frame
+	check(player.camera.global_position.z > 3.0, "and back out once it's clear (z %.2f)" % player.camera.global_position.z)
+	player.set_third_person(false)
+
+
+func test_the_eye_never_ends_up_in_a_low_ceiling() -> void:
+	# Duck under a 1.2 m slab at the last moment: the capsule shrinks at
+	# once and the eye drops over a moment (quickly enough on its own; the
+	# camera sweep is there if it ever isn't). It must stay under the slab.
+	box(Vector3(0, 1.45, -8), Vector3(6, 0.5, 8))  # Underside at 1.2 m, from z -4 to -12.
+	place(Vector3(0, 0.05, 8))
+	player.set_process(true)
+	# Run at it and only duck at the last moment, at the mouth.
+	for i in 120:
+		await run(cmd(Vector2(0, 1)))
+		if player.global_position.z < -3.55:
+			break
+	var slide := cmd(Vector2(0, 1))
+	slide.crouch_pressed = true
+	slide.crouch_held = true
+	var worst := 0.0
+	for i in 60:
+		await run(slide)
+		slide.crouch_held = true
+		await get_tree().process_frame
+		if player.camera.global_position.z < -4.0:  # Under the slab.
+			worst = maxf(worst, player.camera.global_position.y)
+	check(player.global_position.z < -5.0, "slid in under it (z %.1f)" % player.global_position.z)
+	check(worst > 0.0 and worst < 1.2 - Player.CAMERA_PROBE * 0.5, "the camera stayed under the ceiling (highest %.2f m)" % worst)
+
+
+func test_the_death_camera_stays_out_of_walls() -> void:
+	# Die facing a wall 1.5 m away: the death camera's spot (3 m in front)
+	# is inside it, so it stops short.
+	player.queue_free()
+	await get_tree().process_frame
+	player = load("res://scenes/player.tscn").instantiate()
+	player.movement_params = MovementParams.new()
+	player.view_settings = ViewSettings.new()
+	world.add_child(player)
+	box(Vector3(0, 2, -1.9), Vector3(10, 4, 0.8))  # Front face at z -1.5.
+	player.spawn_at(Transform3D(Basis.IDENTITY, Vector3(0, 0.05, 0)))
+	await get_tree().physics_frame
+	player.die()
+	var worst_in := false
+	for i in 90:
+		await get_tree().process_frame
+		worst_in = worst_in or camera_in_wall()
+	check(player.camera.global_position.z > -1.5 + Player.CAMERA_PROBE * 0.5, "the camera stays this side of the wall (z %.2f)" % player.camera.global_position.z)
+	check(not worst_in, "never inside it")
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE

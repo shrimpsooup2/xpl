@@ -26,6 +26,10 @@ const KEY_ACTIONS := {
 	&"debug_respawn": [KEY_F2],
 	&"debug_vsync": [KEY_F3],
 	&"debug_hud": [KEY_F4],
+	&"debug_third_person": [KEY_F6],
+	&"debug_die": [KEY_F7],
+	&"debug_preview_ui": [KEY_F8],
+	&"debug_next_map": [KEY_F9],
 }
 const MOUSE_ACTIONS := {
 	&"fire": [MOUSE_BUTTON_LEFT],
@@ -35,20 +39,57 @@ const MOUSE_ACTIONS := {
 }
 
 const K := GreyBox.Kind
+const LevelKit := preload("res://tools/level_kit.gd")
+## The maps (GDD §9.3): each script's build(kit) lays it out and returns spawn A.
+const MAPS := {
+	"Stack": ["res://tools/maps/stack.gd", "res://scenes/maps/stack.tscn"],
+	"Terrace": ["res://tools/maps/terrace.gd", "res://scenes/maps/terrace.tscn"],
+	"Switchback": ["res://tools/maps/switchback.gd", "res://scenes/maps/switchback.tscn"],
+	"Archipelago": ["res://tools/maps/archipelago.gd", "res://scenes/maps/archipelago.tscn"],
+	"Rift": ["res://tools/maps/rift.gd", "res://scenes/maps/rift.tscn"],
+	"Boulevard": ["res://tools/maps/boulevard.gd", "res://scenes/maps/boulevard.tscn"],
+	"Holdfast": ["res://tools/maps/holdfast.gd", "res://scenes/maps/holdfast.tscn"],
+	"Depot": ["res://tools/maps/depot.gd", "res://scenes/maps/depot.tscn"],
+}
 
-var _root: Node3D
-var _geometry: Node3D
-var _labels: Node3D
+var _kit: LevelKit
 
 
 func _initialize() -> void:
+	_configure_rendering()
 	_build_input_map()
 	_ensure_resource("res://data/movement_params.tres", MovementParams.new())
 	_ensure_resource("res://data/view_settings.tres", ViewSettings.new())
 	_save_scene(_build_player(), "res://scenes/player.tscn")
 	if not "--skip-course" in OS.get_cmdline_user_args():
 		_save_scene(_build_test_course(), "res://scenes/test_course.tscn")
+	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://scenes/maps"))
+	for map_name: String in MAPS:
+		var kit := LevelKit.new(map_name, _make_environment())
+		var spawn: Transform3D = load(MAPS[map_name][0]).build(kit)
+		_save_scene(kit.finish(spawn), MAPS[map_name][1])
+	_save_scene(_build_main_menu(), "res://scenes/main_menu.tscn")
+	ProjectSettings.set_setting("application/run/main_scene", "res://scenes/main_menu.tscn")
+	ProjectSettings.save()
 	quit()
+
+
+# --- Project settings ---------------------------------------------------------
+
+## Crunchy on purpose: no anti-aliasing, hard shadow edges. Also the splash.
+func _configure_rendering() -> void:
+	ProjectSettings.set_setting("rendering/anti_aliasing/quality/msaa_3d", 0)
+	ProjectSettings.set_setting("rendering/anti_aliasing/quality/screen_space_aa", 0)
+	ProjectSettings.set_setting("rendering/lights_and_shadows/directional_shadow/soft_shadow_filter_quality", 0)
+	ProjectSettings.set_setting("rendering/lights_and_shadows/positional_shadow/soft_shadow_filter_quality", 0)
+	ProjectSettings.set_setting("rendering/lights_and_shadows/directional_shadow/size", 2048)
+	# 1 normally; the death sequence drops it to 0 to black out the world.
+	ProjectSettings.set_setting("shader_globals/world_light", {"type": "float", "value": 1.0})
+	# Boot splash: the logo at its own size on white.
+	ProjectSettings.set_setting("application/boot_splash/image", "res://assets/ui/logo.png")
+	ProjectSettings.set_setting("application/boot_splash/bg_color", Color.WHITE)
+	ProjectSettings.set_setting("application/boot_splash/stretch_mode", 0)
+	ProjectSettings.set_setting("application/boot_splash/use_filter", true)
 
 
 # --- Input ------------------------------------------------------------------
@@ -89,12 +130,6 @@ func _save_scene(root: Node, path: String) -> void:
 	root.free()
 
 
-func _own(node: Node) -> void:
-	for child in node.get_children():
-		child.owner = _root if _root else node
-		_own(child)
-
-
 # --- Player -----------------------------------------------------------------
 
 func _build_player() -> Node:
@@ -118,36 +153,34 @@ func _build_player() -> Node:
 	cam.far = 500.0
 	player.add_child(cam)
 
+	var model := Node3D.new()
+	model.name = "Model"
+	model.set_script(load("res://src/player/player_model.gd"))
+	player.add_child(model)
+
 	for child in player.get_children():
 		child.owner = player
 	return player
 
 
+# --- Main menu ----------------------------------------------------------------
+
+func _build_main_menu() -> Node:
+	var menu := Node3D.new()
+	menu.name = "MainMenu"
+	menu.set_script(load("res://src/ui/main_menu.gd"))
+	return menu
+
+
 # --- Test course --------------------------------------------------------------
 
 func _build_test_course() -> Node:
-	_root = Node3D.new()
-	_root.name = "TestCourse"
-
-	var env := WorldEnvironment.new()
-	env.name = "WorldEnvironment"
-	env.environment = _make_environment()
-	_root.add_child(env)
-
-	var sun := DirectionalLight3D.new()
-	sun.name = "Sun"
-	sun.rotation_degrees = Vector3(-52, 35, 0)
-	sun.light_color = Color(1.0, 0.93, 0.86)
-	sun.light_energy = 0.9
-	sun.shadow_enabled = true
-	_root.add_child(sun)
-
-	_geometry = Node3D.new()
-	_geometry.name = "Geometry"
-	_root.add_child(_geometry)
-	_labels = Node3D.new()
-	_labels.name = "Labels"
-	_root.add_child(_labels)
+	_kit = LevelKit.new("TestCourse", _make_environment())
+	# Coloured pools of light: harsh, unshadowed, period-accurate "bad" lighting.
+	_kit.light("PinkLamp", Vector3(0, 4, 18), Color(1.0, 0.35, 0.65), 16.0)
+	_kit.light("CyanLamp", Vector3(38.5, 5, -18), Color(0.3, 0.9, 1.0), 20.0)
+	_kit.light("AmberLamp", Vector3(-28, 4, 17), Color(1.0, 0.7, 0.25), 16.0)
+	_kit.light("VioletLamp", Vector3(-18, 3, -10), Color(0.6, 0.4, 1.0), 14.0)
 
 	_box("Floor", Vector3(0, -0.5, 0), Vector3(200, 1, 200), K.FLOOR)
 	_run_lane()
@@ -160,85 +193,52 @@ func _build_test_course() -> Node:
 	_smash_tower()
 	_valley()
 	_low_tunnel()
-
-	var player: Node3D = load("res://scenes/player.tscn").instantiate()
-	player.name = "Player"
-	_root.add_child(player)
-
-	var hud := CanvasLayer.new()
-	hud.name = "DebugHUD"
-	hud.set_script(load("res://src/debug/debug_hud.gd"))
-	_root.add_child(hud)
-
-	var tuning := CanvasLayer.new()
-	tuning.name = "TuningPanel"
-	tuning.set_script(load("res://src/debug/tuning_panel.gd"))
-	_root.add_child(tuning)
-
-	for child in _root.get_children():
-		child.owner = _root
-		if child != player:
-			_own(child)
-	var r := _root
-	_root = null
-	return r
+	_armory()
+	_shooting_range()
+	var course := _kit.finish(Transform3D.IDENTITY)
+	_kit = null
+	return course
 
 
+## Flat coloured ambient, no sky reflections (surfaces fake their own),
+## linear tonemapping for saturated early-2000s colour, thick coloured fog.
 func _make_environment() -> Environment:
-	var sky_mat := ProceduralSkyMaterial.new()
-	sky_mat.sky_top_color = Color(0.42, 0.40, 0.74)
-	sky_mat.sky_horizon_color = Color(0.96, 0.76, 0.72)
-	sky_mat.ground_horizon_color = Color(0.96, 0.76, 0.72)
-	sky_mat.ground_bottom_color = Color(0.30, 0.24, 0.36)
+	var sky_mat := ShaderMaterial.new()
+	sky_mat.shader = load("res://src/render/retro_sky.gdshader")
 	var sky := Sky.new()
 	sky.sky_material = sky_mat
+	sky.radiance_size = Sky.RADIANCE_SIZE_32
 
 	var e := Environment.new()
 	e.background_mode = Environment.BG_SKY
 	e.sky = sky
-	e.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
-	e.ambient_light_energy = 0.55
-	e.tonemap_mode = Environment.TONE_MAPPER_FILMIC
+	e.ambient_light_source = Environment.AMBIENT_SOURCE_COLOR
+	e.ambient_light_color = Color(0.50, 0.40, 0.62)
+	e.ambient_light_energy = 0.75
+	e.reflected_light_source = Environment.REFLECTION_SOURCE_DISABLED
+	e.tonemap_mode = Environment.TONE_MAPPER_LINEAR
 	e.glow_enabled = true
-	e.glow_intensity = 0.4
-	e.glow_bloom = 0.02
+	e.glow_intensity = 0.5
+	e.glow_bloom = 0.0
 	e.fog_enabled = true
-	e.fog_light_color = Color(0.90, 0.78, 0.82)
-	e.fog_density = 0.005
-	e.fog_sky_affect = 0.4
+	e.fog_light_color = Color(0.70, 0.44, 0.58)
+	e.fog_density = 0.01
+	e.fog_sky_affect = 0.25
 	return e
 
 
 func _box(box_name: String, center: Vector3, size: Vector3, kind: GreyBox.Kind, rot_deg := Vector3.ZERO) -> void:
-	var b := StaticBody3D.new()
-	b.set_script(load("res://src/world/grey_box.gd"))
-	b.name = box_name
-	b.position = center
-	b.rotation_degrees = rot_deg
-	b.set(&"size", size)
-	b.set(&"kind", kind)
-	_geometry.add_child(b)
+	_kit.box(box_name, center, size, kind, rot_deg)
 
 
 ## A rotated box placed by the midpoint of its top surface, so slopes meet
 ## the ground and platforms exactly.
 func _slab(box_name: String, top_mid: Vector3, size: Vector3, kind: GreyBox.Kind, rot_deg: Vector3) -> void:
-	var up := Basis.from_euler(rot_deg * (PI / 180.0)) * Vector3.UP
-	_box(box_name, top_mid - up * size.y * 0.5, size, kind, rot_deg)
+	_kit.slab(box_name, top_mid, size, kind, rot_deg)
 
 
 func _label(text: String, pos: Vector3) -> void:
-	var l := Label3D.new()
-	l.name = text.validate_node_name().replace(" ", "_")
-	l.text = text
-	l.position = pos
-	l.billboard = BaseMaterial3D.BILLBOARD_FIXED_Y
-	l.font_size = 64
-	l.pixel_size = 0.01
-	l.outline_size = 16
-	l.modulate = Color(1, 1, 1)
-	l.outline_modulate = Color(0.15, 0.1, 0.25)
-	_labels.add_child(l)
+	_kit.label(text, pos)
 
 
 ## Distance poles every 10 m straight ahead of spawn, for reading speed.
@@ -330,3 +330,37 @@ func _low_tunnel() -> void:
 	_box("TunnelRoof", Vector3(-12, 1.45, 14), Vector3(4, 0.5, 8), K.WALL)
 	_box("TunnelWall_L", Vector3(-14.25, 0.85, 14), Vector3(0.5, 1.7, 8), K.WALL)
 	_box("TunnelWall_R", Vector3(-9.75, 0.85, 14), Vector3(0.5, 1.7, 8), K.WALL)
+
+
+## A pad for every gun just left of spawn. They come back quickly here.
+func _armory() -> void:
+	_label("ARMORY  (walk over a gun · E swap · Q throw · 1/2 switch)", Vector3(-4, 3.2, -3))
+	for i in Weapons.GUNS.size():
+		_kit.pad("Pad_%s" % String(Weapons.GUNS[i]).capitalize().replace(" ", ""), Weapons.GUNS[i],
+				Vector3(-4, 0, 2.5 - 2.2 * i), 3.0)
+
+
+## Dummies to shoot, facing back toward the armory: standing at 7, 12, 22
+## and 42 m, one up on a block, two pacing across the range.
+func _shooting_range() -> void:
+	_label("SHOOTING RANGE  (7 / 12 / 22 / 42 m)", Vector3(-14, 3.5, 6))
+	var face := -PI * 0.5  # Looking down +X.
+	for d: Array in [
+			["Dummy_7m", Vector3(-12, 0, -1), Vector3.ZERO, 0.0, &"top_hat"],
+			["Dummy_12m", Vector3(-17, 0, 2), Vector3.ZERO, 0.0, &"cowboy_hat"],
+			["Dummy_22m", Vector3(-27, 0, -4), Vector3.ZERO, 0.0, &"none"],
+			["Dummy_42m", Vector3(-47, 0, -1), Vector3.ZERO, 0.0, &"viking_helmet"],
+			["Dummy_Up", Vector3(-32, 3, 5), Vector3.ZERO, 0.0, &"crown"],
+			["Dummy_Walker", Vector3(-22, 0, -7), Vector3(0, 0, 11), 1.6, &"party_hat"],
+			["Dummy_Runner", Vector3(-37, 0, 4), Vector3(0, 0, -11), 4.5, &"propeller_cap"]]:
+		var dummy := Node3D.new()
+		dummy.set_script(load("res://src/combat/target_dummy.gd"))
+		dummy.name = d[0]
+		dummy.position = d[1]
+		dummy.set(&"patrol", d[2])
+		dummy.set(&"patrol_speed", d[3] if d[3] > 0.0 else 2.0)
+		dummy.set(&"facing", face)
+		dummy.set(&"hat", d[4])
+		_kit.combat.add_child(dummy)
+	_box("DummyBlock", Vector3(-32, 1.5, 5), Vector3(3, 3, 3), K.LEDGE)
+	_box("RangeBackstop", Vector3(-60, 4, -1), Vector3(1, 8, 26), K.WALL)

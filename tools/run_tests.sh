@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Runs the headless movement tests.
+# Runs the headless tests (SKIP_ONLINE=1 skips the networked ones).
 #
 # Uses $GODOT if set, then `godot` on PATH, otherwise downloads the pinned
 # Linux build into .tools/ (Linux x86_64 only).
@@ -32,6 +32,12 @@ log="$(mktemp)"
 set +e
 "$GODOT" --headless --path . --fixed-fps 60 --script res://tests/run_tests.gd 2>&1 | tee "$log"
 status=${PIPESTATUS[0]}
+# The networked suite: a dedicated server and clients in real time.
+if [[ "${SKIP_ONLINE:-}" == "" ]]; then
+	"$GODOT" --headless --path . --script res://tests/run_tests.gd -- --online 2>&1 | tee -a "$log"
+	online=${PIPESTATUS[0]}
+	[[ "$online" != 0 ]] && status=$online
+fi
 set -e
 if grep -qE "SCRIPT ERROR|Parse Error|ERROR:" "$log"; then
 	echo "Engine errors were printed during the run (see above)."

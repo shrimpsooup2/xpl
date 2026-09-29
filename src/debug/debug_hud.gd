@@ -1,7 +1,9 @@
 extends CanvasLayer
-## Prototype HUD: crosshair, speedometer, movement state readout, and a ticker
-## of recent movement events so chains are easy to see while testing.
-## Also owns the debug hotkeys: F2 respawn, F3 vsync, F4 toggle this readout.
+## Developer overlay: movement state readout (with exact and peak speed;
+## the HUD has the player-facing speed meter), and a ticker of recent
+## movement events so chains are easy to see while testing.
+## Also owns the debug hotkeys: F2 respawn, F3 vsync, F4 toggle this readout,
+## F6 third-person camera, F7 die.
 
 const TICKER_SIZE := 7
 const TICKER_LIFETIME := 2.5
@@ -13,7 +15,7 @@ const EVENT_LABELS := {
 }
 
 var _player: Player
-var _speed_label: Label
+var _root: Control
 var _info_label: Label
 var _ticker_label: Label
 var _ticker: Array[Dictionary] = []
@@ -28,6 +30,8 @@ func _ready() -> void:
 	_player = get_tree().get_first_node_in_group(&"local_player") as Player
 	if _player:
 		_player.movement_event.connect(_on_movement_event)
+		_player.died.connect(func() -> void: _root.visible = false)
+		_player.respawned.connect(func() -> void: _root.visible = true)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -36,6 +40,10 @@ func _unhandled_input(event: InputEvent) -> void:
 	elif event.is_action_pressed(&"debug_vsync"):
 		var on := DisplayServer.window_get_vsync_mode() != DisplayServer.VSYNC_DISABLED
 		DisplayServer.window_set_vsync_mode(DisplayServer.VSYNC_DISABLED if on else DisplayServer.VSYNC_ENABLED)
+	elif event.is_action_pressed(&"debug_third_person") and _player:
+		_player.set_third_person(not _player.third_person)
+	elif event.is_action_pressed(&"debug_die") and _player:
+		_player.die()
 	elif event.is_action_pressed(&"debug_hud"):
 		_show_info = not _show_info
 		_info_label.visible = _show_info
@@ -51,7 +59,6 @@ func _process(delta: float) -> void:
 	if speed > _peak_speed or _peak_timer <= 0.0:
 		_peak_speed = speed
 		_peak_timer = 1.5
-	_speed_label.text = "%.1f m/s\npeak %.1f" % [speed, _peak_speed]
 
 	if _show_info:
 		var p := _player.movement_params
@@ -68,7 +75,7 @@ func _process(delta: float) -> void:
 			"%d fps   vsync %s" % [Engine.get_frames_per_second(), "on" if vsync else "off"],
 			"mode      %s" % MovementState.Mode.keys()[st.mode],
 			"ground    %s   crouch %s" % [st.on_ground, st.crouched],
-			"speed     h %.2f   v %.2f" % [speed, _player.velocity.y],
+			"speed     h %.2f   v %.2f   peak %.1f" % [speed, _player.velocity.y, _peak_speed],
 			"dash      %s" % dash_bar,
 			"walljump  %d / %d" % [st.wall_jumps_left, p.wall_jumps],
 			"slide cd  %.2f" % st.slide_boost_cooldown,
@@ -99,20 +106,7 @@ func _build() -> void:
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(root)
-
-	var crosshair := ColorRect.new()
-	crosshair.color = Color(1, 1, 1, 0.9)
-	crosshair.size = Vector2(4, 4)
-	crosshair.set_anchors_preset(Control.PRESET_CENTER)
-	crosshair.position = -crosshair.size * 0.5
-	crosshair.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	root.add_child(crosshair)
-
-	_speed_label = _label(root, 30, HORIZONTAL_ALIGNMENT_CENTER)
-	_speed_label.set_anchors_and_offsets_preset(Control.PRESET_CENTER_BOTTOM)
-	_speed_label.offset_top = -130
-	_speed_label.offset_left = -200
-	_speed_label.offset_right = 200
+	_root = root
 
 	_info_label = _label(root, 15, HORIZONTAL_ALIGNMENT_LEFT)
 	_info_label.position = Vector2(16, 12)
@@ -127,7 +121,7 @@ func _build() -> void:
 	help.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_LEFT)
 	help.offset_top = -34
 	help.offset_left = 16
-	help.text = "F1 tuning   F2 respawn   F3 vsync   F4 readout   Esc release mouse"
+	help.text = "F1 tuning   F2 respawn   F3 vsync   F4 readout   F6 third person   F7 die   F8 preview ui   F9 next map   Tab scores   Esc menu"
 
 
 func _label(parent: Control, font_size: int, align: HorizontalAlignment) -> Label:

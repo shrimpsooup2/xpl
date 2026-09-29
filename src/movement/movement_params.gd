@@ -41,12 +41,14 @@ extends Resource
 @export_range(0.0, 20.0, 0.1) var slide_min_speed: float = 6.0
 @export_range(0.0, 10.0, 0.1) var slide_boost: float = 3.0
 @export_range(0.0, 5.0, 0.05) var slide_boost_cooldown: float = 1.5
-@export_range(0.0, 10.0, 0.05) var slide_friction: float = 0.8
+## Deceleration while sliding, in m/s² (constant, not proportional to speed,
+## so fast slides carry). Slopes steeper than about 10° pull harder than this.
+@export_range(0.0, 20.0, 0.1) var slide_friction: float = 3.5
 @export_range(0.0, 10.0, 0.1) var slide_exit_speed: float = 4.0
 
 @export_group("Dash")
 @export_range(0, 5, 1) var dash_charges: int = 2
-@export_range(0.1, 10.0, 0.05) var dash_recharge: float = 1.75
+@export_range(0.1, 10.0, 0.05) var dash_recharge: float = 2.25
 @export_range(1.0, 50.0, 0.5) var dash_speed: float = 18.0
 @export_range(0.02, 0.5, 0.01) var dash_duration: float = 0.15
 @export_range(0.0, 30.0, 0.5) var dash_exit_min_speed: float = 10.0
@@ -78,12 +80,15 @@ extends Resource
 
 @export_group("Smashdown")
 @export_range(0.0, 10.0, 0.1) var smash_min_clearance: float = 1.5
-@export_range(0.0, 0.5, 0.01) var smash_windup: float = 0.06
+@export_range(0.0, 0.5, 0.01) var smash_windup: float = 0.1
 @export_range(5.0, 100.0, 1.0) var smash_speed: float = 40.0
 @export_range(0.0, 1.0, 0.01) var smash_bounce_window: float = 0.2
-@export_range(0.0, 30.0, 0.5) var smash_bounce_base: float = 7.0
-@export_range(0.0, 3.0, 0.05) var smash_bounce_per_meter: float = 0.5
-@export_range(0.0, 50.0, 0.5) var smash_bounce_max: float = 16.0
+@export_range(0.0, 30.0, 0.5) var smash_bounce_base: float = 9.0
+@export_range(0.0, 3.0, 0.05) var smash_bounce_per_meter: float = 0.75
+@export_range(0.0, 50.0, 0.5) var smash_bounce_max: float = 22.0
+## Horizontal speed a slam bounce adds, toward your input (or along the
+## banked direction without input).
+@export_range(0.0, 10.0, 0.5) var smash_bounce_boost: float = 3.0
 @export_range(0.0, 20.0, 0.5) var smash_slide_bonus: float = 4.0
 
 @export_group("Input")
