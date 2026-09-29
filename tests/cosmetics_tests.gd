@@ -68,10 +68,10 @@ func test_every_hat_builds_in_its_team_colours() -> void:
 	for id: StringName in Hats.ALL:
 		check(Hats.NAMES.has(id), "%s has a name" % id)
 		if id == Hats.NONE:
-			check(Hats.build(id, Hats.Team.RED) == null, "no hat builds nothing")
+			check(Hats.build(id, Hats.team_color(Hats.Team.RED)) == null, "no hat builds nothing")
 			continue
-		var red := Hats.build(id, Hats.Team.RED)
-		var blue := Hats.build(id, Hats.Team.BLUE)
+		var red := Hats.build(id, Hats.team_color(Hats.Team.RED))
+		var blue := Hats.build(id, Hats.team_color(Hats.Team.BLUE))
 		check(red != null and red.get_child_count() >= 1, "%s builds" % id)
 		var red_colors := colors_of(red)
 		var blue_colors := colors_of(blue)
@@ -94,24 +94,24 @@ func test_every_hat_builds_in_its_team_colours() -> void:
 
 func test_a_hat_rides_on_the_head() -> void:
 	var m := model_at(Vector3(2, 0, 0))
-	m.dress(&"top_hat", Hats.Team.BLUE)
+	m.dress(&"top_hat", Hats.team_color(Hats.Team.BLUE))
 	await frames(2)
 	check(m.hat != null and m.marker == null, "a hat and no triangle")
-	check(m.hat_id == &"top_hat" and m.team == Hats.Team.BLUE, "remembers what it's wearing")
+	check(m.hat_id == &"top_hat" and m.tint == Hats.team_color(Hats.Team.BLUE), "remembers what it's wearing")
 	var head := head_position(m)
 	check(m.hat.global_position.distance_to(head) < 0.35, "the hat is at the head (%.2f m off)" % m.hat.global_position.distance_to(head))
 	check(m.hat.global_position.y > head.y - 0.05, "on top of it, not under")
 	m.follow(Vector3(-3, 0, 4), 1.2)
 	await frames(2)
 	check(m.hat.global_position.distance_to(head_position(m)) < 0.35, "follows the head as it moves")
-	m.dress(&"fez", Hats.Team.BLUE)
+	m.dress(&"fez", Hats.team_color(Hats.Team.BLUE))
 	await frames(1)
 	check(m.find_children("Hat_top_hat", "", true, false).is_empty(), "changing hats takes the old one off")
 
 
 func test_no_hat_puts_a_team_triangle_over_the_head() -> void:
 	var m := model_at(Vector3.ZERO)
-	m.dress(Hats.NONE, Hats.Team.BLUE)
+	m.dress(Hats.NONE, Hats.team_color(Hats.Team.BLUE))
 	await frames(3)
 	check(m.hat == null and m.marker != null, "no hat: the triangle instead")
 	check(m.marker.is_visible_in_tree(), "the triangle shows")
@@ -122,14 +122,14 @@ func test_no_hat_puts_a_team_triangle_over_the_head() -> void:
 	var above := m.marker.global_position.y - head_position(m).y
 	check(above > 0.45 and above < 0.8, "hovering over the head (%.2f m above)" % above)
 	check(absf(m.marker.global_position.x - head_position(m).x) < 0.1, "right over it")
-	m.dress(&"cap", Hats.Team.BLUE)
+	m.dress(&"cap", Hats.team_color(Hats.Team.BLUE))
 	await frames(1)
 	check(m.marker == null, "a hat puts the triangle away")
 
 
 func test_the_hat_flies_off_when_the_body_falls_apart_and_is_back_after() -> void:
 	var m := model_at(Vector3.ZERO)
-	m.dress(&"cowboy_hat", Hats.Team.RED)
+	m.dress(&"cowboy_hat", Hats.team_color(Hats.Team.RED))
 	await frames(2)
 	m.fall_apart(false, Vector3(0, 1.5, -4))
 	await get_tree().create_timer(0.6).timeout
@@ -147,7 +147,7 @@ func test_the_hat_flies_off_when_the_body_falls_apart_and_is_back_after() -> voi
 	await frames(2)
 	check(m.hat != null and m.hat_id == &"cowboy_hat", "back on after reassembling")
 
-	m.dress(Hats.NONE, Hats.Team.RED)
+	m.dress(Hats.NONE, Hats.team_color(Hats.Team.RED))
 	await frames(1)
 	m.fall_apart(false, Vector3(0, 1.5, -4))
 	await get_tree().create_timer(0.6).timeout
@@ -182,7 +182,7 @@ func test_players_wear_their_hats_and_dummies_play_for_blue() -> void:
 	player.hat = &"viking_helmet"
 	world.add_child(player)
 	await frames(2)
-	check(player.model.hat_id == &"viking_helmet" and player.model.team == Hats.Team.RED, "the player wears its hat, for red")
+	check(player.model.hat_id == &"viking_helmet" and player.model.tint == Hats.team_color(Hats.Team.RED), "the player wears its hat, for red")
 	check(player.model.hat != null, "and it's on")
 	var dummy := TargetDummy.new()
 	dummy.hat = Hats.NONE
@@ -192,7 +192,7 @@ func test_players_wear_their_hats_and_dummies_play_for_blue() -> void:
 	world.add_child(capped)
 	capped.global_position = Vector3(-3, 0, 0)
 	await frames(2)
-	check(dummy.model.team == Hats.Team.BLUE and capped.model.team == Hats.Team.BLUE, "dummies play for blue")
+	check(dummy.model.tint == Hats.team_color(Hats.Team.BLUE) and capped.model.tint == Hats.team_color(Hats.Team.BLUE), "dummies play for blue")
 	check(dummy.model.marker != null and dummy.model.hat == null, "a hatless dummy shows the triangle")
 	check(capped.model.hat != null and Hats.team_color(Hats.Team.BLUE) in colors_of(capped.model.hat), "a blue hat on the other")
 
@@ -222,11 +222,11 @@ func test_the_title_screen_picker_steps_through_the_hats() -> void:
 	await frames(2)
 	var model: PlayerModel = menu.get(&"_model")
 	check(model.hat_id == &"cap", "the blob wears the saved hat")
-	check(Hats.team_color(model.team) in colors_of(model.hat), "in its team's colour")
+	check(model.tint in colors_of(model.hat), "in its team's colour")
 	var hat_name: Control = menu.get(&"_hat_name")
 	var play: Control = null
 	for b in menu.find_children("*", "Button", true, false):
-		if (b as Button).text == "play":
+		if (b as Button).text == "free-for-all":
 			play = b
 	check(play != null and not play.get_parent().is_ancestor_of(hat_name), "the picker isn't in the main menu column")
 	check(LofiUI.style_of(hat_name) == LofiUI.Style.GHOST, "it's a quiet ghost box")
@@ -243,6 +243,16 @@ func test_the_title_screen_picker_steps_through_the_hats() -> void:
 		if model.hat_id == Hats.NONE:
 			break
 	check(model.hat == null and model.marker != null, "no hat shows the triangle on the blob")
+	# The free-for-all colour: steps, saves, and shows on the blob.
+	Cosmetics.set_color(&"red")
+	menu.cycle_color(1)
+	var next_color: StringName = Hats.PALETTE.keys()[1]
+	check(Cosmetics.color == next_color and model.tint == Hats.PALETTE[next_color], "→ picks the next colour and wears it")
+	Cosmetics.color = &"red"
+	Cosmetics.load_saved()
+	check(Cosmetics.color == next_color, "and saves it")
+	menu.cycle_color(-2)
+	check(Cosmetics.color == Hats.PALETTE.keys()[-1], "← wraps round")
 	await frames(20)
 	menu.queue_free()
 	await frames(1)
@@ -255,10 +265,11 @@ func test_the_title_screen_blob_is_red_or_blue_at_random() -> void:
 		var menu: Node = load("res://scenes/main_menu.tscn").instantiate()
 		world.add_child(menu)
 		await frames(1)
-		teams[(menu.get(&"_model") as PlayerModel).team] = true
+		teams[(menu.get(&"_model") as PlayerModel).tint] = true
 		menu.queue_free()
 		await frames(1)
-	check(teams.has(Hats.Team.RED) and teams.has(Hats.Team.BLUE), "both teams come up (%s)" % [teams.keys()])
+	check(teams.has(Hats.team_color(Hats.Team.RED)) and teams.has(Hats.team_color(Hats.Team.BLUE)) and teams.size() == 2,
+			"both teams come up, and only them (%s)" % [teams.keys()])
 
 
 ## Sleeve vertices in the eye's space, this frame.

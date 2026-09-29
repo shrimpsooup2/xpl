@@ -15,7 +15,7 @@ const BOULEVARD := "res://scenes/maps/boulevard.tscn"
 const HOLDFAST := "res://scenes/maps/holdfast.tscn"
 const DEPOT := "res://scenes/maps/depot.tscn"
 ## Map scene, and how many spawns it has.
-const MAPS := {STACK: 2, TERRACE: 2, SWITCHBACK: 2, ARCHIPELAGO: 4, RIFT: 4, BOULEVARD: 8, HOLDFAST: 8, DEPOT: 8}
+const MAPS := {STACK: 4, TERRACE: 4, SWITCHBACK: 4, ARCHIPELAGO: 4, RIFT: 4, BOULEVARD: 8, HOLDFAST: 8, DEPOT: 8}
 ## The team maps: each team's half is the other's flipped by this, and how far
 ## out the map reaches (x, z).
 const TEAM_MAPS := {

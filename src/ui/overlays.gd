@@ -26,8 +26,9 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 
 
-## "round 3" over the map's name, a fake loading bar, then 3-2-1-go.
-func round_card(map_name: String, round_number: int, countdown := true) -> void:
+## "round 3" over the map's name, a fake loading bar, then 3-2-1-go; with
+## `go_at` the loading bar stretches so "go" lands that many seconds in.
+func round_card(map_name: String, round_number: int, countdown := true, go_at := -1.0) -> void:
 	var col := _center_column()
 	if round_number > 0:
 		var label := LofiUI.box("round %d" % round_number, LofiUI.SMALL, LofiUI.Style.GHOST)
@@ -49,10 +50,13 @@ func round_card(map_name: String, round_number: int, countdown := true) -> void:
 	# Bound to the card, so a newer overlay replacing it stops the sequence.
 	var card := _current
 	var t := card.create_tween()
+	var load_time := LOAD_TIME
+	if countdown and go_at > 0.0:
+		load_time = maxf(go_at - 0.25 - (COUNTDOWN.size() - 1) * COUNT_STEP, 0.2)
 	t.tween_interval(0.25)
 	for cell in cells:
 		t.tween_callback(_fill_cell.bind(cell))
-		t.tween_interval(LOAD_TIME / LOAD_CELLS)
+		t.tween_interval(load_time / LOAD_CELLS)
 	if countdown:
 		for step: String in COUNTDOWN:
 			t.tween_callback(_count.bind(card, step))
@@ -63,9 +67,9 @@ func round_card(map_name: String, round_number: int, countdown := true) -> void:
 	t.tween_callback(card_finished.emit)
 
 
-func round_result(won: bool, left: int, right: int) -> void:
+func round_result(won: bool, left: int, right: int, title := "") -> void:
 	var col := _center_column()
-	var banner := LofiUI.tiles("round won" if won else "round lost", LofiUI.HUGE,
+	var banner := LofiUI.tiles(title if title != "" else ("round won" if won else "round lost"), LofiUI.HUGE,
 			LofiUI.Style.INVERTED if won else LofiUI.Style.NORMAL)
 	col.add_child(banner)
 	LofiUI.tiles_in(banner, 0.045, 0.7 if won else 0.4)
@@ -73,15 +77,16 @@ func round_result(won: bool, left: int, right: int) -> void:
 	_auto_clear(2.4)
 
 
-## Hold-to-show table. rows: [name, rounds, kills, heartshots, ping].
-func show_scoreboard(rows: Array) -> void:
+## Hold-to-show table. rows: [name, rounds, kills, heartshots, ping]; the
+## second column's heading can change (a team game shows "team").
+func show_scoreboard(rows: Array, second := "rounds") -> void:
 	hide_scoreboard()
 	var box := PanelContainer.new()
 	box.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var grid := GridContainer.new()
 	grid.columns = 5
 	grid.add_theme_constant_override(&"h_separation", 12)
-	for header: String in ["", "rounds", "kills", "♥", "ping"]:
+	for header: String in ["", second, "kills", "♥", "ping"]:
 		var l := Label.new()
 		l.text = header
 		l.add_theme_font_size_override(&"font_size", LofiUI.SMALL)
@@ -109,10 +114,11 @@ func hide_scoreboard() -> void:
 	_scoreboard = null
 
 
-## rounds: [map, winner, how] per round.
-func match_end(won: bool, left: int, right: int, rounds: Array) -> void:
+## rounds: [map, winner, how] per round. `title` overrides "you won" /
+## "you lost" (a draw, or someone watching).
+func match_end(won: bool, left: int, right: int, rounds: Array, title := "") -> void:
 	var col := _center_column()
-	var banner := LofiUI.tiles("you won" if won else "you lost", LofiUI.HUGE,
+	var banner := LofiUI.tiles(title if title != "" else ("you won" if won else "you lost"), LofiUI.HUGE,
 			LofiUI.Style.INVERTED if won else LofiUI.Style.NORMAL)
 	col.add_child(banner)
 	LofiUI.tiles_in(banner, 0.06, 0.9 if won else 0.5)

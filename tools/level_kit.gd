@@ -178,6 +178,15 @@ func pad(pad_name: String, weapon: StringName, at: Vector3, respawn := 20.0) -> 
 	combat.add_child(p)
 
 
+## An ammo crate (only there in games with resupply: see ResupplyCrate).
+func resupply(crate_name: String, at: Vector3) -> void:
+	var c := Node3D.new()
+	c.set_script(load("res://src/combat/resupply_crate.gd"))
+	c.name = crate_name
+	c.position = at
+	combat.add_child(c)
+
+
 ## A spawn point facing along `facing` (horizontal), for `team` (a
 ## Hats.Team, or -1 for anyone). Returns its transform.
 func spawn(spawn_name: String, at: Vector3, facing: Vector3, team := -1) -> Transform3D:

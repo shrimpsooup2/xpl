@@ -24,6 +24,8 @@ const BAR_WIDTH := 0.5
 ## Dummies play for blue; `hat` is one of Hats.ALL (none: the team triangle).
 @export var team := Hats.Team.BLUE
 @export var hat := Cosmetics.DEFAULT_HAT
+## Over its head and in the killfeed.
+@export var display_name := "dummy"
 
 var model: PlayerModel
 var health := MAX_HEALTH
@@ -49,7 +51,8 @@ func _ready() -> void:
 	model = PlayerModel.new()
 	model.name = "Model"
 	add_child(model)
-	model.dress(hat, team)
+	model.dress(hat, Hats.team_color(team))
+	model.set_nametag(display_name, Hats.team_color(team))
 	_body = StaticBody3D.new()
 	_body.collision_layer = BODY_LAYER
 	_body.collision_mask = 0
@@ -129,7 +132,7 @@ func take_hit(hit: Dictionary) -> Dictionary:
 		model.react_to_hit(hit.part, hit.point, hit.direction, amount / 40.0 + (hit.get("knockback", 0.0) as float) * 0.05)
 	return {
 		"target": self,
-		"name": "dummy",
+		"name": display_name,
 		"damage": amount,
 		"zone": &"heart" if lethal else hit.zone,
 		"part": hit.part,

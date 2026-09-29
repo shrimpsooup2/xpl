@@ -10,6 +10,11 @@ extends CharacterBody3D
 signal movement_event(event: Dictionary)
 signal died
 signal respawned
+## Health went up or down (hits, healing, respawning).
+signal health_changed(health: float)
+## It died: {attacker: Player or null, weapon: WeaponDef or null, heartshot}.
+## A fall counts as the last hit's if that was recent (KNOCKED_OFF_TIME).
+signal killed(info: Dictionary)
 
 const DEGREES_PER_COUNT := 0.022
 const MAX_PITCH := 1.5533430342749532  # 89 degrees
@@ -66,14 +71,26 @@ const SHAKE_POSITION := 0.05
 const SHAKE_ROTATION := deg_to_rad(1.2)
 const SHAKE_RATE := 30.0
 
+## Players are hit by shots through their HitShapes, not their capsule, so
+## they have a layer of their own: shots trace the world layer only.
+const PLAYER_LAYER := 1 << 3
+const MAX_HEALTH := 100.0
+## A fall this soon after being hit is a kill for whoever hit you.
+const KNOCKED_OFF_TIME := 5.0
+
 @export var movement_params: MovementParams
 @export var view_settings: ViewSettings
 ## Off for bots and tests: they call tick() themselves.
 @export var human_controlled: bool = true
-## Its side, shown by its hat's colour (GDD §11.4). The local player wears
-## the hat picked on the title screen (Cosmetics); anyone else wears `hat`.
+## Its side (GDD §11.4). The local player wears the hat and goes by the name
+## picked on the title screen (Cosmetics); anyone else wears `hat`.
 @export var team := Hats.Team.RED
 @export var hat := Cosmetics.DEFAULT_HAT
+## Its name, over its head (to everyone else) and in the killfeed.
+@export var player_name := Cosmetics.DEFAULT_NAME
+## The colour of its hat or marker (free-for-all: the colour it picked);
+## left clear, it wears its team's.
+@export var tint := Color(0, 0, 0, 0)
 
 var state := MovementState.new()
 var sim: MovementSim
@@ -81,6 +98,17 @@ var yaw: float = 0.0
 var pitch: float = 0.0
 var is_dead := false
 var third_person := false
+var health := MAX_HEALTH
+var max_health := MAX_HEALTH
+## Seconds untouched before health comes back, and how fast (0: never; set
+## by the game's rules).
+var regen_delay := 0.0
+var regen_rate := 25.0
+## Respawns itself when the death sequence ends (the sandbox). In a game the
+## match decides when (see Match).
+var auto_respawn := true
+var _since_hit := INF
+var _last_hit := {}
 ## The local player's death cinematic; null for bots, remote players and tests.
 var death: DeathSequence
 var weapons: WeaponHolder
@@ -145,7 +173,9 @@ func _ready() -> void:
 
 	camera.top_level = true
 	camera.current = human_controlled
-	collision_mask |= TargetDummy.BODY_LAYER
+	collision_layer = PLAYER_LAYER
+	collision_mask = 1 | TargetDummy.BODY_LAYER
+	add_to_group(Ballistics.GROUP)
 	weapons = WeaponHolder.new()
 	weapons.name = "Weapons"
 	weapons.player = self
@@ -164,13 +194,16 @@ func _ready() -> void:
 		death = DeathSequence.new()
 		death.player = self
 		add_child(death)
-		death.finished.connect(respawn)
+		death.finished.connect(func() -> void:
+			if auto_respawn:
+				respawn())
 	else:
 		set_physics_process(false)
 	if human_controlled:
 		Cosmetics.load_saved()
 		hat = Cosmetics.hat
-	model.dress(hat, team)
+		player_name = Cosmetics.player_name
+	refresh_look()
 	_update_model_visibility()
 	model.follow(global_position, yaw)
 
@@ -214,6 +247,9 @@ func _physics_process(delta: float) -> void:
 func tick(cmd: InputCommand, delta: float) -> void:
 	if is_dead:
 		return
+	_since_hit += delta
+	if regen_delay > 0.0 and _since_hit > regen_delay and health < max_health:
+		heal(regen_rate * delta)
 	_prev_position = global_position
 	sim.step(self, state, cmd, delta)
 	_curr_position = global_position
@@ -226,11 +262,71 @@ func tick(cmd: InputCommand, delta: float) -> void:
 		die()
 
 
+## The first body part the segment hits, or {} (Ballistics).
+func ray_test(from: Vector3, to: Vector3) -> Dictionary:
+	if is_dead:
+		return {}
+	return model.ray_test(from, to)
+
+
+## Takes a hit (see Ballistics._land for the fields): loses health, reacts
+## where it was hit, and dies at zero, or at once through the heart. A hit
+## the game says can't land (a teammate's, see Game.can_damage) does
+## nothing. Returns what it did, for the shooter's feedback.
+func take_hit(hit: Dictionary) -> Dictionary:
+	if is_dead:
+		return {}
+	var attacker: Player = hit.get("attacker")
+	if attacker == self:
+		return {}
+	if attacker and not Game.can_damage(attacker, self):
+		return {}
+	var amount: float = hit.damage
+	var lethal: bool = hit.get("heartshot", false)
+	if lethal:
+		amount = maxf(amount, health)
+	health = maxf(health - amount, 0.0)
+	_since_hit = 0.0
+	_last_hit = {"attacker": attacker, "weapon": hit.get("weapon"), "heartshot": lethal, "time": Time.get_ticks_msec()}
+	health_changed.emit(health)
+	DamageNumber.add(get_parent(), self, hit.point, amount, &"heart" if lethal else hit.zone)
+	var killed_now := health <= 0.0
+	if killed_now:
+		die()
+	else:
+		model.react_to_hit(hit.part, hit.point, hit.direction, amount / 40.0 + (hit.get("knockback", 0.0) as float) * 0.05)
+	return {
+		"target": self,
+		"name": player_name,
+		"damage": amount,
+		"zone": &"heart" if lethal else hit.zone,
+		"part": hit.part,
+		"heartshot": lethal,
+		"killed": killed_now,
+		"weapon": hit.get("weapon"),
+	}
+
+
+## Gains `amount` health, up to its maximum.
+func heal(amount: float) -> void:
+	var before := health
+	health = minf(health + amount, max_health)
+	if health != before:
+		health_changed.emit(health)
+
+
 ## Stops the player and falls apart. The local player gets the full death
-## cinematic; everyone else just sees the body crumble.
+## cinematic; everyone else just sees the body crumble. Whoever hit it last
+## gets the kill if that was recent (a fall after a hit counts).
 func die() -> void:
 	if is_dead:
 		return
+	var info := {"attacker": null, "weapon": null, "heartshot": false}
+	if not _last_hit.is_empty() and Time.get_ticks_msec() - int(_last_hit.time) <= KNOCKED_OFF_TIME * 1000.0:
+		info = {"attacker": _last_hit.attacker, "weapon": _last_hit.weapon, "heartshot": _last_hit.heartshot and health <= 0.0}
+	if info.attacker != null and not is_instance_valid(info.attacker):
+		info.attacker = null
+	health = 0.0
 	is_dead = true
 	velocity = Vector3.ZERO
 	weapons.drop_on_death()
@@ -238,6 +334,7 @@ func die() -> void:
 	model.visible = true
 	if viewmodel:
 		viewmodel.visible = false
+	killed.emit(info)
 	died.emit()
 	if death:
 		death.play()
@@ -257,12 +354,37 @@ func respawn() -> void:
 	velocity = Vector3.ZERO
 	state.reset(movement_params)
 	weapons.reset()
+	health = max_health
+	_since_hit = INF
+	_last_hit = {}
+	health_changed.emit(health)
 	_prev_position = global_position
 	_curr_position = global_position
 	model.follow(global_position, yaw)
 	_update_model_visibility()
 	if was_dead:
 		respawned.emit()
+
+
+## Brings it back (alive, full health, empty-handed) at `at`, facing the way
+## `at` faces. It keeps coming back there until told otherwise.
+func spawn_at(at: Transform3D) -> void:
+	_spawn = Transform3D(Basis.IDENTITY, at.origin)
+	yaw = at.basis.get_euler().y
+	pitch = 0.0
+	respawn()
+
+
+## The colour it wears: its own pick, or its team's.
+func look_color() -> Color:
+	return tint if tint.a > 0.0 else Hats.team_color(team)
+
+
+## Dresses it again after its hat, team or colour changed, and floats its
+## name over its head for everyone but itself (a teammate's `through_walls`).
+func refresh_look(through_walls := false) -> void:
+	model.dress(hat, look_color())
+	model.set_nametag("" if human_controlled else player_name, look_color(), through_walls)
 
 
 func set_third_person(on: bool) -> void:

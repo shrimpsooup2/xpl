@@ -12,7 +12,7 @@ A round-based, movement-first arena FPS. Two players duel through short rounds o
 
 1. Install **Godot 4.7.2**, the standard build (not .NET): <https://godotengine.org/download>
 2. Clone this repo, open Godot, choose **Import**, and select `project.godot`.
-3. Press **F5** to play. The main menu opens; choose **play** to enter the movement test course. The small arrows in the bottom-right corner of the menu change your hat, which is saved and worn in the match. The gun pads are just to your left, and the shooting range is beyond them; its dummies play for blue. Press **F9** to step through the maps: Stack, Terrace, Switchback, Archipelago and Rift, then the team maps Boulevard, Holdfast and Depot (greybox, [GDD §9.3](docs/GDD.md#93-built-maps)).
+3. Press **F5** to play. The main menu opens: **free-for-all** starts a practice game of short rounds against three bots, **teams** a long four-against-four game with bots, and **sandbox** the movement test course. In the bottom-right corner you type your name and pick your hat and your free-for-all colour; they're saved and worn in every game. In the sandbox the gun pads are just to your left, and the shooting range is beyond them; its dummies play for blue. Press **F9** to step through the maps: Stack, Terrace, Switchback, Archipelago and Rift, then the team maps Boulevard, Holdfast and Depot (greybox, [GDD §9.3](docs/GDD.md#93-built-maps)).
 
 ### Controls
 
@@ -56,6 +56,7 @@ The **View → Look** section of the panel controls the render: `pixel height` i
 | `src/cosmetics/` | `Hats` (every hat, built from primitives in team colours, and the no-hat team triangle) and `Cosmetics` (the saved pick) |
 | `src/combat/` | The roster (`Weapons`, `WeaponDef`), gun models (`WeaponModel`), a player's hands (`WeaponHolder`: firing, pickups, throwing), shots in flight (`Ballistics`), hit zones (`HitShapes`), pickups and pads, `TargetDummy`, and shooting effects |
 | `src/ui/` | The UI: style and motion kit (`LofiUI`), low-res canvas (`LofiLayer`), HUD and its ammo column, crosshair and ammo ring, overlays, pause and main menus, scene wipe |
+| `src/game/` | Games: `GameRules` (the free-for-all and teams presets), `Match` (runs a game across maps), `Game` (starts and ends one), `PlayerInfo` (each player's name, side and score), `BotBrain` (practice bots) |
 | `src/world/` | `GreyBox` blocks (size and surface kind) and `Maps` (the map list F9 steps through) |
 | `src/render/` | Surface, sky, screen, prop and viewmodel shaders, and `RetroScreen` (low-res rendering) |
 | `assets/` | Pixel textures, the reflection map, the logo, the generated body and chunk meshes, and third-party assets |

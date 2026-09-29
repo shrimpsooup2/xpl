@@ -57,6 +57,10 @@ const SHOULDERED := Vector3(0.02, -0.1, -0.26)
 const HELD_SCALE := 1.25
 ## The team triangle hovers this far over the head bone.
 const MARKER_OVER_HEAD := 0.62
+## The nametag floats this far over the head's centre (over the marker too).
+const NAMETAG_OVER_HEAD := 0.92
+## Past this far the nametag isn't drawn.
+const NAMETAG_RANGE := 70.0
 const WALK_CLIP_SPEED := 1.1
 const JOG_CLIP_SPEED := 2.9
 const SPRINT_CLIP_SPEED := 5.0
@@ -88,8 +92,11 @@ var held: WeaponModel
 ## Its hat (null with no hat), and the team triangle shown instead.
 var hat: Node3D
 var marker: Node3D
-var team := Hats.Team.RED
+## The colour its hat or marker is in (see dress()).
+var tint := Hats.TEAM_COLORS[Hats.Team.RED]
 var hat_id := Hats.NONE
+## The name floating over its head (see set_nametag()), or null.
+var nametag: Label3D
 
 var _rig: Node3D
 var _skin: Skin
@@ -210,15 +217,19 @@ func _process(delta: float) -> void:
 		var cam := get_viewport().get_camera_3d()
 		if cam:
 			Hats.face_marker(marker, cam.global_position)
+	if nametag and nametag.visible:
+		var head := skeleton.global_transform * skeleton.get_bone_global_pose(skeleton.find_bone("DEF-head")).origin
+		nametag.global_position = head + Vector3.UP * NAMETAG_OVER_HEAD
 
 
-# --- Hat and team -------------------------------------------------------------
+# --- Hat, colour and name -----------------------------------------------------
 
-## Dresses it in hat `id` in `for_team`'s colours; with no hat (Hats.NONE) a
-## team triangle hovers over the head instead.
-func dress(id: StringName, for_team: Hats.Team) -> void:
+## Dresses it in hat `id` in `with_tint` (a team's colour, or the colour its
+## player picked); with no hat (Hats.NONE) a triangle in that colour hovers
+## over the head instead.
+func dress(id: StringName, with_tint: Color) -> void:
 	hat_id = id
-	team = for_team
+	tint = with_tint
 	_dressed = true
 	if hat:
 		hat.queue_free()
@@ -226,7 +237,7 @@ func dress(id: StringName, for_team: Hats.Team) -> void:
 	if marker:
 		marker.queue_free()
 		marker = null
-	hat = Hats.build(id, team)
+	hat = Hats.build(id, tint)
 	if hat:
 		_hat_mount.add_child(hat)
 		# Hat space (y up, -z forward, from the head's centre) into the head
@@ -234,16 +245,45 @@ func dress(id: StringName, for_team: Hats.Team) -> void:
 		var rest := skeleton.get_bone_global_rest(skeleton.find_bone("DEF-head"))
 		hat.transform = rest.affine_inverse() * Transform3D(Basis(Vector3.UP, PI), rest.origin + BodyShape.HEAD_OFFSET)
 	else:
-		marker = Hats.build_marker(team)
+		marker = Hats.build_marker(tint)
 		marker.top_level = true
 		add_child(marker)
 		marker.visible = not _falling
+
+
+## Floats `text` over its head in `with_tint` (lightened to read on dark
+## backgrounds), or takes the tag away with "". A tag `through_walls` (a
+## teammate's) shows through the world; any other only while its head is in
+## sight. Gone while the body is in pieces, and past NAMETAG_RANGE.
+func set_nametag(text: String, with_tint: Color, through_walls := false) -> void:
+	if nametag == null:
+		nametag = Label3D.new()
+		nametag.name = "Nametag"
+		nametag.top_level = true
+		nametag.billboard = BaseMaterial3D.BILLBOARD_ENABLED
+		nametag.fixed_size = true
+		nametag.pixel_size = 0.0009
+		nametag.font = LofiUI.FONT
+		nametag.font_size = 22
+		nametag.outline_size = 7
+		nametag.outline_modulate = Color(0.04, 0.04, 0.06)
+		nametag.texture_filter = BaseMaterial3D.TEXTURE_FILTER_NEAREST
+		nametag.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
+		nametag.visibility_range_end = NAMETAG_RANGE
+		add_child(nametag)
+	nametag.text = text
+	nametag.modulate = with_tint.lerp(Color.WHITE, 0.45)
+	nametag.no_depth_test = through_walls
+	nametag.render_priority = 2 if through_walls else 0
+	nametag.visible = not text.is_empty() and not _falling
 
 
 ## The hat flies off as the body falls apart.
 func _pop_hat(look_from: Vector3) -> void:
 	if marker:
 		marker.visible = false
+	if nametag:
+		nametag.visible = false
 	if hat == null:
 		return
 	var at := hat.global_transform
@@ -446,6 +486,8 @@ func fall_apart(performance: bool, look_from: Vector3) -> void:
 	anim.speed_scale = 1.0
 	if held:
 		held.visible = false
+	if nametag:
+		nametag.visible = false
 	var t := create_tween()
 	_fall_tween = t
 	if performance:
@@ -482,7 +524,9 @@ func reassemble() -> void:
 	if held:
 		held.visible = true
 	if _dressed:
-		dress(hat_id, team)  # A fresh hat (the old one flew off), or the triangle back.
+		dress(hat_id, tint)  # A fresh hat (the old one flew off), or the triangle back.
+	if nametag:
+		nametag.visible = not nametag.text.is_empty()
 
 
 func fragments() -> Array[RigidBody3D]:

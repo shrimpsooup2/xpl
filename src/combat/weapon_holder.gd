@@ -38,6 +38,8 @@ const PUNCH_ASSIST := deg_to_rad(12.0)
 const PUNCH_KINDS := {&"straight": 0.5, &"hook": 0.28, &"uppercut": 0.22}
 
 var player: Player
+## Off during a countdown: no firing, throwing or picking up (GDD §8.3).
+var enabled := true
 var fists: WeaponDef = Weapons.get_def(Weapons.FISTS)
 var primary: WeaponDef
 var primary_ammo := 0
@@ -99,6 +101,17 @@ func give(def: WeaponDef, rounds := -1) -> void:
 	_equip()
 
 
+## Fills the gun in hand back to a full magazine (a resupply crate, in games
+## that have them). False if there was nothing to fill.
+func refill() -> bool:
+	if primary == null or not using_primary or primary_ammo >= primary.ammo:
+		return false
+	primary_ammo = primary.ammo
+	_empty_timer = -1.0
+	ammo_changed.emit(primary_ammo, primary.ammo)
+	return true
+
+
 func is_ready() -> bool:
 	return _ready_timer <= 0.0 and _cooldown <= 0.0
 
@@ -116,6 +129,9 @@ func spread() -> float:
 
 func tick(cmd: InputCommand, delta: float) -> void:
 	if player == null or player.is_dead:
+		return
+	if not enabled:
+		zoom = 1.0
 		return
 	# Kept going below zero for one tick, so a held automatic keeps its
 	# exact rate instead of rounding each shot up to whole ticks.

@@ -140,6 +140,9 @@ static func _half(side, team_name: String) -> Transform3D:
 	side.pad("Pad_Revolver", Weapons.REVOLVER, Vector3(35.5, 0, -24))
 	side.pad("Pad_SMG", Weapons.SMG, Vector3(38, 0, 17))
 	side.pad("Pad_Sniper", Weapons.SNIPER, Vector3(53, 12, -17), 0.0)
+	side.resupply("Resupply_Yard", Vector3(64, 0, 8))
+	side.resupply("Resupply_Arcade", Vector3(52, 0, -30))
+	side.resupply("Resupply_Walkway", Vector3(52, 0, 36))
 
 	var color := Color(1.0, 0.35, 0.3) if side.team == Hats.Team.RED else Color(0.35, 0.55, 1.0)
 	side.light("Yard", Vector3(65, 5, 0), color, 20.0)

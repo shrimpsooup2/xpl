@@ -81,4 +81,7 @@ static func build(kit) -> Transform3D:
 
 	var a: Transform3D = kit.spawn("SpawnA", Vector3(-21.5, 0, -15.5), Vector3(1, 0, 0.5))
 	kit.spawn("SpawnB", Vector3(21.5, TOP, 15.5), Vector3(-1, 0, -0.5))
+	# Two more for a four-way free-for-all: one more each side.
+	kit.spawn("SpawnC", Vector3(-21.5, 0, 15.5), Vector3(1, 0, -0.5))
+	kit.spawn("SpawnD", Vector3(21.5, TOP, -6), Vector3(-1, 0, 0))
 	return a

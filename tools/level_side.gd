@@ -59,6 +59,10 @@ func pad(n: String, weapon: StringName, at: Vector3, respawn := 20.0) -> void:
 	kit.pad(n + tag, weapon, p(at), respawn)
 
 
+func resupply(n: String, at: Vector3) -> void:
+	kit.resupply(n + tag, p(at))
+
+
 func spawn(n: String, at: Vector3, facing: Vector3) -> Transform3D:
 	return kit.spawn(n + tag, p(at), p(facing), team)
 

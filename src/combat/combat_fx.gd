@@ -217,11 +217,11 @@ static func _hole(world: Node, point: Vector3, normal: Vector3, radius: float) -
 	var up := Vector3.UP if absf(normal.y) < 0.95 else Vector3.FORWARD
 	m.global_transform = Transform3D(Basis.looking_at(-normal, up).scaled(Vector3.ONE * radius * 2.0), point + normal * 0.004)
 	m.rotate_object_local(Vector3.BACK, randf() * TAU)
+	# Holes free themselves after HOLE_LIFE (and with their level): forget those.
+	_holes = _holes.filter(func(h: Variant) -> bool: return is_instance_valid(h))
 	_holes.append(m)
 	while _holes.size() > MAX_HOLES:
-		var old: Node3D = _holes.pop_front()
-		if is_instance_valid(old):
-			old.queue_free()
+		(_holes.pop_front() as Node3D).queue_free()
 	m.create_tween().tween_callback(m.queue_free).set_delay(HOLE_LIFE)
 
 

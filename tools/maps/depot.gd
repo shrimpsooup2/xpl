@@ -126,6 +126,9 @@ static func _half(side, team_name: String) -> Transform3D:
 	side.pad("Pad_Pistol2", Weapons.PISTOL, Vector3(70, 0, 0))
 	side.pad("Pad_SMG", Weapons.SMG, Vector3(62, 5, -28))
 	side.pad("Pad_Sniper", Weapons.SNIPER, Vector3(30, 10, 47.5), 0.0)
+	side.resupply("Resupply_BackRoom", Vector3(80, 0, -40))
+	side.resupply("Resupply_Mezzanine", Vector3(60, 5, -48))
+	side.resupply("Resupply_Yard", Vector3(64, 0, 16))
 	side.pad("Pad_Shotgun", Weapons.SHOTGUN, Vector3(36, 0, 10))
 	side.pad("Pad_Revolver", Weapons.REVOLVER, Vector3(77, 5.2, 11.25))
 

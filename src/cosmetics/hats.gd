@@ -1,9 +1,10 @@
 class_name Hats
 extends RefCounted
-## Hats: the one cosmetic, and how you tell the teams apart. Every hat's main
-## mass is its wearer's team colour (red or blue), trimmed in black, white,
-## gold or metal, so a glance at the head says whose side someone's on. No
-## hat: a team-coloured triangle hovers over the head instead.
+## Hats: the one cosmetic, and how you tell players apart. Every hat's main
+## mass is its wearer's colour, trimmed in black, white, gold or metal: in
+## teams the team's colour (red or blue), so a glance at the head says whose
+## side someone's on; in free-for-all the colour each player picked (PALETTE).
+## No hat: a triangle in that colour hovers over the head instead.
 ##
 ## Hats are built like the guns: glossy primitives listed as data. Hat
 ## space: the origin is the centre of the ball head (radius 0.165), +Y up,
@@ -19,6 +20,13 @@ enum Team { RED, BLUE }
 
 const NONE := &"none"
 const TEAM_COLORS := {Team.RED: Color(0.9, 0.17, 0.2), Team.BLUE: Color(0.17, 0.4, 0.95)}
+## Free-for-all colours, one picked per player (Cosmetics.color), in order.
+const PALETTE := {
+	&"red": Color(0.9, 0.17, 0.2), &"orange": Color(0.97, 0.48, 0.1), &"yellow": Color(0.98, 0.8, 0.12),
+	&"lime": Color(0.55, 0.86, 0.18), &"green": Color(0.1, 0.66, 0.32), &"teal": Color(0.08, 0.7, 0.66),
+	&"sky": Color(0.3, 0.68, 1.0), &"blue": Color(0.17, 0.4, 0.95), &"violet": Color(0.56, 0.3, 0.95),
+	&"pink": Color(1.0, 0.42, 0.72),
+}
 const FIXED := {
 	&"white": Color(0.95, 0.95, 0.96),
 	&"black": Color(0.09, 0.09, 0.11),
@@ -62,8 +70,9 @@ static func team_color(team: Team) -> Color:
 	return TEAM_COLORS[team]
 
 
-static func color(key: StringName, team: Team) -> Color:
-	var c := team_color(team)
+## A part's colour: the wearer's `tint` (and shades of it) or a fixed trim.
+static func color(key: StringName, tint: Color) -> Color:
+	var c := tint
 	match key:
 		&"team", &"team_glow":
 			return c
@@ -74,24 +83,24 @@ static func color(key: StringName, team: Team) -> Color:
 	return FIXED.get(key, Color.MAGENTA)
 
 
-## The hat `id` in `team`'s colours, as a node in hat space (null for none).
-static func build(id: StringName, team: Team) -> Node3D:
+## The hat `id` in `tint`, as a node in hat space (null for none).
+static func build(id: StringName, tint: Color) -> Node3D:
 	var parts := _parts(id)
 	if parts.is_empty():
 		return null
 	var hat := Node3D.new()
 	hat.name = "Hat_" + String(id)
 	for p: Array in parts:
-		hat.add_child(_part(p, team))
+		hat.add_child(_part(p, tint))
 	return hat
 
 
-## A downward-pointing triangle over the head in the team colour, with a
-## dark outline so it reads on any background. Turn it to face the viewer
-## with face_marker().
-static func build_marker(team: Team) -> Node3D:
+## A downward-pointing triangle over the head in `tint`, with a dark
+## outline so it reads on any background. Turn it to face the viewer with
+## face_marker().
+static func build_marker(tint: Color) -> Node3D:
 	var marker := Node3D.new()
-	marker.name = "TeamMarker"
+	marker.name = "Marker"
 	for outline in [true, false]:
 		var mi := MeshInstance3D.new()
 		var prism := PrismMesh.new()
@@ -100,7 +109,7 @@ static func build_marker(team: Team) -> Node3D:
 		mi.rotation.z = PI  # Point down, at the head.
 		var m := StandardMaterial3D.new()
 		m.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-		m.albedo_color = Color(0.05, 0.05, 0.08) if outline else team_color(team)
+		m.albedo_color = Color(0.05, 0.05, 0.08) if outline else tint
 		mi.material_override = m
 		mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 		# The outline sits behind, lowered so the border comes out even (the
@@ -125,7 +134,7 @@ static func animate(hat: Node3D, delta: float) -> void:
 			(part as Node3D).rotate_y(SPIN_SPEED * delta)
 
 
-static func _part(p: Array, team: Team) -> Node3D:
+static func _part(p: Array, tint: Color) -> Node3D:
 	var shape: String = p[0]
 	var key: StringName = p[1]
 	var dims: Vector3 = p[2]
@@ -136,7 +145,7 @@ static func _part(p: Array, team: Team) -> Node3D:
 	mi.mesh = _mesh(shape, dims)
 	mi.material_override = _material(shape == "ring" or shape == "dome")
 	var finish: Array = FINISH.get(key, FINISH[&"team"])
-	mi.set_instance_shader_parameter(&"color", color(key, team))
+	mi.set_instance_shader_parameter(&"color", color(key, tint))
 	mi.set_instance_shader_parameter(&"gloss", finish[0])
 	mi.set_instance_shader_parameter(&"rim_amount", finish[1])
 	mi.set_instance_shader_parameter(&"glow", finish[2])

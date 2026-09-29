@@ -6,11 +6,18 @@ extends Node3D
 ## into a dance now and then, the camera leans toward the mouse, and a news
 ## ticker crawls along the bottom. Play jumps into a wipe.
 ##
-## The blob wears your hat, in red or blue at random. A small picker tucked
-## in the bottom corner (or ← →) steps through the hats, dropping each onto
-## the blob; the pick is saved and is the hat you wear in a match (GDD §11.4).
+## The blob wears your hat, in red or blue at random. Small pickers tucked in
+## the bottom corner step through the hats (or ← →) and the free-for-all
+## colours, dropping each onto the blob, and your name is typed in next to
+## them; all saved, and what you wear and go by in a game (GDD §11.4).
+## Hovering free-for-all shows your colour; hovering teams, a team's.
+##
+## Free-for-all and teams start a practice game against bots (Game); the
+## sandbox is the movement course.
 
 const PLAY_SCENE := "res://scenes/test_course.tscn"
+const FFA_BOTS := 3
+const TEAM_BOTS := 7
 const LOGO := preload("res://assets/ui/logo_small.png")
 const DANCE_EVERY := Vector2(5.0, 9.0)
 ## Camera lean toward the mouse, in meters at the screen edge.
@@ -42,7 +49,11 @@ var _lean := Vector2.ZERO
 var _reaction := 0
 var _leaving := false
 var _hat_name: PanelContainer
+var _color_name: PanelContainer
+var _name_field: LineEdit
 var _team := Hats.Team.RED
+## What the blob is wearing now: a team's colour or your free-for-all one.
+var _tint := Color.WHITE
 
 
 func _ready() -> void:
@@ -50,12 +61,15 @@ func _ready() -> void:
 	RenderingServer.global_shader_parameter_set(&"world_light", 1.0)
 	Cosmetics.load_saved()
 	_team = Hats.Team.RED if randi() % 2 == 0 else Hats.Team.BLUE
+	_tint = Hats.team_color(_team)
 	_build_stage()
 	_build_menu()
 	_show_hat(false)
 
 
 func _unhandled_input(event: InputEvent) -> void:
+	if _name_field and _name_field.has_focus():
+		return
 	if event.is_action_pressed(&"ui_left"):
 		cycle_hat(-1)
 	elif event.is_action_pressed(&"ui_right"):
@@ -156,12 +170,19 @@ func _build_menu() -> void:
 	var spacer := Control.new()
 	spacer.custom_minimum_size.y = 12
 	col.add_child(spacer)
-	var play := LofiUI.button("play", _play)
-	play.mouse_entered.connect(_react.bind(&"Punch_Jab", 0.8))
-	col.add_child(play)
-	var settings := LofiUI.button("settings (soon)", func() -> void: pass)
-	settings.disabled = true
-	col.add_child(settings)
+	var ffa := LofiUI.button("free-for-all", _play.bind(&"ffa"))
+	ffa.mouse_entered.connect(func() -> void:
+		_react(&"Punch_Jab", 0.8)
+		_wear(Cosmetics.tint()))
+	col.add_child(ffa)
+	var teams := LofiUI.button("teams", _play.bind(&"teams"))
+	teams.mouse_entered.connect(func() -> void:
+		_react(&"Punch_Cross", 0.8)
+		_wear(Hats.team_color(_team)))
+	col.add_child(teams)
+	var sandbox := LofiUI.button("sandbox", _play.bind(&"sandbox"))
+	sandbox.mouse_entered.connect(_react.bind(&"Punch_Jab", 0.8))
+	col.add_child(sandbox)
 	var quit := LofiUI.button("quit", get_tree().quit)
 	quit.mouse_entered.connect(_react.bind(&"Hit_Head", 0.42))
 	col.add_child(quit)
@@ -173,7 +194,7 @@ func _build_menu() -> void:
 	var footer := LofiUI.box("v0.1 · movement prototype", LofiUI.SMALL, LofiUI.Style.GHOST)
 	footer.size_flags_vertical = Control.SIZE_SHRINK_END
 	footer.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-	var picker := _build_hat_picker()
+	var picker := _build_pickers()
 	picker.size_flags_vertical = Control.SIZE_SHRINK_END
 	picker.size_flags_horizontal = Control.SIZE_EXPAND | Control.SIZE_SHRINK_END
 	var bottom := HBoxContainer.new()
@@ -194,25 +215,66 @@ func _build_menu() -> void:
 	LofiUI.enter(picker, Vector2(0, 10), 0.7, 0.25)
 
 
-## A quiet [<] [hat: name] [>] in small ghost boxes, like the version tag.
-func _build_hat_picker() -> HBoxContainer:
+## Quiet rows in small ghost boxes, like the version tag: your name, then
+## [<] [hat: name] [>] and [<] [colour: name] [>].
+func _build_pickers() -> VBoxContainer:
+	var col := VBoxContainer.new()
+	col.add_theme_constant_override(&"separation", 1)
+	col.alignment = BoxContainer.ALIGNMENT_END
+	var name_row := HBoxContainer.new()
+	name_row.alignment = BoxContainer.ALIGNMENT_END
+	name_row.add_theme_constant_override(&"separation", 1)
+	var name_label := LofiUI.box("name:", LofiUI.SMALL, LofiUI.Style.GHOST)
+	name_row.add_child(name_label)
+	_name_field = LineEdit.new()
+	_name_field.text = Cosmetics.player_name
+	_name_field.max_length = Cosmetics.NAME_LENGTH
+	_name_field.custom_minimum_size.x = 84
+	_name_field.add_theme_font_size_override(&"font_size", LofiUI.SMALL)
+	_name_field.add_theme_stylebox_override(&"normal", LofiUI.stylebox(LofiUI.Style.GHOST, LofiUI.SMALL, randi()))
+	_name_field.add_theme_stylebox_override(&"focus", LofiUI.stylebox(LofiUI.Style.NORMAL, LofiUI.SMALL, randi()))
+	_name_field.add_theme_color_override(&"font_color", LofiUI.BLACK)
+	_name_field.text_submitted.connect(func(_t: String) -> void: _name_field.release_focus())
+	_name_field.focus_exited.connect(func() -> void:
+		Cosmetics.set_player_name(_name_field.text)
+		_name_field.text = Cosmetics.player_name)
+	name_row.add_child(_name_field)
+	col.add_child(name_row)
+	var hats: Array = []
+	for id: StringName in Hats.ALL:
+		hats.append("hat: " + Hats.NAMES[id])
+	var hat_row := _stepper(hats, cycle_hat)
+	_hat_name = hat_row.get_child(1)
+	col.add_child(hat_row)
+	var colors: Array = []
+	for key: StringName in Hats.PALETTE:
+		colors.append("colour: " + String(key))
+	var color_row := _stepper(colors, cycle_color)
+	_color_name = color_row.get_child(1)
+	col.add_child(color_row)
+	return col
+
+
+## [<] [label] [>]: the label box wide enough for the longest of `texts`,
+## so the arrows never jump; the arrows call `step` with -1 and 1.
+func _stepper(texts: Array, step: Callable) -> HBoxContainer:
 	var row := HBoxContainer.new()
+	row.alignment = BoxContainer.ALIGNMENT_END
 	row.add_theme_constant_override(&"separation", 1)
 	var ghost := LofiUI.stylebox(LofiUI.Style.GHOST, LofiUI.SMALL, randi())
 	for by in [-1, 1]:
-		var arrow := LofiUI.button("<" if by < 0 else ">", cycle_hat.bind(by))
+		var arrow := LofiUI.button("<" if by < 0 else ">", step.bind(by))
 		arrow.add_theme_font_size_override(&"font_size", LofiUI.SMALL)
 		arrow.add_theme_stylebox_override(&"normal", ghost)
 		arrow.add_theme_color_override(&"font_color", LofiUI.GREY)
 		row.add_child(arrow)
-	_hat_name = LofiUI.box("", LofiUI.SMALL, LofiUI.Style.GHOST)
-	# Wide enough for the longest name, so the arrows never jump.
-	for id: StringName in Hats.ALL:
-		var width := LofiUI.FONT.get_string_size("hat: " + Hats.NAMES[id], HORIZONTAL_ALIGNMENT_LEFT, -1, LofiUI.SMALL).x
-		_hat_name.custom_minimum_size.x = maxf(_hat_name.custom_minimum_size.x, ceilf(width) + 10.0)
-	LofiUI.label_of(_hat_name).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	row.add_child(_hat_name)
-	row.move_child(_hat_name, 1)
+	var label := LofiUI.box("", LofiUI.SMALL, LofiUI.Style.GHOST)
+	for text: String in texts:
+		var width := LofiUI.FONT.get_string_size(text, HORIZONTAL_ALIGNMENT_LEFT, -1, LofiUI.SMALL).x
+		label.custom_minimum_size.x = maxf(label.custom_minimum_size.x, ceilf(width) + 10.0)
+	LofiUI.label_of(label).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	row.add_child(label)
+	row.move_child(label, 1)
 	return row
 
 
@@ -226,15 +288,36 @@ func cycle_hat(by: int) -> void:
 	LofiUI.pop(_hat_name, 1.1, 0.12)
 
 
+## Steps `by` through the free-for-all colours, saves the pick, and shows it
+## on the blob.
+func cycle_color(by: int) -> void:
+	if _leaving:
+		return
+	var keys := Hats.PALETTE.keys()
+	Cosmetics.set_color(keys[posmod(keys.find(Cosmetics.color) + by, keys.size())])
+	_tint = Cosmetics.tint()
+	_show_hat(true)
+	LofiUI.pop(_color_name, 1.1, 0.12)
+
+
+## Re-dresses the blob in `tint` (hovering a mode shows what you'd wear).
+func _wear(tint: Color) -> void:
+	if _leaving or tint == _tint:
+		return
+	_tint = tint
+	_show_hat(false)
+
+
 ## Puts the picked hat on the blob; with `drop` it lands with a little squash
 ## and the head nods under it.
 func _show_hat(drop: bool) -> void:
-	_model.dress(Cosmetics.hat, _team)
+	_model.dress(Cosmetics.hat, _tint)
 	if _model.hat:
 		# The spot is nearly overhead: the hat's shadow would black out the face.
 		for part: MeshInstance3D in _model.hat.find_children("*", "MeshInstance3D", true, false):
 			part.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	LofiUI.set_text(_hat_name, "hat: " + Hats.NAMES[Cosmetics.hat])
+	LofiUI.set_text(_color_name, "colour: " + String(Cosmetics.color))
 	if not drop:
 		return
 	if _model.hat:
@@ -289,11 +372,25 @@ func _react(clip: StringName, length: float) -> void:
 			_model.anim.play(PlayerModel.ANIM_IDLE, 0.3))
 
 
-func _play() -> void:
+## Starts `mode`: a practice game of free-for-all or teams against bots, or
+## the sandbox course.
+func _play(mode: StringName) -> void:
 	if _leaving:
 		return
+	if _name_field:
+		Cosmetics.set_player_name(_name_field.text)
 	_react(&"Jump_Start", 1.0)
 	_leaving = true
 	LofiUI.kick(_layer, 0.6)
-	get_tree().create_timer(0.2).timeout.connect(func() -> void:
-		Wipe.change_scene(get_tree(), PLAY_SCENE))
+	get_tree().create_timer(0.2).timeout.connect(_start.bind(mode))
+
+
+func _start(mode: StringName) -> void:
+	match mode:
+		&"ffa":
+			Game.practice(get_tree(), GameRules.free_for_all(), FFA_BOTS)
+		&"teams":
+			Game.practice(get_tree(), GameRules.teams(), TEAM_BOTS)
+		_:
+			Game.end(get_tree(), false)
+			Wipe.change_scene(get_tree(), PLAY_SCENE)

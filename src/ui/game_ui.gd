@@ -5,6 +5,10 @@ extends Node
 ## and the (experimental, off by default) impact frames. Hides the HUD while the
 ## local player is dead.
 ##
+## In a game (Game.current) it follows the match: scores, the timer, the
+## round card and countdown, the killfeed, round and match results, and the
+## scoreboard.
+##
 ## Debug: F8 previews each overlay, F9 goes to the next map; hold Tab for the
 ## scoreboard.
 
@@ -21,6 +25,7 @@ var pause: PauseMenu
 var impact: ImpactFrames
 var speed_lines: SpeedLines
 var player: Player
+var game: Match
 
 var _preview_step := -1
 var _map_name := "test course"
@@ -61,6 +66,7 @@ func _ready() -> void:
 		player.respawned.connect(_set_alive_ui.bind(true))
 		player.movement_event.connect(hud.on_movement_event)
 		player.movement_event.connect(crosshair.on_movement_event)
+		player.health_changed.connect(func(h: float) -> void: hud.set_health(ceili(h)))
 		impact.settings = player.view_settings
 		player.movement_event.connect(_impact_on_movement)
 		impact.fired.connect(func(strength: float, point: Vector2) -> void:
@@ -74,7 +80,11 @@ func _ready() -> void:
 	if map_name != "":
 		_map_name = map_name
 	hud.set_map(_map_name)
-	overlays.round_card(_map_name, 0, false)
+	game = Game.current
+	if game:
+		_follow_match()
+	else:
+		overlays.round_card(_map_name, 0, false)
 
 
 func _process(_delta: float) -> void:
@@ -122,7 +132,8 @@ func _on_hit(result: Dictionary) -> void:
 	if result.get("killed", false):
 		var heartshot: bool = result.get("heartshot", false)
 		kill_confirmed(heartshot)
-		hud.add_kill("you", result.get("name", "?"), weapon.display_name if weapon else "", heartshot)
+		if game == null:  # In a game, the match's killfeed has it.
+			hud.add_kill("you", result.get("name", "?"), weapon.display_name if weapon else "", heartshot)
 	elif result.get("zone") == &"head":
 		crosshair.hit(&"head")
 	else:
@@ -139,9 +150,93 @@ func _unhandled_input(event: InputEvent) -> void:
 		var scene := get_tree().current_scene
 		Wipe.change_scene(get_tree(), Maps.after(scene.scene_file_path if scene else ""))
 	elif event.is_action_pressed(&"scoreboard"):
-		overlays.show_scoreboard([["you", 0, 0, 0, 0]])
+		if game:
+			_show_scoreboard()
+		else:
+			overlays.show_scoreboard([["you", 0, 0, 0, 0]])
 	elif event.is_action_released(&"scoreboard"):
 		overlays.hide_scoreboard()
+
+
+# --- Following a game -------------------------------------------------------------
+
+const TEAM_NAMES := {Hats.Team.RED: "red", Hats.Team.BLUE: "blue"}
+
+
+func _follow_match() -> void:
+	game.state_changed.connect(_on_match_state)
+	game.scores_changed.connect(_show_scores)
+	game.kill_feed.connect(func(killer: PlayerInfo, victim: PlayerInfo, weapon_name: String, heartshot: bool) -> void:
+		if killer == null or killer == victim:
+			hud.add_kill(_who(victim), _who(victim), weapon_name if weapon_name != "" else "fell", false)
+		else:
+			hud.add_kill(_who(killer), _who(victim), weapon_name, heartshot))
+	game.round_decided.connect(func(winner: PlayerInfo) -> void:
+		var me := game.local_info()
+		var scores := _score_pair()
+		var title := "draw" if winner == null else ("" if me else winner.player_name + " wins")
+		overlays.round_result(winner != null and winner == me, scores[1], scores[3], title))
+	game.match_decided.connect(func(winner: PlayerInfo, team: int) -> void:
+		var me := game.local_info()
+		var won := (me != null and team == me.team) if game.rules.is_teams() else (winner != null and winner == me)
+		var title := ""
+		if (game.rules.is_teams() and team < 0) or (not game.rules.is_teams() and winner == null):
+			title = "draw"
+		elif me == null:
+			title = (TEAM_NAMES[team] if game.rules.is_teams() else winner.player_name) + " wins"
+		var scores := _score_pair()
+		var rounds := game.history.map(func(h: Array) -> Array: return [h[0], h[1] if h[1] != "" else "draw", ""])
+		overlays.match_end(won, scores[1], scores[3], rounds, title))
+	_show_scores()
+	if game.state == Match.State.COUNTDOWN:
+		_on_match_state(game.state)
+
+
+func _on_match_state(state: Match.State) -> void:
+	match state:
+		Match.State.COUNTDOWN:
+			overlays.round_card(_map_name, game.round_number if game.rules.rounds else 0, true, game.rules.countdown)
+			hud.set_timer(-1.0)
+		Match.State.LIVE:
+			var limited := (game.rules.round_time if game.rules.rounds else game.rules.time_limit) > 0.0
+			hud.set_timer(game.timer if limited else -1.0)
+
+
+## [left name, left score, right name, right score]: your side first.
+func _score_pair() -> Array:
+	var me := game.local_info()
+	if game.rules.is_teams():
+		var mine: int = me.team if me else Hats.Team.RED
+		var other := Hats.Team.BLUE if mine == Hats.Team.RED else Hats.Team.RED
+		return [TEAM_NAMES[mine], game.team_scores[mine], TEAM_NAMES[other], game.team_scores[other]]
+	var ranked := game.standings()
+	var left: PlayerInfo = me if me else (ranked[0] if not ranked.is_empty() else null)
+	var right: PlayerInfo = null
+	for info in ranked:
+		if info != left:
+			right = info
+			break
+	return ["you" if left == me and me else (left.player_name if left else ""), left.round_wins if left else 0,
+			right.player_name if right else "", right.round_wins if right else 0]
+
+
+func _show_scores() -> void:
+	var s := _score_pair()
+	hud.set_scores(s[0], s[1], s[2] if s[2] != "" else "—", s[3])
+
+
+func _show_scoreboard() -> void:
+	var rows := []
+	for info in game.standings():
+		var second: Variant = TEAM_NAMES[info.team] if game.rules.is_teams() else info.round_wins
+		rows.append([_who(info), second, "%d / %d" % [info.kills, info.deaths], info.heartshots, "bot" if info.bot else "—"])
+	overlays.show_scoreboard(rows, "team" if game.rules.is_teams() else "rounds")
+
+
+func _who(info: PlayerInfo) -> String:
+	if info == null:
+		return "?"
+	return "you" if info.local else info.player_name
 
 
 ## A kill you made (from a confirmed hit; F8 previews it):

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 1.5 (draft) |
+| **Version** | 1.6 (draft) |
 | **Date** | 2026-09-29 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -28,6 +28,7 @@
 | 1.3 | Weapons renamed from computing jargon to realistic-sounding model names (SP-12, Marshal .357, SX-50, TR-30, Warden 12, Heron .308…). Damage numbers merge: one number per target that adds up and grows (§10.4). |
 | 1.4 | Hats: the first cosmetic, and how teams are told apart. Sixteen hats in red or blue, or no hat and a team triangle over the head; picked on the title screen (§11.4, §13.4). Dash charges recharge slower (1.75 → 2.25 s). First-person arms sit lower and further back and carry on past the cut off screen, so no arm end ever shows. Punches mix jabs, crosses, hooks and uppercuts. UI boxes drawn like the logo: a crooked black frame set in from a white card. |
 | 1.5 | Map rules rewritten (§9.1): size varies from map to map, structure before theme, fair but not always symmetrical, long sightlines allowed on the big maps. The first eight greybox maps built and tested (§9.3): Stack, Terrace, Switchback; two spread-out maps for more players and longer rounds, Archipelago and Rift, where the sniper has a job; and three large team maps in the traditional style, Boulevard, Holdfast and Depot. F9 steps through them in game. The movement sandbox moves to §9.4. |
+| 1.6 | The two game styles built (§8.5): free-for-all in short rounds (last one standing, first to five, a new map each round) and teams as one long game (respawns, kill target, time limit), run by a server-side match, with practice bots. Ammo by style (§7.2): teams keep "no reloads" but add resupply crates, faster pads and a spawn pistol. Players take damage and die like the dummies, kills go to whoever hit them last (§5.1). In free-for-all everyone picks their colour; names float over heads (§11.4). |
 
 ---
 
@@ -269,8 +270,12 @@ The smashdown is a vertical move that is also an attack and a chain starter. It 
 | Property | Value |
 |---|---|
 | Max health | 100 |
-| Regeneration | None. Rounds are too short to need it. |
+| Regeneration | None in free-for-all: rounds are too short to need it. In teams, 25/s after 5 s untouched. |
 | Armor / health pickups | None in MVP. Weapons are the only pickups. |
+| Who gets the kill | Whoever hit you last, if that was within the last 5 s: knocking someone off the map counts. A fall nobody caused is nobody's kill. |
+| Friendly fire | Off in teams (a teammate's shots don't land), on in free-for-all. |
+
+Players take hits exactly like the practice dummies (the same hit shapes, zones and reactions); they have their own physics layer, so shots trace the world and then the bodies' hit shapes, never a player's movement capsule. Code: `Player.take_hit()`.
 
 ### 5.2 Damage zones
 
@@ -397,6 +402,12 @@ In order of preference, if heartshots land too often or not often enough:
 - **When empty:** you switch to fists automatically after 0.2 s, unless you throw first.
 - **Empty weapons** dissolve 3 s after landing.
 - No weapon reloads.
+
+**By game style** (§8.5). The rules above are free-for-all's: short rounds on small maps, where scarcity keeps everyone moving and each round resets the race. A long team game on a big map would turn that into a long walk for ammo, and a "once a round" sniper would appear once a game, so teams change four things (all in `GameRules`, tunable per game):
+- **Still no reloads**: no dead frames.
+- **Resupply crates** stand in each team's base and along its lanes: walk up to one holding a gun and its magazine fills up, once every 8 s per player. They're hidden and inert in free-for-all.
+- **Pads come back twice as fast** (10 s), and **power pads come back** after 60 s instead of never.
+- **You respawn holding a pistol**, not just fists.
 
 ### 7.3 Fists
 
@@ -531,6 +542,29 @@ Lobby → Warmup → [ Countdown → Round → Round end → Next map ] × N →
 - First to **7 round wins** by default (configurable 3–15 in custom games).
 - Maps rotate every round. A match draws from the map pool without repeats until the pool runs out.
 - There is no comeback mechanic by default. Rounds are short and every map resets the weapon race.
+
+### 8.5 Game styles (built)
+
+Two styles, each a `GameRules` preset (`src/game/game_rules.gd`), run by a `Match` (`src/game/match.gd`) that lives outside the level so it survives map changes. It runs on the machine that hosts the game (offline, yours): damage, deaths, scores, spawns and respawns are decided there and only there, ready for the network (§15.2).
+
+| | Free-for-all (classic) | Teams |
+|---|---|---|
+| Shape | Short rounds, one life each; last one standing wins the round | One long game on one map, respawning |
+| Win | First to 5 round wins | First team to 50 kills, or ahead after 10 min |
+| Maps | A new map every round, from Stack, Terrace, Switchback, Archipelago, Rift | One of Boulevard, Holdfast, Depot |
+| Round limit | 70 s, then nobody wins it (sudden death to come) | — |
+| Countdown | 3 s, moving, weapons off | 5 s |
+| Spawn with | Fists | A pistol; 3 s to respawn, at your team's spawns, away from enemies |
+| Ammo | No reloads, no resupply (§7.2) | No reloads; resupply crates, faster pads, power pads return |
+| Health | 100, no regeneration | 100, back after 5 s untouched |
+| Friendly fire | — | Off |
+| Colours | Everyone picks their own (§11.4) | Red and blue |
+
+The flow: loading (the Match finds the new level and puts everyone in it: the local person in the level's own Player, everyone else in a new one), countdown (the round card's "go" lands on the moment weapons come on), live, round end (a result card), then the next round or the match end (the winner, the rounds) and back to the menu. The HUD follows along: the score (your side on the left), the round or game timer, a killfeed of every kill, and a real scoreboard on Tab.
+
+**Practice bots** (`src/game/bot_brain.gd`) make both styles playable offline: free-for-all against three, teams four against four. A bot drives its Player through the same input commands a person does: to the nearest gun when empty-handed, then at the nearest enemy it can see, strafing and shooting with a reaction time and aim error, jumping what's in the way and refusing to walk into the void. They don't navigate (no navigation mesh yet), so on multi-level maps they can get stuck.
+
+*Not built yet:* warmup, the map unloading (sudden death), spectating while dead, the barrier at spawn during the countdown, a rematch vote.
 
 ---
 
@@ -744,7 +778,8 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 - The body is one skinned mesh generated from a smooth signed-distance shape (`src/player/body_shape.gd`, `tools/gen_body.gd`), so proportions are tuned in code, not in a modeling tool.
 - It must never read as lumpy. Nothing is glued on: the legs are the bottom of the torso slab split by a slit, each arm is one tapered tube, and every join is a wide C2 blend. The mesh is built in an A-pose (arms 45° down, where they spend most of their time), so skinning never bends a shoulder far.
 - Animation comes from Quaternius's Universal Animation Library (CC0). Its human rig is reshaped at load time to the body's proportions (shorter legs, longer spine, A-pose rest), and the hips motion is scaled to match.
-- **Hats** are the first cosmetic, and they carry the team colour. Sixteen, built like the guns from glossy primitives listed as data (`src/cosmetics/hats.gd`): top hat, cap, beanie, cowboy hat, bowler, party hat, crown, fez, propeller cap, chef hat, viking helmet, hard hat, bucket hat, mortarboard, wizard hat, halo. Each one's main mass is the wearer's team colour (red or blue) with trim in black, white, gold or metal, so one glance at the head says whose side someone is on. **No hat** is a choice too: a team-coloured triangle, pointing down at the head with a dark outline, hovers over the head and turns to face whoever looks. The hat rides the head bone, flies off when the body falls apart, and is back on respawn. You pick yours on the title screen, and that is the hat you wear in every match until you change it (it's saved, `src/cosmetics/cosmetics.gd`). Your team comes from the match, not the menu. Practice dummies play for blue, each in a different hat.
+- **Hats** are the first cosmetic, and they carry the wearer's colour: the team's in teams, and in free-for-all a colour each player picks from ten (red, orange, yellow, lime, green, teal, sky, blue, violet, pink). Sixteen, built like the guns from glossy primitives listed as data (`src/cosmetics/hats.gd`): top hat, cap, beanie, cowboy hat, bowler, party hat, crown, fez, propeller cap, chef hat, viking helmet, hard hat, bucket hat, mortarboard, wizard hat, halo. Each one's main mass is the wearer's team colour (red or blue) with trim in black, white, gold or metal, so one glance at the head says whose side someone is on. **No hat** is a choice too: a team-coloured triangle, pointing down at the head with a dark outline, hovers over the head and turns to face whoever looks. The hat rides the head bone, flies off when the body falls apart, and is back on respawn. You pick yours on the title screen, and that is the hat you wear in every match until you change it (it's saved, `src/cosmetics/cosmetics.gd`). Your team comes from the match, not the menu. Practice dummies play for blue, each in a different hat.
+- **Names** float over everyone's head but your own, in their colour, small and the same size at any distance, gone past 70 m and while the body is in pieces. A teammate's shows through walls; anyone else's only while you can see their head. You type yours on the title screen (up to 16 characters, cleaned of anything unprintable), next to the hat and colour pickers.
 - Cosmetics (post-MVP): more hats, surface materials (chrome, marble, carpet, TV static), heart styles, weapon skins. Cosmetics can never change hitboxes or hide the heart, and hats are never hit shapes.
 - **Layered animation** (`src/player/body_layers.gd`): on top of the locomotion clip, clips can be laid over some bones (the arms aim while the legs run), played once over some bones (a hit, a punch), arms reach for targets by two-bone IK, and bones can be knocked on springs.
 
@@ -878,6 +913,8 @@ Code: the motion kit is in `src/ui/lofi_ui.gd` (`enter`, `leave`, `pop`, `stamp`
 | Mode | Phase | Notes |
 |---|---|---|
 | 1v1 online (private lobby) | MVP | Invite or join code |
+| Free-for-all (classic) | Built, offline vs bots | Short rounds, see §8.5 |
+| Teams | Built, offline vs bots | One long game, see §8.5 |
 | Movement sandbox | MVP | See [§9.4](#94-movement-sandbox) |
 | Custom rules | MVP (basic) | Rounds to win, weapon pool filters ("precision only", "melee only", "random roulette"), Heartshot on/off, round timer |
 | 2v2 | Post-MVP | Team maps built (§9.3) |

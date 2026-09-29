@@ -40,18 +40,22 @@ func _ready() -> void:
 	_title = LofiUI.box("paused", LofiUI.BIG, LofiUI.Style.INVERTED)
 	col.add_child(_title)
 	col.add_child(LofiUI.button("resume", close))
-	col.add_child(LofiUI.button("respawn", func() -> void:
-		close()
-		if player:
-			player.respawn()))
+	if Game.current == null:
+		col.add_child(LofiUI.button("respawn", func() -> void:
+			close()
+			if player:
+				player.respawn()))
 	col.add_child(LofiUI.button("tuning (f1)", func() -> void:
 		close()
 		var e := InputEventAction.new()
 		e.action = &"debug_tuning"
 		e.pressed = true
 		Input.parse_input_event(e)))
-	col.add_child(LofiUI.button("main menu", func() -> void:
-		Wipe.change_scene(get_tree(), MAIN_MENU)))
+	col.add_child(LofiUI.button("leave game" if Game.current else "main menu", func() -> void:
+		if Game.current:
+			Game.end(get_tree())
+		else:
+			Wipe.change_scene(get_tree(), MAIN_MENU)))
 	col.add_child(LofiUI.button("quit", get_tree().quit))
 	_panel = col
 

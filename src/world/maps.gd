@@ -24,6 +24,14 @@ static func name_of(scene_path: String) -> String:
 	return ""
 
 
+## The scene of the level called `level_name` ("" if there's none).
+static func scene_of(level_name: String) -> String:
+	for m: Dictionary in ALL:
+		if m.name == level_name:
+			return m.scene
+	return ""
+
+
 ## The scene after `scene_path` in the list, wrapping round.
 static func after(scene_path: String) -> String:
 	for i in ALL.size():
