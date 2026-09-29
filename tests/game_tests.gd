@@ -203,12 +203,21 @@ func test_after_dying_in_a_game_you_watch_someone_not_a_black_screen() -> void:
 	var other := make_player(Vector3(-4, 0.05, 0))
 	await physics(5)
 	you.set_process(true)
+	var pause := PauseMenu.new()
+	pause.player = you
+	add_child(pause)
 	you.take_hit(hit(killer, 500.0))
 	check(you.is_dead and you.death.is_active(), "dead: the cinematic plays")
+	check(pause.in_death_cinematic(), "and the menu waits for it (it plays over everything)")
 	you.death.finished.emit()  # It's over (skipped).
 	await frames(3)
 	check(you.spectating == killer, "then you watch whoever killed you")
 	check(not you.death.is_active(), "the cinematic's done, the world put back")
+	check(not pause.in_death_cinematic(), "watching someone, esc opens the menu")
+	pause.open()
+	check(pause.is_open, "and it's open")
+	pause.close()
+	pause.queue_free()
 	await frames(int(DeathSequence.FADE_BACK * 60.0) + 5)
 	check(you.death._overlay.color.a == 0.0, "and the picture fades back in from black")
 	var cam := you.camera.global_position

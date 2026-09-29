@@ -75,15 +75,21 @@ func _ready() -> void:
 	_panel = col
 
 
-## Esc: opens from gameplay, closes when open (from the settings page, back
-## to the menu).
+## Esc: opens from gameplay, and while you're down watching someone; closes
+## when open (from the settings page, back to the menu).
 func toggle() -> void:
 	if _settings:
 		_settings.escape()
 	elif is_open:
 		close()
-	elif Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not (player and player.is_dead):
+	elif Input.mouse_mode == Input.MOUSE_MODE_CAPTURED and not in_death_cinematic():
 		open()
+
+
+## Whether your death cinematic has the screen: it plays over everything,
+## so the menu waits until it's over (and you're watching someone).
+func in_death_cinematic() -> bool:
+	return player != null and player.is_dead and player.death != null and player.death.is_active()
 
 
 func open() -> void:

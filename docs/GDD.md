@@ -775,7 +775,7 @@ Dying is slightly over the top and silly on purpose. The body turns out to have 
 | Performance | about 1.2 s | You do a little dance, freeze mid-move, and shiver. |
 | Crumble | about 1.8 s | Cuts open, you crumble, the heart pops out toward the camera, and the camera tilts down to the heap. |
 | Caption | 1.8 s | A logo-style boxed caption: *you fell apart*. Then fade out. |
-| Watching | until you're back | In a game that doesn't bring you straight back (free-for-all until the round's over, teams until the respawn), the world comes back and the picture fades in on someone alive: whoever killed you first. The camera rides behind them; click for the next, right-click for the last, and when they die it moves on. A box says who you're watching and when you're back (*back in 2*, or *out till the round's over*). |
+| Watching | until you're back | In a game that doesn't bring you straight back (free-for-all until the round's over, teams until the respawn), the world comes back and the picture fades in on someone alive: whoever killed you first. The camera rides behind them; click for the next, right-click for the last, and when they die it moves on. Esc opens the menu. A box says who you're watching and when you're back (*back in 2*, or *out till the round's over*). |
 
 Every timing lives as a constant in `src/player/death_sequence.gd` and `src/player/player_model.gd`. (Before *watching*, a game left you on the black screen until you came back, which looked like the game had frozen.) Later: a skip button, audio stings, and the killer's name and weapon in the caption.
 
@@ -917,7 +917,7 @@ The HUD hides during your death sequence and springs back in on respawn. Code: `
 | Screen | Status | Description |
 |---|---|---|
 | Main menu | Built | Your blob idles (and sometimes dances) under a spotlight on a dark stage. Logo top left, boxed menu below (*free-for-all*, *teams*, *online*, *sandbox*, *settings*, *quit*), version in a ghost box. The blob wears your hat, in red or blue at random. A small ghost-box hat picker sits in the bottom-right corner, `<` *hat: name* `>` (or ← →): each step drops the next hat onto the blob, which nods under it. The pick is saved and is the hat you wear in a match. |
-| Pause (Esc) | Built | Dim + boxed list: *resume*, *respawn*, *settings*, *tuning*, *main menu*, *quit*. The game keeps running underneath (it's multiplayer). |
+| Pause (Esc) | Built | Dim + boxed list: *resume*, *respawn*, *settings*, *tuning*, *main menu*, *quit*. The game keeps running underneath (it's multiplayer). Opens while you're down and watching someone too, but not over the death cinematic, which plays over everything. |
 | Map card + countdown | Built (preview) | *round 3* over the map name, a fake loading bar of boxes, then *3 · 2 · 1 · go*. |
 | Round result | Built (preview) | Huge *round won* (inverted) or *round lost* banner over the score. |
 | Scoreboard (hold Tab) | Built (preview) | One boxed table: rounds, kills, ♥ heartshots, ping. |
