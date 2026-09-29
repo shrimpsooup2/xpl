@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 2.6 (draft) |
+| **Version** | 2.7 (draft) |
 | **Date** | 2026-09-29 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -39,6 +39,7 @@
 | 2.4 | Empty guns no longer disappear (§7.2): one stays in your hands until you throw it or take another, is dropped rather than lost, and lasts until the next gun from the pad it came off is taken. Bots with an empty gun switch to fists and go looking for another. |
 | 2.5 | Teams play like Shell Shockers (§7.2, §8.5): you pick your gun from the six and spawn with it, changing it in the countdown or while you're down (1–6); there are no guns on the map, just ammo boxes where the pads and crates were, each topping your gun up by half a magazine. |
 | 2.6 | Kill combos in teams (§8.5, §13.3): kills within 4 s of each other chain into a *double kill*, *triple kill*, *quad kill*, *penta kill*, each one popping up bigger, kicking the UI and punching the camera harder; a meter by the crosshair shows the count and drains until the chain breaks. Kills without dying make a streak, and some have names (*on a roll* at 3, *heating up* at 5, *unstoppable* at 8, *untouchable* at 12). The killfeed marks anyone's combo, ×2 after the killer. |
+| 2.7 | Guns do about a third less damage (§7.4), so you last longer: at 100 health the TR-30 and SX-50 kill in about a second instead of two thirds of one, the SP-12 in 1.8 s, the Marshal in four shots; a Heron headshot still kills outright. Hits show where they came from (§13.3): a red arc round the crosshair points at the shooter. Esc opens the menu while you're down watching someone (§13.4). |
 
 ---
 
@@ -481,22 +482,24 @@ Every gun is modelled on a real kind of gun, abstracted: chunky blocks in beige 
 | Warden 12 | A ghost ring on the receiver and a strawberry front post | 1.15× | 65% (a tighter pattern) |
 | Heron .308 | The scope: once it's up to the eye, the view cuts to it | 3× | (already exact) |
 
+**Damage** is tuned for fights that last a moment: at 100 health, every hit landing, the TR-30 and SX-50 kill in about 1 s (10 and 15 hits), the SP-12 in 1.8 s (7), the Marshal .357 in four shots (1.5 s, or 0.3 s fanned), the Warden 12 in two point-blank shells or three at range, and the Heron .308 in two body shots or one to the head. (Cut by about a third in 2.7: the automatics killed in under 0.7 s. The planned weapons below keep their first numbers until they're built.)
+
 **Precision**
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
-| SP-12 | Standard | 20 | 0.3 s | 12 | Projectile 150 m/s | ♥ | 9 mm pistol. Common, found near spawns. |
-| Marshal .357 | Standard | 45 | 0.5 s | 6 | Projectile 250 m/s | ♥ | .357 revolver. Hold the trigger from the hip past 0.2 s: fan the hammer (a round every 0.1 s while held, +3° spread, no ♥). Aimed, holding it is one careful shot. |
+| SP-12 | Standard | 15 | 0.3 s | 12 | Projectile 150 m/s | ♥ | 9 mm pistol. Common, found near spawns. |
+| Marshal .357 | Standard | 32 | 0.5 s | 6 | Projectile 250 m/s | ♥ | .357 revolver. Hold the trigger from the hip past 0.2 s: fan the hammer (a round every 0.1 s while held, +3° spread, no ♥). Aimed, holding it is one careful shot. |
 | Sentry DMR | Standard | 40 | 0.35 s | 10 | Hitscan | ♥ | Aimed: 1.5× zoom |
 | Talon | Standard | 70 | 0.9 s | 5 | Bolt 90 m/s, with drop | ♥ | Crossbow. Bolts stick in walls. |
-| Heron .308 | Heavy | 85 (head kills) | 1.2 s | 5 | Hitscan | ♥ | Bolt-action sniper. Scoped: 3× zoom. |
+| Heron .308 | Heavy | 70 (head kills) | 1.2 s | 5 | Hitscan | ♥ | Bolt-action sniper. Scoped: 3× zoom. |
 
 **Automatic**
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
-| SX-50 | Standard | 11 | 0.07 s | 50 | Projectile 180 m/s | — | SMG. Spread blooms 1° → 4°. |
-| TR-30 | Standard | 16 | 0.11 s | 30 | Projectile 200 m/s | — | Assault rifle. 0.5° spread, blooming to 1.5°. |
+| SX-50 | Standard | 7 | 0.07 s | 50 | Projectile 180 m/s | — | SMG. Spread blooms 1° → 4°. |
+| TR-30 | Standard | 11 | 0.11 s | 30 | Projectile 200 m/s | — | Assault rifle. 0.5° spread, blooming to 1.5°. |
 | NX-50 | Standard | 14 | 0.09 s | 50 | Nail 90 m/s, slight drop | — | Nailgun. Nails bounce once. |
 | GX-6 | Heavy | 9 | 0.04 s after 0.5 s spin-up | 200 | Projectile 160 m/s | — | Minigun. 2.5° spread. Alt: keep spun up without firing. |
 
@@ -504,7 +507,7 @@ Every gun is modelled on a real kind of gun, abstracted: chunky blocks in beige 
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
-| Warden 12 | Standard | 10 × 9 pellets | 0.8 s | 8 | Pellets, 5° spread | — | Pump shotgun. Pellets land in a readable pattern: one in the middle, a tight inner ring, an outer ring. |
+| Warden 12 | Standard | 7 × 9 pellets | 0.8 s | 8 | Pellets, 5° spread | — | Pump shotgun. Pellets land in a readable pattern: one in the middle, a tight inner ring, an outer ring. |
 | Coachman | Heavy | 12 × 9 pellets per barrel | 0.25 s | 10 | Pellets, 6° spread | — | Alt: both barrels at once, with 5 m/s self-knockback (shotgun jump) |
 | FT-5 | Heavy | 120 DPS + 15 burn over 3 s | Continuous | 5 s of fuel | 8 m cone | — | Flamethrower |
 

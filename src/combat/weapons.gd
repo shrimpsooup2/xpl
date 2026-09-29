@@ -76,7 +76,7 @@ static func _pistol() -> WeaponDef:
 	d.id = PISTOL
 	d.display_name = "sp-12"
 	d.based_on = "semi-automatic 9 mm pistol"
-	d.damage = 20.0
+	d.damage = 15.0
 	d.fire_interval = 0.3
 	d.ammo = 12
 	d.projectile_speed = 150.0
@@ -119,7 +119,7 @@ static func _revolver() -> WeaponDef:
 	d.id = REVOLVER
 	d.display_name = "marshal .357"
 	d.based_on = ".357 revolver"
-	d.damage = 45.0
+	d.damage = 32.0
 	d.fire_interval = 0.5
 	d.ammo = 6
 	d.projectile_speed = 250.0
@@ -161,7 +161,7 @@ static func _sniper() -> WeaponDef:
 	d.display_name = "heron .308"
 	d.based_on = "bolt-action sniper rifle"
 	d.tier = "heavy"
-	d.damage = 85.0
+	d.damage = 70.0
 	d.fire_interval = 1.2
 	d.ammo = 5
 	d.delivery = WeaponDef.Delivery.HITSCAN
@@ -216,7 +216,7 @@ static func _smg() -> WeaponDef:
 	d.id = SMG
 	d.display_name = "sx-50"
 	d.based_on = "9 mm submachine gun"
-	d.damage = 11.0
+	d.damage = 7.0
 	d.fire_interval = 0.07
 	d.automatic = true
 	d.ammo = 50
@@ -268,7 +268,7 @@ static func _rifle() -> WeaponDef:
 	d.id = RIFLE
 	d.display_name = "tr-30"
 	d.based_on = "assault rifle"
-	d.damage = 16.0
+	d.damage = 11.0
 	d.fire_interval = 0.11
 	d.automatic = true
 	d.ammo = 30
@@ -320,7 +320,7 @@ static func _shotgun() -> WeaponDef:
 	d.id = SHOTGUN
 	d.display_name = "warden 12"
 	d.based_on = "pump-action shotgun"
-	d.damage = 10.0
+	d.damage = 7.0
 	d.pellets = 9
 	d.fire_interval = 0.8
 	d.ammo = 8
