@@ -91,7 +91,8 @@ Both ways run the same server-authoritative game ([how it works, and its safety 
 | `data/` | Tuning resources |
 | `scenes/` | `main_menu.tscn` (main scene), `test_course.tscn`, `player.tscn`, and the maps in `maps/` |
 | `tests/` | Headless movement, UI, combat, cosmetics, map, game and network tests, and the online tests (real processes talking over the network) |
-| `tools/` | Test runner, the scene generator, the level kit (with `level_side.gd` for symmetric team maps) and the map layouts (`maps/`) |
+| `site/` | The website (below) |
+| `tools/` | Test runner, the website's build script, the scene generator, the level kit (with `level_side.gd` for symmetric team maps) and the map layouts (`maps/`) |
 
 ## Tests
 
@@ -102,6 +103,16 @@ tools/run_tests.sh
 This runs the headless movement, UI, combat, cosmetics, map, game and network tests (the map tests drive a player through each map's routes), then the online tests in real time: a dedicated server started in a second Godot process, this one joining it (and a third joining late), then this one hosting a game a friend's process joins. `SKIP_ONLINE=1` skips those. Set `TEST_ONLY` to part of a test's name to run just those. It uses `$GODOT` or `godot` on your PATH; on Linux x86_64 it downloads Godot 4.7.2 into `.tools/` if neither is found.
 
 `tools/build_scenes.gd` regenerates the input map, `player.tscn`, the greybox test course, and the maps (each laid out by a script in `tools/maps/` with the kit in `tools/level_kit.gd`). Once you edit the course by hand in the editor, stop regenerating it (pass `-- --skip-course`). `tools/gen_textures.gd` and `tools/gen_logo.gd` regenerate the placeholder textures and the logo; paint over the PNGs freely instead. `tools/gen_body.gd` regenerates the player's body and its pre-diced chunks from `src/player/body_shape.gd` (about a minute; add `-- --body-only` to skip the dicing while tuning the shape).
+
+## Website
+
+`site/` is the game's website: plain HTML, CSS and a little JavaScript, no build tools, in the game's UI style (boxes drawn by hand like the logo, letter tiles, the heart spinner you can poke). There are no screenshots yet, only stand-ins, until the maps are decorated. `tools/build_site.sh` puts it together in `_site/` with the logo, the icon and the font from `assets/`; to look at it locally:
+
+```sh
+tools/build_site.sh && python3 -m http.server -d _site
+```
+
+`.github/workflows/pages.yml` publishes it to GitHub Pages whenever it changes on `main`. It needs, once, **Settings → Pages → Build and deployment → Source: GitHub Actions** in the repository. `tools/gen_icon.gd` makes the favicon (*xpl*, in the logo's style).
 
 ## Known issues
 

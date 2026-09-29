@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>devlog · xtrapartial</title>
+<meta name="description" content="what's changed in xtrapartial, newest first.">
+<meta name="theme-color" content="#3d296b">
+<meta property="og:type" content="website">
+<meta property="og:title" content="devlog · xtrapartial">
+<meta property="og:description" content="what's changed in xtrapartial, newest first.">
+<meta property="og:image" content="https://shrimpsooup2.github.io/xpl/assets/logo.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<link rel="stylesheet" href="site.css">
+<script>document.documentElement.classList.add("js")</script>
+<script src="site.js" defer></script>
+</head>
+<body>
+<a class="skip box" href="#main">skip to the page</a>
+<div class="sky" aria-hidden="true"><div class="sun"></div><div class="fog"></div></div>
+
+<header class="wrap top">
+	<a class="home" href="./"><img src="assets/logo.png" alt="xtrapartial, home" width="753" height="216"></a>
+	<nav aria-label="pages">
+		<a class="box btn" href="./">home</a>
+		<a class="box btn" href="how-to-play.html">how to play</a>
+		<a class="box btn inv" href="devlog.html" aria-current="page">devlog</a>
+		<a class="box btn" href="./#get-it">get it</a>
+	</nav>
+</header>
+
+<main id="main" class="wrap" style="max-width:820px">
+
+<section>
+	<h1 style="margin-bottom:18px"><span class="tiles" data-tiles="inv">devlog</span></h1>
+	<p class="box ghost small reveal">what's changed, newest first. the long version is the <a href="https://github.com/shrimpsooup2/xpl/blob/main/docs/GDD.md">design doc</a>, and every change is in the <a href="https://github.com/shrimpsooup2/xpl/commits/main">history</a>.</p>
+</section>
+
+<section style="margin-top:28px">
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">29 sep 2026</span><span class="box small">2.6</span><h3>kill combos</h3></header>
+		<p>in teams, kills within 4 seconds of each other chain into a <em>double kill</em>, <em>triple kill</em>, <em>quad kill</em>, <em>penta kill</em>, each popping up bigger, kicking the ui and punching the camera harder. a meter by the crosshair shows the count and drains until the chain breaks. kills without dying make a streak, and some have names: <em>on a roll</em>, <em>heating up</em>, <em>unstoppable</em>, <em>untouchable</em>. the killfeed marks anyone's combo.</p>
+	</article>
+
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">29 sep 2026</span><span class="box small">2.5</span><h3>teams, like shell shockers</h3></header>
+		<p>you pick your gun from the six and spawn with it, and change it in the countdown or while you're down. there are no guns on the map any more, just ammo boxes where the pads and crates were, each topping you up by half a magazine.</p>
+	</article>
+
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">29 sep 2026</span><span class="box small">2.4</span><h3>empty guns stick around</h3></header>
+		<p>an empty gun used to vanish. now it stays in your hands until you throw it or take another, and lasts until the next gun from the pad it came off is taken. bots with an empty gun switch to their fists and go looking for another.</p>
+	</article>
+
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">29 sep 2026</span><span class="box small">2.3</span><h3>the heart is beads now</h3></header>
+		<p>the heart became real beads floating in a pocket scooped out of the chest, each on its own spring, so they lag and rattle. a heartshot spills them across the floor; any other death lets them settle, grey. (before that it was a tiny crt with a pixel heart on it. it's gone.)</p>
+		<p>dying in a game no longer leaves you on a black screen: you watch someone until you're back. and the death camera looks up at you from low down, further back and off to one side, which is funnier.</p>
+	</article>
+
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">29 sep 2026</span><span class="box small">2.2</span><h3>a settings page</h3></header>
+		<p>controls, keys (two per action, rebindable), video, camera (field of view, impact frames and every camera and ui motion setting) and sound. saved as you change it.</p>
+	</article>
+
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">29 sep 2026</span><span class="box small">2.1</span><h3>down the sights</h3></header>
+		<p>every gun aims: iron sights, a dot sight on the sx-50, a rear sight on the tr-30's carry handle, a ghost ring on the warden 12, the heron's scope. aiming zooms and tightens the spread and never slows you. the revolver fans when you hold the trigger from the hip. and a fix: you couldn't be hurt while playing in first person.</p>
+	</article>
+
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">29 sep 2026</span><span class="box small">2.0</span><h3>dashes carry you</h3></header>
+		<p>a dash keeps part of its burst: some on the ground, where the extra fades out instead of stopping dead, and most of it in the air, where it ends with a little lift and carries you twice as far. (it replaced timed hops, which lasted a day.)</p>
+	</article>
+
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">29 sep 2026</span><span class="box small">1.7</span><h3>online</h3></header>
+		<p>host a game from the menu or run a dedicated server, join by address, and wait in a lobby between games. the server decides everything; your own movement is predicted so it feels instant, and everyone else is smoothed out. every message is checked, and junk and floods get you kicked.</p>
+	</article>
+
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">29 sep 2026</span><span class="box small">1.6</span><h3>two ways to play, and bots</h3></header>
+		<p>free-for-all in short rounds (last one standing, first to five, a new map each round) and teams as one long game (respawns, a kill target, a time limit), with practice bots for both. players take damage and fall apart like the dummies. in free-for-all you pick your colour, and names float over heads.</p>
+	</article>
+
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">29 sep 2026</span><span class="box small">1.5</span><h3>eight maps</h3></header>
+		<p>the first maps, in greybox: stack, terrace and switchback for small fights; archipelago and rift, spread out, where the sniper has a job; and boulevard, holdfast and depot for teams. each is laid out by a script from a shared kit, and tests drive a player through every route. f9 steps through them.</p>
+	</article>
+
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">28 sep 2026</span><span class="box small">1.4</span><h3>hats</h3></header>
+		<p>sixteen hats, and they're how you tell teams apart: every one is mostly your team's colour. no hat, and a triangle hangs over your head instead. also: first-person arms that never show where they end, punches that mix jabs, hooks and uppercuts, and ui boxes drawn like the logo, a crooked frame set in from a white card.</p>
+	</article>
+
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">28 sep 2026</span><span class="box small">1.2</span><h3>six guns</h3></header>
+		<p>the first guns, each modelled on a real kind of gun, with first-person arms, third-person holds, and mechanisms that work: a slide, a cylinder and hammer, a pump, a bolt. target dummies react to where you hit them. ammo is shown, not counted: a column as tall as the gun holds, and a ring round the crosshair.</p>
+	</article>
+
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">28 sep 2026</span><span class="box small">1.0</span><h3>how moving feels</h3></header>
+		<p>slides carry, hills speed you up, the smashdown got heavier and bounces higher, and the camera reacts to everything you do. speed lines. impact frames on kills and big smashdowns, which the whole ui takes the hit from.</p>
+	</article>
+
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">28 sep 2026</span><span class="box small">0.6</span><h3>the look of the ui</h3></header>
+		<p>everything in the logo's style: tiny arial in framed boxes, blown up soft. then the motion: a springy hud that reacts to how you move, pop-ups that land one letter at a time and shatter, typed map cards, a wipe between scenes.</p>
+	</article>
+
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">28 sep 2026</span><span class="box small">0.5</span><h3>a body, and a silly death</h3></header>
+		<p>a smooth, joint-free glossy figure, generated from a shape in code. and the death: blackout, spotlight, a little dance, then the body turns out to have been diced all along.</p>
+	</article>
+
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">27 sep 2026</span><span class="box small">0.4</span><h3>the look</h3></header>
+		<p>early-2000s realtime 3d, rendered crunchy: a low internal resolution with hard pixels, point-filtered pixel textures, glossy surfaces, lighting that's flat and harsh on purpose, heavy pastel fog. and the logo.</p>
+	</article>
+
+	<article class="box card entry reveal">
+		<header><span class="box small ghost">27 sep 2026</span><span class="box small">0.1</span><h3>the start</h3></header>
+		<p>a design doc, then the movement prototype in godot 4.7: run, jump, air strafe, slide, slide-hop, dash, smashdown, wall ride, wall jump and mantle, with a live tuning panel.</p>
+	</article>
+</section>
+
+</main>
+
+<footer class="wrap bottom">
+	<div class="row">
+		<span class="box ghost">xtrapartial</span>
+		<span class="box ghost">made with godot</span>
+		<a class="box btn" href="https://github.com/shrimpsooup2/xpl">source</a>
+		<a class="box btn" href="./">home</a>
+	</div>
+</footer>
+</body>
+</html>

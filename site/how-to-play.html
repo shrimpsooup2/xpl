@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>how to play · xtrapartial</title>
+<meta name="description" content="the controls, every move, the heartshot, and how free-for-all and teams play.">
+<meta name="theme-color" content="#3d296b">
+<meta property="og:type" content="website">
+<meta property="og:title" content="how to play · xtrapartial">
+<meta property="og:description" content="the controls, every move, the heartshot, and how free-for-all and teams play.">
+<meta property="og:image" content="https://shrimpsooup2.github.io/xpl/assets/logo.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<link rel="stylesheet" href="site.css">
+<script>document.documentElement.classList.add("js")</script>
+<script src="site.js" defer></script>
+</head>
+<body>
+<a class="skip box" href="#main">skip to the page</a>
+<div class="sky" aria-hidden="true"><div class="sun"></div><div class="fog"></div></div>
+
+<header class="wrap top">
+	<a class="home" href="./"><img src="assets/logo.png" alt="xtrapartial, home" width="753" height="216"></a>
+	<nav aria-label="pages">
+		<a class="box btn" href="./">home</a>
+		<a class="box btn inv" href="how-to-play.html" aria-current="page">how to play</a>
+		<a class="box btn" href="devlog.html">devlog</a>
+		<a class="box btn" href="./#get-it">get it</a>
+	</nav>
+</header>
+
+<main id="main" class="wrap">
+
+<section>
+	<h1 style="margin-bottom:18px"><span class="tiles" data-tiles="inv">how to play</span></h1>
+	<div class="box card reveal">
+		<p class="lede">you're a glossy blank figure with a glowing heart and nothing but your fists, pouring through dreamlike maps at 15 m/s. the one who moves best gets to the good guns first, so most of this page is about moving.</p>
+	</div>
+</section>
+
+<section aria-labelledby="controls">
+	<h2 id="controls"><span class="tiles" data-tiles="inv">controls</span></h2>
+	<div class="box card reveal keys">
+		<div class="table-scroll">
+		<table>
+			<tr><th>move</th><td><kbd class="box small">w</kbd><kbd class="box small">a</kbd><kbd class="box small">s</kbd><kbd class="box small">d</kbd></td></tr>
+			<tr><th>look</th><td><span class="box small">mouse</span></td></tr>
+			<tr><th>jump</th><td><kbd class="box small">space</kbd><span class="box small">wheel down</span></td></tr>
+			<tr><th>slide / crouch <span class="dim">on the ground</span></th><td><kbd class="box small">ctrl</kbd><kbd class="box small">c</kbd></td></tr>
+			<tr><th>smashdown <span class="dim">in the air</span></th><td><kbd class="box small">ctrl</kbd><kbd class="box small">c</kbd></td></tr>
+			<tr><th>dash</th><td><kbd class="box small">shift</kbd></td></tr>
+			<tr><th>fire</th><td><span class="box small">left click</span> <span class="dim">hold it from the hip to fan the revolver</span></td></tr>
+			<tr><th>aim down the sights</th><td><span class="box small">right click</span></td></tr>
+			<tr><th>pick up / swap</th><td><kbd class="box small">e</kbd> <span class="dim">walk over one empty-handed to just take it</span></td></tr>
+			<tr><th>throw your gun</th><td><kbd class="box small">q</kbd></td></tr>
+			<tr><th>gun / fists</th><td><kbd class="box small">1</kbd><kbd class="box small">2</kbd><span class="box small">wheel up</span></td></tr>
+			<tr><th>pick your gun <span class="dim">teams</span></th><td><kbd class="box small">1</kbd>–<kbd class="box small">6</kbd> <span class="dim">in the countdown or while you're down</span></td></tr>
+			<tr><th>scores</th><td><span class="box small">hold</span><kbd class="box small">tab</kbd></td></tr>
+			<tr><th>menu</th><td><kbd class="box small">esc</kbd></td></tr>
+		</table>
+		</div>
+		<p class="note" style="margin-top:12px">every key can be changed in <em>settings → keys</em>, two to an action.</p>
+	</div>
+</section>
+
+<section aria-labelledby="moving">
+	<h2 id="moving"><span class="tiles" data-tiles="inv">moving</span></h2>
+	<p class="box ghost small reveal" style="margin-bottom:16px">every move keeps your speed or adds to it. nothing quietly eats it, and falling never hurts.</p>
+	<div class="grid three">
+		<article class="box card reveal">
+			<div class="row" style="margin-bottom:10px"><h3>run</h3><kbd class="box small">w a s d</kbd></div>
+			<p>quick to full speed, with a little weight to it. stairs and small lips never interrupt a run.</p>
+		</article>
+		<article class="box card reveal">
+			<div class="row" style="margin-bottom:10px"><h3>jump</h3><kbd class="box small">space</kbd></div>
+			<p>always the same height. you can still jump just after running off a ledge, and a jump pressed just before you land goes off as you land.</p>
+		</article>
+		<article class="box card reveal">
+			<div class="row" style="margin-bottom:10px"><h3>air strafe</h3><kbd class="box small">a / d + mouse</kbd></div>
+			<p>hold a or d and turn with the mouse to steer in the air and pick up a little speed, like quake.</p>
+		</article>
+		<article class="box card reveal">
+			<div class="row" style="margin-bottom:10px"><h3>slide</h3><kbd class="box small">ctrl</kbd></div>
+			<p>at speed on the ground: a boost to start and low friction after, so a slide carries. downhill it speeds you up.</p>
+		</article>
+		<article class="box card reveal">
+			<div class="row" style="margin-bottom:10px"><h3>slide-hop</h3><kbd class="box small">space</kbd></div>
+			<p>jump out of a slide and keep every bit of your speed. it's the move everything else chains through.</p>
+		</article>
+		<article class="box card reveal">
+			<div class="row" style="margin-bottom:10px"><h3>dash</h3><kbd class="box small">shift</kbd></div>
+			<p>a burst the way you're moving that leaves you faster: a little on the ground, a lot in the air. at the top of a jump it carries you about twice as far. two charges.</p>
+		</article>
+		<article class="box card reveal">
+			<div class="row" style="margin-bottom:10px"><h3>smashdown</h3><kbd class="box small inv">ctrl in the air</kbd></div>
+			<p>slam straight down. a shockwave where you land, then bounce back up (higher the further you fell) or slide out. best on someone's head.</p>
+		</article>
+		<article class="box card reveal">
+			<div class="row" style="margin-bottom:10px"><h3>wall ride</h3><span class="box small ghost">automatic</span></div>
+			<p>jump along a wall and you run on it for a moment, gravity easing off.</p>
+		</article>
+		<article class="box card reveal">
+			<div class="row" style="margin-bottom:10px"><h3>wall jump</h3><kbd class="box small">space</kbd></div>
+			<p>on or near a wall, kick off it. three before you touch the ground again.</p>
+		</article>
+		<article class="box card reveal">
+			<div class="row" style="margin-bottom:10px"><h3>mantle</h3><span class="box small ghost">automatic</span></div>
+			<p>move into a ledge and you vault onto it, keeping most of your speed.</p>
+		</article>
+	</div>
+</section>
+
+<section aria-labelledby="fighting">
+	<h2 id="fighting"><span class="tiles" data-tiles="inv">fighting</span></h2>
+	<div class="grid two">
+		<article class="box card reveal">
+			<h3><span class="box small heart">♥</span> the heartshot</h3>
+			<p>the heart is the ring of pink beads in everyone's chest, a little off the middle. a shot through it from the sp-12, the marshal .357 or the heron .308 kills outright, whatever their health, from the front, back or side.</p>
+			<p>nothing else can: no pellets, no sprays, no fists, and never through a wall. aim for it when they're predictable: riding a wall, flying off a smashdown, standing still.</p>
+		</article>
+		<article class="box card reveal">
+			<h3>aiming</h3>
+			<p>right click brings the gun up to your eye: each gun zooms by its own amount and tightens its spread, and aiming never slows you down. the heron's scope cuts to the scope view.</p>
+			<p>turning slows with the zoom (<em>aim sensitivity</em> in settings), and aiming can be a toggle instead of a hold.</p>
+		</article>
+		<article class="box card reveal">
+			<h3>fists</h3>
+			<p>you always have them. a punch hits harder the faster you're going, and punching never slows you down.</p>
+		</article>
+		<article class="box card reveal">
+			<h3>throwing</h3>
+			<p>q throws your gun, empty or not. it hurts whoever it hits and lands where anyone can pick it up again with what's left in it.</p>
+		</article>
+	</div>
+</section>
+
+<section aria-labelledby="styles">
+	<h2 id="styles"><span class="tiles" data-tiles="inv">free-for-all and teams</span></h2>
+	<div class="grid two">
+		<article class="box card reveal">
+			<h3>free-for-all</h3>
+			<p class="dim">short rounds, one life each, first to 5 rounds.</p>
+			<ul>
+				<li>a new map every round, and a round lasts 70 s at most. last one standing takes it.</li>
+				<li>you spawn with your fists. guns float over pads round the map: walk over one empty-handed to take it, or press e to swap.</li>
+				<li>no reloads: what's in the gun is what you get. walking over the same kind of gun tops yours up.</li>
+				<li>an empty gun stays in your hands until you throw it or take another, and lasts until the next gun from its pad is taken.</li>
+				<li>health doesn't come back.</li>
+			</ul>
+		</article>
+		<article class="box card reveal">
+			<h3>teams</h3>
+			<p class="dim">four against four on one map. first team to 50 kills, or ahead after 10 minutes.</p>
+			<ul>
+				<li>pick your gun with 1–6: in the countdown it's in your hands at once, while you're down it's yours next life. your pick is saved.</li>
+				<li>no guns on the map. ammo boxes stand all over it: walk into one and it tops your gun up by half a magazine, and it's back 10 s later.</li>
+				<li>health comes back 5 s after you were last hit. you're back 3 s after you die, at your team's end, away from the enemy.</li>
+				<li>kills within 4 s of each other chain: <span class="box small inv">double kill</span><span class="box small inv">triple kill</span><span class="box small alert">quad kill</span><span class="box small alert">penta kill</span>. kills without dying make a streak: <em>on a roll</em> at 3, <em>heating up</em> at 5, <em>unstoppable</em> at 8, <em>untouchable</em> at 12.</li>
+				<li>teams are told apart by hats: every hat is mostly your team's colour. no hat, and a triangle in your colour hangs over your head.</li>
+			</ul>
+		</article>
+	</div>
+</section>
+
+<section aria-labelledby="dying">
+	<h2 id="dying"><span class="tiles" data-tiles="inv">when you die</span></h2>
+	<div class="box card reveal">
+		<p>you fall apart. literally: the body turns out to have been diced all along, and it crumbles into a heap while a spotlight watches. after a heartshot the beads spill out across the floor.</p>
+		<p>then, until you're back, you watch someone who's still going: whoever got you first. click for the next person, right click for the last.</p>
+	</div>
+</section>
+
+<section aria-labelledby="settings">
+	<h2 id="settings"><span class="tiles" data-tiles="inv">settings</span></h2>
+	<div class="box card reveal">
+		<p>from the title screen or the menu (esc). everything takes effect at once and is saved as you change it; <em>defaults</em> puts a tab back.</p>
+		<table>
+			<tr><th>controls</th><td>sensitivity, aim sensitivity, invert look, toggle aim</td></tr>
+			<tr><th>keys</th><td>every action, two keys each: click a slot and press a key or mouse button</td></tr>
+			<tr><th>video</th><td>window, vsync, frame cap, pixels (how tall the 3d picture is), colours (a 16-bit look)</td></tr>
+			<tr><th>camera</th><td>field of view, speed fov, camera motion, smoothing, screen shake, wall ride tilt, ui motion, landing dip, speed lines, impact frames</td></tr>
+			<tr><th>sound</th><td>volume, for when there are sounds</td></tr>
+		</table>
+	</div>
+</section>
+
+<section aria-labelledby="online">
+	<h2 id="online"><span class="tiles" data-tiles="inv">online</span></h2>
+	<div class="grid three">
+		<article class="box card reveal">
+			<h3>host</h3>
+			<p><em>online → host a game</em>: pick the style, the port (27960) and a password if you like. friends on your network join at the address the lobby shows; over the internet, forward the port or try <em>open the port</em>. add bots, then start.</p>
+		</article>
+		<article class="box card reveal">
+			<h3>join</h3>
+			<p><em>online → join a game</em>: the host's address (<code>192.168.1.20</code>, or <code>example.com:27961</code> for another port) and the password if there is one.</p>
+		</article>
+		<article class="box card reveal">
+			<h3>know the risks</h3>
+			<p>whoever hosts decides the game and can see your ip address. traffic isn't encrypted and there's no anti-cheat. play on hosts you trust, and host for people you know.</p>
+		</article>
+	</div>
+</section>
+
+</main>
+
+<footer class="wrap bottom">
+	<div class="row">
+		<span class="box ghost">xtrapartial</span>
+		<span class="box ghost">made with godot</span>
+		<a class="box btn" href="https://github.com/shrimpsooup2/xpl">source</a>
+		<a class="box btn" href="devlog.html">devlog</a>
+	</div>
+</footer>
+</body>
+</html>
