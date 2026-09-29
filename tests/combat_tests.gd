@@ -181,13 +181,34 @@ func test_the_heart_is_a_tiny_tv_that_ends_the_way_it_died() -> void:
 	check(heart.ending() == &"on" and heart.get_parent().name == &"HeartMount", "back together: on again, in the chest")
 
 
-func test_the_heart_can_be_a_loading_spinner_instead() -> void:
+func test_the_heart_sits_in_a_socket_in_the_chest() -> void:
+	# The body's shape has a round pocket scooped out round the heart, and
+	# the body's mesh follows it.
+	var sk := dummy.model.skeleton
+	var prims := BodyShape.primitives(sk)
+	var centre: Vector3 = prims.heart
+	check(BodyShape.sdf(centre, prims) > 0.02, "the heart's centre is empty space (%.3f)" % BodyShape.sdf(centre, prims))
+	check(BodyShape.sdf(centre + Vector3(0, 0, -BodyShape.SOCKET_RADIUS - 0.02), prims) < 0.0, "with chest behind the pocket")
+	var mesh: ArrayMesh = load("res://assets/characters/player_body.res")
+	var nearest := INF
+	for v: Vector3 in mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+		nearest = minf(nearest, v.distance_to(centre))
+	near(nearest, BodyShape.SOCKET_RADIUS, 0.006, "the body's mesh has the pocket: nearest to the heart")
+
+
+func test_the_heart_can_be_a_loading_spinner_of_real_beads() -> void:
 	var heart: HeartScreen = dummy.model.heart
 	HeartScreen.style = HeartScreen.Style.SPINNER
 	heart._process(0.01)
-	check(heart.built == HeartScreen.Style.SPINNER and heart.material.shader == HeartScreen.SPINNER_SHADER,
-			"switching the style rebuilds the heart as a spinner")
-	check(heart.DIAL * 0.5 < HitShapes.HEART_RADIUS, "its glass is inside the hit sphere too")
+	check(heart.built == HeartScreen.Style.SPINNER and heart.dots.size() == HeartScreen.DOTS and heart.casing == null and heart.lining.visible,
+			"switching the style rebuilds the heart as beads in a lined socket")
+	await frames(2)
+	var inside := true
+	for bead in heart.dots:
+		var local := heart.global_transform.affine_inverse() * bead.global_position
+		inside = inside and local.length() + HeartScreen.DOT_RADIUS < HitShapes.HEART_RADIUS \
+				and local.length() + HeartScreen.DOT_RADIUS < HeartScreen.LINING_RADIUS and local.z < 0.0
+	check(inside, "every bead floats inside the chest's socket, inside the hit sphere")
 	var turns := func(speed: float) -> float:
 		heart.speed = speed
 		var from := heart.spin()
@@ -195,18 +216,57 @@ func test_the_heart_can_be_a_loading_spinner_instead() -> void:
 		return fposmod(heart.spin() - from, TAU) / TAU / 0.05
 	near(turns.call(0.0), HeartScreen.SPIN_REST, 0.05, "turns per second at rest")
 	check(turns.call(HeartScreen.FAST_SPEED) > HeartScreen.SPIN_REST * 2.0, "faster at speed")
+	# Each bead on its own spring: a hit rattles them.
+	var before: Array[Vector3] = []
+	for bead in heart.dots:
+		before.append(bead.global_position)
 	heart.hurt()
 	var held := heart.spin()
-	heart._process(0.1)
-	check(heart.spin() == held, "a hit makes it hitch")
+	heart._process(1.0 / 60.0)
+	var moved := 0
+	for i in heart.dots.size():
+		if heart.dots[i].global_position.distance_to(before[i]) > 0.002:
+			moved += 1
+	check(moved == HeartScreen.DOTS, "a hit rattles every bead (%d moved)" % moved)
+	check(heart.spin() == held, "and makes the spin hitch")
 	heart._process(HeartScreen.HITCH_TIME)
 	heart._process(0.05)
 	check(heart.spin() != held, "then it carries on")
-	heart.stop(true)
-	check(heart.ending() == &"off", "a heartshot stops it the same way")
+	# A heartshot spills them out of the chest.
+	var at := heart.global_position
+	dummy.take_hit({"damage": 5.0, "zone": &"heart", "part": &"chest", "point": at,
+			"normal": Vector3.BACK, "direction": Vector3.FORWARD, "heartshot": true, "attacker": null})
+	check(heart.ending() == &"off" and heart.dots.is_empty() and heart.spilled().size() == HeartScreen.DOTS,
+			"a heartshot spills every bead")
+	for i in 40:
+		await get_tree().physics_frame
+	var furthest := 0.0
+	for body in heart.spilled():
+		furthest = maxf(furthest, body.global_position.distance_to(at))
+	check(furthest > 0.3, "out of the chest and away (%.2f m)" % furthest)
 	HeartScreen.style = HeartScreen.Style.CRT
 	heart._process(0.01)
 	check(heart.built == HeartScreen.Style.CRT and heart.ending() == &"off", "and back to the TV, keeping its ending")
+	dummy.model.reassemble()
+	await frames(2)
+	check(heart.spilled().is_empty(), "back together, the spilled beads are cleared away")
+
+
+func test_timed_out_the_beads_settle_in_the_bottom_of_the_socket() -> void:
+	var heart: HeartScreen = dummy.model.heart
+	HeartScreen.style = HeartScreen.Style.SPINNER
+	heart._process(0.01)
+	heart.stop(false)
+	for i in 60:
+		heart._process(1.0 / 60.0)
+	var low := true
+	for bead in heart.dots:
+		var local := heart.global_transform.affine_inverse() * bead.global_position
+		low = low and local.y < -HeartScreen.RING_RADIUS * 0.8
+	check(heart.ending() == &"lost" and low, "timed out: they sink to the bottom of the socket")
+	HeartScreen.style = HeartScreen.Style.CRT
+	heart.revive()
+	heart._process(0.01)
 
 
 func test_automatic_guns_cannot_heartshot() -> void:

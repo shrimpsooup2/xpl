@@ -680,6 +680,7 @@ func _pop_heart(look_from: Vector3) -> void:
 	piece.add_child(col)
 	_fragment_parent().add_child(piece)
 	piece.global_transform = heart.global_transform
+	heart.leave_socket()
 	heart.reparent(piece, true)
 	piece.linear_velocity = toward * 2.4 + Vector3.UP * 3.8
 	piece.angular_velocity = Vector3(randf(), randf(), randf()) * 6.0
@@ -711,6 +712,7 @@ func _build_heart() -> void:
 	skeleton.add_child(_heart_mount)
 	heart = HeartScreen.new()
 	heart.name = "Heart"
+	heart.drop_into = _fragment_parent
 	_heart_rest = rest.affine_inverse() * Transform3D(Basis.IDENTITY, rest.origin + BodyShape.HEART_OFFSET)
 	heart.transform = _heart_rest
 	_heart_mount.add_child(heart)
