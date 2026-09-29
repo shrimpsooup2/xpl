@@ -6,14 +6,17 @@ extends Node
 ## the way, won't walk off into the void, and gets itself unstuck by trying
 ## somewhere else for a moment.
 ##   empty-handed: to the nearest gun lying about (walking over one takes it);
-##   armed: at the nearest enemy it can see, strafing and shooting, with a
-##     human-ish reaction time and aim error; hunting the nearest enemy it
-##     can't see.
+##   armed: at the nearest enemy it can see, strafing and shooting (down
+##     the sights beyond close range), with a human-ish reaction time and
+##     aim error; hunting the nearest enemy it can't see;
+##   low on ammo, where there are ammo boxes: to the nearest one.
 
 ## Degrees of aim error, seconds before it reacts to someone new, turn rate.
 @export var aim_error := 3.0
 @export var reaction := 0.35
 @export var turn_speed := deg_to_rad(320.0)
+## Aims down the sights at enemies further than this (m).
+@export var aim_from := 12.0
 
 var player: Player
 var match_ref: Match
@@ -40,6 +43,8 @@ func _physics_process(delta: float) -> void:
 		_think = 0.2
 		_choose()
 	var cmd := InputCommand.new()
+	if player.weapons.using_primary and player.weapons.primary_ammo <= 0:
+		cmd.switch_to = 2  # Out: fists, and off to find another gun.
 	var eye := player.weapons.eye_position()
 	var sees := _target != null and _visible(_target)
 	_seen_for = _seen_for + delta if sees else 0.0
@@ -88,7 +93,9 @@ func _physics_process(delta: float) -> void:
 	if sees and _seen_for > reaction:
 		var def := player.weapons.current
 		var off := rad_to_deg(forward.angle_to(Vector3(want.x, 0, want.z).normalized())) if want.length() > 0.1 else 0.0
-		var in_range := player.global_position.distance_to(_target.global_position) < (2.4 if def.is_fists() else def.max_range * 0.8)
+		var distance := player.global_position.distance_to(_target.global_position)
+		var in_range := distance < (2.4 if def.is_fists() else def.max_range * 0.8)
+		cmd.alt_held = not def.is_fists() and distance > aim_from
 		if off < 6.0 and in_range:
 			_fire_hold += 1
 			cmd.fire_held = true
@@ -128,7 +135,13 @@ func _choose() -> void:
 		return
 
 	_has_goal = true
-	if not player.weapons.using_primary or player.weapons.primary == null:
+	var w := player.weapons
+	if match_ref and match_ref.rules.ammo_boxes and w.primary and w.primary_ammo < w.primary.ammo * 0.3:
+		var box := _nearest_ammo()
+		if box:
+			_goal = box.global_position
+			return
+	if not w.using_primary or w.primary == null or w.primary_ammo <= 0:
 		var gun := _nearest_gun()
 		if gun:
 			_goal = gun.global_position
@@ -161,6 +174,15 @@ func _nearest_gun() -> Node3D:
 		var p := n as WeaponPickup
 		if p and p.is_available() and (best == null or player.global_position.distance_to(p.global_position) < player.global_position.distance_to(best.global_position)):
 			best = p
+	return best
+
+
+func _nearest_ammo() -> Node3D:
+	var best: Node3D = null
+	for n: Node in get_tree().get_nodes_in_group(AmmoBox.GROUP):
+		var box := n as AmmoBox
+		if box and box.available and (best == null or player.global_position.distance_to(box.global_position) < player.global_position.distance_to(best.global_position)):
+			best = box
 	return best
 
 

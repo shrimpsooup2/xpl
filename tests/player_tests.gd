@@ -268,7 +268,7 @@ func test_dash_charges_and_exit_speed() -> void:
 	var y_before := player.global_position.y
 	await run(c, roundi(p.dash_duration / DT))
 	check(player.state.mode == Mode.AIR, "dash ended")
-	near(hspeed(), p.dash_exit_min_speed, 0.05, "exit speed from a standstill")
+	near(hspeed(), p.dash_keep_air * p.dash_speed, 0.05, "exit speed from a standstill, in the air")
 	check(absf(player.global_position.y - y_before) < 0.05, "no gravity during the dash")
 
 	c.dash_pressed = true
@@ -301,6 +301,70 @@ func test_dash_jump_keeps_exit_speed() -> void:
 	await run(c)
 	check(player.state.mode == Mode.AIR and player.velocity.y > 5.0, "dash-jump left the ground")
 	check(hspeed() >= p.dash_exit_min_speed - 0.2, "kept dash exit speed: %.2f" % hspeed())
+
+
+## Runs up to run speed on the flat, facing -Z.
+func run_up() -> InputCommand:
+	place(Vector3.ZERO)
+	await settle()
+	var c := cmd(Vector2(0, 1))
+	await run(c, 60)
+	return c
+
+
+func test_a_ground_dash_leaves_you_faster_for_a_moment() -> void:
+	var c := await run_up()
+	c.dash_pressed = true
+	await run(c, 1 + roundi(p.dash_duration / DT))
+	var kept := p.run_speed + p.dash_keep_ground * (p.dash_speed - p.run_speed)
+	check(player.state.mode == Mode.GROUND, "dash over, still on the ground")
+	near(hspeed(), kept, 0.3, "keeps a share of the burst")
+	await run(c, 18)
+	check(hspeed() > p.run_speed + 1.0, "still faster 0.3 s later: %.2f" % hspeed())
+	await run(c, roundi(p.dash_carry_time / DT))
+	near(hspeed(), p.run_speed, 0.1, "then back to run speed")
+
+
+func test_an_air_dash_keeps_more_and_flies_further() -> void:
+	# A plain running jump, for comparison.
+	var c := await run_up()
+	var from := player.global_position
+	c.jump_pressed = true
+	await run(c)
+	while not player.state.on_ground:
+		await run(c)
+	var plain := from.distance_to(player.global_position)
+	# The same jump with a dash at the top.
+	c = await run_up()
+	from = player.global_position
+	c.jump_pressed = true
+	await run(c)
+	while player.velocity.y > 0.0:
+		await run(c)
+	c.dash_pressed = true
+	await run(c, 1 + roundi(p.dash_duration / DT))
+	var kept := p.run_speed + p.dash_keep_air * (p.dash_speed - p.run_speed)
+	near(hspeed(), kept, 0.3, "an air dash keeps most of the burst")
+	check(player.velocity.y > 0.0, "and ends with a little lift")
+	while not player.state.on_ground:
+		await run(c)
+	var dashed := from.distance_to(player.global_position)
+	check(dashed > plain * 1.5, "flies further: %.1f m against %.1f m" % [dashed, plain])
+	await run(c, 12)
+	check(hspeed() > p.run_speed + 3.0, "and lands still carrying it: %.2f" % hspeed())
+
+
+func test_steering_while_carried_turns_but_adds_nothing() -> void:
+	var c := await run_up()
+	c.dash_pressed = true
+	await run(c, 1 + roundi(p.dash_duration / DT))
+	var top := hspeed()
+	c.move = Vector2(1, 0)  # Hard over to the side.
+	for i in 20:
+		await run(c)
+		check(hspeed() <= top + 0.01, "no faster than the dash left you (%.2f > %.2f)" % [hspeed(), top])
+		top = hspeed()
+	check(player.velocity.x > 1.0, "but it does turn you")
 
 
 # --- Step and mantle ----------------------------------------------------------
@@ -580,6 +644,8 @@ func test_respawn_mid_collapse_reassembles_cleanly() -> void:
 	check(not player.is_dead, "alive after respawn")
 	check(player.model.fragments().is_empty(), "no fragments after respawn (%d)" % player.model.fragments().size())
 	check(player.model.body.visible and player.model.heart.visible, "body and heart back")
+	check(player.model.heart.ending() == &"on" and player.model.heart.get_parent().name == &"HeartMount",
+			"the heart back in the chest and on")
 	await run(cmd(Vector2(0, 1)), 30)
 	check(hspeed() > 5.0, "can move again after respawn")
 

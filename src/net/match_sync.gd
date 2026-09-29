@@ -74,6 +74,9 @@ func _on_server_level(_level: Node) -> void:
 	for pad in Match._all_of(match_ref.level, "WeaponPad"):
 		var path := match_ref.level.get_path_to(pad)
 		pad.changed.connect(func(ready: bool) -> void: _pad.rpc(match_ref.serial, path, ready))
+	for box in Match._all_of(match_ref.level, "AmmoBox"):
+		var path := match_ref.level.get_path_to(box)
+		box.changed.connect(func(ready: bool) -> void: _ammo_box.rpc(match_ref.serial, path, ready))
 
 
 ## Hooks a player's body up (the server): its hits, death, shots and hands
@@ -298,6 +301,8 @@ func _level_loaded(serial: int) -> void:
 			_died.rpc_id(id, serial, info.id)
 	for pad in Match._all_of(match_ref.level, "WeaponPad"):
 		_pad.rpc_id(id, serial, match_ref.level.get_path_to(pad), pad.pickup != null)
+	for box in Match._all_of(match_ref.level, "AmmoBox"):
+		_ammo_box.rpc_id(id, serial, match_ref.level.get_path_to(box), box.available)
 	for pickup_id: int in _pickups:
 		var pickup: WeaponPickup = _pickups[pickup_id]
 		if is_instance_valid(pickup):
@@ -315,12 +320,35 @@ func everyone_loaded() -> bool:
 	return true
 
 
-## The client: this level's loaded, so the server can catch it up.
+## The client: this level's loaded, so the server can catch it up (and
+## hear which gun you've picked, in games where you pick).
 func level_loaded() -> void:
 	_pickups.clear()
 	_pickup_targets.clear()
 	if not match_ref.authority and NetSession.active():
 		_level_loaded.rpc_id(1, match_ref.serial)
+		if match_ref.rules.loadout:
+			send_gun(Cosmetics.gun)
+
+
+## The client: tells the server the gun you've picked.
+func send_gun(id: StringName) -> void:
+	if not match_ref.authority and NetSession.active():
+		_choose_gun.rpc_id(1, NetCodec.weapon_id(Weapons.get_def(id)))
+
+
+## A client picked its gun (games where you pick): one of the guns, or
+## nothing happens.
+@rpc("any_peer", "call_remote", "reliable")
+func _choose_gun(weapon: int) -> void:
+	var id := multiplayer.get_remote_sender_id()
+	if not _is_server() or not NetSession.current.allow_request(id):
+		return
+	var def := NetCodec.weapon_of(weapon)
+	var info := match_ref.info_by_id(id)
+	if def == null or info == null or not def.id in Weapons.GUNS:
+		return
+	match_ref.choose_gun(info, def.id)
 
 
 # --- Client: receiving ---------------------------------------------------------------------
@@ -424,7 +452,8 @@ func _hurt(serial: int, id: int, attacker_id: int, health: float, amount: float,
 	var body := info.player
 	var attacker := match_ref.info_by_id(attacker_id)
 	body.show_hurt(clampf(health, 0.0, body.max_health), clampf(amount, 0.0, 1000.0), point, direction,
-			StringName(zone.left(16)), StringName(part.left(16)), heartshot, attacker != null and attacker.local)
+			StringName(zone.left(16)), StringName(part.left(16)), heartshot, attacker != null and attacker.local,
+			attacker.player if attacker else null)
 	if attacker and attacker.local and attacker.player:
 		# Your hit: the server says it landed.
 		attacker.player.weapons.confirm_hit({"target": body, "name": info.player_name, "damage": amount, "zone": StringName(zone.left(16)),
@@ -470,6 +499,15 @@ func _apply_loadout(body: Player, weapon: int, ammo: int, using_primary: bool) -
 		w.give(def, ammo)
 	if w.using_primary != using_primary:
 		w.set_using_primary(using_primary)
+
+
+@rpc("authority", "call_remote", "reliable")
+func _ammo_box(serial: int, path: NodePath, ready: bool) -> void:
+	if not _current(serial) or str(path).length() > 128 or str(path).begins_with("/") or ".." in str(path):
+		return
+	var box := match_ref.level.get_node_or_null(path) as AmmoBox
+	if box:
+		box.set_ready(ready)
 
 
 @rpc("authority", "call_remote", "reliable")

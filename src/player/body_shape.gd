@@ -75,6 +75,12 @@ const LEG_SKIN_SPLIT := 0.035
 const HEART_RADIUS := 0.05
 const HEART_BONE := "DEF-spine.003"
 const HEART_OFFSET := Vector3(0.085, 0.13, 0.115)
+## The heart's socket (GDD §6.4): a round pocket in the chest, centred on the
+## heart (just under the chest's front), SOCKET_RADIUS to its wall, its lip
+## rounded over SOCKET_LIP. The heart sits in it: the TV set into it, or the
+## spinner's dots floating in it.
+const SOCKET_RADIUS := 0.05
+const SOCKET_LIP := 0.018
 
 const TORSO_BONES := ["DEF-hips", "DEF-spine.001", "DEF-spine.002", "DEF-spine.003", "DEF-neck", "DEF-head"]
 const ARM_BONES := {"L": ["DEF-upper_arm.L", "DEF-forearm.L", "DEF-hand.L"], "R": ["DEF-upper_arm.R", "DEF-forearm.R", "DEF-hand.R"]}
@@ -135,6 +141,7 @@ static func primitives(sk: Skeleton3D) -> Dictionary:
 		"head": at.call("DEF-head") + HEAD_OFFSET,
 		"neck_a": at.call("DEF-neck"),
 		"neck_b": at.call("DEF-head") + Vector3(0, 0.05, 0),
+		"heart": at.call(HEART_BONE) + HEART_OFFSET,
 	}
 	for side: String in ["L", "R"]:
 		var shoulder: Vector3 = at.call("DEF-upper_arm." + side)
@@ -146,7 +153,9 @@ static func primitives(sk: Skeleton3D) -> Dictionary:
 
 
 static func sdf(p: Vector3, prims: Dictionary) -> float:
-	return _smin(_core(p, prims), minf(_arm(p, prims, "L"), _arm(p, prims, "R")), BLEND_ARMS_TO_BODY)
+	var body := _smin(_core(p, prims), minf(_arm(p, prims, "L"), _arm(p, prims, "R")), BLEND_ARMS_TO_BODY)
+	# The heart's socket, scooped out (a smooth max with the ball's outside).
+	return -_smin(-body, p.distance_to(prims.heart) - SOCKET_RADIUS, SOCKET_LIP)
 
 
 ## Slab, neck, and head: everything the arms blend into.

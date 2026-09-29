@@ -236,6 +236,38 @@ func test_junk_gets_you_kicked() -> void:
 	check(await until(func() -> bool: return "everyone left" in _server_log), "the server went back to waiting")
 
 
+func test_teams_online_your_pick_and_the_ammo_boxes() -> void:
+	await until(func() -> bool: return not NetSession.active() and Game.current == null, 5.0)
+	var rules := GameRules.teams()
+	rules.map_pool = PackedStringArray(["boulevard"])
+	rules.countdown = 1.0
+	check(NetSession.host(get_tree(), HOST_PORT, rules) == OK, "hosting teams")
+	var s := NetSession.current
+	_friend_log = ""
+	_friend = OS.execute_with_pipe(OS.get_executable_path(), PackedStringArray(["--headless", "--path", ProjectSettings.globalize_path("res://"),
+			"--script", "res://tests/online_client.gd", "--", "--port", str(HOST_PORT), "--name", "friend", "--gun", "sniper", "--stay", "14"]), false)
+	check(await until(func() -> bool: return s.players().size() == 2), "a friend joined")
+	Game.start(get_tree(), s.rules, s.players())
+	var m := Game.current
+	check(await until(func() -> bool: return m.state == Match.State.LIVE), "live")
+	var friend := _named("friend")
+	check(friend != null and friend.gun == Weapons.SNIPER, "the server heard which gun they picked")
+	check(await until(func() -> bool: return "holding: sniper" in _friend_log), "and they spawn holding it:\n" + _friend_log)
+	check(await until(func() -> bool: return "ammo boxes up: 21" in _friend_log), "they see all 21 ammo boxes")
+	var me := _me()
+	var box: AmmoBox = Match._all_of(m.level, "AmmoBox")[0]
+	me.player.weapons.primary_ammo = 1
+	me.player.global_position = box.global_position
+	check(await until(func() -> bool: return not box.available), "I take one")
+	check(await until(func() -> bool: return "ammo boxes up: 20" in _friend_log), "and they see it go")
+	NetSession.leave(get_tree())
+	check(await until(func() -> bool: return Game.current == null and not NetSession.active()), "closed")
+	if OS.is_process_running(_friend.pid):
+		OS.kill(_friend.pid)
+	_friend = {}
+	_friend_log = ""
+
+
 func test_you_can_host_and_a_friend_joins() -> void:
 	await until(func() -> bool: return not NetSession.active() and Game.current == null, 5.0)
 	var rules := GameRules.free_for_all()

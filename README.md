@@ -12,7 +12,7 @@ A round-based, movement-first arena FPS. Two players duel through short rounds o
 
 1. Install **Godot 4.7.2**, the standard build (not .NET): <https://godotengine.org/download>
 2. Clone this repo, open Godot, choose **Import**, and select `project.godot`.
-3. Press **F5** to play. The main menu opens: **free-for-all** starts a practice game of short rounds against three bots, **teams** a long four-against-four game with bots, **online** hosts or joins a game over the network (below), and **sandbox** the movement test course. In the bottom-right corner you type your name and pick your hat and your free-for-all colour; they're saved and worn in every game. In the sandbox the gun pads are just to your left, and the shooting range is beyond them; its dummies play for blue. Press **F9** to step through the maps: Stack, Terrace, Switchback, Archipelago and Rift, then the team maps Boulevard, Holdfast and Depot (greybox, [GDD §9.3](docs/GDD.md#93-built-maps)).
+3. Press **F5** to play. The main menu opens: **free-for-all** starts a practice game of short rounds against three bots, **teams** a long four-against-four game with bots (pick your gun with 1–6 in the countdown or while you're down; ammo boxes stand where the guns would be; kills close together chain into combos), **online** hosts or joins a game over the network (below), and **sandbox** the movement test course. In the bottom-right corner you type your name and pick your hat and your free-for-all colour; they're saved and worn in every game. In the sandbox the gun pads are just to your left, and the shooting range is beyond them; its dummies play for blue. Press **F9** to step through the maps: Stack, Terrace, Switchback, Archipelago and Rift, then the team maps Boulevard, Holdfast and Depot (greybox, [GDD §9.3](docs/GDD.md#93-built-maps)).
 
 ### Controls
 
@@ -24,7 +24,7 @@ A round-based, movement-first arena FPS. Two players duel through short rounds o
 | Slide / crouch (on the ground) | Ctrl or C |
 | Smashdown (in the air) | Ctrl or C |
 | Dash | Shift |
-| Fire / alt-fire | Left / right mouse (the revolver fans its hammer, the sniper zooms) |
+| Fire / aim down the sights | Left / right mouse (hold fire from the hip to fan the revolver) |
 | Swap for the gun you're standing at | E (walking over one empty-handed takes it) |
 | Throw your gun | Q |
 | Switch gun / fists | 1 / 2, mouse wheel up |
@@ -39,13 +39,23 @@ A round-based, movement-first arena FPS. Two players duel through short rounds o
 | Scoreboard | Hold Tab |
 | Pause menu | Esc |
 
-Wall ride and mantle are automatic: jump along a wall to ride it, and move into a ledge to climb it.
+Wall ride and mantle are automatic: jump along a wall to ride it, and move into a ledge to climb it. A dash leaves you faster: on the ground for a moment, and in the air much more (a dash at the top of a jump carries you about twice as far).
+
+### Settings
+
+**Settings** on the title screen or in the pause menu (Esc) has the usual settings, in tabs:
+
+- **controls:** sensitivity, aim sensitivity, invert look, toggle aim.
+- **keys:** rebind every action, two keys each. Click a slot and press a key or mouse button; Esc cancels, Backspace clears.
+- **video:** window mode, vsync, frame cap, pixels (the 3D picture's height: 360 by default, *screen* for native), and colours (an optional 16-bit colour and dither mode).
+- **camera:** field of view, speed FOV, camera motion, smoothing, screen shake, wall ride tilt, UI motion, landing dip, speed lines, impact frames.
+- **sound:** volume. There are no sounds yet.
+
+Changes take effect at once and are saved in `user://settings.cfg` as you make them. Only what you've changed from the defaults is saved. **defaults** resets the open tab.
 
 ### Tuning
 
-Press **F1** in-game to edit every movement value live. **Save** writes them to `data/movement_params.tres` and `data/view_settings.tres` when you run from the editor, so tuned values can be committed.
-
-The **View → Look** section of the panel controls the render: `pixel height` is the internal 3D resolution (360 by default, 0 for native), and `color levels` turns on an optional 16-bit color and dither mode (off by default).
+Press **F1** in-game to edit every movement value live. **Save** writes them to `data/movement_params.tres` when you run from the editor, so tuned values can be committed. The panel's View section is your settings (as above), and Save keeps those in `user://settings.cfg`.
 
 ## Playing online
 
@@ -68,10 +78,10 @@ Both ways run the same server-authoritative game ([how it works, and its safety 
 | Path | Contents |
 |---|---|
 | `src/movement/` | The movement simulation: `MovementSim` (one fixed tick), `MovementState`, `MovementParams`, `InputCommand` |
-| `src/player/` | `Player` (input, camera interpolated between ticks), `PlayerModel` (the body, its holds, hit reactions and crumble), `BodyLayers` (clips over some bones, arm IK, hit flinches), `Viewmodel` (first-person arms and gun), `BodyShape` (proportions and shape), `DeathSequence` (the death cinematic), `ViewSettings` |
+| `src/player/` | `Player` (input, camera interpolated between ticks), `PlayerModel` (the body, its holds, hit reactions and crumble), `BodyLayers` (clips over some bones, arm IK, hit flinches), `Viewmodel` (first-person arms and gun), `BodyShape` (proportions and shape), `DeathSequence` (the death cinematic), `Heart` (the heart: glowing beads going round in a pocket in the chest), `ViewSettings` |
 | `src/cosmetics/` | `Hats` (every hat, built from primitives in team colours, and the no-hat team triangle) and `Cosmetics` (the saved pick) |
-| `src/combat/` | The roster (`Weapons`, `WeaponDef`), gun models (`WeaponModel`), a player's hands (`WeaponHolder`: firing, pickups, throwing), shots in flight (`Ballistics`), hit zones (`HitShapes`), pickups and pads, `TargetDummy`, and shooting effects |
-| `src/ui/` | The UI: style and motion kit (`LofiUI`), low-res canvas (`LofiLayer`), HUD and its ammo column, crosshair and ammo ring, overlays, pause and main menus, the online page and lobby (`OnlineMenu`), scene wipe |
+| `src/combat/` | The roster (`Weapons`, `WeaponDef`), gun models (`WeaponModel`), a player's hands (`WeaponHolder`: firing, pickups, throwing), shots in flight (`Ballistics`), hit zones (`HitShapes`), pickups and pads, ammo boxes (`AmmoBox`, teams), `TargetDummy`, and shooting effects |
+| `src/ui/` | The UI: style and motion kit (`LofiUI`, `LofiSlider`), low-res canvas (`LofiLayer`), HUD and its ammo column, crosshair and ammo ring, overlays, pause and main menus, the online page and lobby (`OnlineMenu`), the settings page (`SettingsMenu`) and what it saves (`Settings`), scene wipe |
 | `src/game/` | Games: `GameRules` (the free-for-all and teams presets), `Match` (runs a game across maps), `Game` (starts and ends one), `PlayerInfo` (each player's name, side and score), `BotBrain` (practice bots) |
 | `src/net/` | Online play: `NetSession` (host, join, handshake, roster), `DedicatedServer`, `MatchSync` (a networked game's messages), `Prediction` and `Puppet` (your player and everyone else on a client), `NetCodec` (the wire format, checked) |
 | `src/world/` | `GreyBox` blocks (size and surface kind) and `Maps` (the map list F9 steps through) |
@@ -81,7 +91,8 @@ Both ways run the same server-authoritative game ([how it works, and its safety 
 | `data/` | Tuning resources |
 | `scenes/` | `main_menu.tscn` (main scene), `test_course.tscn`, `player.tscn`, and the maps in `maps/` |
 | `tests/` | Headless movement, UI, combat, cosmetics, map, game and network tests, and the online tests (real processes talking over the network) |
-| `tools/` | Test runner, the scene generator, the level kit (with `level_side.gd` for symmetric team maps) and the map layouts (`maps/`) |
+| `site/` | The website (below) |
+| `tools/` | Test runner, the website's build script, the scene generator, the level kit (with `level_side.gd` for symmetric team maps) and the map layouts (`maps/`) |
 
 ## Tests
 
@@ -92,6 +103,21 @@ tools/run_tests.sh
 This runs the headless movement, UI, combat, cosmetics, map, game and network tests (the map tests drive a player through each map's routes), then the online tests in real time: a dedicated server started in a second Godot process, this one joining it (and a third joining late), then this one hosting a game a friend's process joins. `SKIP_ONLINE=1` skips those. Set `TEST_ONLY` to part of a test's name to run just those. It uses `$GODOT` or `godot` on your PATH; on Linux x86_64 it downloads Godot 4.7.2 into `.tools/` if neither is found.
 
 `tools/build_scenes.gd` regenerates the input map, `player.tscn`, the greybox test course, and the maps (each laid out by a script in `tools/maps/` with the kit in `tools/level_kit.gd`). Once you edit the course by hand in the editor, stop regenerating it (pass `-- --skip-course`). `tools/gen_textures.gd` and `tools/gen_logo.gd` regenerate the placeholder textures and the logo; paint over the PNGs freely instead. `tools/gen_body.gd` regenerates the player's body and its pre-diced chunks from `src/player/body_shape.gd` (about a minute; add `-- --body-only` to skip the dicing while tuning the shape).
+
+## Website
+
+`site/` is the game's website: one screen, drawn small on a canvas and blown up in hard pixels like the game's 3D, with the game's boxes: the logo, what the game is, download buttons for pc, mac and the server build, and a picture card you can flip through. The words and buttons are plain HTML in `site/index.html`, laid over the canvas unseen so links, the keyboard and screen readers work, and shown as plain boxes without JavaScript.
+
+- **Downloads:** put each build's address in its button's `href`. Until then they say *soon :)*.
+- **Pictures:** list them in the picture card's `data-shots` (e.g. `shots/boulevard.png, shots/depot.png`, files in `site/shots/`). They're drawn small, so they come out pixelated like everything else. With none it shows stand-ins, until the maps are decorated.
+
+`tools/build_site.sh` puts it together in `_site/` with the logo, the icon and the font from `assets/`; to look at it locally:
+
+```sh
+tools/build_site.sh && python3 -m http.server -d _site
+```
+
+`.github/workflows/pages.yml` publishes it to GitHub Pages whenever it changes on `main`. It needs, once, **Settings → Pages → Build and deployment → Source: GitHub Actions** in the repository. `tools/gen_icon.gd` makes the favicon (*xpl*, in the logo's style).
 
 ## Known issues
 

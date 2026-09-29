@@ -7,7 +7,13 @@ extends Node
 ##
 ## Picking up: moving over a weapon while the primary slot is empty (or
 ## holds an empty gun) takes it; E swaps; the same gun tops yours up. Q
-## throws the primary. An empty gun switches to fists after a moment.
+## throws the primary. An empty gun stays in your hands (click, click) and
+## is dropped rather than lost when you take another or die: it lasts until
+## the next gun from the pad it came from is taken, then it's gone.
+##
+## Alt-fire held aims down a gun's sights (WeaponDef, Aiming): `aim` rises
+## to 1 over the gun's aim time, zooming the view and tightening the
+## spread. Holding the revolver's trigger from the hip fans the hammer.
 
 signal equipped(def: WeaponDef, ammo: int)
 signal fired(def: WeaponDef, shot: Dictionary)
@@ -16,15 +22,18 @@ signal hit_confirmed(result: Dictionary)
 signal picked_up(def: WeaponDef, how: StringName)
 signal thrown(def: WeaponDef)
 signal dry_fired(def: WeaponDef)
+## An empty gun in your hands had its time (see give()).
+signal vanished(def: WeaponDef)
 
 const READY_TIME := 0.15
-const EMPTY_SWITCH := 0.2
 const PICKUP_RADIUS := 1.5
 ## A click this soon before a semi-automatic is ready still fires, on time.
 const FIRE_BUFFER := 0.15
 const THROW_SPEED := 18.0
 const FAN_INTERVAL := 0.1
 const FAN_SPREAD := 3.0
+## Hold the revolver's trigger this long past the first shot and it fans.
+const FAN_HOLD := 0.2
 ## Automatic spread recovers this many degrees per second once released.
 const BLOOM_RECOVERY := 6.0
 ## Fists (GDD §7.3): +1 damage per m/s over run speed, up to +15. The hit
@@ -48,7 +57,15 @@ var fists: WeaponDef = Weapons.get_def(Weapons.FISTS)
 var primary: WeaponDef
 var primary_ammo := 0
 var using_primary := false
-## Alt-fire zoom (1 = none), for the camera.
+## Where the primary came from: its pad and which of that pad's guns it was
+## (WeaponPad.generation), so an empty one lasts until the pad's next.
+var primary_origin: WeaponPad
+var primary_generation := 0
+## Whether the gun's dropped when you die (not in games where you pick it).
+var drops_on_death := true
+## How far the sights are up: 0 from the hip, 1 aimed.
+var aim := 0.0
+## How far that zooms the view (1 = none), for the camera.
 var zoom := 1.0
 ## A different gun in reach that E would swap for, or null.
 var swap_candidate: WeaponPickup
@@ -57,9 +74,9 @@ var _cooldown := 0.0
 var _ready_timer := 0.0
 var _buffer := 0.0
 var _bloom := 0.0
-var _empty_timer := -1.0
-var _fan_left := 0
+var _fanning := false
 var _fan_timer := 0.0
+var _fire_held_for := 0.0
 var _punch_left := true
 var _last_punch := &"straight"
 var _punch_timer := -1.0
@@ -86,22 +103,25 @@ func reset() -> void:
 	using_primary = false
 	_cooldown = 0.0
 	_ready_timer = 0.0
-	_fan_left = 0
-	_empty_timer = -1.0
+	_stop_fanning()
 	_punch_timer = -1.0
-	zoom = 1.0
+	primary_origin = null
+	_lower()
 	_equip()
 
 
-## Puts `def` in the primary slot with `rounds` and switches to it.
-func give(def: WeaponDef, rounds := -1) -> void:
+## Puts `def` in the primary slot with `rounds` and switches to it; `origin`
+## is the pad it came off (and `generation` which of its guns it was).
+func give(def: WeaponDef, rounds := -1, origin: WeaponPad = null, generation := 0) -> void:
 	primary = def
 	primary_ammo = def.ammo if rounds < 0 else rounds
+	primary_origin = origin
+	primary_generation = generation
 	using_primary = true
 	_ready_timer = READY_TIME
 	_cooldown = 0.0
-	_fan_left = 0
-	_empty_timer = -1.0
+	_stop_fanning()
+	_lower()
 	_equip()
 
 
@@ -135,9 +155,22 @@ func refill() -> bool:
 	if primary == null or not using_primary or primary_ammo >= primary.ammo:
 		return false
 	primary_ammo = primary.ammo
-	_empty_timer = -1.0
 	ammo_changed.emit(primary_ammo, primary.ammo)
 	return true
+
+
+## Tops the primary up by `share` of a full gun (an ammo box), puts it back
+## in your hands, and says how many rounds went in (0: nothing to fill).
+func top_up(share: float) -> int:
+	if primary == null or primary_ammo >= primary.ammo or not authority:
+		return 0
+	var added := mini(ceili(primary.ammo * share), primary.ammo - primary_ammo)
+	primary_ammo += added
+	if not using_primary:
+		_switch(true)
+	picked_up.emit(primary, &"top_up")
+	ammo_changed.emit(ammo, current.ammo)
+	return added
 
 
 func is_ready() -> bool:
@@ -152,14 +185,15 @@ func cooldown() -> float:
 ## Current spread (degrees) of the weapon in hand.
 func spread() -> float:
 	var def := current
-	return minf(def.spread + _bloom, maxf(def.spread_max, def.spread)) + (FAN_SPREAD if _fan_left > 0 else 0.0)
+	var cone := minf(def.spread + _bloom, maxf(def.spread_max, def.spread)) * lerpf(1.0, def.aim_spread, aim)
+	return cone + (FAN_SPREAD if _fanning else 0.0)
 
 
 func tick(cmd: InputCommand, delta: float) -> void:
 	if player == null or player.is_dead:
 		return
 	if not enabled:
-		zoom = 1.0
+		_lower()
 		return
 	# Kept going below zero for one tick, so a held automatic keeps its
 	# exact rate instead of rounding each shot up to whole ticks.
@@ -190,20 +224,22 @@ func tick(cmd: InputCommand, delta: float) -> void:
 		if _punch_timer < 0.0:
 			_land_punch()
 
-	# Alt-fire.
-	zoom = def.zoom if def.alt == &"zoom" and cmd.alt_held and using_primary else 1.0
-	if cmd.alt_pressed and def.alt == &"fan" and ammo > 0 and _fan_left == 0 and _ready_timer <= 0.0:
-		_fan_left = ammo
-		_fan_timer = 0.0
-	if _fan_left > 0:
+	# Aiming: the sights come up while alt-fire's held (a gun, not fists).
+	var aiming := cmd.alt_held and not def.is_fists()
+	aim = move_toward(aim, 1.0 if aiming else 0.0, delta / maxf(def.aim_time, 0.01))
+	zoom = lerpf(1.0, def.zoom, aim) if not def.is_fists() else 1.0
+
+	# Fanning: the trigger held from the hip past the first shot, the other
+	# hand slapping the hammer, a round every FAN_INTERVAL until let go.
+	_fire_held_for = _fire_held_for + delta if cmd.fire_held else 0.0
+	if def.fans and cmd.fire_held and _fire_held_for >= FAN_HOLD and aim < 0.5 and ammo > 0 and _ready_timer <= 0.0:
+		_fanning = true
 		_fan_timer -= delta
-		if _fan_timer <= 0.0 and ammo > 0:
+		if _fan_timer <= 0.0:
 			_fire(def, true)
-			_fan_left -= 1
 			_fan_timer = FAN_INTERVAL
-		if ammo <= 0:
-			_fan_left = 0
 		return
+	_stop_fanning()
 
 	# Firing.
 	if cmd.fire_pressed:
@@ -221,14 +257,17 @@ func tick(cmd: InputCommand, delta: float) -> void:
 			dry_fired.emit(def)
 			_cooldown = 0.25
 
-	# Empty: fists after a moment (GDD §7.2).
-	if using_primary and primary and primary_ammo <= 0:
-		if _empty_timer < 0.0:
-			_empty_timer = EMPTY_SWITCH
-		_empty_timer -= delta
-		if _empty_timer <= 0.0:
-			_empty_timer = -1.0
-			_switch(false)
+	# An empty gun that's had its time (its pad's next gun is taken) is gone.
+	if primary and primary_ammo <= 0 and authority and primary_origin and is_instance_valid(primary_origin) \
+			and primary_origin.outlived(primary_generation):
+		var gone := primary
+		primary = null
+		primary_origin = null
+		using_primary = false
+		_stop_fanning()
+		_lower()
+		vanished.emit(gone)
+		_equip()
 
 
 ## Throws the primary (any ammo): it flies, hits for 25, and lands as a
@@ -238,6 +277,8 @@ func throw_primary() -> void:
 		return
 	var def := primary
 	var pickup := WeaponPickup.create(def, primary_ammo)
+	pickup.origin = primary_origin
+	pickup.origin_generation = primary_generation
 	player.get_parent().add_child(pickup)
 	var forward := _aim_basis() * Vector3.FORWARD
 	pickup.throw_from(eye_position() + forward * 0.4 + _aim_basis() * Vector3(0.15, -0.1, 0.0),
@@ -246,23 +287,30 @@ func throw_primary() -> void:
 	_ignore_timer = 0.6
 	primary = null
 	primary_ammo = 0
+	primary_origin = null
 	using_primary = false
-	_fan_left = 0
+	_stop_fanning()
+	_lower()
 	_ready_timer = 0.0
 	thrown.emit(def)
 	_equip()
 
 
-## On death the primary drops where you fell, with what's left in it.
+## On death the primary drops where you fell, with what's left in it (an
+## empty one too: it lasts its time on the floor).
 func drop_on_death() -> void:
-	if primary and primary_ammo > 0 and authority:
+	if primary and authority and drops_on_death:
 		var drop := WeaponPickup.create(primary, primary_ammo)
+		drop.origin = primary_origin
+		drop.origin_generation = primary_generation
 		player.get_parent().add_child(drop)
 		drop.throw_from(player.global_position + Vector3.UP * 1.0, Vector3.UP * 2.0 + player.velocity * 0.3, null, player)
 	primary = null
 	primary_ammo = 0
+	primary_origin = null
 	using_primary = false
-	_fan_left = 0
+	_stop_fanning()
+	_lower()
 	_punch_timer = -1.0
 
 
@@ -291,9 +339,20 @@ func _switch(to_primary: bool) -> void:
 		return
 	using_primary = to_primary
 	_ready_timer = READY_TIME
-	_fan_left = 0
-	_empty_timer = -1.0
+	_stop_fanning()
+	_lower()
 	_equip()
+
+
+## Sights down at once (switching, throwing, dying).
+func _lower() -> void:
+	aim = 0.0
+	zoom = 1.0
+
+
+func _stop_fanning() -> void:
+	_fanning = false
+	_fan_timer = 0.0
 
 
 func _equip() -> void:
@@ -465,15 +524,21 @@ func _update_pickups(interact: bool) -> void:
 func _take(pickup: WeaponPickup, how: StringName) -> void:
 	var old := primary
 	var old_ammo := primary_ammo
+	var old_origin := primary_origin
+	var old_generation := primary_generation
 	var def := pickup.def
 	var rounds := pickup.ammo
+	var origin := pickup.origin
+	var generation := pickup.origin_generation
 	pickup.take(rounds)
-	# The old gun drops with what's left in it; an empty one is just gone.
-	if old and old_ammo > 0:
+	# The old gun drops with what's left in it (an empty one too).
+	if old:
 		var drop := WeaponPickup.create(old, old_ammo)
+		drop.origin = old_origin
+		drop.origin_generation = old_generation
 		player.get_parent().add_child(drop)
 		drop.throw_from(player.global_position + Vector3.UP * 1.0, player.velocity * 0.5 + Vector3.UP * 2.5, null, player)
 		_ignore_pickup = drop
 		_ignore_timer = 1.0
-	give(def, rounds)
+	give(def, rounds, origin, generation)
 	picked_up.emit(def, how)

@@ -151,8 +151,96 @@ func test_heartshot_kills_with_a_precision_gun() -> void:
 	await fire_once()
 	await settle_shots()
 	check(dummy.dead, "one heartshot kills")
+	check(dummy.model.heart.ending() == &"off", "and switches its heart off")
 	check(confirmed.size() == 1 and confirmed[0].get("heartshot", false), "the shooter hears it was a heartshot")
 	check(player.weapons.ammo == 11, "one round spent (%d left)" % player.weapons.ammo)
+
+
+func test_the_heart_sits_in_a_pocket_in_the_chest() -> void:
+	# The body's shape has a round pocket scooped out round the heart, and
+	# the body's mesh follows it.
+	var sk := dummy.model.skeleton
+	var prims := BodyShape.primitives(sk)
+	var centre: Vector3 = prims.heart
+	check(BodyShape.sdf(centre, prims) > 0.02, "the heart's centre is empty space (%.3f)" % BodyShape.sdf(centre, prims))
+	check(BodyShape.sdf(centre + Vector3(0, 0, -BodyShape.SOCKET_RADIUS - 0.02), prims) < 0.0, "with chest behind the pocket")
+	var mesh: ArrayMesh = load("res://assets/characters/player_body.res")
+	var nearest := INF
+	for v: Vector3 in mesh.surface_get_arrays(0)[Mesh.ARRAY_VERTEX]:
+		nearest = minf(nearest, v.distance_to(centre))
+	near(nearest, BodyShape.SOCKET_RADIUS, 0.006, "the body's mesh has the pocket: nearest to the heart")
+
+
+func test_the_heart_is_a_spinner_of_real_beads_floating_in_the_chest() -> void:
+	var heart: Heart = dummy.model.heart
+	check(heart.dots.size() == Heart.DOTS and heart.lining.visible and heart.ending() == &"on", "beads in a lined pocket, going")
+	check(heart.lining.cast_shadow == GeometryInstance3D.SHADOW_CASTING_SETTING_OFF, "it casts no shadow down the chest")
+	await frames(2)
+	var inside := true
+	for bead in heart.dots:
+		var local := heart.global_transform.affine_inverse() * bead.global_position
+		inside = inside and local.length() + Heart.DOT_RADIUS < HitShapes.HEART_RADIUS \
+				and local.length() + Heart.DOT_RADIUS < Heart.LINING_RADIUS and local.z < 0.0
+	check(inside, "every bead floats inside the chest's pocket, inside the hit sphere")
+	var turns := func(speed: float) -> float:
+		heart.speed = speed
+		var from := heart.spin()
+		heart._process(0.05)
+		return fposmod(heart.spin() - from, TAU) / TAU / 0.05
+	near(turns.call(0.0), Heart.SPIN_REST, 0.05, "turns per second at rest")
+	check(turns.call(Heart.FAST_SPEED) > Heart.SPIN_REST * 2.0, "faster at speed")
+	# Each bead on its own spring: a hit rattles them.
+	var before: Array[Vector3] = []
+	for bead in heart.dots:
+		before.append(bead.global_position)
+	heart.hurt()
+	var held := heart.spin()
+	heart._process(1.0 / 60.0)
+	var moved := 0
+	for i in heart.dots.size():
+		if heart.dots[i].global_position.distance_to(before[i]) > 0.002:
+			moved += 1
+	check(moved == Heart.DOTS, "a hit rattles every bead (%d moved)" % moved)
+	check(heart.spin() == held, "and makes the spin hitch")
+	heart._process(Heart.HITCH_TIME)
+	heart._process(0.05)
+	check(heart.spin() != held, "then it carries on")
+	# A death through the body times it out; back together, it's going again.
+	dummy.take_hit({"damage": 500.0, "zone": &"body", "part": &"chest", "point": heart.global_position,
+			"normal": Vector3.BACK, "direction": Vector3.FORWARD, "heartshot": false, "attacker": null})
+	check(dummy.dead and heart.ending() == &"lost" and heart.dots.size() == Heart.DOTS, "killed through the body: timed out, beads kept")
+	dummy._respawn()
+	check(heart.ending() == &"on" and heart.get_parent().name == &"HeartMount" and heart.lining.visible,
+			"back together: going again, in the chest")
+	await frames(2)
+	# A heartshot spills them out of the chest.
+	var at := heart.global_position
+	dummy.take_hit({"damage": 5.0, "zone": &"heart", "part": &"chest", "point": at,
+			"normal": Vector3.BACK, "direction": Vector3.FORWARD, "heartshot": true, "attacker": null})
+	check(heart.ending() == &"off" and heart.dots.is_empty() and heart.spilled().size() == Heart.DOTS,
+			"a heartshot spills every bead")
+	for i in 40:
+		await get_tree().physics_frame
+	var furthest := 0.0
+	for body in heart.spilled():
+		furthest = maxf(furthest, body.global_position.distance_to(at))
+	check(furthest > 0.3, "out of the chest and away (%.2f m)" % furthest)
+	dummy._respawn()
+	await frames(2)
+	check(heart.spilled().is_empty() and heart.dots.size() == Heart.DOTS, "back together: the spilled beads cleared, new ones in")
+
+
+func test_timed_out_the_beads_settle_in_the_bottom_of_the_pocket() -> void:
+	var heart: Heart = dummy.model.heart
+	heart.stop(false)
+	for i in 60:
+		heart._process(1.0 / 60.0)
+	var low := true
+	for bead in heart.dots:
+		var local := heart.global_transform.affine_inverse() * bead.global_position
+		low = low and local.y < -Heart.RING_RADIUS * 0.8
+	check(heart.ending() == &"lost" and low, "timed out: they sink to the bottom of the pocket")
+	heart.revive()
 
 
 func test_automatic_guns_cannot_heartshot() -> void:
@@ -212,27 +300,117 @@ func test_shotgun_throws_all_its_pellets() -> void:
 	check(dummy.health <= TargetDummy.MAX_HEALTH - d.damage * 3, "several pellets hit at 8 m (%.0f hp left)" % dummy.health)
 
 
-func test_empty_gun_switches_to_fists() -> void:
-	player.weapons.give(Weapons.get_def(Weapons.REVOLVER), 1)
+func test_an_empty_gun_lasts_until_its_pad_gives_out_the_next() -> void:
+	var revolver := Weapons.get_def(Weapons.REVOLVER)
+	var pad := WeaponPad.new()
+	pad.weapon = Weapons.REVOLVER
+	pad.respawn_time = 0.3
+	world.add_child(pad)
+	pad.global_position = player.global_position
+	await run(cmd(), 3)
+	check(player.weapons.primary == revolver and player.weapons.primary_origin == pad and pad.generation == 1,
+			"walked onto the pad: took its first gun")
+	player.global_position += Vector3(6, 0, 0)  # Off the pad.
+	await run(cmd(), 12)
+	aim_at(player.weapons.eye_position() + Vector3(0, 0, -20))
+	for i in revolver.ammo:
+		await fire_once()
+		await run(cmd(), int(revolver.fire_interval / DT) + 1)
+	await run(cmd(), 30)
+	check(player.weapons.ammo == 0 and player.weapons.current == revolver, "empty, and still in your hands")
+	var clicks := []
+	player.weapons.dry_fired.connect(func(_d: WeaponDef) -> void: clicks.append(true))
+	await fire_once()
+	check(clicks.size() == 1, "click")
+	# Thrown, it lies on the floor, past the old few seconds, while the
+	# pad's next gun is still there.
+	player.weapons.throw_primary()
+	await run(cmd(), int((WeaponPickup.EMPTY_LIFE + 2.0) / DT))
+	var loose := get_tree().get_nodes_in_group(WeaponPickup.GROUP) \
+			.filter(func(n: Node) -> bool: return n != pad.pickup and (n as WeaponPickup).origin == pad)
+	check(loose.size() == 1 and (loose[0] as WeaponPickup).ammo == 0 and pad.pickup != null,
+			"thrown: it lies there empty (%d), the pad's next gun waiting" % loose.size())
+	# Someone takes the pad's next gun: the empty one's had its time.
+	player.global_position = pad.global_position
+	await run(cmd(), 3)
+	check(pad.generation == 2 and player.weapons.primary == revolver and player.weapons.ammo == revolver.ammo, "took the next one")
+	await run(cmd(), int((WeaponPickup.DISSOLVE_TIME + 0.2) / DT))
+	check(not is_instance_valid(loose[0]) or loose[0].is_queued_for_deletion(), "and the empty one's gone")
+	# One empty in your hands goes too, once its pad's next is taken.
+	player.global_position += Vector3(6, 0, 0)
+	player.weapons.primary_ammo = 0
+	await run(cmd(), int(pad.respawn_time / DT) + 5)
+	check(player.weapons.primary == revolver, "empty in your hands while the pad's next gun waits")
+	pad.pickup.take(pad.pickup.ammo)  # Someone else takes it.
+	await run(cmd(), 2)
+	check(player.weapons.primary == null and player.weapons.current.is_fists(), "then it's gone from your hands")
+	# Taking another gun, or dying, drops an empty one rather than losing it.
+	player.weapons.give(revolver, 0, pad, pad.generation)
+	player.weapons.give(Weapons.get_def(Weapons.PISTOL))
+	player.weapons.give(revolver, 0, pad, pad.generation)
+	player.weapons.drop_on_death()
+	await run(cmd(), 2)
+	var dropped := get_tree().get_nodes_in_group(WeaponPickup.GROUP) \
+			.filter(func(n: Node) -> bool: return (n as WeaponPickup).origin == pad and (n as WeaponPickup).ammo == 0)
+	check(dropped.size() == 1, "dying drops the empty gun (%d)" % dropped.size())
+
+
+func test_the_revolver_fans_when_you_hold_the_trigger_from_the_hip() -> void:
+	var revolver := Weapons.get_def(Weapons.REVOLVER)
+	player.weapons.give(revolver)
 	await run(cmd(), 12)
 	aim_at(Vector3(5, 1, -20))
 	await fire_once()
-	check(player.weapons.ammo == 0, "empty")
-	await run(cmd(), int(WeaponHolder.EMPTY_SWITCH / DT) + 2)
-	check(player.weapons.current.is_fists(), "fists after a moment")
-	check(player.weapons.primary != null, "the empty gun is still carried")
-
-
-func test_fanning_empties_the_revolver_quickly() -> void:
-	player.weapons.give(Weapons.get_def(Weapons.REVOLVER))
-	await run(cmd(), 12)
-	aim_at(Vector3(5, 1, -20))
+	await run(cmd(), 40)
+	check(player.weapons.primary_ammo == 5, "a click is one shot (%d left)" % player.weapons.primary_ammo)
+	var fanned := []
+	player.weapons.fired.connect(func(_def: WeaponDef, shot: Dictionary) -> void:
+		if shot.fanned:
+			fanned.append(shot))
 	var c := cmd()
-	c.alt_pressed = true
+	c.fire_pressed = true
+	for i in int((WeaponHolder.FAN_HOLD + WeaponHolder.FAN_INTERVAL * 4.0) / DT) + 4:
+		c.fire_held = true
+		await run(c, 1)
+	check(player.weapons.primary_ammo == 0 and fanned.size() == 4,
+			"held from the hip: a shot, then the other four fanned in under half a second (%d left, %d fanned)" % [player.weapons.primary_ammo, fanned.size()])
+	player.weapons.give(revolver)
+	await run(cmd(), 12)
+	c = cmd()
+	c.fire_pressed = true
+	for i in 60:
+		c.fire_held = true
+		c.alt_held = true
+		await run(c, 1)
+	check(player.weapons.primary_ammo == 5, "held while aiming: one careful shot (%d left)" % player.weapons.primary_ammo)
+
+
+# --- Aiming -----------------------------------------------------------------
+
+func test_every_gun_aims_down_its_sights() -> void:
+	for id: StringName in Weapons.GUNS:
+		var d := Weapons.get_def(id)
+		player.weapons.give(d)
+		await run(cmd(), 12)
+		var hip := player.weapons.spread()
+		var c := cmd()
+		c.alt_held = true
+		await run(c, int(d.aim_time / DT) + 2)
+		check(d.zoom > 1.0 and player.weapons.aim == 1.0 and is_equal_approx(player.weapons.zoom, d.zoom),
+				"%s: alt-fire held aims, zoomed %.2fx" % [d.display_name, player.weapons.zoom])
+		near(player.weapons.spread(), hip * d.aim_spread, 0.001, "%s: its spread, aimed" % d.display_name)
+		near(player.aim_turn_scale(), 1.0 / d.zoom, 0.001, "%s: turning slows with the zoom" % d.display_name)
+		await run(cmd(), int(d.aim_time / DT) + 2)
+		check(player.weapons.aim == 0.0 and player.weapons.zoom == 1.0, "%s: let go, back to the hip" % d.display_name)
+	var c := cmd()
 	c.alt_held = true
-	await run(c, 1)
-	await run(cmd(), int(WeaponHolder.FAN_INTERVAL * 6.0 / DT) + 4)
-	check(player.weapons.primary_ammo == 0, "six rounds fanned in about 0.6 s (%d left)" % player.weapons.primary_ammo)
+	await run(c, 5)
+	c.switch_to = 2
+	await run(c, 20)
+	check(player.weapons.current.is_fists() and player.weapons.aim == 0.0 and player.weapons.zoom == 1.0,
+			"fists have nothing to aim")
+	check(Weapons.get_def(Weapons.SNIPER).sight == WeaponDef.Sight.SCOPE and Weapons.get_def(Weapons.SMG).sight == WeaponDef.Sight.DOT,
+			"the sniper has a scope, the SMG a dot sight")
 
 
 # --- Pickups and throwing ---------------------------------------------------

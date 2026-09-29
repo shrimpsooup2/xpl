@@ -50,6 +50,8 @@ const KNOCK_SNAP := 0.05
 ## Pop-ups sit this far above the crosshair and drift up by POPUP_DRIFT.
 const POPUP_Y := -34.0
 const POPUP_DRIFT := 6.0
+## The combo meter sits this far right of the crosshair.
+const COMBO_X := 30.0
 # Taking an impact frame's hit (at strength 1): zoom in with the camera's
 # punch (fraction of scale, on the same spring) and each group's rattle
 # (radians).
@@ -77,6 +79,12 @@ var _pips: Pips
 var _killfeed: VBoxContainer
 var _prompt: PanelContainer
 var _popup_anchor: CenterContainer
+## The combo meter by the crosshair: ×count over a draining bar.
+var _combo: VBoxContainer
+var _combo_count: PanelContainer
+var _combo_bar: ComboBar
+var _combo_left := 0.0
+var _combo_window := 1.0
 var _fades := {}
 var _elapsed := 0.0
 var _timer_seconds := -1.0  # < 0: count up (sandbox).
@@ -91,6 +99,8 @@ var _has_look := false
 var _impact_time := INF
 var _impact_zoom := 0.0
 var _popup_drift: Tween
+## The last pop-up's words (for tests).
+var last_popup := ""
 
 
 ## Dash charge boxes: filled when ready, filling up while recharging. A used
@@ -136,6 +146,19 @@ class Pips extends Control:
 			if i < _flash.size() and _flash[i] > 0.0:
 				draw_rect(r.grow(_flash[i] * 2.0), Color(LofiUI.WHITE, _flash[i]))
 			PaperBox.draw_frame(self, r, _hand + i * 3)
+
+
+## How long you've got to chain the next kill (KillCombos): a thin bar that
+## drains, under the combo's count.
+class ComboBar extends Control:
+	var left := 0.0  # 0..1.
+	var hand := randi()
+
+	func _draw() -> void:
+		var r := Rect2(Vector2.ZERO, size)
+		PaperBox.draw_card(self, r, hand, 1.0)
+		draw_rect(Rect2(r.position, Vector2(r.size.x * left, r.size.y)), LofiUI.BLACK)
+		PaperBox.draw_frame(self, r, hand)
 
 
 ## Speed as a row of cells that get taller left to right, like a volume
@@ -232,6 +255,17 @@ func _ready() -> void:
 	_prompt.visible = false
 	_anchor(_prompt, Control.PRESET_CENTER, Vector2(0, 26))
 
+	_combo = VBoxContainer.new()
+	_combo.add_theme_constant_override(&"separation", 1)
+	_combo.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_combo_count = LofiUI.box("×1", LofiUI.NORMAL, LofiUI.Style.GHOST)
+	_combo.add_child(_combo_count)
+	_combo_bar = ComboBar.new()
+	_combo_bar.custom_minimum_size = Vector2(0, 3)
+	_combo.add_child(_combo_bar)
+	_combo.visible = false
+	_anchor(_combo, Control.PRESET_CENTER, Vector2(COMBO_X, -6))
+
 	# Full-screen centring, nudged up to sit above the crosshair.
 	_popup_anchor = CenterContainer.new()
 	_popup_anchor.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -248,6 +282,12 @@ func _ready() -> void:
 
 func _process(delta: float) -> void:
 	_elapsed += delta
+	if _combo_left > 0.0:
+		_combo_left = maxf(_combo_left - delta, 0.0)
+		_combo_bar.left = _combo_left / _combo_window
+		_combo_bar.queue_redraw()
+		if _combo_left <= 0.0:
+			hide_combo()
 	_update_timer(delta)
 	if player:
 		var st := player.state
@@ -371,11 +411,16 @@ func set_alert(text: String) -> void:
 	_alert_blink = LofiUI.blink(_alert, LofiUI.Style.ALERT, LofiUI.Style.INVERTED, 0.7)
 
 
-func add_kill(killer: String, victim: String, weapon_name: String, heartshot := false) -> void:
+## A killfeed line; `combo` (2 and up) marks the killer's combo, ×2.
+func add_kill(killer: String, victim: String, weapon_name: String, heartshot := false, combo := 0) -> void:
 	var row := HBoxContainer.new()
 	row.add_theme_constant_override(&"separation", 1)
 	row.alignment = BoxContainer.ALIGNMENT_END
 	row.add_child(LofiUI.box(killer, LofiUI.SMALL))
+	if combo >= 2:
+		var mark := LofiUI.box("×%d" % combo, LofiUI.SMALL, LofiUI.Style.ALERT if combo >= 4 else LofiUI.Style.INVERTED)
+		row.add_child(mark)
+		LofiUI.pop(mark, 1.8, 0.3)
 	var how := LofiUI.box("♥" if heartshot else weapon_name, LofiUI.SMALL,
 			LofiUI.Style.HEART if heartshot else LofiUI.Style.INVERTED)
 	row.add_child(how)
@@ -390,6 +435,35 @@ func add_kill(killer: String, victim: String, weapon_name: String, heartshot := 
 		LofiUI.leave(old, Vector2(40, 0), 0.2)
 	# On the row itself, so a row pushed out early takes its timer with it.
 	row.create_tween().tween_callback(LofiUI.leave.bind(row, Vector2(40, 0), 0.2)).set_delay(KILLFEED_TIME)
+
+
+## The combo meter: ×`count` (inverted from 2, red from 4), its bar
+## draining over `window` seconds, then it goes.
+func show_combo(count: int, window: float) -> void:
+	LofiUI.set_text(_combo_count, "×%d" % count)
+	LofiUI.restyle(_combo_count, LofiUI.Style.GHOST if count < 2 else (LofiUI.Style.INVERTED if count < 4 else LofiUI.Style.ALERT))
+	_combo_window = maxf(window, 0.01)
+	_combo_left = window
+	_combo_bar.left = 1.0
+	_combo_bar.queue_redraw()
+	if not _combo.visible:
+		_combo.visible = true
+		LofiUI.enter(_combo, Vector2(-8, 0), 0.0, 0.2)
+	LofiUI.pop(_combo_count, 1.3 + 0.15 * count, 0.2)
+	if count >= 2:
+		LofiUI.shake(_combo_count, 1.0 + count * 0.5)
+
+
+## Puts the combo meter away (you died, or it ran out).
+func hide_combo() -> void:
+	_combo_left = 0.0
+	if _combo.visible:
+		LofiUI.leave(_combo, Vector2(8, 0), 0.15, false)
+
+
+## The combo count showing (0: none).
+func combo_shown() -> int:
+	return LofiUI.label_of(_combo_count).text.substr(1).to_int() if _combo.visible and _combo_left > 0.0 else 0
 
 
 func show_prompt(text: String) -> void:
@@ -409,6 +483,7 @@ func hide_prompt() -> void:
 ## a heartshot's word then beats twice like a heart, the whole thing drifts
 ## up, and it shatters into tumbling tiles.
 func popup(text: String, style := LofiUI.Style.INVERTED, time := 1.1) -> void:
+	last_popup = text
 	for old: Control in _popup_anchor.get_children():
 		LofiUI.shatter(old, 0.2)
 	var heart := style == LofiUI.Style.HEART

@@ -14,6 +14,9 @@ signal respawned
 signal health_changed(health: float)
 ## It took a hit (the hit as Ballistics landed it, and the damage done).
 signal hurt(hit: Dictionary, amount: float)
+## A hit landed on it from `from` (where the shooter was), by `source` if
+## there was one: for the HUD's damage direction. Online too (show_hurt).
+signal hurt_from(from: Vector3, amount: float, source: Player)
 ## It died: {attacker: Player or null, weapon: WeaponDef or null, heartshot}.
 ## A fall counts as the last hit's if that was recent (KNOCKED_OFF_TIME).
 signal killed(info: Dictionary)
@@ -31,6 +34,8 @@ const KILL_Y := -40.0
 ## it as a ball this big (it covers the near plane at the widest FOV), and
 ## stops short of the world; it comes back out this fast once clear.
 const CAMERA_PROBE := 0.15
+## Watching someone after you've died: this far behind them.
+const SPECTATE_DISTANCE := 3.4
 const CAMERA_RECOVER := 4.0
 const THIRD_PERSON_DISTANCE := 3.4
 const THIRD_PERSON_HEIGHT := 0.5
@@ -114,6 +119,9 @@ var regen_rate := 25.0
 ## Respawns itself when the death sequence ends (the sandbox). In a game the
 ## match decides when (see Match).
 var auto_respawn := true
+## Who you're watching while you wait to come back (a game that doesn't
+## respawn you at once): the camera rides behind them. Click for the next.
+var spectating: Player
 var _since_hit := INF
 var _last_hit := {}
 ## Networking (docs/NETWORKING.md). On a server, a client's player runs on
@@ -144,6 +152,7 @@ var _pending_interact := false
 var _pending_throw := false
 var _pending_switch := 0
 var _zoom := 1.0
+var _aim_toggled := false
 var _prev_position := Vector3.ZERO
 var _curr_position := Vector3.ZERO
 var _spawn := Transform3D.IDENTITY
@@ -178,7 +187,7 @@ func _ready() -> void:
 	if movement_params == null:
 		movement_params = _load_tuning("res://data/movement_params.tres")
 	if view_settings == null:
-		view_settings = _load_tuning("res://data/view_settings.tres")
+		view_settings = Settings.view()  # Yours, as saved (the settings page).
 	# Each player resizes its own capsule when crouching.
 	var col := $Collision as CollisionShape3D
 	col.shape = col.shape.duplicate()
@@ -216,11 +225,14 @@ func _ready() -> void:
 		death.player = self
 		add_child(death)
 		death.finished.connect(func() -> void:
-			if auto_respawn:
+			if not auto_respawn:
+				spectate(_last_hit.get("attacker") as Player if not _last_hit.is_empty() else null)
+			elif auto_respawn:
 				respawn())
 	else:
 		set_physics_process(false)
 	if human_controlled:
+		Settings.apply_saved()
 		Cosmetics.load_saved()
 		hat = Cosmetics.hat
 		player_name = Cosmetics.player_name
@@ -232,9 +244,15 @@ func _ready() -> void:
 func _unhandled_input(event: InputEvent) -> void:
 	if not human_controlled:
 		return
+	if is_dead:
+		# Watching someone: click for the next, right-click for the last.
+		if spectating and (event.is_action_pressed(&"fire") or event.is_action_pressed(&"alt_fire")):
+			spectating = next_to_watch(-1 if event.is_action_pressed(&"alt_fire") else 1)
+			get_viewport().set_input_as_handled()
+		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var delta: Vector2 = (event as InputEventMouseMotion).screen_relative
-		var k := deg_to_rad(DEGREES_PER_COUNT * view_settings.sensitivity)
+		var k := deg_to_rad(DEGREES_PER_COUNT * view_settings.sensitivity) * aim_turn_scale()
 		yaw = wrapf(yaw - delta.x * k, -PI, PI)
 		var dy := -delta.y if view_settings.invert_y else delta.y
 		pitch = clampf(pitch - dy * k, -MAX_PITCH, MAX_PITCH)
@@ -313,9 +331,12 @@ func apply_puppet(at: Vector3, vel: Vector3, look_yaw: float, look_pitch: float,
 ## A hit the server says this player took (a client): health, the flinch,
 ## and (for `numbers`, your own hits) the damage number.
 func show_hurt(new_health: float, amount: float, point: Vector3, direction: Vector3, zone: StringName, part: StringName,
-		heartshot: bool, numbers := false) -> void:
+		heartshot: bool, numbers := false, attacker: Player = null) -> void:
 	health = new_health
+	# So a death the server sends next knows how it went (the heart's ending).
+	_last_hit = {"attacker": null, "weapon": null, "heartshot": heartshot, "time": Time.get_ticks_msec()}
 	health_changed.emit(health)
+	hurt_from.emit(hit_origin(attacker, point, direction), amount, attacker)
 	if numbers:
 		DamageNumber.add(get_parent(), self, point, amount, &"heart" if heartshot else zone)
 	if health > 0.0:
@@ -369,6 +390,7 @@ func take_hit(hit: Dictionary) -> Dictionary:
 	_last_hit = {"attacker": attacker, "weapon": hit.get("weapon"), "heartshot": lethal, "time": Time.get_ticks_msec()}
 	health_changed.emit(health)
 	hurt.emit(hit, amount)
+	hurt_from.emit(hit_origin(attacker, hit.point, hit.get("direction", Vector3.FORWARD)), amount, attacker)
 	DamageNumber.add(get_parent(), self, hit.point, amount, &"heart" if lethal else hit.zone)
 	var killed_now := health <= 0.0
 	if killed_now:
@@ -385,6 +407,14 @@ func take_hit(hit: Dictionary) -> Dictionary:
 		"killed": killed_now,
 		"weapon": hit.get("weapon"),
 	}
+
+
+## Where a hit came from: the shooter's eyes, or (nobody's) back along the
+## shot from where it landed.
+static func hit_origin(attacker: Player, point: Vector3, direction: Vector3) -> Vector3:
+	if attacker and is_instance_valid(attacker):
+		return attacker.global_position + Vector3.UP * 1.4
+	return point - direction.normalized() * 5.0
 
 
 ## Gains `amount` health, up to its maximum.
@@ -414,6 +444,7 @@ func die() -> void:
 	model.visible = true
 	if viewmodel:
 		viewmodel.visible = false
+	model.heart_stops(info.heartshot)
 	killed.emit(info)
 	died.emit()
 	if death:
@@ -434,6 +465,8 @@ func respawn() -> void:
 	velocity = Vector3.ZERO
 	state.reset(movement_params)
 	weapons.reset()
+	_aim_toggled = false
+	spectating = null
 	health = max_health
 	_since_hit = INF
 	_last_hit = {}
@@ -494,6 +527,66 @@ func zoom_amount() -> float:
 	return _zoom
 
 
+## Stops the death cinematic (the world comes back, fading in from black)
+## and watches `first` if they're alive, else the next living player.
+func spectate(first: Player = null) -> void:
+	if death:
+		death.stop(true)
+	spectating = first if can_watch(first) else null
+	spectating = spectating if spectating else next_to_watch(1)
+	if spectating:
+		_watch_yaw = spectating.yaw
+
+
+## Whether `other` is someone you could watch: alive, and not you.
+func can_watch(other: Player) -> bool:
+	return other != null and is_instance_valid(other) and other != self and not other.is_dead and other.is_inside_tree()
+
+
+## The living player `step` along from the one you're watching (teammates
+## first in teams), or null if nobody's left.
+func next_to_watch(step: int) -> Player:
+	var alive: Array = get_tree().get_nodes_in_group(Ballistics.GROUP) \
+			.filter(func(n: Node) -> bool: return n is Player and can_watch(n))
+	if alive.is_empty():
+		return null
+	var teams := Game.current != null and is_instance_valid(Game.current) and Game.current.rules.is_teams()
+	alive.sort_custom(func(a: Player, b: Player) -> bool:
+		var mine_a := teams and a.team == team
+		var mine_b := teams and b.team == team
+		return mine_a if mine_a != mine_b else a.get_instance_id() < b.get_instance_id())
+	var at := alive.find(spectating)
+	return alive[posmod(at + step, alive.size())] if at >= 0 else alive[0]
+
+
+var _watch_yaw := 0.0
+
+
+# The camera rides behind whoever you're watching, above their shoulder, and
+# pulls in rather than go through a wall. When they die, the next one.
+func _watch(delta: float) -> void:
+	if not can_watch(spectating):
+		spectating = next_to_watch(1)
+		if spectating == null:
+			return
+	_watch_yaw = lerp_angle(_watch_yaw, spectating.yaw, 1.0 - exp(-5.0 * delta))
+	var head := spectating.model.global_position + Vector3.UP * 1.45
+	var behind := Basis(Vector3.UP, _watch_yaw) * Vector3(0.0, 0.55, SPECTATE_DISTANCE)
+	var want := head + behind
+	var from := head.lerp(want, reach_toward(head, want))
+	var look := head + Basis(Vector3.UP, _watch_yaw) * Vector3(0.0, -0.3, -4.0)
+	camera.global_transform = Transform3D(Basis.looking_at(look - from, Vector3.UP), from)
+	camera.fov = vfov_from_hfov_16_9(view_settings.fov_horizontal)
+
+
+## How much slower you turn while zoomed (ViewSettings.aim_sensitivity).
+func aim_turn_scale() -> float:
+	var zoom := weapons.zoom if weapons else 1.0
+	if zoom <= 1.0:
+		return 1.0
+	return lerpf(1.0, view_settings.aim_sensitivity, clampf((zoom - 1.0) * 10.0, 0.0, 1.0)) / zoom
+
+
 ## 0..1: how far into the slide look the camera is.
 func slide_look() -> float:
 	return _slide_look
@@ -539,7 +632,15 @@ func _sample_command() -> InputCommand:
 	c.fire_pressed = _pending_fire
 	c.fire_held = Input.is_action_pressed(&"fire")
 	c.alt_pressed = _pending_alt
-	c.alt_held = Input.is_action_pressed(&"alt_fire")
+	if view_settings.toggle_aim:
+		if _pending_alt:
+			_aim_toggled = not _aim_toggled
+		# Down again whenever there's nothing to aim.
+		if weapons.current.is_fists():
+			_aim_toggled = false
+		c.alt_held = _aim_toggled
+	else:
+		c.alt_held = Input.is_action_pressed(&"alt_fire")
 	c.interact_pressed = _pending_interact
 	c.throw_pressed = _pending_throw
 	c.switch_to = _pending_switch
@@ -562,7 +663,10 @@ func _clear_combat_presses() -> void:
 
 func _process(delta: float) -> void:
 	if is_dead:
-		return  # The death sequence has the camera.
+		# The death sequence has the camera, then whoever you're watching.
+		if spectating != null and not (death and death.is_active()):
+			_watch(delta)
+		return
 	var p := movement_params
 	var v := view_settings
 	var f := Engine.get_physics_interpolation_fraction()
@@ -570,6 +674,7 @@ func _process(delta: float) -> void:
 	var pos := _prev_position.lerp(_curr_position, f) + _correction
 	model.follow(pos, yaw)
 	model.animate_movement(state, velocity)
+	model.set_health(health / max_health)
 	model.aim(pitch, weapons.current.is_fists())
 
 	var smooth := v.camera_smoothing

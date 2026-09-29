@@ -5,6 +5,12 @@ extends Resource
 
 ## Source-style sensitivity: degrees of yaw per mouse count = 0.022 × this.
 @export_range(0.05, 10.0, 0.01) var sensitivity: float = 1.5
+## Turning while aimed: at 1 it slows with the zoom, so what's under the
+## sights moves across the screen as fast as it would from the hip; lower
+## is slower still.
+@export_range(0.2, 2.0, 0.05) var aim_sensitivity: float = 1.0
+## Alt-fire toggles aiming instead of aiming while it's held.
+@export var toggle_aim: bool = false
 ## Horizontal FOV at 16:9. Other aspect ratios keep the same vertical FOV.
 @export_range(80.0, 120.0, 1.0) var fov_horizontal: float = 100.0
 ## Extra FOV at the speed soft cap.

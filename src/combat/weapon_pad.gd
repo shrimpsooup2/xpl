@@ -2,7 +2,8 @@ class_name WeaponPad
 extends Node3D
 ## A weapon pad (GDD §7.1): a glossy disc with the gun floating over it.
 ## Once taken, its ring fills back up and the gun pops back in after
-## `respawn_time` (0: never).
+## `respawn_time` (0: never). Every gun remembers the pad it came from, and
+## an empty one lasts until the pad's next gun is taken (`generation`).
 
 const HOVER := 0.95
 const RADIUS := 0.7
@@ -14,6 +15,10 @@ signal changed(ready: bool)
 @export var respawn_time := 20.0
 
 var pickup: WeaponPickup
+## How many of its guns have been taken. Its gun number n (the n it had
+## when it appeared) is past its time once the next one's taken, when this
+## is past n + 1.
+var generation := 0
 var _ring: MeshInstance3D
 var _timer := -1.0
 
@@ -52,6 +57,7 @@ func _ready() -> void:
 ## Called by its pickup when it's taken.
 func taken(_by: WeaponPickup) -> void:
 	pickup = null
+	generation += 1
 	_timer = respawn_time if respawn_time > 0.0 else -1.0
 	_ring.set_instance_shader_parameter(&"glow", 0.0)
 	changed.emit(false)
@@ -64,6 +70,12 @@ func set_ready(ready: bool) -> void:
 	elif not ready and pickup:
 		pickup.queue_free()
 		taken(null)
+
+
+## Whether its gun number `n` is past its time: the gun after it's been
+## taken.
+func outlived(n: int) -> bool:
+	return generation > n + 1
 
 
 func _process(delta: float) -> void:
@@ -79,8 +91,12 @@ func _process(delta: float) -> void:
 
 
 func _spawn(pop: bool) -> void:
+	if not is_inside_tree() or is_queued_for_deletion():
+		return  # Taken off the map (a game with ammo boxes instead).
 	var def := Weapons.get_def(weapon)
 	pickup = WeaponPickup.create(def, def.ammo)
+	pickup.origin = self
+	pickup.origin_generation = generation
 	get_parent().add_child(pickup)
 	pickup.rest_on_pad(global_position + Vector3.UP * HOVER, self)
 	_ring.set_instance_shader_parameter(&"glow", 0.9)

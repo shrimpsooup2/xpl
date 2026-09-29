@@ -68,20 +68,21 @@ func _process(_delta: float) -> bool:
 		return false
 	var small := _viewport.get_texture().get_image()
 	small.convert(Image.FORMAT_RGB8)
-	_frame(small, BOX, Color.BLACK)
+	frame(small, BOX, Color.BLACK)
 
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://assets/ui"))
 	small.save_png("res://assets/ui/logo_small.png")
 
 	var big := small.duplicate() as Image
 	big.resize(roundi(SMALL_SIZE.x * UPSCALE * STRETCH_X), SMALL_SIZE.y * UPSCALE, Image.INTERPOLATE_BILINEAR)
-	var warped := _wave(big)
+	var warped := wave(big)
 	warped.save_png("res://assets/ui/logo.png")
 	print("saved logo_small.png %s and logo.png %s" % [small.get_size(), warped.get_size()])
 	return true
 
 
-func _frame(img: Image, r: Rect2i, c: Color) -> void:
+## Draws a one-pixel frame round `r` (tools/gen_icon.gd uses it too).
+static func frame(img: Image, r: Rect2i, c: Color) -> void:
 	for x in range(r.position.x, r.end.x):
 		img.set_pixel(x, r.position.y, c)
 		img.set_pixel(x, r.end.y - 1, c)
@@ -91,7 +92,7 @@ func _frame(img: Image, r: Rect2i, c: Color) -> void:
 
 
 ## Shifts each row sideways along a slow sine, like a nudged scan.
-func _wave(src: Image) -> Image:
+static func wave(src: Image) -> Image:
 	var w := src.get_width()
 	var h := src.get_height()
 	var out := Image.create_empty(w, h, false, Image.FORMAT_RGB8)

@@ -129,6 +129,8 @@ func setup_level(scene: Node) -> void:
 		_add_body(info, baked if info.local else null)
 	if baked and not has_local:
 		baked.queue_free()
+	if rules.ammo_boxes:
+		_ammo_for_guns(scene)
 	for pad in _all_of(scene, "WeaponPad"):
 		if pad.respawn_time <= 0.0:
 			if rules.power_pad_respawn > 0.0:
@@ -146,6 +148,42 @@ func setup_level(scene: Node) -> void:
 		_load_wait = LOAD_WAIT  # Starts once the clients have it too.
 	else:
 		_start_round()
+
+
+## No guns on the map (GameRules.ammo_boxes): an ammo box where each pad
+## and crate was, named AmmoBox<n> in the level's order, the same on every
+## machine.
+func _ammo_for_guns(scene: Node) -> void:
+	var spots: Array[Node3D] = []
+	for pad: Node3D in _all_of(scene, "WeaponPad"):
+		spots.append(pad)
+	for crate: Node in get_tree().get_nodes_in_group(ResupplyCrate.GROUP):
+		if scene.is_ancestor_of(crate):
+			spots.append(crate)
+	var n := 0
+	for spot in spots:
+		var box := AmmoBox.new()
+		box.name = "AmmoBox%d" % n
+		box.share = rules.ammo_share
+		box.respawn_time = rules.ammo_respawn
+		scene.add_child(box)
+		box.global_transform = spot.global_transform
+		n += 1
+		if spot is WeaponPad and (spot as WeaponPad).pickup:
+			(spot as WeaponPad).pickup.queue_free()
+		spot.get_parent().remove_child(spot)
+		spot.queue_free()
+
+
+## `info` picks gun `id` (games where you pick, GameRules.loadout): theirs
+## from their next spawn, or at once in the countdown before the game
+## (nobody's fired yet).
+func choose_gun(info: PlayerInfo, id: StringName) -> void:
+	if not rules.loadout or info == null or not id in Weapons.GUNS:
+		return
+	info.gun = id
+	if authority and state == State.COUNTDOWN and info.alive():
+		info.player.weapons.give(Weapons.get_def(id))
 
 
 ## Gives `info` a body in the level (`use`, or a new one) and sets it up.
@@ -167,6 +205,7 @@ func _add_body(info: PlayerInfo, use: Player = null) -> Player:
 	body.regen_delay = rules.regen_delay
 	body.regen_rate = rules.regen_rate
 	body.auto_respawn = false
+	body.weapons.drops_on_death = not rules.loadout  # Picked guns aren't left lying about.
 	var me := local_info()
 	body.refresh_look(rules.is_teams() and me != null and info.team == me.team and not info.local)
 	if authority:
@@ -336,7 +375,11 @@ func _spawn(info: PlayerInfo, used: Array) -> Node3D:
 			best = p
 	var at := best.global_transform if best else Transform3D.IDENTITY
 	body.spawn_at(at)
-	if rules.spawn_weapon != &"":
+	if rules.loadout:
+		if info.bot:
+			info.gun = Weapons.GUNS.pick_random()  # Something different each life.
+		body.weapons.give(Weapons.get_def(info.gun))
+	elif rules.spawn_weapon != &"":
 		body.weapons.give(Weapons.get_def(rules.spawn_weapon))
 	spawned.emit(info, at)
 	return best
@@ -489,6 +532,11 @@ func info_by_id(id: int) -> PlayerInfo:
 
 
 ## The local person's PlayerInfo, or null (a dedicated server).
+## Seconds until `info` respawns, or -1 if they aren't waiting to.
+func respawn_in(info: PlayerInfo) -> float:
+	return maxf(_respawns[info], 0.0) if _respawns.has(info) else -1.0
+
+
 func local_info() -> PlayerInfo:
 	for info in infos:
 		if info.local:

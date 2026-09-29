@@ -11,6 +11,8 @@ var team := Hats.Team.RED
 ## The free-for-all colour, a key of Hats.PALETTE.
 var color := Cosmetics.DEFAULT_COLOR
 var hat := Cosmetics.DEFAULT_HAT
+## The gun they've picked, for games where you pick (GameRules.loadout).
+var gun := Cosmetics.DEFAULT_GUN
 var bot := false
 ## Played on this machine by the person at the keyboard.
 var local := false
@@ -39,6 +41,7 @@ static func local_human() -> PlayerInfo:
 	info.player_name = Cosmetics.player_name
 	info.color = Cosmetics.color
 	info.hat = Cosmetics.hat
+	info.gun = Cosmetics.gun
 	return info
 
 
@@ -51,6 +54,7 @@ static func make_bot(n: int) -> PlayerInfo:
 	var colors := Hats.PALETTE.keys()
 	info.color = colors[(n * 3) % colors.size()]
 	info.hat = Hats.ALL[(n * 5) % Hats.ALL.size()]
+	info.gun = Weapons.GUNS[n % Weapons.GUNS.size()]
 	return info
 
 

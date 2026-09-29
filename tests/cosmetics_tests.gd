@@ -379,6 +379,33 @@ func test_first_person_arms_carry_on_out_of_view() -> void:
 	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
+func test_aimed_the_sights_sit_on_the_middle_of_the_screen() -> void:
+	var player: Player = load("res://scenes/player.tscn").instantiate()
+	player.movement_params = MovementParams.new()
+	player.view_settings = ViewSettings.new()
+	world.add_child(player)
+	player.set_physics_process(false)  # Aimed by the test, not the mouse.
+	await frames(2)
+	for id: StringName in Weapons.GUNS:
+		var d := Weapons.get_def(id)
+		player.weapons.give(d)
+		var c := InputCommand.new()
+		for i in 30:
+			c.alt_held = true
+			await get_tree().physics_frame
+			player.tick(c, 1.0 / 60.0)
+			await get_tree().process_frame
+		var vm := player.viewmodel
+		var sight := player.camera.global_transform.affine_inverse() * (vm.gun.global_transform * d.sight_point)
+		check(Vector2(sight.x, sight.y).length() < 0.003 and absf(-sight.z - d.eye_relief) < 0.01,
+				"%s: the sight is on the line of sight, %.2f m out (%s)" % [d.display_name, d.eye_relief, sight])
+		if d.sight == WeaponDef.Sight.SCOPE:
+			check(not vm.visible or not vm.get_child(0).visible, "%s: up to the eye, it cuts to the scope" % d.display_name)
+		else:
+			check_sleeves(player, d.display_name + " aimed")
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
 func test_first_person_arms_are_a_closed_mesh() -> void:
 	var m := model_at(Vector3.ZERO)
 	await frames(1)

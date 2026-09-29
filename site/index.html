@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>xtrapartial</title>
+<meta name="description" content="a movement-first round and team shooter. new maps and weapons being added. free download.">
+<meta name="theme-color" content="#000000">
+<meta property="og:type" content="website">
+<meta property="og:title" content="xtrapartial">
+<meta property="og:description" content="a movement-first round and team shooter. new maps and weapons being added. free download.">
+<meta property="og:image" content="https://shrimpsooup2.github.io/xpl/assets/logo.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icon.png">
+<link rel="apple-touch-icon" href="assets/icon.png">
+<link rel="stylesheet" href="site.css">
+<script>document.documentElement.classList.add("js")</script>
+<script src="site.js" defer></script>
+</head>
+<body>
+<!--
+	The page's words and buttons live here; site.js draws them small on the
+	canvas and blows it up in hard pixels, and lays these over it unseen so
+	links, the keyboard and screen readers still work.
+
+	Downloads: put each build's address in its href. An empty one says
+	"soon :)". Pictures: list them in data-shots, comma-separated
+	(e.g. "shots/boulevard.png, shots/depot.png"); none shows stand-ins.
+-->
+<main id="screen" class="screen">
+	<canvas id="pixels" aria-hidden="true"></canvas>
+
+	<div class="card" data-card="logo">
+		<h1>xtrapartial</h1>
+	</div>
+
+	<div class="card" data-card="info">
+		<ul>
+			<li>-movement first round and team shooter</li>
+			<li>-new maps + weapons being added</li>
+			<li>-free download :)</li>
+		</ul>
+		<a class="hit" data-button="pc" data-label="↓ pc" href="">download for pc</a>
+		<a class="hit" data-button="mac" data-label="↓ mac" href="">download for mac</a>
+		<a class="hit" data-button="server" data-label="↓ server" href="">download the server build</a>
+	</div>
+
+	<div class="card" data-card="pictures" data-shots="" role="region" aria-roledescription="carousel" aria-label="pictures">
+		<p class="caption" aria-live="polite">pictures soon</p>
+		<button class="hit" data-button="prev" type="button">previous picture</button>
+		<button class="hit" data-button="next" type="button">next picture</button>
+	</div>
+
+	<p id="status" class="sr-only" aria-live="polite"></p>
+</main>
+</body>
+</html>

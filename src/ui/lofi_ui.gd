@@ -184,6 +184,45 @@ static func stepper(texts: Array, step: Callable) -> HBoxContainer:
 	return row
 
 
+## [<] [a bar] [>] [value]: a LofiSlider between arrows that step it, and
+## the value after it (`format` turns it into text). `changed` gets each
+## new value. slider_set() moves it without calling back.
+static func slider(value: float, low: float, high: float, step: float, format: Callable, changed: Callable,
+		width := 60.0) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.add_theme_constant_override(&"separation", 1)
+	var bar := LofiSlider.new(value, low, high, step, width)
+	var shown := box(format.call(bar.value), SMALL, Style.GHOST)
+	for v: float in [low, high, (low + high) * 0.5]:
+		var text_width := FONT.get_string_size(format.call(v), HORIZONTAL_ALIGNMENT_LEFT, -1, SMALL).x
+		shown.custom_minimum_size.x = maxf(shown.custom_minimum_size.x, ceilf(text_width) + 10.0)
+	label_of(shown).horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	var ghost := stylebox(Style.GHOST, SMALL, randi())
+	for by in [-1, 1]:
+		var arrow := button("<" if by < 0 else ">", bar.nudge.bind(by))
+		arrow.add_theme_font_size_override(&"font_size", SMALL)
+		arrow.add_theme_stylebox_override(&"normal", ghost)
+		arrow.add_theme_color_override(&"font_color", GREY)
+		row.add_child(arrow)
+	row.add_child(bar)
+	row.move_child(bar, 1)
+	row.add_child(shown)
+	bar.changed.connect(func(v: float) -> void:
+		set_text(shown, format.call(v))
+		changed.call(v))
+	row.set_meta(&"bar", bar)
+	row.set_meta(&"shown", shown)
+	row.set_meta(&"format", format)
+	return row
+
+
+## Moves a slider() row to `value` without calling it back.
+static func slider_set(row: HBoxContainer, value: float) -> void:
+	var bar: LofiSlider = row.get_meta(&"bar")
+	bar.set_value_quietly(value)
+	set_text(row.get_meta(&"shown"), (row.get_meta(&"format") as Callable).call(bar.value))
+
+
 ## A small text field: a ghost box that firms up while you type in it. Enter
 ## lets go of it. `secret` hides what's typed (passwords).
 static func field(text: String, width: float, max_length := 64, secret := false) -> LineEdit:

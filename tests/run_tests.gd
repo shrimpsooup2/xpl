@@ -13,6 +13,9 @@ const SUITES := ["res://tests/player_tests.gd", "res://tests/ui_tests.gd", "res:
 		"res://tests/cosmetics_tests.gd", "res://tests/map_tests.gd", "res://tests/game_tests.gd",
 		"res://tests/net_tests.gd"]
 const ONLINE_SUITES := ["res://tests/online_tests.gd"]
+## The tests' own settings file, so what you've set yourself never reaches
+## them (and they never touch yours).
+const TEST_SETTINGS := "user://test_settings.cfg"
 
 
 func _initialize() -> void:
@@ -20,6 +23,9 @@ func _initialize() -> void:
 
 
 func _run_all() -> void:
+	Settings.path = TEST_SETTINGS
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_SETTINGS))
+	Settings.reload()
 	var failures: PackedStringArray = []
 	var checks := 0
 	var count := 0
@@ -32,6 +38,7 @@ func _run_all() -> void:
 		count += suite.tests_run
 		suite.queue_free()
 		await process_frame
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_SETTINGS))
 	print("\n%d tests, %d checks, %d failures" % [count, checks, failures.size()])
 	for f in failures:
 		print("  ✗ ", f)

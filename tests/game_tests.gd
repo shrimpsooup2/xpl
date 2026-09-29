@@ -49,8 +49,9 @@ func physics(n: int) -> void:
 		await get_tree().physics_frame
 
 
-## A script-driven player standing in `world` at `at`, facing `yaw`.
-func make_player(at: Vector3, yaw := 0.0) -> Player:
+## A script-driven player standing in `world` at `at`, facing `yaw`; with
+## `human`, the one you play (in first person: its body hidden from you).
+func make_player(at: Vector3, yaw := 0.0, human := false) -> Player:
 	if world.get_node_or_null(^"Floor") == null:
 		var floor_body := StaticBody3D.new()
 		floor_body.name = "Floor"
@@ -62,7 +63,7 @@ func make_player(at: Vector3, yaw := 0.0) -> Player:
 		floor_body.position = Vector3(0, -0.5, 0)
 		world.add_child(floor_body)
 	var p: Player = load("res://scenes/player.tscn").instantiate()
-	p.human_controlled = false
+	p.human_controlled = human
 	p.movement_params = MovementParams.new()
 	p.view_settings = ViewSettings.new()
 	world.add_child(p)
@@ -139,6 +140,103 @@ func test_a_real_shot_hurts_another_player_and_kills_them_at_zero() -> void:
 	check(target.is_dead and target.health == 0.0, "shot until dead")
 	check(deaths.size() == 1 and deaths[0].attacker == shooter and deaths[0].weapon == Weapons.get_def(Weapons.RIFLE),
 			"the kill is the shooter's, with the rifle")
+
+
+func test_you_can_be_shot_in_first_person() -> void:
+	# Your own body is hidden from you, not from everyone else's guns.
+	var shooter := make_player(Vector3(0, 0.05, 0), 0.0)
+	var you := make_player(Vector3(0, 0.05, -8), PI, true)
+	you.set_physics_process(false)  # Driven by the test, not the keyboard.
+	await physics(10)
+	check(not you.model.visible, "your body is hidden from you in first person")
+	var eye := shooter.weapons.eye_position()
+	var aim := func(point: Vector3) -> void:
+		shooter.pitch = atan2(point.y - eye.y, eye.distance_to(Vector3(point.x, eye.y, point.z)))
+	# Fires (every few frames, as a player clicking) until a shot lands.
+	var shoot := func(frames: int) -> void:
+		var before := you.health
+		for i in frames:
+			var c := InputCommand.new()
+			c.yaw = shooter.yaw
+			c.pitch = shooter.pitch
+			c.fire_held = true
+			c.fire_pressed = i % 6 == 0
+			await get_tree().physics_frame
+			shooter.tick(c, DT)
+			you.tick(InputCommand.new(), DT)
+			if you.health < before:
+				return
+	shooter.weapons.give(Weapons.get_def(Weapons.RIFLE))
+	aim.call(you.global_position + Vector3.UP * 1.25)
+	await shoot.call(60)
+	check(you.health < Player.MAX_HEALTH and not you.is_dead, "a shot to your chest hurts (%.0f left)" % you.health)
+	# Crouched, your hit shapes go down with you: a shot at standing head
+	# height goes over.
+	you.set_process(true)  # It animates the body.
+	await frames(2)
+	var standing_head := you.global_position + Vector3.UP * 1.55
+	var over := eye + (standing_head - eye) * 1.5
+	check(you.ray_test(eye, over).get("part") == &"head", "standing, a shot at head height hits your head")
+	for i in 30:
+		var c := InputCommand.new()
+		c.crouch_held = true
+		c.crouch_pressed = i == 0
+		await get_tree().physics_frame
+		you.tick(c, DT)
+	await frames(2)
+	check(you.ray_test(eye, over).is_empty(), "crouched, a shot at standing head height misses")
+	you.respawn()
+	shooter.weapons.give(Weapons.get_def(Weapons.PISTOL))
+	await physics(60)  # Stood back up, and the pistol's ready.
+	var deaths := []
+	you.killed.connect(func(info: Dictionary) -> void: deaths.append(info))
+	aim.call(you.model.heart.global_position)
+	await shoot.call(30)  # Until the first shot lands.
+	check(you.is_dead and deaths.size() == 1 and deaths[0].heartshot, "and through the heart, it's a heartshot")
+
+
+func test_after_dying_in_a_game_you_watch_someone_not_a_black_screen() -> void:
+	var you := make_player(Vector3(0, 0.05, 0), 0.0, true)
+	you.set_physics_process(false)
+	you.auto_respawn = false  # A game: you don't come straight back.
+	var killer := make_player(Vector3(4, 0.05, 0))
+	var other := make_player(Vector3(-4, 0.05, 0))
+	await physics(5)
+	you.set_process(true)
+	var pause := PauseMenu.new()
+	pause.player = you
+	add_child(pause)
+	you.take_hit(hit(killer, 500.0))
+	check(you.is_dead and you.death.is_active(), "dead: the cinematic plays")
+	check(pause.in_death_cinematic(), "and the menu waits for it (it plays over everything)")
+	you.death.finished.emit()  # It's over (skipped).
+	await frames(3)
+	check(you.spectating == killer, "then you watch whoever killed you")
+	check(not you.death.is_active(), "the cinematic's done, the world put back")
+	check(not pause.in_death_cinematic(), "watching someone, esc opens the menu")
+	pause.open()
+	check(pause.is_open, "and it's open")
+	pause.close()
+	pause.queue_free()
+	await frames(int(DeathSequence.FADE_BACK * 60.0) + 5)
+	check(you.death._overlay.color.a == 0.0, "and the picture fades back in from black")
+	var cam := you.camera.global_position
+	check(cam.distance_to(killer.global_position + Vector3.UP * 1.45) < Player.SPECTATE_DISTANCE + 0.8,
+			"from just behind them (%.1f m)" % cam.distance_to(killer.global_position))
+	var click := InputEventAction.new()
+	click.action = &"fire"
+	click.pressed = true
+	you._unhandled_input(click)
+	check(you.spectating == other, "click: the next one")
+	other.die()
+	await frames(2)
+	check(you.spectating == killer, "when they die, back to whoever's left")
+	killer.die()
+	await frames(2)
+	check(you.spectating == null, "nobody left: nobody to watch")
+	you.respawn()
+	check(you.spectating == null and not you.is_dead, "back in the game")
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 
 func test_a_heartshot_kills_outright_and_a_fall_after_a_hit_is_the_hitters() -> void:
@@ -236,25 +334,38 @@ func test_ffa_players_wear_their_own_colours_and_no_resupply() -> void:
 
 # --- Teams ------------------------------------------------------------------------
 
-func test_teams_spawn_on_their_side_with_a_pistol_and_respawn() -> void:
+func test_teams_you_spawn_with_the_gun_you_picked_and_change_it_while_down() -> void:
 	var rules := quick(GameRules.teams(), "boulevard")
+	rules.countdown = 1.0
 	rules.respawn_delay = 0.3
 	var infos := people(4)
+	var guns := [Weapons.SNIPER, Weapons.SHOTGUN, Weapons.SMG, Weapons.REVOLVER]
+	for i in infos.size():
+		infos[i].gun = guns[i]
 	var m := Game.start(get_tree(), rules, infos)
-	check(await until_state(m, Match.State.LIVE), "live")
-	for info in infos:
+	check(await until_state(m, Match.State.COUNTDOWN), "counting down")
+	for i in infos.size():
+		var info := infos[i]
 		var side_x := info.player.global_position.x
 		check((side_x < 0.0) == (info.team == Hats.Team.RED), "%s spawns on %s's side (x %.0f)" % [info.player_name, ["red", "blue"][info.team], side_x])
-		check(info.player.weapons.primary == Weapons.get_def(Weapons.PISTOL), "%s holds a pistol" % info.player_name)
+		check(info.player.weapons.primary == Weapons.get_def(guns[i]), "%s holds the gun they picked" % info.player_name)
 		check(info.player.model.tint == Hats.team_color(info.team), "%s wears the team colour" % info.player_name)
+	m.choose_gun(infos[0], Weapons.RIFLE)
+	check(infos[0].player.weapons.primary == Weapons.get_def(Weapons.RIFLE), "picking again in the countdown swaps it at once")
+	m.choose_gun(infos[0], &"fists")
+	check(infos[0].gun == Weapons.RIFLE, "only a gun can be picked")
+	check(await until_state(m, Match.State.LIVE), "live")
 	var red := infos[0]
 	var blue := infos[1]
+	m.choose_gun(red, Weapons.PISTOL)
+	check(red.player.weapons.primary == Weapons.get_def(Weapons.RIFLE), "once it's on, a new pick waits for your next life")
 	blue.player.take_hit(hit(red.player, 200.0))
 	check(m.team_scores == [1, 0] and red.kills == 1, "a kill scores for the killer's team")
-	check(blue.player.is_dead, "blue's down")
+	check(blue.player.is_dead and get_tree().get_nodes_in_group(WeaponPickup.GROUP).is_empty(), "blue's down, its gun not left lying about")
+	m.choose_gun(blue, Weapons.SMG)
 	await physics(40)
-	check(blue.alive() and blue.player.global_position.x > 0.0, "and back on its side after the respawn delay")
-	check(blue.player.weapons.primary == Weapons.get_def(Weapons.PISTOL), "with a pistol again")
+	check(blue.alive() and blue.player.global_position.x > 0.0, "back on its side after the respawn delay")
+	check(blue.player.weapons.primary == Weapons.get_def(Weapons.SMG), "with the gun it picked while it was down")
 
 
 func test_teams_friendly_fire_is_off_and_the_kill_target_ends_it() -> void:
@@ -276,25 +387,80 @@ func test_teams_friendly_fire_is_off_and_the_kill_target_ends_it() -> void:
 	check(not infos[0].player.weapons.enabled, "weapons off once it's over")
 
 
-func test_teams_pads_come_back_faster_and_crates_refill_your_gun() -> void:
+func test_teams_have_ammo_boxes_instead_of_guns_on_the_map() -> void:
 	var rules := quick(GameRules.teams(), "boulevard")
+	rules.ammo_respawn = 0.4
 	var infos := people(2)
 	var m := Game.start(get_tree(), rules, infos)
 	check(await until_state(m, Match.State.LIVE), "live")
-	var sniper: Node = m.level.find_child("Pad_Sniper_Blue", true, false)
-	var pistol: Node = m.level.find_child("Pad_Pistol_Blue", true, false)
-	check(sniper.respawn_time == rules.power_pad_respawn, "the sniper comes back (%.0f s)" % sniper.respawn_time)
-	check(pistol.respawn_time == 10.0, "other pads twice as fast (%.0f s)" % pistol.respawn_time)
-	var crate := m.level.find_child("Resupply_Yard_Blue", true, false) as ResupplyCrate
-	check(crate.enabled and crate.visible, "the crates are on")
+	check(Match._all_of(m.level, "WeaponPad").is_empty() and get_tree().get_nodes_in_group(ResupplyCrate.GROUP).is_empty()
+			and get_tree().get_nodes_in_group(WeaponPickup.GROUP).is_empty(), "no pads, crates or guns on the map")
+	var boxes := Match._all_of(m.level, "AmmoBox")
+	check(boxes.size() == 21, "an ammo box for each of the 15 pads and 6 crates (%d)" % boxes.size())
 	var p := infos[1].player
-	p.weapons.give(Weapons.get_def(Weapons.RIFLE), 3)
-	p.global_position = crate.global_position
+	var rifle := Weapons.get_def(Weapons.RIFLE)
+	p.weapons.give(rifle, 3)
+	p.weapons.set_using_primary(false)
+	var box: AmmoBox = boxes[0]
+	p.global_position = box.global_position
 	await physics(3)
-	check(p.weapons.primary_ammo == Weapons.get_def(Weapons.RIFLE).ammo, "walking up to a crate fills the magazine")
-	p.weapons.primary_ammo = 2
+	check(p.weapons.primary_ammo == 3 + ceili(rifle.ammo * rules.ammo_share) and not box.available,
+			"walking into one tops your gun up by half a magazine (%d) and takes it" % p.weapons.primary_ammo)
+	check(p.weapons.using_primary, "and puts the gun back in your hands")
+	p.global_position = box.global_position + Vector3(4, 0, 0)  # Step off it.
+	await physics(int(rules.ammo_respawn * 60.0) + 5)
+	check(box.available, "it comes back")
+	p.weapons.primary_ammo = rifle.ammo
+	p.global_position = box.global_position
 	await physics(3)
-	check(p.weapons.primary_ammo == 2 and crate.wait_for(p) > 0.0, "then it waits before it'll fill it again")
+	check(box.available, "a full gun leaves it where it is")
+
+
+func test_kill_combos_chain_within_the_window_and_streaks_until_you_die() -> void:
+	var c := KillCombos.new()
+	var a := PlayerInfo.new()
+	var b := PlayerInfo.new()
+	var made := c.record(a, b, 10.0)
+	check(made.combo == 1 and made.combo_name == "" and made.streak == 1, "a kill on its own")
+	made = c.record(a, b, 12.0)
+	check(made.combo == 2 and made.combo_name == "double kill", "another within %.0f s: a double kill" % KillCombos.WINDOW)
+	made = c.record(a, b, 15.9)
+	check(made.combo == 3 and made.combo_name == "triple kill" and made.streak_name == "on a roll", "a triple kill, and a streak of three: on a roll")
+	near(c.time_left(a, 16.9), KillCombos.WINDOW - 1.0, 0.001, "time left to chain the next")
+	made = c.record(a, b, 21.0)
+	check(made.combo == 1 and made.streak == 4, "too slow: the combo starts over, the streak goes on")
+	for i in 5:
+		made = c.record(a, b, 22.0 + i)
+	check(made.combo == 6 and made.combo_name == "combo ×6", "past a penta kill it counts")
+	c.record(b, a, 28.0)
+	made = c.record(a, b, 28.5)
+	check(made.combo == 1 and made.streak == 1, "dying ends both")
+	check(c.record(null, a, 29.0).is_empty() and c.record(a, a, 29.0).is_empty(), "a fall or yourself makes nothing")
+
+
+func test_in_teams_your_combos_pop_up_and_fill_the_meter() -> void:
+	var rules := quick(GameRules.teams(), "boulevard")
+	var infos := people(6)
+	infos[0].local = true
+	var m := Game.start(get_tree(), rules, infos)
+	check(await until_state(m, Match.State.LIVE), "live")
+	var ui: GameUI = m.level.find_children("*", "GameUI", true, false)[0]
+	var me := infos[0]
+	infos[1].player.take_hit(hit(me.player, 200.0))
+	await frames(10)
+	check(ui.hud.combo_shown() == 1, "a kill: the combo meter comes up (×%d)" % ui.hud.combo_shown())
+	infos[3].player.take_hit(hit(me.player, 200.0))
+	await frames(10)
+	check(ui.hud.combo_shown() == 2 and ui.hud.last_popup == "double kill", "another straight after: double kill (%s)" % ui.hud.last_popup)
+	infos[5].player.take_hit(hit(me.player, 200.0))
+	await frames(10)
+	check(ui.hud.combo_shown() == 3 and ui.hud.last_popup == "triple kill", "and a triple (%s)" % ui.hud.last_popup)
+	var feed: Control = ui.hud._killfeed.get_child(0)
+	check(feed.get_children().any(func(b: Node) -> bool: return b is PanelContainer and LofiUI.label_of(b).text == "×3"),
+			"the killfeed marks it ×3")
+	await physics(int((KillCombos.WINDOW + 0.5) * 60.0))
+	check(ui.hud.combo_shown() == 0, "the window runs out and the meter goes")
+	Game.end(get_tree(), false)
 
 
 # --- Looks, names and tags --------------------------------------------------------------

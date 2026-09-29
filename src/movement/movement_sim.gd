@@ -115,6 +115,8 @@ func _tick_timers(st: MovementState, cmd: InputCommand, dt: float) -> void:
 	st.wall_coyote_timer = maxf(st.wall_coyote_timer - dt, 0.0)
 	st.bounce_window_timer = maxf(st.bounce_window_timer - dt, 0.0)
 	st.mantle_cooldown = maxf(st.mantle_cooldown - dt, 0.0)
+	if st.on_ground:
+		st.dash_carry_timer = maxf(st.dash_carry_timer - dt, 0.0)  # Waits while you're in the air.
 	st.dash_timer -= dt
 
 	if st.dash_charges < p.dash_charges:
@@ -168,6 +170,7 @@ func _ground_jump(body: CharacterBody3D, st: MovementState, wish := Vector3.ZERO
 		var h := st.dash_dir * st.dash_exit_speed
 		v.x = h.x
 		v.z = h.z
+		st.dash_carry_timer = p.dash_carry_time
 	body.velocity = v
 	st.mode = Mode.AIR
 	st.on_ground = false
@@ -210,10 +213,17 @@ func _tick_ground(body: CharacterBody3D, st: MovementState, cmd: InputCommand, w
 	st.crouched = cmd.crouch_held or (st.crouched and not can_stand(body))
 	var max_speed := p.crouch_speed if st.crouched else p.run_speed
 	var h := horizontal(body.velocity)
-	if st.landing_grace_timer <= 0.0:
+	var carrying := st.dash_carry_timer > 0.0 and h.length() > max_speed
+	if carrying:
+		# Faster after a dash: the extra fades gently instead of stopping dead.
+		h = h.normalized() * maxf(h.length() - p.dash_carry_drag * dt, max_speed)
+	elif st.landing_grace_timer <= 0.0:
 		h = _friction(h, p.ground_friction, dt)
+	var before := h.length()
 	var wish_dir := wish.normalized()
 	h = _accelerate(h, wish_dir, max_speed * wish.length(), p.ground_accel, dt)
+	if carrying and h.length() > before:
+		h = h.normalized() * before  # Steering while carried turns you; it doesn't add.
 	body.velocity = h
 
 
@@ -277,8 +287,11 @@ func _start_dash(body: CharacterBody3D, st: MovementState, cmd: InputCommand, wi
 	dir = dir.normalized()
 	var pre := horizontal(body.velocity).length()
 	st.dash_dir = dir
-	st.dash_speed = maxf(p.dash_speed, pre)
-	st.dash_exit_speed = maxf(pre, p.dash_exit_min_speed)
+	st.dash_speed = maxf(p.dash_speed, pre + p.dash_min_gain)
+	# You keep part of the burst: more in the air, where nothing slows you.
+	st.dash_airborne = not st.on_ground
+	var keep := p.dash_keep_air if st.dash_airborne else p.dash_keep_ground
+	st.dash_exit_speed = maxf(pre + keep * (st.dash_speed - pre), p.dash_exit_min_speed)
 	st.dash_timer = p.dash_duration
 	st.dash_charges -= 1
 	st.dash_buffer_timer = 0.0
@@ -292,6 +305,9 @@ func _tick_dash(body: CharacterBody3D, st: MovementState) -> void:
 
 func _end_dash(body: CharacterBody3D, st: MovementState) -> void:
 	body.velocity = st.dash_dir * st.dash_exit_speed
+	if not st.on_ground and st.dash_airborne:
+		body.velocity.y = p.dash_air_lift
+	st.dash_carry_timer = p.dash_carry_time
 	st.mode = Mode.GROUND if st.on_ground else Mode.AIR
 	_event(st, &"dash_end")
 

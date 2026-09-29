@@ -14,6 +14,11 @@ extends Node3D
 ## Like the camera (GDD §10.3) it never moves on its own, only in answer to
 ## what you do: looking drags it, landing drops it, slides tilt it, dashes
 ## swing it, smashdowns pull it up and slam it down.
+##
+## Aiming (WeaponHolder.aim) brings the gun from the hip onto the line of
+## sight, square to the view, its sight on the middle of the screen; it
+## steadies there, and kicks less. A scope, once it's up to the eye, cuts
+## to the scope view (the crosshair draws it).
 
 ## Each arm is cut off this far down the upper arm from the shoulder joint.
 const ARM_CUT_DEPTH := 0.1
@@ -77,6 +82,19 @@ const THROW_TIME := 0.22
 ## Fanning: the left hand's swipe over the hammer.
 const FAN_FROM := Vector3(-0.05, 0.2, 0.1)
 const FAN_TO := Vector3(0.04, 0.11, 0.1)
+## Aimed: how much of the look drag and movement knocks still move it, and
+## how much of the recoil (turn and shove) it takes.
+const AIM_STEADY := 0.3
+const AIM_RECOIL := 0.5
+## Aimed, the shoulders drop and come back under the eye, so the arms rise
+## to the gun from below instead of reaching across the view; a one-handed
+## gun is held out along the right arm, that shoulder under the eye.
+const AIM_SHOULDERS := Vector3(0.0, -0.46, 0.0)
+## Aimed with a long gun the right hand holds the grip lower down, its fist
+## under the gun rather than in the view below the sights.
+const AIM_GRIP_DROP := 0.06
+## A scope cuts to the scope view this far up.
+const SCOPE_CUT := 0.9
 
 var player: Player
 var holder: WeaponHolder
@@ -111,6 +129,7 @@ var _top_up := -1.0
 var _pending_casings: Array[float] = []
 var _slide := 0.0
 var _shoulder_rest := Vector3.ZERO  # Shoulders' midpoint, rig space turned and scaled.
+var _right_shoulder := Vector3.ZERO  # The right shoulder from the midpoint, the same way.
 
 static var _arms_mesh: ArrayMesh
 ## Where each arm is cut, for the sleeves: [{bone (the upper arm), along
@@ -138,6 +157,7 @@ func _ready() -> void:
 	var right := skeleton.get_bone_global_rest(skeleton.find_bone("DEF-upper_arm.R")).origin
 	var left := skeleton.get_bone_global_rest(skeleton.find_bone("DEF-upper_arm.L")).origin
 	_shoulder_rest = _rig.transform.basis * ((right + left) * 0.5)
+	_right_shoulder = _rig.transform.basis * right - _shoulder_rest
 	_arms = MeshInstance3D.new()
 	_arms.name = "Arms"
 	_arms.mesh = arms_only(skeleton)
@@ -177,12 +197,17 @@ func follow(camera: Camera3D, delta: float) -> void:
 	var motion := player.view_settings.camera_motion if player else 1.0
 	_step(delta, smooth, motion)
 	global_transform = camera.global_transform
-	# Scoping in drops the arms out of the way; fully in, only the scope shows.
-	var scoped := clampf((player.zoom_amount() - 1.0) / 0.6, 0.0, 1.0) if player else 0.0
-	_root.transform = Transform3D(Basis(Vector3.RIGHT, deg_to_rad(-25.0) * scoped), Vector3(0.0, -0.3, 0.1) * scoped) * _offset(motion)
-	_root.visible = scoped < 0.95
+	var aim := aim_amount()
+	_root.transform = _offset(motion * lerpf(1.0, AIM_STEADY, aim))
+	_root.visible = not (gun and def.sight == WeaponDef.Sight.SCOPE and aim > SCOPE_CUT)
 	_place_gun(delta)
 	_set_projection(camera)
+
+
+## How far the gun is up on the line of sight (0 at the hip, 1 aimed), eased.
+func aim_amount() -> float:
+	var a := holder.aim if holder and gun else 0.0
+	return a * a * (3.0 - 2.0 * a)
 
 
 ## Where the muzzle appears to be, in the world: for tracers to start from.
@@ -282,21 +307,31 @@ func _place_gun(delta: float) -> void:
 	if gun == null:
 		_place_fists(delta)
 		return
-	_rig.position = SHOULDERS - _shoulder_rest
 	var d := gun.def
 	var draw := _draw_curve(_draw)
-	var basis := Basis.from_euler(d.view_rotation * (PI / 180.0))
+	# From the hip (turned in a little) to the sights: square to the view,
+	# the sight point `eye_relief` ahead of the eye.
+	var aim := aim_amount()
+	var aim_shoulders := AIM_SHOULDERS
+	if d.hold == WeaponDef.Hold.ONE_HAND:
+		aim_shoulders.x -= _right_shoulder.x
+	_rig.position = SHOULDERS.lerp(aim_shoulders, aim) - _shoulder_rest
+	var hip := Transform3D(Basis.from_euler(d.view_rotation * (PI / 180.0)), d.view_offset)
+	var aimed := Transform3D(Basis.IDENTITY, -d.sight_point + Vector3(0.0, 0.0, -d.eye_relief))
+	var place := hip.interpolate_with(aimed, aim)
 	# Recoil pivots at the grip: pitch up, twist, push back.
-	var recoil_turn := Basis.from_euler(_recoil)
+	var kick := lerpf(1.0, AIM_RECOIL, aim)
+	var recoil_turn := Basis.from_euler(_recoil * kick)
 	var lowered := Vector3(0.0, -0.28, 0.12) * (1.0 - draw)
 	var lowered_turn := Basis.from_euler(Vector3(deg_to_rad(-50.0), deg_to_rad(20.0), 0.0) * (1.0 - draw))
 	var top_up := _top_up_tilt()
-	gun.transform = Transform3D(basis * lowered_turn * top_up * recoil_turn,
-			d.view_offset + lowered + _shove)
+	gun.transform = Transform3D(place.basis * lowered_turn * top_up * recoil_turn,
+			place.origin + lowered + _shove * kick)
 	# Hands on the gun.
 	var pole_r := _root.global_basis * Vector3(0.7, -1.0, 0.4)
 	var pole_l := _root.global_basis * Vector3(-0.7, -1.0, 0.4)
-	var grip := gun.global_transform * Transform3D(Basis.IDENTITY, gun.right_hand + Vector3(0, 0, GRIP_BACK))
+	var drop := AIM_GRIP_DROP * aim if d.hold == WeaponDef.Hold.TWO_HAND else 0.0
+	var grip := gun.global_transform * Transform3D(Basis.IDENTITY, gun.right_hand + Vector3(0, -drop, GRIP_BACK))
 	layers.set_arm_ik("R", grip, 1.0, pole_r, false, true)
 	if d.hold == WeaponDef.Hold.TWO_HAND and not layers.is_playing(&"Pistol_Reload"):
 		var fore := gun.fore.global_transform

@@ -7,10 +7,11 @@ extends Resource
 ##     weapon race resets every round and the map changes with it. Guns hold
 ##     what's in them and no more (GDD §7.2).
 ##   teams: one long game on one map, respawning, first team to the kill
-##     target (or ahead when time runs out) wins. You respawn with a pistol,
-##     health comes back out of combat, pads come back twice as fast, the
-##     power pads come back at all, and resupply crates refill the gun in
-##     your hands, so a long game on a big map isn't a long walk for ammo.
+##     target (or ahead when time runs out) wins. Like Shell Shockers: you
+##     pick your gun and spawn with it (change it while you're down, for
+##     next time), there are no guns on the map, just ammo boxes spread
+##     over it where the pads and crates were, and health comes back out of
+##     combat.
 ## Everything here is server-side: clients are told the outcome.
 
 enum Kind { FFA, TEAMS }
@@ -56,6 +57,20 @@ enum Kind { FFA, TEAMS }
 ## Resupply crates refill the gun in your hands (see ResupplyCrate).
 @export var resupply := false
 @export var resupply_cooldown := 8.0
+## You pick your gun (PlayerInfo.gun) and spawn with it; you change it while
+## you're down (or in the countdown), for next time.
+@export var loadout := false
+## No guns on the map: an ammo box (AmmoBox) stands in for every pad and
+## crate, topping your gun up by `ammo_share` of a full one, back after
+## `ammo_respawn` seconds.
+@export var ammo_boxes := false
+@export var ammo_share := 0.5
+@export var ammo_respawn := 10.0
+
+@export_group("Show")
+## Kill combos and streaks (KillCombos): pop-ups, a combo meter by the
+## crosshair, and combos marked in the killfeed.
+@export var kill_combos := false
 
 @export_group("Maps")
 ## Map names (Maps) played, in a shuffled order without repeats.
@@ -85,10 +100,9 @@ static func teams() -> GameRules:
 	r.respawn_delay = 3.0
 	r.countdown = 5.0
 	r.regen_delay = 5.0
-	r.spawn_weapon = Weapons.PISTOL
-	r.pad_respawn_scale = 0.5
-	r.power_pad_respawn = 60.0
-	r.resupply = true
+	r.loadout = true
+	r.ammo_boxes = true
+	r.kill_combos = true
 	r.map_pool = PackedStringArray(["boulevard", "holdfast", "depot"])
 	r.map_each_round = false
 	return r

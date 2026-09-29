@@ -1,0 +1,57 @@
+/* xtrapartial's website. With the script, the whole screen is one small
+   canvas blown up in hard pixels (site.js), and the page's words and
+   buttons sit over it unseen. Without it, the same words in plain boxes. */
+
+@font-face {
+	font-family: "Liberation Sans";
+	src: local("Liberation Sans"), local("LiberationSans-Regular"), url("assets/LiberationSans-Regular.ttf") format("truetype");
+	font-display: swap;
+}
+
+html, body { margin: 0; }
+body {
+	min-height: 100vh;
+	background: #000;
+	color: #0d0d0f;
+	font: 16px/1.4 "Liberation Sans", Arial, Helvetica, sans-serif;
+}
+
+.sr-only, html.js .card > :not(.hit) {
+	position: absolute !important;
+	width: 1px; height: 1px; margin: -1px; padding: 0; border: 0;
+	overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap;
+}
+
+/* --- With the script ------------------------------------------------------ */
+
+html.js body { overflow-x: hidden; }
+html.js .screen { position: relative; overflow: hidden; min-height: 100vh; }
+html.js #pixels {
+	display: block;
+	image-rendering: pixelated;
+	image-rendering: crisp-edges;
+}
+html.js .card {
+	position: absolute; left: 0; top: 0;
+	margin: 0; padding: 0; border: 0; background: none;
+	transform-origin: 50% 50%;
+}
+html.js .hit {
+	position: absolute; display: block;
+	margin: 0; padding: 0; border: 0; background: none;
+	color: transparent; font-size: 1px; overflow: hidden;
+	opacity: 0; cursor: pointer;
+	-webkit-tap-highlight-color: transparent;
+}
+
+/* --- Without it ------------------------------------------------------------ */
+
+html:not(.js) #pixels, html:not(.js) [data-button="prev"], html:not(.js) [data-button="next"] { display: none; }
+html:not(.js) body { background: linear-gradient(#000 30%, #72304a); padding: 24px 16px; }
+html:not(.js) .card {
+	max-width: 420px; margin: 0 auto 16px; padding: 18px 20px;
+	background: #fff; box-shadow: inset 0 0 0 6px #fff, inset 0 0 0 8px #0d0d0f;
+}
+html:not(.js) h1 { margin: 0; font-weight: normal; font-size: 32px; }
+html:not(.js) ul { margin: 0 0 12px; padding: 0; list-style: none; }
+html:not(.js) .hit { display: inline-block; margin-right: 8px; color: #0d0d0f; }

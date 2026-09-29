@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 1.7 (draft) |
+| **Version** | 2.7 (draft) |
 | **Date** | 2026-09-29 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -30,6 +30,16 @@
 | 1.5 | Map rules rewritten (§9.1): size varies from map to map, structure before theme, fair but not always symmetrical, long sightlines allowed on the big maps. The first eight greybox maps built and tested (§9.3): Stack, Terrace, Switchback; two spread-out maps for more players and longer rounds, Archipelago and Rift, where the sniper has a job; and three large team maps in the traditional style, Boulevard, Holdfast and Depot. F9 steps through them in game. The movement sandbox moves to §9.4. |
 | 1.6 | The two game styles built (§8.5): free-for-all in short rounds (last one standing, first to five, a new map each round) and teams as one long game (respawns, kill target, time limit), run by a server-side match, with practice bots. Ammo by style (§7.2): teams keep "no reloads" but add resupply crates, faster pads and a spawn pistol. Players take damage and die like the dummies, kills go to whoever hit them last (§5.1). In free-for-all everyone picks their colour; names float over heads (§11.4). |
 | 1.7 | Online play built (§15.2, [NETWORKING.md](NETWORKING.md)): host a game from the menu (a listen server, with UPnP) or run a headless dedicated server, join by address, a lobby before and between games. Server-authoritative over Godot's ENet: clients send numbered commands, the server runs them and sends snapshots and events; your own movement is predicted and reconciled, everyone else is interpolated. A handshake (version, password, room), every message checked, junk and floods kicked, and the risks we can't remove written down. The camera bumps against walls instead of going through them. |
+| 1.8 | Timed hops (§4.2): a hop taken right as you land, pushing the way you're going, adds 1 m/s up to 14 m/s, so flat ground builds speed without a slope or air strafing. A mistimed hop still keeps your speed. |
+| 1.9 | The heart becomes a tiny CRT set into the chest (§6.4): its screen glows heart pink with a pixel heart beating on it, faster at speed and racing near death. Hits tear the picture, near death it rolls. A heartshot switches the set off (the picture collapses to a white-hot line, then a dot) and cracks the glass; any other death loses the signal to static. The set pops out of the crumbling body still showing how it ended. The hit sphere is unchanged. |
+| 2.0 | Timed hops are replaced by dash momentum (§4.3): a dash keeps part of its burst, 35% on the ground (where the extra fades over 0.6 s instead of stopping dead) and 75% in the air, where it ends with a little lift and carries you twice as far. A second look for the heart is on trial (§6.4): a loading spinner, picked in View → Look → *heart style*. |
+| 2.1 | Every gun aims down its sights (§5.4, §7.4): right mouse held zooms by the gun's own amount and tightens its spread, never slowing you. Iron sights, a dot sight on the SX-50, a rear sight on the TR-30's carry handle, a ghost ring on the Warden 12, the Heron's scope. The revolver now fans when you hold the trigger from the hip. Turning slows with the zoom (*aim sensitivity*), and aiming can be a toggle. Bots aim at range. |
+| 2.2 | The settings page is built (§13.4), from the title screen and the pause menu: controls (sensitivity, aim sensitivity, invert, toggle aim), keys (two per action, rebindable), video (window, vsync, frame cap, pixels, colours), camera (field of view and every camera and UI motion setting, impact frames) and sound (volume). Saved as you change them, only what differs from the defaults. |
+| 2.3 | The heart is only the loading spinner now, made of real beads floating in a pocket in the chest (§6.4): the body's shape has the pocket scooped out, lined pink at the rim and dark at the back. Each bead is on its own spring, so they lag and rattle; a heartshot spills them out of the chest across the floor, any other death lets them settle, grey, in the bottom. The TV heart is gone, and so is the *heart style* setting. After dying in a game you watch someone instead of a black screen (§10.5), and the death camera looks up at you from low down, further back and off to one side. |
+| 2.4 | Empty guns no longer disappear (§7.2): one stays in your hands until you throw it or take another, is dropped rather than lost, and lasts until the next gun from the pad it came off is taken. Bots with an empty gun switch to fists and go looking for another. |
+| 2.5 | Teams play like Shell Shockers (§7.2, §8.5): you pick your gun from the six and spawn with it, changing it in the countdown or while you're down (1–6); there are no guns on the map, just ammo boxes where the pads and crates were, each topping your gun up by half a magazine. |
+| 2.6 | Kill combos in teams (§8.5, §13.3): kills within 4 s of each other chain into a *double kill*, *triple kill*, *quad kill*, *penta kill*, each one popping up bigger, kicking the UI and punching the camera harder; a meter by the crosshair shows the count and drains until the chain breaks. Kills without dying make a streak, and some have names (*on a roll* at 3, *heating up* at 5, *unstoppable* at 8, *untouchable* at 12). The killfeed marks anyone's combo, ×2 after the killer. |
+| 2.7 | Guns do about a third less damage (§7.4), so you last longer: at 100 health the TR-30 and SX-50 kill in about a second instead of two thirds of one, the SP-12 in 1.8 s, the Marshal in four shots; a Heron headshot still kills outright. Hits show where they came from (§13.3): a red arc round the crosshair points at the shooter. Esc opens the menu while you're down watching someone (§13.4). |
 
 ---
 
@@ -70,7 +80,7 @@
 
 **What xtrapartial is not:**
 - Not a loadout or class shooter. Everyone spawns with only their fists. Power comes from the map.
-- Not a tactical shooter. No aim-down-sights (except scoped weapons), no movement inaccuracy, no economy.
+- Not a tactical shooter. Aiming down the sights never slows you, and there's no movement inaccuracy and no economy.
 - Not a hero shooter. No abilities beyond movement and what you pick up.
 
 ### Comparable titles
@@ -146,7 +156,7 @@ Every player has all of these at all times.
 | **Air strafe** | A/D + mouse | Quake-style air control. Steering plus modest speed gain. |
 | **Slide** | Ctrl (or C) on the ground | Low-friction slide with an entry boost. Gains speed on slopes. |
 | **Slide-hop** | Jump during slide | Keeps all horizontal speed. The core chaining move. |
-| **Dash** | Shift | Short burst in the input direction. 2 charges. |
+| **Dash** | Shift | Short burst in the input direction that leaves you faster, much more so in the air. 2 charges. |
 | **Smashdown** | Ctrl (or C) in the air | Slam straight down, shockwave on impact, then bounce or slide out. |
 | **Wall ride** | Automatic (airborne, moving along a wall) | Brief run along a wall with reduced gravity. |
 | **Wall jump** | Space on or near a wall | Kick off the wall. 3 per airtime. |
@@ -198,10 +208,11 @@ Tune these in the M1 movement prototype with a live tweak panel. They are a star
 |---|---|---|
 | Charges | 2 | |
 | Recharge | 2.25 s per charge, one at a time | |
-| Burst | 18 m/s for 0.15 s in the input direction (look direction if no input) | Horizontal only |
-| Exit speed | max(pre-dash horizontal speed, 10 m/s) along the dash direction | A dash never slows you down |
-| Airborne | Zeroes downward velocity at start | Recovers bad jumps |
-| Dash-jump | Jumping during a dash cancels it and keeps its exit speed | |
+| Burst | 18 m/s for 0.15 s in the input direction (look direction if no input), or 3 m/s over your speed if you're already faster | Horizontal only |
+| Exit speed | Your speed going in plus a share of the burst over it: 35% on the ground, 75% in the air (at least 10 m/s), along the dash direction | A dash never slows you down, and always leaves you faster. From run speed: 11.8 m/s on the ground, 15.6 in the air |
+| Airborne | Zeroes downward velocity at start, and ends with 1.5 m/s of lift | Recovers bad jumps. With the speed it keeps, an air dash at the top of a running jump carries it from 6.1 m to 12.6 m |
+| Carry | For 0.6 s after a dash (an air dash's waits until you land), speed above run speed fades at 5 m/s² on the ground instead of being stopped by friction | You stay faster for a moment. Steering while carried turns you but can't add speed |
+| Dash-jump | Jumping during a dash cancels it and keeps its exit speed, and the carry | |
 
 **Wall ride, wall jump, mantle**
 
@@ -311,7 +322,7 @@ Knocks land partly on the frame and swing out the rest of the way on springs, wo
 ### 5.4 Combat rules
 
 - **No dead states.** Firing, switching, picking up, and throwing never lock or slow movement.
-- **No ADS.** Right mouse is each weapon's alt-fire. Scoped weapons zoom as their alt-fire.
+- **Aim down sights, at full speed.** Right mouse held raises the gun's sights to your eye: the view zooms by the gun's own amount and its spread tightens (§7.4), and it never slows you. Turning slows with the zoom so what's under the sights moves as fast as it would from the hip (*aim sensitivity* scales that). *toggle aim* makes right mouse a toggle. Code: `WeaponHolder.aim`.
 - **No movement inaccuracy.** Spread is a property of the weapon, never of your speed.
 - **Self-damage** exists only from explosives, at 40%, and comes with knockback (explosive jumps are allowed).
 - **Mixed hitscan and projectile.** Each weapon picks whichever suits its identity. Most weapons are projectiles, so shots are visible.
@@ -323,7 +334,7 @@ Knocks land partly on the frame and swing out the rest of the way on springs, wo
 | Move | WASD |
 | Look | Mouse (raw input) |
 | Fire | Left mouse |
-| Alt-fire | Right mouse |
+| Aim down sights | Right mouse (held, or a toggle) |
 | Jump | Space (also mouse wheel down, for hop timing) |
 | Slide / crouch (smashdown in the air) | Left Ctrl or C |
 | Dash | Left Shift |
@@ -346,7 +357,7 @@ Everything is rebindable. Crouch supports hold or toggle.
 It can, if a few conditions hold. Instant-kill zones work when they feel **earned**, and they fail when they feel **random**. These rules exist to keep it earned:
 
 1. **Only precision weapons can heartshot.** No pellets, explosions, beams, flames, bouncing projectiles, melee, or thrown weapons, and nothing that fires faster than one shot every 0.3 s. If an SMG could heartshot, spraying center mass would sometimes "win the lottery," and that would ruin the mechanic.
-2. **The heart is visible.** It glows on the character's chest. It is a target you choose to aim at, not a hidden bonus.
+2. **The heart is visible.** It glows on the character's chest: a loading spinner of pink beads floating in a pocket in the chest (§6.4). It is a target you choose to aim at, not a hidden bonus.
 3. **Small, but not microscopic.** With a 0.07 m radius, the heart is about 11 px wide at 10 m, 6 px at 20 m, and 3 px at 40 m (1080p, 100° FOV). For comparison, the head is about 10 px wide at 20 m. That is very hard on a moving target, but possible on a predictable one (a wall ride, the arc after a knockup, a player who stops moving).
 4. **Hitboxes agree everywhere.** The heart is attached to the simulated capsule, not to client-side animated bones, so the server and every client agree exactly on where it is. A heartshot that looks clean on your screen must register.
 5. **It is a highlight, not the main way to win.** The target is **3–8% of kills**. Telemetry decides the final size.
@@ -366,10 +377,29 @@ Rounds are one life and 15–40 s long, so an instant death costs little. It is 
 ### 6.3 Feedback
 
 - **Shooter:** a unique sound (a heartbeat that stops on a glass chime), a distinct hitmarker, a short white flash on the crosshair.
-- **Victim:** the heart visibly shatters. The death camera shows the shooter and the shot's path, so the kill reads as skill, not luck.
+- **Victim:** the heart's beads flash white and spill out of the chest across the floor (§6.4). The death camera shows the shooter and the shot's path, so the kill reads as skill, not luck.
 - **Everyone:** a Heartshot icon in the killfeed, and a stat on the match recap screen.
 
-### 6.4 Tuning levers
+### 6.4 The heart itself
+
+The heart is a loading spinner made of real beads, floating in a round pocket in the chest. The body's shape has the pocket scooped out round the heart (10 cm across, a little to the left of the chest's middle, with a rounded lip; `BodyShape.SOCKET_RADIUS`), so it's a real hollow in the mesh, and its crumble pieces have it too. The pocket is lined pink at the rim, fading to near black at the back, so it reads as a hollow up close and as a pink spot from across a map. In it float six glowing beads going round, like a buffering wheel you could reach in and touch: the lead one biggest and white-hot, the tail smaller and pinker. It's a loading spinner because the world is early-2000s surreal, and a heart that's "loading" is a funny thing to shoot.
+
+Each bead hangs on its own spring, so they move on their own: they lag when you move, and rattle against the pocket's wall when you're hit.
+
+| State | What the beads do |
+|---|---|
+| Alive | Go round once a second at rest, up to 2.4 times at full speed, bobbing a little. |
+| Hit | Rattle in the pocket; the spin hitches for 0.25 s and the pocket greys, like lag. |
+| Near death | The spin stutters, holding for a moment now and then; the ring sags and flickers. |
+| Heartshot | Flash white and spill out of the chest ("not responding"): little bodies that bounce about the floor, go dark, and are gone after 8 s. |
+| Any other death | Slow to a stop, grey, and settle in a heap in the bottom of the pocket ("timed out"). |
+| Crumbled | The heart pops out of the body; the beads go with it. |
+
+The hit sphere (0.07 m, §6.2) is unchanged and centred in the pocket, and the ring of beads lies inside it, so what glows is what counts. Every client shows the same speed and ending: health and heartshots come from the server. Code: `src/player/heart.gd`.
+
+(Tried and dropped: a tiny CRT set into the chest with a pixel heart beating on it, and a first spinner that was dots drawn on a little screen.)
+
+### 6.5 Tuning levers
 
 In order of preference, if heartshots land too often or not often enough:
 
@@ -400,15 +430,15 @@ In order of preference, if heartshots land too often or not often enough:
 - **Map weapons have no reserve ammo and don't reload.** What's in the gun is what you get. When it runs dry, throw it and find the next one. This keeps players moving around the map.
 - **Throw (Q):** throws your primary at any ammo count. A thrown weapon deals 25 damage and 6 m/s knockback on hit, then lands and can be picked up again with whatever ammo it has left.
 - **Switching after a throw:** throwing switches to fists instantly.
-- **When empty:** you switch to fists automatically after 0.2 s, unless you throw first.
-- **Empty weapons** dissolve 3 s after landing.
+- **When empty:** the gun stays in your hands (a click on the trigger, the ammo blinking red) until you throw it, switch to fists, or take another. Taking another, or dying, drops it rather than losing it.
+- **An empty gun lasts until its pad's next gun is taken.** Every gun remembers the pad it came off; once someone takes the next gun from that pad, the old one, empty, is gone: from your hands (back to fists) or from the floor (it dissolves). One with rounds in it stays until it's emptied. A gun that never came off a pad (one you picked, in teams) dissolves 3 s after it lands empty. Code: `WeaponPad.generation`.
 - No weapon reloads.
 
-**By game style** (§8.5). The rules above are free-for-all's: short rounds on small maps, where scarcity keeps everyone moving and each round resets the race. A long team game on a big map would turn that into a long walk for ammo, and a "once a round" sniper would appear once a game, so teams change four things (all in `GameRules`, tunable per game):
+**By game style** (§8.5). The rules above are free-for-all's: short rounds on small maps, where scarcity keeps everyone moving and each round resets the race. Teams play differently, like Shell Shockers (all in `GameRules`, tunable per game):
+- **You pick your gun** from the six and spawn with it, every life (`GameRules.loadout`). Pick in the countdown (it's in your hands at once) or while you're down (it's yours next life): the six are shown numbered, press 1–6. Your pick is saved. Guns aren't dropped when you die.
+- **No guns on the map, ammo all over it** (`GameRules.ammo_boxes`): an ammo box stands where each pad and crate was, about 20 a map: a small olive box with a glowing yellow band, floating and turning, tagged *ammo*. Walk into one with a gun that isn't full and it tops it up by half a magazine (and puts it back in your hands), then it's back after 10 s.
 - **Still no reloads**: no dead frames.
-- **Resupply crates** stand in each team's base and along its lanes: walk up to one holding a gun and its magazine fills up, once every 8 s per player. They're hidden and inert in free-for-all.
-- **Pads come back twice as fast** (10 s), and **power pads come back** after 60 s instead of never.
-- **You respawn holding a pistol**, not just fists.
+- Bots pick a gun each life, and go for the nearest ammo box when they're under a third full.
 
 ### 7.3 Fists
 
@@ -435,28 +465,41 @@ Every gun is modelled on a real kind of gun, abstracted: chunky blocks in beige 
 | Weapon | Modelled on | Rounds | Accent | Its animation |
 |---|---|---|---|---|
 | SP-12 | 9 mm semi-automatic pistol | 12 | Bondi blue slide | Slide snaps back; one-handed |
-| Marshal .357 | .357 revolver | 6 | Tangerine cylinder | Hammer falls, cylinder turns a sixth; alt fans the hammer with the left hand |
+| Marshal .357 | .357 revolver | 6 | Tangerine cylinder | Hammer falls, cylinder turns a sixth; the trigger held from the hip fans the hammer with the left hand |
 | SX-50 | 9 mm submachine gun | 50 | Grape magazine | Bolt carrier chatters; two hands |
 | TR-30 | Assault rifle | 30 | Lime magazine | Bolt carrier; carry handle, banana mag |
 | Warden 12 | Pump-action shotgun | 8 | Strawberry pump | The left hand racks the pump; red shells fly |
-| Heron .308 | Bolt-action sniper rifle | 5 | Blueberry scope | The right hand leaves the grip to work the bolt; alt zooms 3× into a scope |
+| Heron .308 | Bolt-action sniper rifle | 5 | Blueberry scope | The right hand leaves the grip to work the bolt |
+
+**Sights.** Every gun aims (right mouse held; `WeaponDef`, Aiming). It takes the gun's aim time to come up, 0.12 s for the pistol up to 0.2 s for the sniper.
+
+| Weapon | What you look through | Zoom | Spread, aimed |
+|---|---|---|---|
+| SP-12 | Iron sights: a front post seen between two rear posts | 1.2× | 30% |
+| Marshal .357 | Iron sights: a tall front post standing clear over the hammer | 1.3× | (already exact) |
+| SX-50 | An open dot sight, a grape frame on the rail; the crosshair's dot turns heart pink, like its reticle | 1.25× | 55% |
+| TR-30 | A notched rear sight at the back of the carry handle, the front post in the notch | 1.6× | 35% |
+| Warden 12 | A ghost ring on the receiver and a strawberry front post | 1.15× | 65% (a tighter pattern) |
+| Heron .308 | The scope: once it's up to the eye, the view cuts to it | 3× | (already exact) |
+
+**Damage** is tuned for fights that last a moment: at 100 health, every hit landing, the TR-30 and SX-50 kill in about 1 s (10 and 15 hits), the SP-12 in 1.8 s (7), the Marshal .357 in four shots (1.5 s, or 0.3 s fanned), the Warden 12 in two point-blank shells or three at range, and the Heron .308 in two body shots or one to the head. (Cut by about a third in 2.7: the automatics killed in under 0.7 s. The planned weapons below keep their first numbers until they're built.)
 
 **Precision**
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
-| SP-12 | Standard | 20 | 0.3 s | 12 | Projectile 150 m/s | ♥ | 9 mm pistol. Common, found near spawns. |
-| Marshal .357 | Standard | 45 | 0.5 s | 6 | Projectile 250 m/s | ♥ | .357 revolver. Alt: fan the hammer (remaining rounds at 0.1 s, +3° spread, no ♥) |
-| Sentry DMR | Standard | 40 | 0.35 s | 10 | Hitscan | ♥ | Alt: 1.5× zoom |
+| SP-12 | Standard | 15 | 0.3 s | 12 | Projectile 150 m/s | ♥ | 9 mm pistol. Common, found near spawns. |
+| Marshal .357 | Standard | 32 | 0.5 s | 6 | Projectile 250 m/s | ♥ | .357 revolver. Hold the trigger from the hip past 0.2 s: fan the hammer (a round every 0.1 s while held, +3° spread, no ♥). Aimed, holding it is one careful shot. |
+| Sentry DMR | Standard | 40 | 0.35 s | 10 | Hitscan | ♥ | Aimed: 1.5× zoom |
 | Talon | Standard | 70 | 0.9 s | 5 | Bolt 90 m/s, with drop | ♥ | Crossbow. Bolts stick in walls. |
-| Heron .308 | Heavy | 85 (head kills) | 1.2 s | 5 | Hitscan | ♥ | Bolt-action sniper. Alt: 3× zoom. |
+| Heron .308 | Heavy | 70 (head kills) | 1.2 s | 5 | Hitscan | ♥ | Bolt-action sniper. Scoped: 3× zoom. |
 
 **Automatic**
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
-| SX-50 | Standard | 11 | 0.07 s | 50 | Projectile 180 m/s | — | SMG. Spread blooms 1° → 4°. |
-| TR-30 | Standard | 16 | 0.11 s | 30 | Projectile 200 m/s | — | Assault rifle. 0.5° spread, blooming to 1.5°. |
+| SX-50 | Standard | 7 | 0.07 s | 50 | Projectile 180 m/s | — | SMG. Spread blooms 1° → 4°. |
+| TR-30 | Standard | 11 | 0.11 s | 30 | Projectile 200 m/s | — | Assault rifle. 0.5° spread, blooming to 1.5°. |
 | NX-50 | Standard | 14 | 0.09 s | 50 | Nail 90 m/s, slight drop | — | Nailgun. Nails bounce once. |
 | GX-6 | Heavy | 9 | 0.04 s after 0.5 s spin-up | 200 | Projectile 160 m/s | — | Minigun. 2.5° spread. Alt: keep spun up without firing. |
 
@@ -464,7 +507,7 @@ Every gun is modelled on a real kind of gun, abstracted: chunky blocks in beige 
 
 | Weapon | Tier | Damage | Fire interval | Ammo | Delivery | ♥ | Alt-fire / notes |
 |---|---|---|---|---|---|---|---|
-| Warden 12 | Standard | 10 × 9 pellets | 0.8 s | 8 | Pellets, 5° spread | — | Pump shotgun. Pellets land in a readable pattern: one in the middle, a tight inner ring, an outer ring. |
+| Warden 12 | Standard | 7 × 9 pellets | 0.8 s | 8 | Pellets, 5° spread | — | Pump shotgun. Pellets land in a readable pattern: one in the middle, a tight inner ring, an outer ring. |
 | Coachman | Heavy | 12 × 9 pellets per barrel | 0.25 s | 10 | Pellets, 6° spread | — | Alt: both barrels at once, with 5 m/s self-knockback (shotgun jump) |
 | FT-5 | Heavy | 120 DPS + 15 burn over 3 s | Continuous | 5 s of fuel | 8 m cone | — | Flamethrower |
 
@@ -555,17 +598,20 @@ Two styles, each a `GameRules` preset (`src/game/game_rules.gd`), run by a `Matc
 | Maps | A new map every round, from Stack, Terrace, Switchback, Archipelago, Rift | One of Boulevard, Holdfast, Depot |
 | Round limit | 70 s, then nobody wins it (sudden death to come) | — |
 | Countdown | 3 s, moving, weapons off | 5 s |
-| Spawn with | Fists | A pistol; 3 s to respawn, at your team's spawns, away from enemies |
-| Ammo | No reloads, no resupply (§7.2) | No reloads; resupply crates, faster pads, power pads return |
+| Spawn with | Fists | The gun you picked (change it in the countdown or while down); 3 s to respawn, at your team's spawns, away from enemies |
+| Ammo | No reloads; guns off pads (§7.2) | No reloads; no guns on the map, ammo boxes all over it (§7.2) |
 | Health | 100, no regeneration | 100, back after 5 s untouched |
 | Friendly fire | — | Off |
 | Colours | Everyone picks their own (§11.4) | Red and blue |
+| Kill combos | — | Kills within 4 s of each other chain (*double kill* to *penta kill*, then *combo ×6*...); kills without dying make a streak, named at 3, 5, 8 and 12. Dying ends both (below) |
+
+**Kill combos** (`src/game/kill_combos.gd`, `GameRules.kill_combos`) are counted from the match's killfeed, so they come out the same offline and online, for everyone. Each kill gives the killer 4 s to get the next one and keep the combo going; each kill without dying adds to their streak; dying ends both. Your own combos set off the effects (§13.3, §13.5): the combo meter by the crosshair from your first kill, then from a double kill a pop-up whose kick, crosshair jump and camera punch grow with the count, red from a quad. A named streak (*on a roll*, *heating up*, *unstoppable*, *untouchable*) pops up on a kill that isn't part of a combo. A heartshot's pop-up goes first and the combo's follows it. Everyone's combos show in the killfeed.
 
 The flow: loading (the Match finds the new level and puts everyone in it: the local person in the level's own Player, everyone else in a new one), countdown (the round card's "go" lands on the moment weapons come on), live, round end (a result card), then the next round or the match end (the winner, the rounds) and back to the menu. The HUD follows along: the score (your side on the left), the round or game timer, a killfeed of every kill, and a real scoreboard on Tab.
 
-**Practice bots** (`src/game/bot_brain.gd`) make both styles playable offline: free-for-all against three, teams four against four. A bot drives its Player through the same input commands a person does: to the nearest gun when empty-handed, then at the nearest enemy it can see, strafing and shooting with a reaction time and aim error, jumping what's in the way and refusing to walk into the void. They don't navigate (no navigation mesh yet), so on multi-level maps they can get stuck.
+**Practice bots** (`src/game/bot_brain.gd`) make both styles playable offline: free-for-all against three, teams four against four. A bot drives its Player through the same input commands a person does: to the nearest gun when empty-handed, then at the nearest enemy it can see, strafing and shooting (down the sights beyond 12 m) with a reaction time and aim error, jumping what's in the way and refusing to walk into the void. They don't navigate (no navigation mesh yet), so on multi-level maps they can get stuck.
 
-*Not built yet:* warmup, the map unloading (sudden death), spectating while dead, the barrier at spawn during the countdown, a rematch vote.
+*Not built yet:* warmup, the map unloading (sudden death), the barrier at spawn during the countdown, a rematch vote.
 
 ---
 
@@ -626,7 +672,7 @@ Eight greybox maps so far, with no theme yet (rule 1): five for free-for-all and
 
 **Rift** (spread out). The Rims: the north at 28 m, the south at 20, with long sightlines down and across the canyon, a sniper tower on each (36 m and 28 m), and rifles. The Shelves: a solid ledge along each wall (12 m north, 10 m south), flanking paths between the floor and the rims, their faces rideable from the floor. The Floor: ruins, a colonnade under an overhang of the north rim, and the Arch, a block across the canyon with a tunnel through it and the shotgun inside. Getting between the layers: the end ramps (the whole floor rises at each end, to the south rim in the west and the north rim in the east: 28 m of 35° slope, the long slide down); a ramp from the floor up to each shelf and on up to its rim; the High Bridge (rim to rim) and the Mid Bridge (shelf to shelf), both crossings in the open; and the big drop: smash off a rim onto the floor (28 m) and the 22 m/s bounce throws you back up to grab the shelf.
 
-**Team maps.** Built the traditional way for team play: each team has a base at one end where it spawns out of sight, lanes run between the bases, and the middle is contested. Both halves are the same, mirrored (Boulevard, Holdfast) or turned 180° (Depot, so the lanes cross diagonally); the map script lays out one half and `tools/level_side.gd` builds it for both teams, and a test checks every spawn, every pad and 400 points of ground against their twins. Each team gets four spawns, a pistol within 2 s of them, its own sniper perch, and the heavy guns in the middle.
+**Team maps.** Built the traditional way for team play: each team has a base at one end where it spawns out of sight, lanes run between the bases, and the middle is contested. Both halves are the same, mirrored (Boulevard, Holdfast) or turned 180° (Depot, so the lanes cross diagonally); the map script lays out one half and `tools/level_side.gd` builds it for both teams, and a test checks every spawn, every pad and 400 points of ground against their twins. Each team gets four spawns, a pistol within 2 s of them, its own sniper perch, and the heavy guns in the middle. (In the teams style the pads and crates are ammo boxes: you bring your own gun, §7.2.)
 
 **Boulevard.** Three lanes, each a different range. The Arcade (north): a two-storey building the length of the lane, rooms below joined by doors that zigzag so there's no line through, a long gallery above whose windows look down on the street; in the middle the Atrium, a double-height hall with the shotgun on its balcony and a skylight in its roof. Main Street (centre): long and open, parked cars for cover, the Plaza in the middle with the rifle on the fountain's plinth, a gate wall at each end so no one shoots into a yard from across the map. The Canal (south): a sunken channel 3.5 m deep with rideable walls, the revolver under the middle bridge, a slide down into it from each yard; beside it a row of kiosks whose flat roofs make a middle layer, and a walkway along the far bank. Over it all the rooftops: a ramp from each yard to the Arcade's roof and the Tower on it (the sniper, looking down the street), and the roof runs the length of the lane over the Atrium's skylight.
 
@@ -721,27 +767,28 @@ The camera is **never** driven by the fixed tick directly. Mouse look is applied
 
 Dying is slightly over the top and silly on purpose. The body turns out to have been diced all along.
 
-**What everyone sees:** the body takes the hit, freezes, hairline cuts open up across it, and it crumbles into a heap of chunks (about 90–100 pieces, pre-cut along a randomly rotated grid, with flat pale cut faces). The heart pops out and bounces.
+**What everyone sees:** the body takes the hit, freezes, hairline cuts open up across it, and it crumbles into a heap of chunks (about 90–100 pieces, pre-cut along a randomly rotated grid, with flat pale cut faces). The heart (§6.4) pops out: after a heartshot its beads have already spilled out across the floor; otherwise they lie greyed in it.
 
 **What the dead player sees** (about 5 s):
 
 | Beat | Time | What happens |
 |---|---|---|
 | Blackout | 0.15 s | The screen cuts to black. The world goes dark: sky, ambient light, lamps, fog, and fake reflections all off. |
-| Spotlight | about 1 s | The camera now faces you from the front. A spotlight clunks on beside you with a stagey flicker, then swings over and settles on you with an overshoot. |
+| Spotlight | about 1 s | The camera now looks up at you from low down (0.45 m), 4 m away and 40° round to one side, and creeps a little closer. A spotlight clunks on beside you with a stagey flicker, then swings over and settles on you with an overshoot. |
 | Performance | about 1.2 s | You do a little dance, freeze mid-move, and shiver. |
 | Crumble | about 1.8 s | Cuts open, you crumble, the heart pops out toward the camera, and the camera tilts down to the heap. |
 | Caption | 1.8 s | A logo-style boxed caption: *you fell apart*. Then fade out. |
+| Watching | until you're back | In a game that doesn't bring you straight back (free-for-all until the round's over, teams until the respawn), the world comes back and the picture fades in on someone alive: whoever killed you first. The camera rides behind them; click for the next, right-click for the last, and when they die it moves on. Esc opens the menu. A box says who you're watching and when you're back (*back in 2*, or *out till the round's over*). |
 
-Every timing lives as a constant in `src/player/death_sequence.gd` and `src/player/player_model.gd`. Later: a skip button, audio stings, and the killer's name and weapon in the caption.
+Every timing lives as a constant in `src/player/death_sequence.gd` and `src/player/player_model.gd`. (Before *watching*, a game left you on the black screen until you came back, which looked like the game had frozen.) Later: a skip button, audio stings, and the killer's name and weapon in the caption.
 
 ### 10.6 Accessibility
 - Sensitivity shown in cm/360 as well as a raw value. Raw input is always on.
 - Every camera motion effect can be toggled off, and UI motion can be turned down to nothing (§13.5).
 - No full-screen flashing by default. The experimental impact frames (§10.4) are opt-in and never fire more than twice a second.
 - Colorblind-safe enemy highlight and heart color presets.
-- Hold/toggle options for crouch. Smashdown can have its own key.
-- Full key rebinding.
+- Hold/toggle options for crouch and for aiming (*toggle aim* is built). Smashdown can have its own key.
+- Full key rebinding (built: the settings page's keys tab, two keys per action).
 
 ---
 
@@ -766,7 +813,7 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 
 ### 11.3 Readability rules (Pillar 4)
 - **Players:** glossy, featureless figures with a strong rim light and emissive player color. They must separate from any background at any distance.
-- **The heart:** glows on the chest, in the player's color. It is never hidden by cosmetics.
+- **The heart:** pink beads going round in a pocket in the chest (§6.4). It is never hidden by cosmetics.
 - **Teams:** told apart by the hat. Every hat's main mass is the team colour (red or blue), and a player with no hat has a team-coloured triangle over the head instead (§11.4).
 - **Weapons in hand:** chunky silhouettes, identifiable at 30 m.
 - **Weapon pickups:** float and rotate above glowing pads, arena-shooter style. Pad color shows the tier (Standard, Heavy, Power). Respawn timers are shown on the pad.
@@ -775,13 +822,13 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 - **Fog** never hides a player inside the maximum sightline.
 
 ### 11.4 Characters
-- Base figure: a blank, glossy white blob of a person, in the spirit of Meccha Chameleon's figures. One seamless smooth shape with **no visible joints**: a big ball head on a short neck, one flat slab of a torso, long tube arms with no hands, and short stubby legs (crotch at about a third of the height) with no feet. A glowing heart sits on the chest. Uncanny but friendly.
+- Base figure: a blank, glossy white blob of a person, in the spirit of Meccha Chameleon's figures. One seamless smooth shape with **no visible joints**: a big ball head on a short neck, one flat slab of a torso, long tube arms with no hands, and short stubby legs (crotch at about a third of the height) with no feet. A round pocket in the chest holds the heart, glowing beads going round in it (§6.4). Uncanny but friendly.
 - The body is one skinned mesh generated from a smooth signed-distance shape (`src/player/body_shape.gd`, `tools/gen_body.gd`), so proportions are tuned in code, not in a modeling tool.
 - It must never read as lumpy. Nothing is glued on: the legs are the bottom of the torso slab split by a slit, each arm is one tapered tube, and every join is a wide C2 blend. The mesh is built in an A-pose (arms 45° down, where they spend most of their time), so skinning never bends a shoulder far.
 - Animation comes from Quaternius's Universal Animation Library (CC0). Its human rig is reshaped at load time to the body's proportions (shorter legs, longer spine, A-pose rest), and the hips motion is scaled to match.
 - **Hats** are the first cosmetic, and they carry the wearer's colour: the team's in teams, and in free-for-all a colour each player picks from ten (red, orange, yellow, lime, green, teal, sky, blue, violet, pink). Sixteen, built like the guns from glossy primitives listed as data (`src/cosmetics/hats.gd`): top hat, cap, beanie, cowboy hat, bowler, party hat, crown, fez, propeller cap, chef hat, viking helmet, hard hat, bucket hat, mortarboard, wizard hat, halo. Each one's main mass is the wearer's team colour (red or blue) with trim in black, white, gold or metal, so one glance at the head says whose side someone is on. **No hat** is a choice too: a team-coloured triangle, pointing down at the head with a dark outline, hovers over the head and turns to face whoever looks. The hat rides the head bone, flies off when the body falls apart, and is back on respawn. You pick yours on the title screen, and that is the hat you wear in every match until you change it (it's saved, `src/cosmetics/cosmetics.gd`). Your team comes from the match, not the menu. Practice dummies play for blue, each in a different hat.
 - **Names** float over everyone's head but your own, in their colour, small and the same size at any distance, gone past 70 m and while the body is in pieces. A teammate's shows through walls; anyone else's only while you can see their head. You type yours on the title screen (up to 16 characters, cleaned of anything unprintable), next to the hat and colour pickers.
-- Cosmetics (post-MVP): more hats, surface materials (chrome, marble, carpet, TV static), heart styles, weapon skins. Cosmetics can never change hitboxes or hide the heart, and hats are never hit shapes.
+- Cosmetics (post-MVP): more hats, surface materials (chrome, marble, carpet, TV static), heart styles (the beads' colours and shapes, always the same size and glow), weapon skins. Cosmetics can never change hitboxes or hide the heart, and hats are never hit shapes.
 - **Layered animation** (`src/player/body_layers.gd`): on top of the locomotion clip, clips can be laid over some bones (the arms aim while the legs run), played once over some bones (a hit, a punch), arms reach for targets by two-bone IK, and bones can be knocked on springs.
 
 ### 11.5 Weapons in hand
@@ -793,12 +840,12 @@ Every timing lives as a constant in `src/player/death_sequence.gd` and `src/play
 | Holding a gun | Both hands on it by IK: the right on the grip, the left on the foregrip or pump (one-handed guns leave the left arm down). |
 | Firing | The gun kicks around the grip (pitch, a random twist, a shove back) on a snappy spring, its mechanism cycles, a muzzle flash, a light pops on the world, casings fly out to the right. |
 | Pump / bolt | The left hand rides the pump; the right hand leaves the grip to work the bolt and comes back. |
-| Fanning (Marshal .357 alt) | The left hand swipes over the hammer on every shot. |
+| Fanning (Marshal .357, the trigger held from the hip) | The left hand swipes over the hammer on every shot. |
 | Drawing | The gun comes up from below, turned, and eases past its place. |
 | Top-up | The left arm plays the rig's pistol reload: down to the belt, back up to slap the rounds in; the gun tilts. |
 | Throwing | The throwing arm (the rig's cross punch) flings it. |
 | Fists | Held up in a guard by IK, like hands on a gun. Hands alternate, and each punch is a straight (jab or cross, about half), a hook (swings out wide, elbow up, comes across) or an uppercut (dips and drives up), never the same hook or uppercut twice running. Every kind is fully out as the hit lands and only looks different; the rig's jab and cross clips turn the shoulders into it. |
-| Scoped | The arms drop out of view; a scope with fine lines, the rest of the screen dimmed. |
+| Aiming | The gun comes from the hip onto the line of sight, square to the view, its sight on the middle of the screen. The shoulders drop, so the arms rise to it from below rather than reaching across the view, and a long gun's right hand holds the grip lower, its fist out of sight. Aimed it steadies (look drag and knocks at 30%) and kicks half as much. A scope, once up to the eye, cuts to the scope view: fine lines, the rest of the screen dimmed. |
 
 Like the camera, it only moves in answer to you: looking drags it, strafing leans it, landing drops it, sliding tucks it in and rolls it over, dashes swing it, wall rides tilt it away from the wall, smashdowns brace it and slam it down.
 
@@ -851,9 +898,10 @@ Code: `src/ui/lofi_ui.gd` (style kit), `src/ui/lofi_layer.gd` (the low-res canva
 | Position | Contents |
 |---|---|
 | Top centre | Your score · round timer (inverted) · their score. Map name in a ghost box below. Alerts (e.g. *the map is unloading*) in red below that. |
-| Top right | Killfeed: `killer [weapon] victim`, newest on top, five at most, five seconds each. A heartshot kill shows a pink ♥ instead of the weapon. |
-| Centre | The sharp crosshair. Hit markers: white (hit), yellow (head), red (kill), big pink (heartshot). Around it, a ring of the gun's rounds (below). |
-| Above the crosshair | Pop-ups: *heartshot* (pink), later *double kill* etc. |
+| Top right | Killfeed: `killer [weapon] victim`, newest on top, five at most, five seconds each. A heartshot kill shows a pink ♥ instead of the weapon. In teams a kill in a combo gets its count after the killer, `killer ×2 [weapon] victim` (red from ×4). |
+| Centre | The sharp crosshair. Hit markers: white (hit), yellow (head), red (kill), big pink (heartshot). Around it, a ring of the gun's rounds (below). Aiming down the sights, its ticks close in and fade, leaving the dot on the sights (pink through a dot sight); scoped, it becomes the scope. Further out, **where you're being hit from**: a red arc on a ring 50 px out for each shooter, pointing at them (up is in front, down behind), with a notch pointing out; wider and thicker for harder hits. It lands from further out, follows them as you turn or they move, and fades after 1.4 s; another hit from them renews it. Online the server says who hit you. |
+| Above the crosshair | Pop-ups: *heartshot* (pink); in teams *double kill*, *triple kill* (inverted), *quad kill*, *penta kill* (red), and named streaks. |
+| Right of the crosshair | In teams, the combo meter: ×count in a small box (ghost for one kill, inverted from 2, red from 4) over a bar that drains over the 4 s you have for the next kill. It pops and shakes on every kill and leaves when the window runs out or you die. |
 | Below the crosshair | Pickup prompt: `e  swap for rl-5 (5)`. Never covers the crosshair. Auto-pickups only flash the name. |
 | Bottom left | `hp` + health. Turns red and shakes at 30 or below. |
 | Bottom centre | Speed meter: a row of cells that get taller left to right (volume-meter style), lit black up to your speed, a grey cell marking the recent peak, jittering past the soft cap. Your speed in a box to its left, inverted above run speed. Dash charges underneath as small boxes: black when ready, filling grey while recharging; a used charge flashes, a recharged one pops. |
@@ -871,17 +919,17 @@ The HUD hides during your death sequence and springs back in on respawn. Code: `
 
 | Screen | Status | Description |
 |---|---|---|
-| Main menu | Built | Your blob idles (and sometimes dances) under a spotlight on a dark stage. Logo top left, boxed menu below (*play*, *settings (soon)*, *quit*), version in a ghost box. The blob wears your hat, in red or blue at random. A small ghost-box hat picker sits in the bottom-right corner, `<` *hat: name* `>` (or ← →): each step drops the next hat onto the blob, which nods under it. The pick is saved and is the hat you wear in a match. |
-| Pause (Esc) | Built | Dim + boxed list: *resume*, *respawn*, *tuning*, *main menu*, *quit*. The game keeps running underneath (it's multiplayer). |
+| Main menu | Built | Your blob idles (and sometimes dances) under a spotlight on a dark stage. Logo top left, boxed menu below (*free-for-all*, *teams*, *online*, *sandbox*, *settings*, *quit*), version in a ghost box. The blob wears your hat, in red or blue at random. A small ghost-box hat picker sits in the bottom-right corner, `<` *hat: name* `>` (or ← →): each step drops the next hat onto the blob, which nods under it. The pick is saved and is the hat you wear in a match. |
+| Pause (Esc) | Built | Dim + boxed list: *resume*, *respawn*, *settings*, *tuning*, *main menu*, *quit*. The game keeps running underneath (it's multiplayer). Opens while you're down and watching someone too, but not over the death cinematic, which plays over everything. |
 | Map card + countdown | Built (preview) | *round 3* over the map name, a fake loading bar of boxes, then *3 · 2 · 1 · go*. |
 | Round result | Built (preview) | Huge *round won* (inverted) or *round lost* banner over the score. |
 | Scoreboard (hold Tab) | Built (preview) | One boxed table: rounds, kills, ♥ heartshots, ping. |
 | Match end | Built (preview) | *you won* / *you lost*, final score, and a list of every round: map, winner, and how. |
 | Death | Built | See §10.5. Caption in the same boxed style. |
-| Settings | Planned | Video (pixel height, FOV), mouse, audio, key binds. |
+| Settings | Built | From the title screen (in place of the buttons, the logo stepping aside) and the pause menu (in its place); esc comes back. Tabs, each a white card of rows, a name then a slider (a bar filled black to the value, arrows either side, the value after) or a `<` choice `>`: **controls** (sensitivity, aim sensitivity, invert look, toggle aim), **keys** (every action with two slots: click one, press a key or mouse button; esc cancels, backspace clears; a key taken off another action says so and that row shakes), **video** (window: windowed / fullscreen / exclusive, vsync, frame cap, pixels: the 3D picture's height, colours), **camera** (field of view, speed fov, camera motion, smoothing, screen shake, wall ride tilt, ui motion, landing dip, speed lines, impact frames) and **sound** (volume, ready for when there are sounds). Everything takes effect at once and is saved as it changes, only what differs from the defaults (`user://settings.cfg`), so a default tuned later still reaches you; *defaults* puts the open tab back. Code: `src/ui/settings.gd`, `src/ui/settings_menu.gd`. |
 | Lobby | Planned (M3) | Invite / join code, ready-up. |
 
-"Preview" screens run on made-up data (press **F8** in the test course to cycle them) until rounds exist in M3. Code: `src/ui/overlays.gd`, `src/ui/pause_menu.gd`, `src/ui/main_menu.gd`, wired together by `src/ui/game_ui.gd`.
+"Preview" screens run on made-up data (press **F8** in the test course to cycle them) until rounds exist in M3. Code: `src/ui/overlays.gd`, `src/ui/pause_menu.gd`, `src/ui/main_menu.gd`, `src/ui/settings_menu.gd`, wired together by `src/ui/game_ui.gd`.
 
 ### 13.5 Motion
 The boxes are plain, so the motion carries the energy. The UI should feel as alive as the movement: it reacts to what you do and never just blinks things on and off.
@@ -896,6 +944,7 @@ The boxes are plain, so the motion carries the energy. The UI should feel as ali
 | Killfeed | Rows slide in from the right with an overshoot (a heartshot's ♥ pops) and slide back out when they expire. |
 | Pop-ups | One letter tile per character, each slamming down from big and crooked in quick succession, then a kick. A heartshot gets a black ♥ tile in front and beats twice like a heart. They drift up while they hold, then shatter: every tile tumbles off in its own direction. |
 | Impact frames | When one fires (§10.4) the HUD takes the hit with the camera: it punches in on the camera's spring and recoils past rest, every group rattles loose and wobbles back, and the crosshair blows wide open. |
+| Combos | Each kill pops the combo meter in and refills its bar, which drains; from a double kill the count shakes. The pop-up lands like any other, then the UI kicks, the crosshair jumps and the camera punches, harder the bigger the combo (a quad kill hits about as hard as a heartshot). |
 | Alerts | Stamp in, then blink red/black. |
 | Map card | The map name types itself into a box that flips open; the load cells pop as they fill. Countdown numbers stamp down, *go* bursts. |
 | Banners | *round won*, *you won* land one letter tile at a time, then kick; the winner's score rolls up. |

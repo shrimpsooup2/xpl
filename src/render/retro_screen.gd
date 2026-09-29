@@ -20,7 +20,7 @@ func _ready() -> void:
 	_rect.material = _material
 	add_child(_rect)
 	var player := get_tree().get_first_node_in_group(&"local_player") as Player
-	_settings = player.view_settings if player else load("res://data/view_settings.tres")
+	_settings = player.view_settings if player else Settings.view()
 
 
 func _process(_delta: float) -> void:

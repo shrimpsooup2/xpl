@@ -21,6 +21,16 @@ var crosshair: Crosshair
 var layer: LofiLayer
 var hud: GameHud
 var overlays: Overlays
+## While you're dead in a game: who you're watching, and when you're back.
+var watch_box: PanelContainer
+## Games where you pick your gun: the picker (countdown, and while down).
+var gun_picker: GunPicker
+## Kill combos and streaks, from the match's killfeed (GameRules.kill_combos).
+var combos := KillCombos.new()
+## A heartshot's pop-up has the screen until then (a combo's waits for it).
+var _heartshot_until := 0.0
+## Game time (seconds), for the combos' window.
+var _clock := 0.0
 var pause: PauseMenu
 var impact: ImpactFrames
 var speed_lines: SpeedLines
@@ -48,6 +58,12 @@ func _ready() -> void:
 	layer.canvas.add_child(hud)
 	overlays = Overlays.new()
 	layer.canvas.add_child(overlays)
+	watch_box = LofiUI.box("", LofiUI.SMALL, LofiUI.Style.NORMAL)
+	watch_box.visible = false
+	layer.canvas.add_child(watch_box)
+	gun_picker = GunPicker.new()
+	gun_picker.visible = false
+	layer.canvas.add_child(gun_picker)
 	pause = PauseMenu.new()
 	pause.layer = layer
 	layer.canvas.add_child(pause)
@@ -67,6 +83,9 @@ func _ready() -> void:
 		player.movement_event.connect(hud.on_movement_event)
 		player.movement_event.connect(crosshair.on_movement_event)
 		player.health_changed.connect(func(h: float) -> void: hud.set_health(ceili(h)))
+		# Where you're being hit from, round the crosshair.
+		crosshair.camera = player.camera
+		player.hurt_from.connect(crosshair.hurt_from)
 		impact.settings = player.view_settings
 		player.movement_event.connect(_impact_on_movement)
 		impact.fired.connect(func(strength: float, point: Vector2) -> void:
@@ -87,16 +106,19 @@ func _ready() -> void:
 		overlays.round_card(_map_name, 0, false)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_clock += delta
 	# Live, so the tuning panel's slider takes effect straight away.
 	if player and player.view_settings:
 		LofiUI.motion = player.view_settings.ui_motion
 		LofiUI.smoothing = player.view_settings.camera_smoothing
+	_show_watching()
+	_show_gun_picker()
 	if player and player.weapons:
 		var w := player.weapons
 		var def := w.current
 		crosshair.set_cycle(1.0 - clampf(w.cooldown() / maxf(def.fire_interval, 0.001), 0.0, 1.0))
-		crosshair.set_zoom(w.zoom)
+		crosshair.set_aim(w.aim, def.sight)
 		if w.swap_candidate and is_instance_valid(w.swap_candidate):
 			var text := "e  swap for %s" % w.swap_candidate.def.display_name
 			if _prompt != text:
@@ -167,10 +189,19 @@ func _follow_match() -> void:
 	game.state_changed.connect(_on_match_state)
 	game.scores_changed.connect(_show_scores)
 	game.kill_feed.connect(func(killer: PlayerInfo, victim: PlayerInfo, weapon_name: String, heartshot: bool) -> void:
+		var made := combos.record(killer, victim, _now())
+		var show := game.rules.kill_combos
 		if killer == null or killer == victim:
 			hud.add_kill(_who(victim), _who(victim), weapon_name if weapon_name != "" else "fell", false)
 		else:
-			hud.add_kill(_who(killer), _who(victim), weapon_name, heartshot))
+			hud.add_kill(_who(killer), _who(victim), weapon_name, heartshot, made.get("combo", 0) if show else 0)
+		var me := game.local_info()
+		if show and me and victim == me:
+			hud.hide_combo()
+		elif show and me and killer == me and not made.is_empty():
+			# A moment later, so a heartshot's pop-up (its hit may come
+			# after the killfeed) has its turn first.
+			get_tree().create_timer(0.05).timeout.connect(_combo_effects.bind(made)))
 	game.round_decided.connect(func(winner: PlayerInfo) -> void:
 		var me := game.local_info()
 		var scores := _score_pair()
@@ -243,6 +274,7 @@ func _who(info: PlayerInfo) -> String:
 ## the kill marker, and an impact frame, pink for a heartshot.
 func kill_confirmed(heartshot := false) -> void:
 	if heartshot:
+		_heartshot_until = _now() + 0.7
 		crosshair.hit(&"heart")
 		hud.popup("heartshot", LofiUI.Style.HEART)
 		ImpactFrames.hit(get_tree(), 1.0, Vector2(0.5, 0.5), LofiUI.HEART)
@@ -266,9 +298,102 @@ func _screen_point(world: Vector3) -> Vector2:
 	return cam.unproject_position(world) / get_viewport().get_visible_rect().size
 
 
+## Your kill in a combo or a streak (KillCombos): the combo meter by the
+## crosshair; from a double kill a pop-up (red from a quad) and a hit that
+## grows with the combo: the UI kicks, the crosshair jumps, the camera
+## punches. A named streak gets a pop-up of its own when there's no combo.
+func _combo_effects(made: Dictionary) -> void:
+	if player == null or player.is_dead:
+		return
+	var count: int = made.combo
+	hud.show_combo(count, KillCombos.WINDOW)
+	var named: String = made.combo_name
+	var text: String = named if named != "" else made.streak_name
+	if text == "":
+		return
+	var strength := clampf(0.25 + 0.2 * (count - 1), 0.3, 1.2) if named != "" else 0.35
+	var style := LofiUI.Style.ALERT if count >= 4 else LofiUI.Style.INVERTED
+	var go := func() -> void:
+		if player == null or player.is_dead:
+			return
+		hud.popup(text, style, 1.1 + 0.1 * count)
+		LofiUI.kick(hud, strength)
+		crosshair.bump(strength)
+		player.punch_camera(strength * 0.6)
+	var wait := _heartshot_until - _now()
+	if wait > 0.0:
+		get_tree().create_timer(wait).timeout.connect(go)
+	else:
+		go.call()
+
+
+func _now() -> float:
+	return _clock
+
+
+## Picking your gun: in the countdown, and while you're down.
+func _show_gun_picker() -> void:
+	var on := game != null and is_instance_valid(game) and game.rules.loadout and player != null \
+			and (player.is_dead or game.state == Match.State.COUNTDOWN)
+	if on != gun_picker.visible:
+		gun_picker.visible = on
+		if on:
+			LofiUI.enter(gun_picker, Vector2(0, 12), 0.0, 0.25)
+	if not on:
+		return
+	var me := game.local_info()
+	gun_picker.show_pick(me.gun if me else Cosmetics.gun)
+	var view := layer.canvas.size
+	gun_picker.size = gun_picker.get_combined_minimum_size()
+	gun_picker.position = Vector2((view.x - gun_picker.size.x) * 0.5, view.y - gun_picker.size.y - 50.0)
+
+
+## Number keys pick your gun while the picker's up (before anything else
+## takes them: they'd switch weapons).
+func _input(event: InputEvent) -> void:
+	if gun_picker == null or not gun_picker.visible:
+		return
+	var key := event as InputEventKey
+	if key and key.pressed and not key.echo:
+		var id := GunPicker.gun_for_key(key.physical_keycode)
+		if id != &"":
+			Game.choose_gun(id)
+			get_viewport().set_input_as_handled()
+
+
+## Dead and waiting: "watching bot 2 · click for the next · back in 2".
+func _show_watching() -> void:
+	var text := ""
+	if player and player.is_dead and not (player.death and player.death.is_active()):
+		if player.spectating:
+			text = "watching %s · click for the next" % player.spectating.player_name
+		else:
+			text = "everyone's down"
+		if game and is_instance_valid(game):
+			var me := game.local_info()
+			var back := game.respawn_in(me) if me else -1.0
+			if back >= 0.0:
+				text += " · back in %d" % ceili(back)
+			elif game.rules.respawn:
+				text += " · back soon"  # A client: the server keeps the time.
+			else:
+				text += " · out till the round's over"
+	if text == "":
+		watch_box.visible = false
+		return
+	if not watch_box.visible:
+		watch_box.visible = true
+		LofiUI.enter(watch_box, Vector2(0, 10), 0.0, 0.25)
+	if LofiUI.label_of(watch_box).text != text:
+		LofiUI.set_text(watch_box, text)
+	var view := layer.canvas.size
+	watch_box.position = Vector2((view.x - watch_box.size.x) * 0.5, view.y - watch_box.size.y - 26.0)
+
+
 func _set_alive_ui(alive: bool) -> void:
 	hud.visible = alive
 	crosshair.visible = alive
+	crosshair.clear_hurts()
 	if not alive:
 		pause.close()
 

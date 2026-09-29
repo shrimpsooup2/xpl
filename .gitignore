@@ -9,3 +9,6 @@
 .DS_Store
 Thumbs.db
 *.tmp
+
+# The website, put together (tools/build_site.sh)
+/_site/

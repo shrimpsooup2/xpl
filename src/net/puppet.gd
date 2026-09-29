@@ -58,6 +58,7 @@ func _process(delta: float) -> void:
 	var ea: Dictionary = a[1]
 	var eb: Dictionary = b[1]
 	var near: Dictionary = eb if t > 0.5 else ea
+	player.health = near.health  # For its heart; the HUD only shows your own.
 	player.apply_puppet((ea.position as Vector3).lerp(eb.position, t), (ea.velocity as Vector3).lerp(eb.velocity, t),
 			lerp_angle(ea.yaw, eb.yaw, t), lerpf(ea.pitch, eb.pitch, t), near.mode, near.flags)
 	while _snaps.size() > 2 and _snaps[1][0] <= _clock:
