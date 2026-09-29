@@ -771,12 +771,13 @@ Dying is slightly over the top and silly on purpose. The body turns out to have 
 | Beat | Time | What happens |
 |---|---|---|
 | Blackout | 0.15 s | The screen cuts to black. The world goes dark: sky, ambient light, lamps, fog, and fake reflections all off. |
-| Spotlight | about 1 s | The camera now faces you from the front. A spotlight clunks on beside you with a stagey flicker, then swings over and settles on you with an overshoot. |
+| Spotlight | about 1 s | The camera now looks up at you from low down (0.45 m), 4 m away and 40° round to one side, and creeps a little closer. A spotlight clunks on beside you with a stagey flicker, then swings over and settles on you with an overshoot. |
 | Performance | about 1.2 s | You do a little dance, freeze mid-move, and shiver. |
 | Crumble | about 1.8 s | Cuts open, you crumble, the heart pops out toward the camera, and the camera tilts down to the heap. |
 | Caption | 1.8 s | A logo-style boxed caption: *you fell apart*. Then fade out. |
+| Watching | until you're back | In a game that doesn't bring you straight back (free-for-all until the round's over, teams until the respawn), the world comes back and the picture fades in on someone alive: whoever killed you first. The camera rides behind them; click for the next, right-click for the last, and when they die it moves on. A box says who you're watching and when you're back (*back in 2*, or *out till the round's over*). |
 
-Every timing lives as a constant in `src/player/death_sequence.gd` and `src/player/player_model.gd`. Later: a skip button, audio stings, and the killer's name and weapon in the caption.
+Every timing lives as a constant in `src/player/death_sequence.gd` and `src/player/player_model.gd`. (Before *watching*, a game left you on the black screen until you came back, which looked like the game had frozen.) Later: a skip button, audio stings, and the killer's name and weapon in the caption.
 
 ### 10.6 Accessibility
 - Sensitivity shown in cm/360 as well as a raw value. Raw input is always on.

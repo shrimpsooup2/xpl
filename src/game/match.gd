@@ -489,6 +489,11 @@ func info_by_id(id: int) -> PlayerInfo:
 
 
 ## The local person's PlayerInfo, or null (a dedicated server).
+## Seconds until `info` respawns, or -1 if they aren't waiting to.
+func respawn_in(info: PlayerInfo) -> float:
+	return maxf(_respawns[info], 0.0) if _respawns.has(info) else -1.0
+
+
 func local_info() -> PlayerInfo:
 	for info in infos:
 		if info.local:

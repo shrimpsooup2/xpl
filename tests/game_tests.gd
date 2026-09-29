@@ -195,6 +195,41 @@ func test_you_can_be_shot_in_first_person() -> void:
 	check(you.is_dead and deaths.size() == 1 and deaths[0].heartshot, "and through the heart, it's a heartshot")
 
 
+func test_after_dying_in_a_game_you_watch_someone_not_a_black_screen() -> void:
+	var you := make_player(Vector3(0, 0.05, 0), 0.0, true)
+	you.set_physics_process(false)
+	you.auto_respawn = false  # A game: you don't come straight back.
+	var killer := make_player(Vector3(4, 0.05, 0))
+	var other := make_player(Vector3(-4, 0.05, 0))
+	await physics(5)
+	you.set_process(true)
+	you.take_hit(hit(killer, 500.0))
+	check(you.is_dead and you.death.is_active(), "dead: the cinematic plays")
+	you.death.finished.emit()  # It's over (skipped).
+	await frames(3)
+	check(you.spectating == killer, "then you watch whoever killed you")
+	check(not you.death.is_active(), "the cinematic's done, the world put back")
+	await frames(int(DeathSequence.FADE_BACK * 60.0) + 5)
+	check(you.death._overlay.color.a == 0.0, "and the picture fades back in from black")
+	var cam := you.camera.global_position
+	check(cam.distance_to(killer.global_position + Vector3.UP * 1.45) < Player.SPECTATE_DISTANCE + 0.8,
+			"from just behind them (%.1f m)" % cam.distance_to(killer.global_position))
+	var click := InputEventAction.new()
+	click.action = &"fire"
+	click.pressed = true
+	you._unhandled_input(click)
+	check(you.spectating == other, "click: the next one")
+	other.die()
+	await frames(2)
+	check(you.spectating == killer, "when they die, back to whoever's left")
+	killer.die()
+	await frames(2)
+	check(you.spectating == null, "nobody left: nobody to watch")
+	you.respawn()
+	check(you.spectating == null and not you.is_dead, "back in the game")
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+
 func test_a_heartshot_kills_outright_and_a_fall_after_a_hit_is_the_hitters() -> void:
 	var a := make_player(Vector3(0, 0.05, 0))
 	var b := make_player(Vector3(3, 0.05, 0))

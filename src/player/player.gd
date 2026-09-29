@@ -31,6 +31,8 @@ const KILL_Y := -40.0
 ## it as a ball this big (it covers the near plane at the widest FOV), and
 ## stops short of the world; it comes back out this fast once clear.
 const CAMERA_PROBE := 0.15
+## Watching someone after you've died: this far behind them.
+const SPECTATE_DISTANCE := 3.4
 const CAMERA_RECOVER := 4.0
 const THIRD_PERSON_DISTANCE := 3.4
 const THIRD_PERSON_HEIGHT := 0.5
@@ -114,6 +116,9 @@ var regen_rate := 25.0
 ## Respawns itself when the death sequence ends (the sandbox). In a game the
 ## match decides when (see Match).
 var auto_respawn := true
+## Who you're watching while you wait to come back (a game that doesn't
+## respawn you at once): the camera rides behind them. Click for the next.
+var spectating: Player
 var _since_hit := INF
 var _last_hit := {}
 ## Networking (docs/NETWORKING.md). On a server, a client's player runs on
@@ -217,7 +222,9 @@ func _ready() -> void:
 		death.player = self
 		add_child(death)
 		death.finished.connect(func() -> void:
-			if auto_respawn:
+			if not auto_respawn:
+				spectate(_last_hit.get("attacker") as Player if not _last_hit.is_empty() else null)
+			elif auto_respawn:
 				respawn())
 	else:
 		set_physics_process(false)
@@ -233,6 +240,12 @@ func _ready() -> void:
 
 func _unhandled_input(event: InputEvent) -> void:
 	if not human_controlled:
+		return
+	if is_dead:
+		# Watching someone: click for the next, right-click for the last.
+		if spectating and (event.is_action_pressed(&"fire") or event.is_action_pressed(&"alt_fire")):
+			spectating = next_to_watch(-1 if event.is_action_pressed(&"alt_fire") else 1)
+			get_viewport().set_input_as_handled()
 		return
 	if event is InputEventMouseMotion and Input.mouse_mode == Input.MOUSE_MODE_CAPTURED:
 		var delta: Vector2 = (event as InputEventMouseMotion).screen_relative
@@ -440,6 +453,7 @@ func respawn() -> void:
 	state.reset(movement_params)
 	weapons.reset()
 	_aim_toggled = false
+	spectating = null
 	health = max_health
 	_since_hit = INF
 	_last_hit = {}
@@ -498,6 +512,58 @@ func muzzle_position() -> Vector3:
 ## How far the camera is zoomed in (1 = not at all).
 func zoom_amount() -> float:
 	return _zoom
+
+
+## Stops the death cinematic (the world comes back, fading in from black)
+## and watches `first` if they're alive, else the next living player.
+func spectate(first: Player = null) -> void:
+	if death:
+		death.stop(true)
+	spectating = first if can_watch(first) else null
+	spectating = spectating if spectating else next_to_watch(1)
+	if spectating:
+		_watch_yaw = spectating.yaw
+
+
+## Whether `other` is someone you could watch: alive, and not you.
+func can_watch(other: Player) -> bool:
+	return other != null and is_instance_valid(other) and other != self and not other.is_dead and other.is_inside_tree()
+
+
+## The living player `step` along from the one you're watching (teammates
+## first in teams), or null if nobody's left.
+func next_to_watch(step: int) -> Player:
+	var alive: Array = get_tree().get_nodes_in_group(Ballistics.GROUP) \
+			.filter(func(n: Node) -> bool: return n is Player and can_watch(n))
+	if alive.is_empty():
+		return null
+	var teams := Game.current != null and is_instance_valid(Game.current) and Game.current.rules.is_teams()
+	alive.sort_custom(func(a: Player, b: Player) -> bool:
+		var mine_a := teams and a.team == team
+		var mine_b := teams and b.team == team
+		return mine_a if mine_a != mine_b else a.get_instance_id() < b.get_instance_id())
+	var at := alive.find(spectating)
+	return alive[posmod(at + step, alive.size())] if at >= 0 else alive[0]
+
+
+var _watch_yaw := 0.0
+
+
+# The camera rides behind whoever you're watching, above their shoulder, and
+# pulls in rather than go through a wall. When they die, the next one.
+func _watch(delta: float) -> void:
+	if not can_watch(spectating):
+		spectating = next_to_watch(1)
+		if spectating == null:
+			return
+	_watch_yaw = lerp_angle(_watch_yaw, spectating.yaw, 1.0 - exp(-5.0 * delta))
+	var head := spectating.model.global_position + Vector3.UP * 1.45
+	var behind := Basis(Vector3.UP, _watch_yaw) * Vector3(0.0, 0.55, SPECTATE_DISTANCE)
+	var want := head + behind
+	var from := head.lerp(want, reach_toward(head, want))
+	var look := head + Basis(Vector3.UP, _watch_yaw) * Vector3(0.0, -0.3, -4.0)
+	camera.global_transform = Transform3D(Basis.looking_at(look - from, Vector3.UP), from)
+	camera.fov = vfov_from_hfov_16_9(view_settings.fov_horizontal)
 
 
 ## How much slower you turn while zoomed (ViewSettings.aim_sensitivity).
@@ -584,7 +650,10 @@ func _clear_combat_presses() -> void:
 
 func _process(delta: float) -> void:
 	if is_dead:
-		return  # The death sequence has the camera.
+		# The death sequence has the camera, then whoever you're watching.
+		if spectating != null and not (death and death.is_active()):
+			_watch(delta)
+		return
 	var p := movement_params
 	var v := view_settings
 	var f := Engine.get_physics_interpolation_fraction()

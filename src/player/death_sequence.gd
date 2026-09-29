@@ -2,7 +2,8 @@ class_name DeathSequence
 extends Node
 ## The local player's death cinematic. The screen blacks out, the world goes
 ## dark, a spotlight clunks on beside you and swings over to settle on you,
-## the camera looks at you from the front, and you comically fall apart.
+## the camera looks up at you from low down, back a way and off to one
+## side, and you comically fall apart.
 ##
 ## Presentation only: the player's simulation has already stopped. Every
 ## timing is a constant here so it's easy to tune.
@@ -17,16 +18,21 @@ const SPOT_SWEEP := 0.65
 const CAPTION_DELAY := 0.5  # After the last piece falls.
 const HOLD := 1.8
 const FADE_OUT := 0.3
+## Back from black when it's over and you watch someone (Player.spectate).
+const FADE_BACK := 0.35
 
-const CAMERA_DISTANCE := 3.2
-const CAMERA_HEIGHT := 1.3
-const LOOK_HEIGHT := 0.95
+## The camera: this far away, this low (looking up at you), and turned this
+## far round from straight in front.
+const CAMERA_DISTANCE := 4.0
+const CAMERA_HEIGHT := 0.45
+const CAMERA_ANGLE := deg_to_rad(40.0)
+const LOOK_HEIGHT := 0.9
 ## Once you crumble, the camera tilts down to the heap.
 const HEAP_LOOK_HEIGHT := 0.35
 const HEAP_TILT_START := 1.3  # Seconds after the collapse begins.
 const HEAP_TILT_TIME := 1.1
 ## How far the camera creeps toward you over the sequence.
-const DOLLY := 0.7
+const DOLLY := 0.8
 const DOLLY_TIME := 4.0
 
 ## The spotlight hangs high in front of you, on the camera's side, like a
@@ -102,8 +108,9 @@ func play() -> void:
 		player.model.fall_apart(true, _camera_position()))
 
 
-## Ends the sequence early (or at the end) and puts the world back.
-func stop() -> void:
+## Ends the sequence early (or at the end) and puts the world back; with
+## `fade_back`, the picture fades back in from black.
+func stop(fade_back := false) -> void:
 	if not _active:
 		return
 	_active = false
@@ -112,8 +119,13 @@ func stop() -> void:
 	if player.model.fell_apart.is_connected(_on_fell_apart):
 		player.model.fell_apart.disconnect(_on_fell_apart)
 	_restore_world()
-	_overlay.color.a = 0.0
 	_caption.visible = false
+	if fade_back:
+		_overlay.color.a = 1.0
+		_tween = create_tween()
+		_tween.tween_property(_overlay, "color:a", 0.0, FADE_BACK)
+	else:
+		_overlay.color.a = 0.0
 
 
 func _process(delta: float) -> void:
@@ -123,7 +135,7 @@ func _process(delta: float) -> void:
 	var tilt := smoothstep(0.0, 1.0, (_elapsed - _collapse_at - HEAP_TILT_START) / HEAP_TILT_TIME)
 	var look := _feet + Vector3.UP * lerpf(LOOK_HEIGHT, HEAP_LOOK_HEIGHT, tilt)
 	var creep := ease(clampf(_elapsed / DOLLY_TIME, 0.0, 1.0), 0.6) * DOLLY
-	var from := _camera_position() - _facing * creep
+	var from := _camera_position() - _toward_camera() * creep
 	# Never inside a wall: swept out from over the body, stopping short.
 	var over := _feet + Vector3.UP * CAMERA_HEIGHT
 	from = over.lerp(from, player.reach_toward(over, from))
@@ -131,7 +143,12 @@ func _process(delta: float) -> void:
 
 
 func _camera_position() -> Vector3:
-	return _feet + _facing * CAMERA_DISTANCE + Vector3.UP * CAMERA_HEIGHT
+	return _feet + _toward_camera() * CAMERA_DISTANCE + Vector3.UP * CAMERA_HEIGHT
+
+
+## From you toward the camera: in front of you, turned CAMERA_ANGLE round.
+func _toward_camera() -> Vector3:
+	return Basis(Vector3.UP, CAMERA_ANGLE) * _facing
 
 
 # --- Steps --------------------------------------------------------------------

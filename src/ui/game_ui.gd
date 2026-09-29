@@ -21,6 +21,8 @@ var crosshair: Crosshair
 var layer: LofiLayer
 var hud: GameHud
 var overlays: Overlays
+## While you're dead in a game: who you're watching, and when you're back.
+var watch_box: PanelContainer
 var pause: PauseMenu
 var impact: ImpactFrames
 var speed_lines: SpeedLines
@@ -48,6 +50,9 @@ func _ready() -> void:
 	layer.canvas.add_child(hud)
 	overlays = Overlays.new()
 	layer.canvas.add_child(overlays)
+	watch_box = LofiUI.box("", LofiUI.SMALL, LofiUI.Style.NORMAL)
+	watch_box.visible = false
+	layer.canvas.add_child(watch_box)
 	pause = PauseMenu.new()
 	pause.layer = layer
 	layer.canvas.add_child(pause)
@@ -92,6 +97,7 @@ func _process(_delta: float) -> void:
 	if player and player.view_settings:
 		LofiUI.motion = player.view_settings.ui_motion
 		LofiUI.smoothing = player.view_settings.camera_smoothing
+	_show_watching()
 	if player and player.weapons:
 		var w := player.weapons
 		var def := w.current
@@ -264,6 +270,35 @@ func _screen_point(world: Vector3) -> Vector2:
 	if cam == null or cam.is_position_behind(world):
 		return Vector2(0.5, 0.5)
 	return cam.unproject_position(world) / get_viewport().get_visible_rect().size
+
+
+## Dead and waiting: "watching bot 2 · click for the next · back in 2".
+func _show_watching() -> void:
+	var text := ""
+	if player and player.is_dead and not (player.death and player.death.is_active()):
+		if player.spectating:
+			text = "watching %s · click for the next" % player.spectating.player_name
+		else:
+			text = "everyone's down"
+		if game and is_instance_valid(game):
+			var me := game.local_info()
+			var back := game.respawn_in(me) if me else -1.0
+			if back >= 0.0:
+				text += " · back in %d" % ceili(back)
+			elif game.rules.respawn:
+				text += " · back soon"  # A client: the server keeps the time.
+			else:
+				text += " · out till the round's over"
+	if text == "":
+		watch_box.visible = false
+		return
+	if not watch_box.visible:
+		watch_box.visible = true
+		LofiUI.enter(watch_box, Vector2(0, 10), 0.0, 0.25)
+	if LofiUI.label_of(watch_box).text != text:
+		LofiUI.set_text(watch_box, text)
+	var view := layer.canvas.size
+	watch_box.position = Vector2((view.x - watch_box.size.x) * 0.5, view.y - watch_box.size.y - 26.0)
 
 
 func _set_alive_ui(alive: bool) -> void:
