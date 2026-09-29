@@ -233,6 +233,69 @@ func test_slide_hop_keeps_speed() -> void:
 	near(hspeed(), sliding_speed, 0.25, "horizontal speed after slide-hop")
 
 
+## Runs up, then hops off `hops` landings: pressing jump `early` ticks
+## before each landing (it fires just after touching down, by the buffer),
+## or with `early` <= 0, that many ticks after it. Holds `move` while
+## hopping. Returns how many hops were timed (from the jump events).
+func hop_run(hops: int, early: int, move := Vector2(0, 1)) -> int:
+	place(Vector3.ZERO)
+	await settle()
+	var c := cmd()
+	c.jump_pressed = true
+	await run(c)  # A jump on the spot, to time the airtime.
+	var airtime := 0
+	while not player.state.on_ground:
+		await run(c)
+		airtime += 1
+	var timed := [0]
+	player.movement_event.connect(func(e: Dictionary) -> void:
+		if e.type == &"jump" and e.get("timed", false):
+			timed[0] += 1)
+	c.move = Vector2(0, 1)
+	await run(c, 60)  # Up to run speed, forward.
+	c.move = move
+	c.jump_pressed = true
+	await run(c)  # The first hop, from the run: no landing to time it to.
+	for i in hops:
+		var ticks := 0
+		while not player.state.on_ground:
+			ticks += 1
+			if early > 0 and ticks == airtime - early:
+				c.jump_pressed = true
+			await run(c)
+		if early <= 0:
+			await run(c, -early)
+			c.jump_pressed = true
+		await run(c)  # Off this landing.
+	return timed[0]
+
+
+func test_timed_hops_build_speed_up_to_the_hop_cap() -> void:
+	var timed := await hop_run(3, 0)
+	check(timed == 3 and player.state.mode == Mode.AIR, "three hops right on landing, all timed (%d)" % timed)
+	near(hspeed(), p.run_speed + 3.0 * p.hop_boost, 0.3, "each adds hop_boost")
+	await hop_run(3, 3)
+	near(hspeed(), p.run_speed + 3.0 * p.hop_boost, 0.3, "pressed a moment before landing counts too")
+	await hop_run(12, 0)
+	near(hspeed(), p.hop_speed_cap, 0.25, "they build up to the hop cap")
+	check(hspeed() <= p.hop_speed_cap + 0.05, "and no further")
+
+
+func test_mistimed_hops_only_keep_speed() -> void:
+	var timed := await hop_run(4, 6)
+	check(timed == 0 and player.state.mode == Mode.AIR, "pressed too early: still hops (the buffer), but plainly (%d timed)" % timed)
+	check(hspeed() <= p.run_speed + 0.2, "keeping speed, not adding: %.2f" % hspeed())
+	timed = await hop_run(4, -5)
+	check(timed == 0 and hspeed() <= p.run_speed + 0.2, "late ones (after the landing grace) add nothing: %.2f" % hspeed())
+
+
+func test_timed_hops_need_you_pushing_your_way() -> void:
+	var timed := await hop_run(4, 0, Vector2.ZERO)
+	check(timed == 0 and hspeed() <= p.run_speed + 0.05, "no input: speed kept, nothing added (%.2f)" % hspeed())
+	timed = await hop_run(4, 0, Vector2(1, 0))
+	check(timed == 0 and hspeed() < p.run_speed + 1.0, "strafing across your way doesn't count (%.2f)" % hspeed())
+
+
 func test_slide_gains_speed_downhill() -> void:
 	# 35° slope going down toward -Z from y = 16.
 	var length := 40.0

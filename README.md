@@ -39,7 +39,7 @@ A round-based, movement-first arena FPS. Two players duel through short rounds o
 | Scoreboard | Hold Tab |
 | Pause menu | Esc |
 
-Wall ride and mantle are automatic: jump along a wall to ride it, and move into a ledge to climb it.
+Wall ride and mantle are automatic: jump along a wall to ride it, and move into a ledge to climb it. To build speed on flat ground, hop again the moment you land while holding the way you're going: each timed hop adds a little, up to 14 m/s (jumping on the mouse wheel makes the rhythm easy).
 
 ### Tuning
 

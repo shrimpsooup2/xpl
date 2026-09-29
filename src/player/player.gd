@@ -712,7 +712,8 @@ func _react(e: Dictionary) -> void:
 	var local := func(dir: Vector3) -> Vector3: return Basis(Vector3.UP, yaw).inverse() * dir
 	match e.type:
 		&"jump":
-			_kick_camera(0.0, 1.0, 0.0, 0.04)
+			# A timed hop punches the view out a little more: you hear the rhythm.
+			_kick_camera(2.0 if e.get("timed", false) else 0.0, 1.0, 0.0, 0.04)
 		&"land":
 			if view_settings.landing_dip:
 				_dip = minf(_dip + e.impact_speed * DIP_PER_IMPACT, DIP_MAX)

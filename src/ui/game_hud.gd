@@ -450,6 +450,8 @@ func on_movement_event(e: Dictionary) -> void:
 	match e.type:
 		&"jump":
 			_knock(Vector2(0, -KNOCK_JUMP))
+			if e.get("timed", false):
+				LofiUI.pop(_speed, 1.2, 0.12)  # The speed you just gained.
 		&"slam_bounce":
 			_knock(Vector2(0, -KNOCK_JUMP * 2.0))
 		&"land":

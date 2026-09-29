@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 1.7 (draft) |
+| **Version** | 1.8 (draft) |
 | **Date** | 2026-09-29 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -30,6 +30,7 @@
 | 1.5 | Map rules rewritten (§9.1): size varies from map to map, structure before theme, fair but not always symmetrical, long sightlines allowed on the big maps. The first eight greybox maps built and tested (§9.3): Stack, Terrace, Switchback; two spread-out maps for more players and longer rounds, Archipelago and Rift, where the sniper has a job; and three large team maps in the traditional style, Boulevard, Holdfast and Depot. F9 steps through them in game. The movement sandbox moves to §9.4. |
 | 1.6 | The two game styles built (§8.5): free-for-all in short rounds (last one standing, first to five, a new map each round) and teams as one long game (respawns, kill target, time limit), run by a server-side match, with practice bots. Ammo by style (§7.2): teams keep "no reloads" but add resupply crates, faster pads and a spawn pistol. Players take damage and die like the dummies, kills go to whoever hit them last (§5.1). In free-for-all everyone picks their colour; names float over heads (§11.4). |
 | 1.7 | Online play built (§15.2, [NETWORKING.md](NETWORKING.md)): host a game from the menu (a listen server, with UPnP) or run a headless dedicated server, join by address, a lobby before and between games. Server-authoritative over Godot's ENet: clients send numbered commands, the server runs them and sends snapshots and events; your own movement is predicted and reconciled, everyone else is interpolated. A handshake (version, password, room), every message checked, junk and floods kicked, and the risks we can't remove written down. The camera bumps against walls instead of going through them. |
+| 1.8 | Timed hops (§4.2): a hop taken right as you land, pushing the way you're going, adds 1 m/s up to 14 m/s, so flat ground builds speed without a slope or air strafing. A mistimed hop still keeps your speed. |
 
 ---
 
@@ -143,6 +144,7 @@ Every player has all of these at all times.
 |---|---|---|
 | **Run** | WASD | Source-style acceleration and friction. Snappy but with weight. |
 | **Jump** | Space | Fixed height, with coyote time and input buffer. |
+| **Timed hop** | Space, the moment you land | Jumping again right as you touch down, pushing the way you're going, adds a little speed, up to the hop cap. Flat ground's way to build speed: a rhythm, not a technique. |
 | **Air strafe** | A/D + mouse | Quake-style air control. Steering plus modest speed gain. |
 | **Slide** | Ctrl (or C) on the ground | Low-friction slide with an entry boost. Gains speed on slopes. |
 | **Slide-hop** | Jump during slide | Keeps all horizontal speed. The core chaining move. |
@@ -166,6 +168,15 @@ Tune these in the M1 movement prototype with a live tweak panel. They are a star
 | Stop speed | 2.5 m/s | Friction floor for crisp stops |
 | Crouch-walk speed | 4.0 m/s | |
 | Landing grace | 50 ms | No friction right after landing, so well-timed hops keep speed |
+
+**Timed hops**
+
+| Parameter | Value | Notes |
+|---|---|---|
+| Window | Jump pressed up to 60 ms before touching down, fired within the 50 ms landing grace | A press earlier still jumps (the 120 ms buffer), but plainly. The mouse wheel makes the timing easy, which is fine: hopping is still a predictable arc, a target for the heartshot. |
+| Boost | +1 m/s along your way | Only while holding a direction within 60° of the way you're moving; never out of a dash or a slam bounce (they have their own) |
+| Hop cap | 14 m/s | Timed hops build to this and then just keep speed: from run speed, about six hops (4 s). Slides, slopes, dashes, bounces and air strafing take you on to the soft cap. |
+| Measured on flat ground | Run 8.5 → 14 m/s in about 4 s | For comparison, the slide-hop chain (holding crouch, the slide boost every 1.5 s) and perfect air strafing both reach the 16 m/s soft cap in 4–5 s |
 
 **Air**
 

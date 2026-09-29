@@ -162,7 +162,11 @@ func _ground_jump(body: CharacterBody3D, st: MovementState, wish := Vector3.ZERO
 		_event(st, &"slam_bounce", {"velocity": v.y})
 	else:
 		v.y = maxf(v.y, 0.0) + p.jump_velocity
-		_event(st, &"jump")
+		var gain := _timed_hop_gain(st, v, wish)
+		if gain > 0.0:
+			var h := horizontal(v)
+			v += h.normalized() * gain
+		_event(st, &"jump", {"timed": gain > 0.0, "gain": gain})
 	if st.mode == Mode.DASH:
 		# Dash-jump: keep the dash's exit speed instead of its burst speed.
 		var h := st.dash_dir * st.dash_exit_speed
@@ -174,6 +178,25 @@ func _ground_jump(body: CharacterBody3D, st: MovementState, wish := Vector3.ZERO
 	st.coyote_timer = 0.0
 	st.jump_buffer_timer = 0.0
 	st.bounce_window_timer = 0.0
+
+
+## Speed a hop adds (GDD §4.2): only one timed to the landing (pressed no
+## more than hop_window before touching down, fired within the landing
+## grace), not out of a dash, and only while pushing the way you're going;
+## it builds up to hop_speed_cap and no further.
+func _timed_hop_gain(st: MovementState, v: Vector3, wish: Vector3) -> float:
+	if st.landing_grace_timer <= 0.0 or st.mode == Mode.DASH:
+		return 0.0
+	var since_landing := p.landing_grace - st.landing_grace_timer
+	var pressed_ago := p.jump_buffer - st.jump_buffer_timer
+	if pressed_ago > since_landing + p.hop_window + TIMER_EPSILON:
+		return 0.0  # Pressed too early: it still jumps (the buffer), plainly.
+	var h := horizontal(v)
+	var speed := h.length()
+	var w := horizontal(wish)
+	if speed < 1.0 or w.length() < 0.5 or w.normalized().dot(h / speed) < 0.5:
+		return 0.0
+	return maxf(minf(speed + p.hop_boost, p.hop_speed_cap) - speed, 0.0)
 
 
 func _wall_jump(body: CharacterBody3D, st: MovementState) -> void:

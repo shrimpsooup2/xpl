@@ -37,6 +37,16 @@ extends Resource
 @export_range(0.0, 10.0, 0.1) var soft_cap_drag: float = 2.0
 @export_range(10.0, 100.0, 1.0) var terminal_velocity: float = 40.0
 
+@export_group("Hop")
+## A hop timed to the landing adds speed along your way: jump pressed at most
+## this long before touching down (and fired within the landing grace after),
+## holding a direction you're already going.
+@export_range(0.0, 0.2, 0.005) var hop_window: float = 0.06
+@export_range(0.0, 5.0, 0.05) var hop_boost: float = 1.0
+## Timed hops add speed up to this; past it they just keep it (slopes, slides,
+## dashes and bounces take you higher, up to the soft cap).
+@export_range(5.0, 30.0, 0.5) var hop_speed_cap: float = 14.0
+
 @export_group("Slide")
 @export_range(0.0, 20.0, 0.1) var slide_min_speed: float = 6.0
 @export_range(0.0, 10.0, 0.1) var slide_boost: float = 3.0
