@@ -181,6 +181,34 @@ func test_the_heart_is_a_tiny_tv_that_ends_the_way_it_died() -> void:
 	check(heart.ending() == &"on" and heart.get_parent().name == &"HeartMount", "back together: on again, in the chest")
 
 
+func test_the_heart_can_be_a_loading_spinner_instead() -> void:
+	var heart: HeartScreen = dummy.model.heart
+	HeartScreen.style = HeartScreen.Style.SPINNER
+	heart._process(0.01)
+	check(heart.built == HeartScreen.Style.SPINNER and heart.material.shader == HeartScreen.SPINNER_SHADER,
+			"switching the style rebuilds the heart as a spinner")
+	check(heart.DIAL * 0.5 < HitShapes.HEART_RADIUS, "its glass is inside the hit sphere too")
+	var turns := func(speed: float) -> float:
+		heart.speed = speed
+		var from := heart.spin()
+		heart._process(0.05)
+		return fposmod(heart.spin() - from, TAU) / TAU / 0.05
+	near(turns.call(0.0), HeartScreen.SPIN_REST, 0.05, "turns per second at rest")
+	check(turns.call(HeartScreen.FAST_SPEED) > HeartScreen.SPIN_REST * 2.0, "faster at speed")
+	heart.hurt()
+	var held := heart.spin()
+	heart._process(0.1)
+	check(heart.spin() == held, "a hit makes it hitch")
+	heart._process(HeartScreen.HITCH_TIME)
+	heart._process(0.05)
+	check(heart.spin() != held, "then it carries on")
+	heart.stop(true)
+	check(heart.ending() == &"off", "a heartshot stops it the same way")
+	HeartScreen.style = HeartScreen.Style.CRT
+	heart._process(0.01)
+	check(heart.built == HeartScreen.Style.CRT and heart.ending() == &"off", "and back to the TV, keeping its ending")
+
+
 func test_automatic_guns_cannot_heartshot() -> void:
 	player.weapons.give(Weapons.get_def(Weapons.SMG))
 	await run(cmd(), 12)

@@ -37,16 +37,6 @@ extends Resource
 @export_range(0.0, 10.0, 0.1) var soft_cap_drag: float = 2.0
 @export_range(10.0, 100.0, 1.0) var terminal_velocity: float = 40.0
 
-@export_group("Hop")
-## A hop timed to the landing adds speed along your way: jump pressed at most
-## this long before touching down (and fired within the landing grace after),
-## holding a direction you're already going.
-@export_range(0.0, 0.2, 0.005) var hop_window: float = 0.06
-@export_range(0.0, 5.0, 0.05) var hop_boost: float = 1.0
-## Timed hops add speed up to this; past it they just keep it (slopes, slides,
-## dashes and bounces take you higher, up to the soft cap).
-@export_range(5.0, 30.0, 0.5) var hop_speed_cap: float = 14.0
-
 @export_group("Slide")
 @export_range(0.0, 20.0, 0.1) var slide_min_speed: float = 6.0
 @export_range(0.0, 10.0, 0.1) var slide_boost: float = 3.0
@@ -62,6 +52,19 @@ extends Resource
 @export_range(1.0, 50.0, 0.5) var dash_speed: float = 18.0
 @export_range(0.02, 0.5, 0.01) var dash_duration: float = 0.15
 @export_range(0.0, 30.0, 0.5) var dash_exit_min_speed: float = 10.0
+## A dash always bursts at least this much faster than you were going.
+@export_range(0.0, 10.0, 0.5) var dash_min_gain: float = 3.0
+## Share of the burst (over your speed going in) you keep when a dash ends:
+## on the ground, and in the air, where it carries you on much further.
+@export_range(0.0, 1.0, 0.05) var dash_keep_ground: float = 0.35
+@export_range(0.0, 1.0, 0.05) var dash_keep_air: float = 0.75
+## Upward speed an air dash ends with: a little lift, so it flies.
+@export_range(0.0, 5.0, 0.1) var dash_air_lift: float = 1.5
+## After a dash, speed above run speed fades at dash_carry_drag for this long
+## on the ground (an air dash's waits until you land) instead of friction
+## stopping it: you stay faster for a moment.
+@export_range(0.0, 2.0, 0.05) var dash_carry_time: float = 0.6
+@export_range(0.0, 30.0, 0.5) var dash_carry_drag: float = 5.0
 
 @export_group("Wall")
 @export_range(0.0, 20.0, 0.1) var wallride_min_speed: float = 5.0

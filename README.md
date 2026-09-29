@@ -39,13 +39,13 @@ A round-based, movement-first arena FPS. Two players duel through short rounds o
 | Scoreboard | Hold Tab |
 | Pause menu | Esc |
 
-Wall ride and mantle are automatic: jump along a wall to ride it, and move into a ledge to climb it. To build speed on flat ground, hop again the moment you land while holding the way you're going: each timed hop adds a little, up to 14 m/s (jumping on the mouse wheel makes the rhythm easy).
+Wall ride and mantle are automatic: jump along a wall to ride it, and move into a ledge to climb it. A dash leaves you faster: on the ground for a moment, and in the air much more (a dash at the top of a jump carries you about twice as far).
 
 ### Tuning
 
 Press **F1** in-game to edit every movement value live. **Save** writes them to `data/movement_params.tres` and `data/view_settings.tres` when you run from the editor, so tuned values can be committed.
 
-The **View → Look** section of the panel controls the render: `pixel height` is the internal 3D resolution (360 by default, 0 for native), and `color levels` turns on an optional 16-bit color and dither mode (off by default).
+The **View → Look** section of the panel controls the render: `pixel height` is the internal 3D resolution (360 by default, 0 for native), `color levels` turns on an optional 16-bit color and dither mode (off by default), and `heart style` switches every heart between the two looks on trial: 0 the tiny TV, 1 the loading spinner.
 
 ## Playing online
 

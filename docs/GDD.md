@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 1.9 (draft) |
+| **Version** | 2.0 (draft) |
 | **Date** | 2026-09-29 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -32,6 +32,7 @@
 | 1.7 | Online play built (§15.2, [NETWORKING.md](NETWORKING.md)): host a game from the menu (a listen server, with UPnP) or run a headless dedicated server, join by address, a lobby before and between games. Server-authoritative over Godot's ENet: clients send numbered commands, the server runs them and sends snapshots and events; your own movement is predicted and reconciled, everyone else is interpolated. A handshake (version, password, room), every message checked, junk and floods kicked, and the risks we can't remove written down. The camera bumps against walls instead of going through them. |
 | 1.8 | Timed hops (§4.2): a hop taken right as you land, pushing the way you're going, adds 1 m/s up to 14 m/s, so flat ground builds speed without a slope or air strafing. A mistimed hop still keeps your speed. |
 | 1.9 | The heart becomes a tiny CRT set into the chest (§6.4): its screen glows heart pink with a pixel heart beating on it, faster at speed and racing near death. Hits tear the picture, near death it rolls. A heartshot switches the set off (the picture collapses to a white-hot line, then a dot) and cracks the glass; any other death loses the signal to static. The set pops out of the crumbling body still showing how it ended. The hit sphere is unchanged. |
+| 2.0 | Timed hops are replaced by dash momentum (§4.3): a dash keeps part of its burst, 35% on the ground (where the extra fades over 0.6 s instead of stopping dead) and 75% in the air, where it ends with a little lift and carries you twice as far. A second look for the heart is on trial (§6.4): a loading spinner, picked in View → Look → *heart style*. |
 
 ---
 
@@ -145,11 +146,10 @@ Every player has all of these at all times.
 |---|---|---|
 | **Run** | WASD | Source-style acceleration and friction. Snappy but with weight. |
 | **Jump** | Space | Fixed height, with coyote time and input buffer. |
-| **Timed hop** | Space, the moment you land | Jumping again right as you touch down, pushing the way you're going, adds a little speed, up to the hop cap. Flat ground's way to build speed: a rhythm, not a technique. |
 | **Air strafe** | A/D + mouse | Quake-style air control. Steering plus modest speed gain. |
 | **Slide** | Ctrl (or C) on the ground | Low-friction slide with an entry boost. Gains speed on slopes. |
 | **Slide-hop** | Jump during slide | Keeps all horizontal speed. The core chaining move. |
-| **Dash** | Shift | Short burst in the input direction. 2 charges. |
+| **Dash** | Shift | Short burst in the input direction that leaves you faster, much more so in the air. 2 charges. |
 | **Smashdown** | Ctrl (or C) in the air | Slam straight down, shockwave on impact, then bounce or slide out. |
 | **Wall ride** | Automatic (airborne, moving along a wall) | Brief run along a wall with reduced gravity. |
 | **Wall jump** | Space on or near a wall | Kick off the wall. 3 per airtime. |
@@ -169,15 +169,6 @@ Tune these in the M1 movement prototype with a live tweak panel. They are a star
 | Stop speed | 2.5 m/s | Friction floor for crisp stops |
 | Crouch-walk speed | 4.0 m/s | |
 | Landing grace | 50 ms | No friction right after landing, so well-timed hops keep speed |
-
-**Timed hops**
-
-| Parameter | Value | Notes |
-|---|---|---|
-| Window | Jump pressed up to 60 ms before touching down, fired within the 50 ms landing grace | A press earlier still jumps (the 120 ms buffer), but plainly. The mouse wheel makes the timing easy, which is fine: hopping is still a predictable arc, a target for the heartshot. |
-| Boost | +1 m/s along your way | Only while holding a direction within 60° of the way you're moving; never out of a dash or a slam bounce (they have their own) |
-| Hop cap | 14 m/s | Timed hops build to this and then just keep speed: from run speed, about six hops (4 s). Slides, slopes, dashes, bounces and air strafing take you on to the soft cap. |
-| Measured on flat ground | Run 8.5 → 14 m/s in about 4 s | For comparison, the slide-hop chain (holding crouch, the slide boost every 1.5 s) and perfect air strafing both reach the 16 m/s soft cap in 4–5 s |
 
 **Air**
 
@@ -210,10 +201,11 @@ Tune these in the M1 movement prototype with a live tweak panel. They are a star
 |---|---|---|
 | Charges | 2 | |
 | Recharge | 2.25 s per charge, one at a time | |
-| Burst | 18 m/s for 0.15 s in the input direction (look direction if no input) | Horizontal only |
-| Exit speed | max(pre-dash horizontal speed, 10 m/s) along the dash direction | A dash never slows you down |
-| Airborne | Zeroes downward velocity at start | Recovers bad jumps |
-| Dash-jump | Jumping during a dash cancels it and keeps its exit speed | |
+| Burst | 18 m/s for 0.15 s in the input direction (look direction if no input), or 3 m/s over your speed if you're already faster | Horizontal only |
+| Exit speed | Your speed going in plus a share of the burst over it: 35% on the ground, 75% in the air (at least 10 m/s), along the dash direction | A dash never slows you down, and always leaves you faster. From run speed: 11.8 m/s on the ground, 15.6 in the air |
+| Airborne | Zeroes downward velocity at start, and ends with 1.5 m/s of lift | Recovers bad jumps. With the speed it keeps, an air dash at the top of a running jump carries it from 6.1 m to 12.6 m |
+| Carry | For 0.6 s after a dash (an air dash's waits until you land), speed above run speed fades at 5 m/s² on the ground instead of being stopped by friction | You stay faster for a moment. Steering while carried turns you but can't add speed |
+| Dash-jump | Jumping during a dash cancels it and keeps its exit speed, and the carry | |
 
 **Wall ride, wall jump, mantle**
 
@@ -394,9 +386,20 @@ The heart is a tiny CRT set into the chest: a rounded dark set, about 12 × 10 c
 | Any other death | The signal's lost: the picture dissolves into static. |
 | Crumbled | The set pops out of the body and bounces, still showing its ending: cracked black glass after a heartshot, static otherwise. |
 
-The hit sphere (0.07 m, §6.2) is unchanged and centred on the set. All the glass that glows lies inside it seen from the front, so what glows is what counts. Every client shows the same beat speed and ending: health and heartshots come from the server. Code: `src/player/heart_screen.gd`, `src/render/heart_screen.gdshader`.
+The hit sphere (0.07 m, §6.2) is unchanged and centred on the set. All the glass that glows lies inside it seen from the front, so what glows is what counts. Every client shows the same beat speed and ending: health and heartshots come from the server.
 
-### 6.4 Tuning levers
+**On trial: the loading spinner.** A second look, picked in View → Look → *heart style* (every heart you see changes at once): a round dark puck whose round glass glows heart pink, with eight chunky light dots stepping round it like an old buffering wheel: the lead dot white, the tail smaller and fading back into the pink.
+
+| State | What the spinner does |
+|---|---|
+| Alive | Turns once a second at rest, up to 2.4 times at full speed; below 35% health it stutters, holding for a moment now and then. |
+| Hit | Hitches: freezes for 0.25 s and greys, like lag. |
+| Heartshot | Flashes white, the dots drop out of the ring one after another, and a dim pink ✕ is left ("not responding"). |
+| Any other death | Greys out as it winds down to a stop ("timed out"). |
+
+Both glow pink from afar (a first try at the spinner with a dark face nearly vanished at 12 m, so its face is lit too). Up close the TV says more (the beat, the picture tearing); the spinner is simpler and funnier. One of them stays. Code: `src/player/heart_screen.gd`, `src/render/heart_screen.gdshader`, `src/render/heart_spinner.gdshader`.
+
+### 6.5 Tuning levers
 
 In order of preference, if heartshots land too often or not often enough:
 

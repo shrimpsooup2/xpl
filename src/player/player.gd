@@ -574,6 +574,8 @@ func _process(delta: float) -> void:
 	model.follow(pos, yaw)
 	model.animate_movement(state, velocity)
 	model.set_health(health / max_health)
+	if human_controlled:
+		HeartScreen.style = view_settings.heart_style as HeartScreen.Style
 	model.aim(pitch, weapons.current.is_fists())
 
 	var smooth := v.camera_smoothing
@@ -716,8 +718,7 @@ func _react(e: Dictionary) -> void:
 	var local := func(dir: Vector3) -> Vector3: return Basis(Vector3.UP, yaw).inverse() * dir
 	match e.type:
 		&"jump":
-			# A timed hop punches the view out a little more: you hear the rhythm.
-			_kick_camera(2.0 if e.get("timed", false) else 0.0, 1.0, 0.0, 0.04)
+			_kick_camera(0.0, 1.0, 0.0, 0.04)
 		&"land":
 			if view_settings.landing_dip:
 				_dip = minf(_dip + e.impact_speed * DIP_PER_IMPACT, DIP_MAX)

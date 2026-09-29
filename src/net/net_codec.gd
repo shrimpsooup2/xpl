@@ -23,7 +23,7 @@ extends RefCounted
 
 ## Bumped whenever any message changes shape: old and new builds refuse each
 ## other at the handshake.
-const PROTOCOL := 1
+const PROTOCOL := 2
 const INPUT_SIZE := 19
 ## Commands per input packet: the newest and the few before it, so one lost
 ## packet loses nothing.

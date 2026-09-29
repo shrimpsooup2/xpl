@@ -26,6 +26,10 @@ var dash_timer: float = 0.0
 var dash_dir: Vector3 = Vector3.ZERO
 var dash_speed: float = 0.0
 var dash_exit_speed: float = 0.0
+## Whether the current dash started in the air.
+var dash_airborne: bool = false
+## Seconds left in which speed from a dash fades gently on the ground.
+var dash_carry_timer: float = 0.0
 
 var wall_jumps_left: int = 3
 var wall_coyote_timer: float = 0.0
