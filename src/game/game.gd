@@ -87,6 +87,24 @@ static func can_damage(attacker: Player, victim: Player) -> bool:
 	return current.can_damage(attacker, victim)
 
 
+## You pick gun `id` (for games where you pick, GameRules.loadout): it's
+## saved, and the game you're in hears about it (the server, online).
+static func choose_gun(id: StringName) -> void:
+	if not id in Weapons.GUNS:
+		return
+	Cosmetics.set_gun(id)
+	var m := current
+	if m == null or not is_instance_valid(m):
+		return
+	var me := m.local_info()
+	if m.authority:
+		m.choose_gun(me, id)
+	elif m.sync:
+		if me:
+			me.gun = id
+		m.sync.send_gun(id)
+
+
 ## A quick offline game: you and `bots` bots (in teams, split evenly, you
 ## on red).
 static func practice(tree: SceneTree, rules: GameRules, bots: int) -> Match:

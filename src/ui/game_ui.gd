@@ -23,6 +23,8 @@ var hud: GameHud
 var overlays: Overlays
 ## While you're dead in a game: who you're watching, and when you're back.
 var watch_box: PanelContainer
+## Games where you pick your gun: the picker (countdown, and while down).
+var gun_picker: GunPicker
 var pause: PauseMenu
 var impact: ImpactFrames
 var speed_lines: SpeedLines
@@ -53,6 +55,9 @@ func _ready() -> void:
 	watch_box = LofiUI.box("", LofiUI.SMALL, LofiUI.Style.NORMAL)
 	watch_box.visible = false
 	layer.canvas.add_child(watch_box)
+	gun_picker = GunPicker.new()
+	gun_picker.visible = false
+	layer.canvas.add_child(gun_picker)
 	pause = PauseMenu.new()
 	pause.layer = layer
 	layer.canvas.add_child(pause)
@@ -98,6 +103,7 @@ func _process(_delta: float) -> void:
 		LofiUI.motion = player.view_settings.ui_motion
 		LofiUI.smoothing = player.view_settings.camera_smoothing
 	_show_watching()
+	_show_gun_picker()
 	if player and player.weapons:
 		var w := player.weapons
 		var def := w.current
@@ -270,6 +276,36 @@ func _screen_point(world: Vector3) -> Vector2:
 	if cam == null or cam.is_position_behind(world):
 		return Vector2(0.5, 0.5)
 	return cam.unproject_position(world) / get_viewport().get_visible_rect().size
+
+
+## Picking your gun: in the countdown, and while you're down.
+func _show_gun_picker() -> void:
+	var on := game != null and is_instance_valid(game) and game.rules.loadout and player != null \
+			and (player.is_dead or game.state == Match.State.COUNTDOWN)
+	if on != gun_picker.visible:
+		gun_picker.visible = on
+		if on:
+			LofiUI.enter(gun_picker, Vector2(0, 12), 0.0, 0.25)
+	if not on:
+		return
+	var me := game.local_info()
+	gun_picker.show_pick(me.gun if me else Cosmetics.gun)
+	var view := layer.canvas.size
+	gun_picker.size = gun_picker.get_combined_minimum_size()
+	gun_picker.position = Vector2((view.x - gun_picker.size.x) * 0.5, view.y - gun_picker.size.y - 50.0)
+
+
+## Number keys pick your gun while the picker's up (before anything else
+## takes them: they'd switch weapons).
+func _input(event: InputEvent) -> void:
+	if gun_picker == null or not gun_picker.visible:
+		return
+	var key := event as InputEventKey
+	if key and key.pressed and not key.echo:
+		var id := GunPicker.gun_for_key(key.physical_keycode)
+		if id != &"":
+			Game.choose_gun(id)
+			get_viewport().set_input_as_handled()
 
 
 ## Dead and waiting: "watching bot 2 · click for the next · back in 2".

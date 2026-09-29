@@ -91,6 +91,8 @@ func _process(delta: float) -> void:
 
 
 func _spawn(pop: bool) -> void:
+	if not is_inside_tree() or is_queued_for_deletion():
+		return  # Taken off the map (a game with ammo boxes instead).
 	var def := Weapons.get_def(weapon)
 	pickup = WeaponPickup.create(def, def.ammo)
 	pickup.origin = self

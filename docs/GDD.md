@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 2.4 (draft) |
+| **Version** | 2.5 (draft) |
 | **Date** | 2026-09-29 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -37,6 +37,7 @@
 | 2.2 | The settings page is built (§13.4), from the title screen and the pause menu: controls (sensitivity, aim sensitivity, invert, toggle aim), keys (two per action, rebindable), video (window, vsync, frame cap, pixels, colours), camera (field of view and every camera and UI motion setting, impact frames) and sound (volume). Saved as you change them, only what differs from the defaults. |
 | 2.3 | The heart is only the loading spinner now, made of real beads floating in a pocket in the chest (§6.4): the body's shape has the pocket scooped out, lined pink at the rim and dark at the back. Each bead is on its own spring, so they lag and rattle; a heartshot spills them out of the chest across the floor, any other death lets them settle, grey, in the bottom. The TV heart is gone, and so is the *heart style* setting. After dying in a game you watch someone instead of a black screen (§10.5), and the death camera looks up at you from low down, further back and off to one side. |
 | 2.4 | Empty guns no longer disappear (§7.2): one stays in your hands until you throw it or take another, is dropped rather than lost, and lasts until the next gun from the pad it came off is taken. Bots with an empty gun switch to fists and go looking for another. |
+| 2.5 | Teams play like Shell Shockers (§7.2, §8.5): you pick your gun from the six and spawn with it, changing it in the countdown or while you're down (1–6); there are no guns on the map, just ammo boxes where the pads and crates were, each topping your gun up by half a magazine. |
 
 ---
 
@@ -428,14 +429,14 @@ In order of preference, if heartshots land too often or not often enough:
 - **Throw (Q):** throws your primary at any ammo count. A thrown weapon deals 25 damage and 6 m/s knockback on hit, then lands and can be picked up again with whatever ammo it has left.
 - **Switching after a throw:** throwing switches to fists instantly.
 - **When empty:** the gun stays in your hands (a click on the trigger, the ammo blinking red) until you throw it, switch to fists, or take another. Taking another, or dying, drops it rather than losing it.
-- **An empty gun lasts until its pad's next gun is taken.** Every gun remembers the pad it came off; once someone takes the next gun from that pad, the old one, empty, is gone: from your hands (back to fists) or from the floor (it dissolves). One with rounds in it stays until it's emptied. A gun that never came off a pad (the teams spawn pistol) dissolves 3 s after it lands empty. Code: `WeaponPad.generation`.
+- **An empty gun lasts until its pad's next gun is taken.** Every gun remembers the pad it came off; once someone takes the next gun from that pad, the old one, empty, is gone: from your hands (back to fists) or from the floor (it dissolves). One with rounds in it stays until it's emptied. A gun that never came off a pad (one you picked, in teams) dissolves 3 s after it lands empty. Code: `WeaponPad.generation`.
 - No weapon reloads.
 
-**By game style** (§8.5). The rules above are free-for-all's: short rounds on small maps, where scarcity keeps everyone moving and each round resets the race. A long team game on a big map would turn that into a long walk for ammo, and a "once a round" sniper would appear once a game, so teams change four things (all in `GameRules`, tunable per game):
+**By game style** (§8.5). The rules above are free-for-all's: short rounds on small maps, where scarcity keeps everyone moving and each round resets the race. Teams play differently, like Shell Shockers (all in `GameRules`, tunable per game):
+- **You pick your gun** from the six and spawn with it, every life (`GameRules.loadout`). Pick in the countdown (it's in your hands at once) or while you're down (it's yours next life): the six are shown numbered, press 1–6. Your pick is saved. Guns aren't dropped when you die.
+- **No guns on the map, ammo all over it** (`GameRules.ammo_boxes`): an ammo box stands where each pad and crate was, about 20 a map: a small olive box with a glowing yellow band, floating and turning, tagged *ammo*. Walk into one with a gun that isn't full and it tops it up by half a magazine (and puts it back in your hands), then it's back after 10 s.
 - **Still no reloads**: no dead frames.
-- **Resupply crates** stand in each team's base and along its lanes: walk up to one holding a gun and its magazine fills up, once every 8 s per player. They're hidden and inert in free-for-all.
-- **Pads come back twice as fast** (10 s), and **power pads come back** after 60 s instead of never.
-- **You respawn holding a pistol**, not just fists.
+- Bots pick a gun each life, and go for the nearest ammo box when they're under a third full.
 
 ### 7.3 Fists
 
@@ -593,8 +594,8 @@ Two styles, each a `GameRules` preset (`src/game/game_rules.gd`), run by a `Matc
 | Maps | A new map every round, from Stack, Terrace, Switchback, Archipelago, Rift | One of Boulevard, Holdfast, Depot |
 | Round limit | 70 s, then nobody wins it (sudden death to come) | — |
 | Countdown | 3 s, moving, weapons off | 5 s |
-| Spawn with | Fists | A pistol; 3 s to respawn, at your team's spawns, away from enemies |
-| Ammo | No reloads, no resupply (§7.2) | No reloads; resupply crates, faster pads, power pads return |
+| Spawn with | Fists | The gun you picked (change it in the countdown or while down); 3 s to respawn, at your team's spawns, away from enemies |
+| Ammo | No reloads; guns off pads (§7.2) | No reloads; no guns on the map, ammo boxes all over it (§7.2) |
 | Health | 100, no regeneration | 100, back after 5 s untouched |
 | Friendly fire | — | Off |
 | Colours | Everyone picks their own (§11.4) | Red and blue |
@@ -664,7 +665,7 @@ Eight greybox maps so far, with no theme yet (rule 1): five for free-for-all and
 
 **Rift** (spread out). The Rims: the north at 28 m, the south at 20, with long sightlines down and across the canyon, a sniper tower on each (36 m and 28 m), and rifles. The Shelves: a solid ledge along each wall (12 m north, 10 m south), flanking paths between the floor and the rims, their faces rideable from the floor. The Floor: ruins, a colonnade under an overhang of the north rim, and the Arch, a block across the canyon with a tunnel through it and the shotgun inside. Getting between the layers: the end ramps (the whole floor rises at each end, to the south rim in the west and the north rim in the east: 28 m of 35° slope, the long slide down); a ramp from the floor up to each shelf and on up to its rim; the High Bridge (rim to rim) and the Mid Bridge (shelf to shelf), both crossings in the open; and the big drop: smash off a rim onto the floor (28 m) and the 22 m/s bounce throws you back up to grab the shelf.
 
-**Team maps.** Built the traditional way for team play: each team has a base at one end where it spawns out of sight, lanes run between the bases, and the middle is contested. Both halves are the same, mirrored (Boulevard, Holdfast) or turned 180° (Depot, so the lanes cross diagonally); the map script lays out one half and `tools/level_side.gd` builds it for both teams, and a test checks every spawn, every pad and 400 points of ground against their twins. Each team gets four spawns, a pistol within 2 s of them, its own sniper perch, and the heavy guns in the middle.
+**Team maps.** Built the traditional way for team play: each team has a base at one end where it spawns out of sight, lanes run between the bases, and the middle is contested. Both halves are the same, mirrored (Boulevard, Holdfast) or turned 180° (Depot, so the lanes cross diagonally); the map script lays out one half and `tools/level_side.gd` builds it for both teams, and a test checks every spawn, every pad and 400 points of ground against their twins. Each team gets four spawns, a pistol within 2 s of them, its own sniper perch, and the heavy guns in the middle. (In the teams style the pads and crates are ammo boxes: you bring your own gun, §7.2.)
 
 **Boulevard.** Three lanes, each a different range. The Arcade (north): a two-storey building the length of the lane, rooms below joined by doors that zigzag so there's no line through, a long gallery above whose windows look down on the street; in the middle the Atrium, a double-height hall with the shotgun on its balcony and a skylight in its roof. Main Street (centre): long and open, parked cars for cover, the Plaza in the middle with the rifle on the fountain's plinth, a gate wall at each end so no one shoots into a yard from across the map. The Canal (south): a sunken channel 3.5 m deep with rideable walls, the revolver under the middle bridge, a slide down into it from each yard; beside it a row of kiosks whose flat roofs make a middle layer, and a walkway along the far bank. Over it all the rooftops: a ramp from each yard to the Arcade's roof and the Tower on it (the sniper, looking down the street), and the roof runs the length of the lane over the Atrium's skylight.
 

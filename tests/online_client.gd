@@ -1,14 +1,17 @@
 extends SceneTree
 ## Another client for tests/online_tests.gd, run in its own process: joins
 ## the server named on the command line (as "latecomer", or --name), says
-## what it sees, stays a while (walking about, with --walk) and leaves.
+## what it sees, stays a while (walking about, with --walk) and leaves. With
+## --gun it's picked that gun for teams.
 ##
 ##   godot --headless --path . --script res://tests/online_client.gd --
-##       --port 27990 --password x --stay 5 --name friend --walk
+##       --port 27990 --password x --stay 5 --name friend --walk --gun sniper
 
 var _stay := 5.0
 var _walk := false
 var _loose := 0
+var _ammo := -1
+var _holding := &""
 var _still := 0
 var _last_at := Vector3.INF
 var _said := {}
@@ -20,11 +23,14 @@ func _initialize() -> void:
 	var port := NetSession.DEFAULT_PORT
 	var password := ""
 	var player_name := "latecomer"
+	var gun := &""
 	_walk = "--walk" in args
 	for i in args.size() - 1:
 		match args[i]:
 			"--name":
 				player_name = args[i + 1]
+			"--gun":
+				gun = StringName(args[i + 1])
 			"--port":
 				port = args[i + 1].to_int()
 			"--password":
@@ -35,6 +41,8 @@ func _initialize() -> void:
 	Settings.path = "user://test_%s_settings.cfg" % player_name.validate_filename()
 	Cosmetics.load_saved()
 	Cosmetics.set_player_name(player_name)
+	if gun != &"":
+		Cosmetics.set_gun(gun)
 	NetSession.join(self, "127.0.0.1", port, password)
 	NetSession.current.join_finished.connect(func(ok: bool, reason: String) -> void:
 		print("joined" if ok else "refused: " + reason)
@@ -58,6 +66,7 @@ func _process(_delta: float) -> bool:
 				c.yaw = body.yaw
 				return c
 	_watch_loose_weapons()
+	_watch_teams()
 	if Time.get_ticks_msec() - _started > _stay * 1000.0:
 		NetSession.leave(self)
 		DirAccess.remove_absolute(ProjectSettings.globalize_path(Cosmetics.path))
@@ -67,6 +76,22 @@ func _process(_delta: float) -> bool:
 
 
 ## Says how many loose weapons it can see, and where the first comes to rest.
+## Teams: how many ammo boxes are up, and what I'm holding.
+func _watch_teams() -> void:
+	var m := Game.current
+	if m == null or not is_instance_valid(m) or m.level == null or not m.rules.ammo_boxes:
+		return
+	var up := Match._all_of(m.level, "AmmoBox").filter(func(b: AmmoBox) -> bool: return b.available).size()
+	if up != _ammo:
+		_ammo = up
+		print("ammo boxes up: %d" % up)
+	var me := m.local_info()
+	var held := me.player.weapons.primary.id if me and me.player and me.player.weapons.primary else &""
+	if held != _holding:
+		_holding = held
+		print("holding: %s" % held)
+
+
 func _watch_loose_weapons() -> void:
 	var loose := get_nodes_in_group(WeaponPickup.GROUP).filter(func(p: WeaponPickup) -> bool: return p.pad == null)
 	if loose.size() != _loose:

@@ -61,6 +61,8 @@ var using_primary := false
 ## (WeaponPad.generation), so an empty one lasts until the pad's next.
 var primary_origin: WeaponPad
 var primary_generation := 0
+## Whether the gun's dropped when you die (not in games where you pick it).
+var drops_on_death := true
 ## How far the sights are up: 0 from the hip, 1 aimed.
 var aim := 0.0
 ## How far that zooms the view (1 = none), for the camera.
@@ -155,6 +157,20 @@ func refill() -> bool:
 	primary_ammo = primary.ammo
 	ammo_changed.emit(primary_ammo, primary.ammo)
 	return true
+
+
+## Tops the primary up by `share` of a full gun (an ammo box), puts it back
+## in your hands, and says how many rounds went in (0: nothing to fill).
+func top_up(share: float) -> int:
+	if primary == null or primary_ammo >= primary.ammo or not authority:
+		return 0
+	var added := mini(ceili(primary.ammo * share), primary.ammo - primary_ammo)
+	primary_ammo += added
+	if not using_primary:
+		_switch(true)
+	picked_up.emit(primary, &"top_up")
+	ammo_changed.emit(ammo, current.ammo)
+	return added
 
 
 func is_ready() -> bool:
@@ -283,7 +299,7 @@ func throw_primary() -> void:
 ## On death the primary drops where you fell, with what's left in it (an
 ## empty one too: it lasts its time on the floor).
 func drop_on_death() -> void:
-	if primary and authority:
+	if primary and authority and drops_on_death:
 		var drop := WeaponPickup.create(primary, primary_ammo)
 		drop.origin = primary_origin
 		drop.origin_generation = primary_generation

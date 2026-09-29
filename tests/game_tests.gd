@@ -325,25 +325,38 @@ func test_ffa_players_wear_their_own_colours_and_no_resupply() -> void:
 
 # --- Teams ------------------------------------------------------------------------
 
-func test_teams_spawn_on_their_side_with_a_pistol_and_respawn() -> void:
+func test_teams_you_spawn_with_the_gun_you_picked_and_change_it_while_down() -> void:
 	var rules := quick(GameRules.teams(), "boulevard")
+	rules.countdown = 1.0
 	rules.respawn_delay = 0.3
 	var infos := people(4)
+	var guns := [Weapons.SNIPER, Weapons.SHOTGUN, Weapons.SMG, Weapons.REVOLVER]
+	for i in infos.size():
+		infos[i].gun = guns[i]
 	var m := Game.start(get_tree(), rules, infos)
-	check(await until_state(m, Match.State.LIVE), "live")
-	for info in infos:
+	check(await until_state(m, Match.State.COUNTDOWN), "counting down")
+	for i in infos.size():
+		var info := infos[i]
 		var side_x := info.player.global_position.x
 		check((side_x < 0.0) == (info.team == Hats.Team.RED), "%s spawns on %s's side (x %.0f)" % [info.player_name, ["red", "blue"][info.team], side_x])
-		check(info.player.weapons.primary == Weapons.get_def(Weapons.PISTOL), "%s holds a pistol" % info.player_name)
+		check(info.player.weapons.primary == Weapons.get_def(guns[i]), "%s holds the gun they picked" % info.player_name)
 		check(info.player.model.tint == Hats.team_color(info.team), "%s wears the team colour" % info.player_name)
+	m.choose_gun(infos[0], Weapons.RIFLE)
+	check(infos[0].player.weapons.primary == Weapons.get_def(Weapons.RIFLE), "picking again in the countdown swaps it at once")
+	m.choose_gun(infos[0], &"fists")
+	check(infos[0].gun == Weapons.RIFLE, "only a gun can be picked")
+	check(await until_state(m, Match.State.LIVE), "live")
 	var red := infos[0]
 	var blue := infos[1]
+	m.choose_gun(red, Weapons.PISTOL)
+	check(red.player.weapons.primary == Weapons.get_def(Weapons.RIFLE), "once it's on, a new pick waits for your next life")
 	blue.player.take_hit(hit(red.player, 200.0))
 	check(m.team_scores == [1, 0] and red.kills == 1, "a kill scores for the killer's team")
-	check(blue.player.is_dead, "blue's down")
+	check(blue.player.is_dead and get_tree().get_nodes_in_group(WeaponPickup.GROUP).is_empty(), "blue's down, its gun not left lying about")
+	m.choose_gun(blue, Weapons.SMG)
 	await physics(40)
-	check(blue.alive() and blue.player.global_position.x > 0.0, "and back on its side after the respawn delay")
-	check(blue.player.weapons.primary == Weapons.get_def(Weapons.PISTOL), "with a pistol again")
+	check(blue.alive() and blue.player.global_position.x > 0.0, "back on its side after the respawn delay")
+	check(blue.player.weapons.primary == Weapons.get_def(Weapons.SMG), "with the gun it picked while it was down")
 
 
 func test_teams_friendly_fire_is_off_and_the_kill_target_ends_it() -> void:
@@ -365,25 +378,33 @@ func test_teams_friendly_fire_is_off_and_the_kill_target_ends_it() -> void:
 	check(not infos[0].player.weapons.enabled, "weapons off once it's over")
 
 
-func test_teams_pads_come_back_faster_and_crates_refill_your_gun() -> void:
+func test_teams_have_ammo_boxes_instead_of_guns_on_the_map() -> void:
 	var rules := quick(GameRules.teams(), "boulevard")
+	rules.ammo_respawn = 0.4
 	var infos := people(2)
 	var m := Game.start(get_tree(), rules, infos)
 	check(await until_state(m, Match.State.LIVE), "live")
-	var sniper: Node = m.level.find_child("Pad_Sniper_Blue", true, false)
-	var pistol: Node = m.level.find_child("Pad_Pistol_Blue", true, false)
-	check(sniper.respawn_time == rules.power_pad_respawn, "the sniper comes back (%.0f s)" % sniper.respawn_time)
-	check(pistol.respawn_time == 10.0, "other pads twice as fast (%.0f s)" % pistol.respawn_time)
-	var crate := m.level.find_child("Resupply_Yard_Blue", true, false) as ResupplyCrate
-	check(crate.enabled and crate.visible, "the crates are on")
+	check(Match._all_of(m.level, "WeaponPad").is_empty() and get_tree().get_nodes_in_group(ResupplyCrate.GROUP).is_empty()
+			and get_tree().get_nodes_in_group(WeaponPickup.GROUP).is_empty(), "no pads, crates or guns on the map")
+	var boxes := Match._all_of(m.level, "AmmoBox")
+	check(boxes.size() == 21, "an ammo box for each of the 15 pads and 6 crates (%d)" % boxes.size())
 	var p := infos[1].player
-	p.weapons.give(Weapons.get_def(Weapons.RIFLE), 3)
-	p.global_position = crate.global_position
+	var rifle := Weapons.get_def(Weapons.RIFLE)
+	p.weapons.give(rifle, 3)
+	p.weapons.set_using_primary(false)
+	var box: AmmoBox = boxes[0]
+	p.global_position = box.global_position
 	await physics(3)
-	check(p.weapons.primary_ammo == Weapons.get_def(Weapons.RIFLE).ammo, "walking up to a crate fills the magazine")
-	p.weapons.primary_ammo = 2
+	check(p.weapons.primary_ammo == 3 + ceili(rifle.ammo * rules.ammo_share) and not box.available,
+			"walking into one tops your gun up by half a magazine (%d) and takes it" % p.weapons.primary_ammo)
+	check(p.weapons.using_primary, "and puts the gun back in your hands")
+	p.global_position = box.global_position + Vector3(4, 0, 0)  # Step off it.
+	await physics(int(rules.ammo_respawn * 60.0) + 5)
+	check(box.available, "it comes back")
+	p.weapons.primary_ammo = rifle.ammo
+	p.global_position = box.global_position
 	await physics(3)
-	check(p.weapons.primary_ammo == 2 and crate.wait_for(p) > 0.0, "then it waits before it'll fill it again")
+	check(box.available, "a full gun leaves it where it is")
 
 
 # --- Looks, names and tags --------------------------------------------------------------

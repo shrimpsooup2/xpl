@@ -8,7 +8,8 @@ extends Node
 ##   empty-handed: to the nearest gun lying about (walking over one takes it);
 ##   armed: at the nearest enemy it can see, strafing and shooting (down
 ##     the sights beyond close range), with a human-ish reaction time and
-##     aim error; hunting the nearest enemy it can't see.
+##     aim error; hunting the nearest enemy it can't see;
+##   low on ammo, where there are ammo boxes: to the nearest one.
 
 ## Degrees of aim error, seconds before it reacts to someone new, turn rate.
 @export var aim_error := 3.0
@@ -135,6 +136,11 @@ func _choose() -> void:
 
 	_has_goal = true
 	var w := player.weapons
+	if match_ref and match_ref.rules.ammo_boxes and w.primary and w.primary_ammo < w.primary.ammo * 0.3:
+		var box := _nearest_ammo()
+		if box:
+			_goal = box.global_position
+			return
 	if not w.using_primary or w.primary == null or w.primary_ammo <= 0:
 		var gun := _nearest_gun()
 		if gun:
@@ -168,6 +174,15 @@ func _nearest_gun() -> Node3D:
 		var p := n as WeaponPickup
 		if p and p.is_available() and (best == null or player.global_position.distance_to(p.global_position) < player.global_position.distance_to(best.global_position)):
 			best = p
+	return best
+
+
+func _nearest_ammo() -> Node3D:
+	var best: Node3D = null
+	for n: Node in get_tree().get_nodes_in_group(AmmoBox.GROUP):
+		var box := n as AmmoBox
+		if box and box.available and (best == null or player.global_position.distance_to(box.global_position) < player.global_position.distance_to(best.global_position)):
+			best = box
 	return best
 
 
