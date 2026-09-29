@@ -3,7 +3,9 @@ extends RigidBody3D
 ## A weapon lying in the world with the ammo left in it: floating on a pad
 ## (frozen, turning slowly), or loose after being thrown or dropped. A
 ## thrown one hits the first body in its way for 25 damage and bounces off
-## (GDD §7.2). Empty guns dissolve a few seconds after they land.
+## (GDD §7.2). An empty gun lies where it landed until the next gun from its
+## pad is taken, then dissolves; one that never came off a pad dissolves
+## EMPTY_LIFE after it lands.
 
 const GROUP := &"weapon_pickups"
 const THROW_DAMAGE := 25.0
@@ -16,7 +18,11 @@ const LAYER := 1 << 1  # With the body fragments: never blocks players.
 
 var def: WeaponDef
 var ammo := 0
+## On a pad now (and frozen there).
 var pad: WeaponPad
+## The pad it first came from, and which of that pad's guns it was.
+var origin: WeaponPad
+var origin_generation := 0
 var model: WeaponModel
 
 var _spinner := Node3D.new()
@@ -130,8 +136,16 @@ func _physics_process(delta: float) -> void:
 		_flying = false
 		if _landed_time < 0.0:
 			_landed_time = _age
-	if ammo <= 0 and _landed_time >= 0.0 and _age - _landed_time > EMPTY_LIFE:
+	if ammo <= 0 and _landed_time >= 0.0 and NetSession.authority() and past_its_time():
 		_dissolve()
+
+
+## Whether it's had its time: its pad's next gun has been taken (or, if it
+## never came off a pad, it's lain here EMPTY_LIFE).
+func past_its_time() -> bool:
+	if origin and is_instance_valid(origin):
+		return origin.outlived(origin_generation)
+	return _landed_time >= 0.0 and _age - _landed_time > EMPTY_LIFE
 
 
 func _check_throw_hit(delta: float) -> void:

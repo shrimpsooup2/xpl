@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 2.3 (draft) |
+| **Version** | 2.4 (draft) |
 | **Date** | 2026-09-29 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -36,6 +36,7 @@
 | 2.1 | Every gun aims down its sights (§5.4, §7.4): right mouse held zooms by the gun's own amount and tightens its spread, never slowing you. Iron sights, a dot sight on the SX-50, a rear sight on the TR-30's carry handle, a ghost ring on the Warden 12, the Heron's scope. The revolver now fans when you hold the trigger from the hip. Turning slows with the zoom (*aim sensitivity*), and aiming can be a toggle. Bots aim at range. |
 | 2.2 | The settings page is built (§13.4), from the title screen and the pause menu: controls (sensitivity, aim sensitivity, invert, toggle aim), keys (two per action, rebindable), video (window, vsync, frame cap, pixels, colours), camera (field of view and every camera and UI motion setting, impact frames) and sound (volume). Saved as you change them, only what differs from the defaults. |
 | 2.3 | The heart is only the loading spinner now, made of real beads floating in a pocket in the chest (§6.4): the body's shape has the pocket scooped out, lined pink at the rim and dark at the back. Each bead is on its own spring, so they lag and rattle; a heartshot spills them out of the chest across the floor, any other death lets them settle, grey, in the bottom. The TV heart is gone, and so is the *heart style* setting. After dying in a game you watch someone instead of a black screen (§10.5), and the death camera looks up at you from low down, further back and off to one side. |
+| 2.4 | Empty guns no longer disappear (§7.2): one stays in your hands until you throw it or take another, is dropped rather than lost, and lasts until the next gun from the pad it came off is taken. Bots with an empty gun switch to fists and go looking for another. |
 
 ---
 
@@ -426,8 +427,8 @@ In order of preference, if heartshots land too often or not often enough:
 - **Map weapons have no reserve ammo and don't reload.** What's in the gun is what you get. When it runs dry, throw it and find the next one. This keeps players moving around the map.
 - **Throw (Q):** throws your primary at any ammo count. A thrown weapon deals 25 damage and 6 m/s knockback on hit, then lands and can be picked up again with whatever ammo it has left.
 - **Switching after a throw:** throwing switches to fists instantly.
-- **When empty:** you switch to fists automatically after 0.2 s, unless you throw first.
-- **Empty weapons** dissolve 3 s after landing.
+- **When empty:** the gun stays in your hands (a click on the trigger, the ammo blinking red) until you throw it, switch to fists, or take another. Taking another, or dying, drops it rather than losing it.
+- **An empty gun lasts until its pad's next gun is taken.** Every gun remembers the pad it came off; once someone takes the next gun from that pad, the old one, empty, is gone: from your hands (back to fists) or from the floor (it dissolves). One with rounds in it stays until it's emptied. A gun that never came off a pad (the teams spawn pistol) dissolves 3 s after it lands empty. Code: `WeaponPad.generation`.
 - No weapon reloads.
 
 **By game style** (§8.5). The rules above are free-for-all's: short rounds on small maps, where scarcity keeps everyone moving and each round resets the race. A long team game on a big map would turn that into a long walk for ammo, and a "once a round" sniper would appear once a game, so teams change four things (all in `GameRules`, tunable per game):

@@ -300,15 +300,59 @@ func test_shotgun_throws_all_its_pellets() -> void:
 	check(dummy.health <= TargetDummy.MAX_HEALTH - d.damage * 3, "several pellets hit at 8 m (%.0f hp left)" % dummy.health)
 
 
-func test_empty_gun_switches_to_fists() -> void:
-	player.weapons.give(Weapons.get_def(Weapons.REVOLVER), 1)
+func test_an_empty_gun_lasts_until_its_pad_gives_out_the_next() -> void:
+	var revolver := Weapons.get_def(Weapons.REVOLVER)
+	var pad := WeaponPad.new()
+	pad.weapon = Weapons.REVOLVER
+	pad.respawn_time = 0.3
+	world.add_child(pad)
+	pad.global_position = player.global_position
+	await run(cmd(), 3)
+	check(player.weapons.primary == revolver and player.weapons.primary_origin == pad and pad.generation == 1,
+			"walked onto the pad: took its first gun")
+	player.global_position += Vector3(6, 0, 0)  # Off the pad.
 	await run(cmd(), 12)
-	aim_at(Vector3(5, 1, -20))
+	aim_at(player.weapons.eye_position() + Vector3(0, 0, -20))
+	for i in revolver.ammo:
+		await fire_once()
+		await run(cmd(), int(revolver.fire_interval / DT) + 1)
+	await run(cmd(), 30)
+	check(player.weapons.ammo == 0 and player.weapons.current == revolver, "empty, and still in your hands")
+	var clicks := []
+	player.weapons.dry_fired.connect(func(_d: WeaponDef) -> void: clicks.append(true))
 	await fire_once()
-	check(player.weapons.ammo == 0, "empty")
-	await run(cmd(), int(WeaponHolder.EMPTY_SWITCH / DT) + 2)
-	check(player.weapons.current.is_fists(), "fists after a moment")
-	check(player.weapons.primary != null, "the empty gun is still carried")
+	check(clicks.size() == 1, "click")
+	# Thrown, it lies on the floor, past the old few seconds, while the
+	# pad's next gun is still there.
+	player.weapons.throw_primary()
+	await run(cmd(), int((WeaponPickup.EMPTY_LIFE + 2.0) / DT))
+	var loose := get_tree().get_nodes_in_group(WeaponPickup.GROUP) \
+			.filter(func(n: Node) -> bool: return n != pad.pickup and (n as WeaponPickup).origin == pad)
+	check(loose.size() == 1 and (loose[0] as WeaponPickup).ammo == 0 and pad.pickup != null,
+			"thrown: it lies there empty (%d), the pad's next gun waiting" % loose.size())
+	# Someone takes the pad's next gun: the empty one's had its time.
+	player.global_position = pad.global_position
+	await run(cmd(), 3)
+	check(pad.generation == 2 and player.weapons.primary == revolver and player.weapons.ammo == revolver.ammo, "took the next one")
+	await run(cmd(), int((WeaponPickup.DISSOLVE_TIME + 0.2) / DT))
+	check(not is_instance_valid(loose[0]) or loose[0].is_queued_for_deletion(), "and the empty one's gone")
+	# One empty in your hands goes too, once its pad's next is taken.
+	player.global_position += Vector3(6, 0, 0)
+	player.weapons.primary_ammo = 0
+	await run(cmd(), int(pad.respawn_time / DT) + 5)
+	check(player.weapons.primary == revolver, "empty in your hands while the pad's next gun waits")
+	pad.pickup.take(pad.pickup.ammo)  # Someone else takes it.
+	await run(cmd(), 2)
+	check(player.weapons.primary == null and player.weapons.current.is_fists(), "then it's gone from your hands")
+	# Taking another gun, or dying, drops an empty one rather than losing it.
+	player.weapons.give(revolver, 0, pad, pad.generation)
+	player.weapons.give(Weapons.get_def(Weapons.PISTOL))
+	player.weapons.give(revolver, 0, pad, pad.generation)
+	player.weapons.drop_on_death()
+	await run(cmd(), 2)
+	var dropped := get_tree().get_nodes_in_group(WeaponPickup.GROUP) \
+			.filter(func(n: Node) -> bool: return (n as WeaponPickup).origin == pad and (n as WeaponPickup).ammo == 0)
+	check(dropped.size() == 1, "dying drops the empty gun (%d)" % dropped.size())
 
 
 func test_the_revolver_fans_when_you_hold_the_trigger_from_the_hip() -> void:

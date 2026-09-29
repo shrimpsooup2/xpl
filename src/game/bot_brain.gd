@@ -42,6 +42,8 @@ func _physics_process(delta: float) -> void:
 		_think = 0.2
 		_choose()
 	var cmd := InputCommand.new()
+	if player.weapons.using_primary and player.weapons.primary_ammo <= 0:
+		cmd.switch_to = 2  # Out: fists, and off to find another gun.
 	var eye := player.weapons.eye_position()
 	var sees := _target != null and _visible(_target)
 	_seen_for = _seen_for + delta if sees else 0.0
@@ -132,7 +134,8 @@ func _choose() -> void:
 		return
 
 	_has_goal = true
-	if not player.weapons.using_primary or player.weapons.primary == null:
+	var w := player.weapons
+	if not w.using_primary or w.primary == null or w.primary_ammo <= 0:
 		var gun := _nearest_gun()
 		if gun:
 			_goal = gun.global_position
