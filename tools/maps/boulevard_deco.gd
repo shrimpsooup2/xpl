@@ -4,12 +4,11 @@ extends RefCounted
 ## The village stands on a shelf of old ice in the middle of a great cave
 ## in a glacier, a crevasse all round it; past the crevasse the cave's
 ## floor runs out to its walls, jagged, round in plan, and up into a vault
-## of ice forty-odd metres up, glowing blue with the daylight coming
-## through it, a hint of violet in its depths: the only light there is but
-## the village's own. Icicles hang from the vault; columns, spikes and
-## crystals of ice stand about the floor. The village keeps warm under it,
-## lamps and fires everywhere. The gameplay blocks are untouched, only
-## dressed.
+## of ice forty-odd metres up, a dim blue with the daylight coming through
+## it, a hint of violet in its depths. Icicles hang from the vault; columns,
+## spikes and crystals of ice stand about the floor. The village keeps warm
+## under it, lit by its own strings of bulbs slung everywhere, lanterns and
+## fires. The gameplay blocks are untouched, only dressed.
 
 const DecoKit := preload("res://tools/deco_kit.gd")
 const LevelKit := preload("res://tools/level_kit.gd")
@@ -25,6 +24,8 @@ const ICE := "res://src/render/deco/ice.gdshader"
 const FLAME := "res://src/render/deco/flame.gdshader"
 const POOL := "res://src/render/deco/light_pool.gdshader"
 const WARM := Color(1.0, 0.72, 0.42)
+## The strings of bulbs' light: yellower.
+const BULB := Color(1.0, 0.8, 0.5)
 const SERIF := "DejaVuSerif-Bold.ttf"
 const ITALIC := "LiberationSerif-BoldItalic.ttf"
 
@@ -82,8 +83,8 @@ static func dress(kit, d) -> void:
 	d.zone = "Middle"
 	_hall(kit, d)
 	_plaza(kit, d)
+	_middle_strings(kit, d)
 	d.zone = ""
-	_glow_of_the_village(d)
 	_floors(d)
 	_ground_tiles(d)
 	_drifts(d)
@@ -97,19 +98,21 @@ static func dress(kit, d) -> void:
 static func _light(kit) -> void:
 	var e: Environment = kit.environment
 	var sky: ShaderMaterial = e.sky.sky_material
-	# Only seen through the openings: a bright overcast day.
+	# Never seen (the vault is closed).
 	sky.set_shader_parameter(&"top_color", Color(0.78, 0.86, 0.96))
 	sky.set_shader_parameter(&"upper_color", Color(0.86, 0.92, 0.98))
 	sky.set_shader_parameter(&"horizon_color", Color(0.94, 0.97, 1.0))
 	sky.set_shader_parameter(&"ground_color", Color(0.8, 0.86, 0.92))
 	sky.set_shader_parameter(&"halo", 0.0)
 	sky.set_shader_parameter(&"sun_size", 0.0)
-	e.ambient_light_color = Color(0.44, 0.6, 0.84)
-	e.ambient_light_energy = 0.46
-	e.fog_light_color = Color(0.32, 0.5, 0.74)
+	# The ice's light only a little, cold, all round: the village's light is
+	# its own lamps'.
+	e.ambient_light_color = Color(0.36, 0.46, 0.66)
+	e.ambient_light_energy = 0.24
+	e.fog_light_color = Color(0.12, 0.18, 0.28)
 	e.fog_density = 0.007
 	e.fog_sky_affect = 0.0
-	e.glow_intensity = 0.8
+	e.glow_intensity = 1.0
 	e.glow_hdr_threshold = 0.9
 	e.glow_bloom = 0.0
 	# No sun in here: the light is the ice's own, and the village's lamps.
@@ -126,12 +129,12 @@ static func _materials(d) -> void:
 	var ice := {"ice": "boulevard/ice.png", "scallops": "boulevard/ice_scallops.png", "inner": "boulevard/ice_inner.png",
 			"reflection_map": "boulevard/reflection_ice.png", "glow_heights": Vector2(-10.0, 44.0)}
 	# The cave: big scallops, lit through.
-	d.shaded("cave_ice", ICE, ice.merged({"meters": 4.0, "inner_meters": 6.0, "glow": 0.9, "depth": 1.2}))
+	d.shaded("cave_ice", ICE, ice.merged({"meters": 4.0, "inner_meters": 6.0, "glow": 0.4, "depth": 1.2}))
 	# Icicles, spikes, columns: small scallops, thin, bright.
-	d.shaded("icicle", ICE, ice.merged({"meters": 1.5, "inner_meters": 1.6, "bump": 0.6, "glow": 1.15, "depth": 0.3,
+	d.shaded("icicle", ICE, ice.merged({"meters": 1.5, "inner_meters": 1.6, "bump": 0.6, "glow": 0.55, "depth": 0.3,
 			"glow_low": 0.8, "tint": Color(1.1, 1.15, 1.15)}))
 	# The frozen canal: polished, deep, bubbles far down.
-	d.shaded("canal_ice", ICE, ice.merged({"meters": 5.0, "inner_meters": 3.0, "bump": 0.12, "glow": 0.55, "depth": 2.4,
+	d.shaded("canal_ice", ICE, ice.merged({"meters": 5.0, "inner_meters": 3.0, "bump": 0.12, "glow": 0.3, "depth": 2.4,
 			"inside": 1.4, "glow_low": 1.0, "gloss": 0.8, "roughness_value": 0.08, "albedo_amount": 0.25}))
 	# The village.
 	var weathered := {"gloss": 0.04, "grazing": 0.25, "roughness": 0.8, "specular": 0.2}
@@ -179,8 +182,6 @@ static func _materials(d) -> void:
 	d.shaded("window_warm", GLOW, {"color": Color(1.0, 0.64, 0.32), "energy": 1.5})
 	d.shaded("flame", FLAME, {"size": Vector2(0.5, 0.8)})
 	d.shaded("flame_small", FLAME, {"size": Vector2(0.16, 0.26), "energy": 2.6})
-	d.shaded("pool", POOL, {"color": WARM, "strength": 0.9, "size": Vector2(5.0, 5.0)})
-	d.shaded("pool_big", POOL, {"color": WARM, "strength": 0.6, "size": Vector2(10.0, 10.0)})
 
 
 ## Each block's surface, by its name (without the team's tag or its
@@ -648,8 +649,9 @@ static func _at(side: float, v: Vector3) -> Vector3:
 
 
 ## A warm lamp's light, maybe wavering like a flame.
-static func _lamp(kit, d, name: String, at: Vector3, reach: float, energy: float, minor := true, fire := 0.0, seed := 0.0) -> void:
-	var l: OmniLight3D = d.omni(name, at, WARM, reach, energy * 1.3, 0xFFFFF & ~CAVE_LAYER, minor)
+static func _lamp(kit, d, name: String, at: Vector3, reach: float, energy: float, minor := true, fire := 0.0, seed := 0.0,
+		colour := WARM) -> OmniLight3D:
+	var l: OmniLight3D = d.omni(name, at, colour, reach, energy * 1.3, 0xFFFFF & ~CAVE_LAYER, minor)
 	if fire > 0.0:
 		var f := Node.new()
 		f.set_script(load("res://src/world/fire_light.gd"))
@@ -658,6 +660,7 @@ static func _lamp(kit, d, name: String, at: Vector3, reach: float, energy: float
 		f.set(&"seed", seed)
 		f.set(&"amount", fire)
 		kit.root.add_child(f)
+	return l
 
 
 ## A lantern: a little iron house round a flame, a glow in it. `hang`
@@ -674,7 +677,17 @@ static func _lantern(d, at: Vector3, size := 0.32) -> void:
 
 ## A pool of warm light on the ground (or any floor) under a lamp.
 static func _pool(d, at: Vector3, radius := 2.5, big := false) -> void:
-	d.face("pool_big" if big else "pool", at + Vector3(0, 0.03, 0), Vector3(radius, 0, 0), Vector3(0, 0, -radius), "Effects", BOTH)
+	_glow(d, at + Vector3(0, 0.03, 0), Vector3(radius, 0, 0), Vector3(0, 0, -radius), 0.75 if big else 0.9)
+
+
+## Lamplight faked on a floor or a wall: a soft round glow on the face
+## `c` ± `u`, `v` (half its width and height). The glow's shader reads the
+## face in metres, so each size has its material.
+static func _glow(d, c: Vector3, u: Vector3, v: Vector3, strength := 0.9) -> void:
+	var size := Vector2(u.length(), v.length()) * 2.0
+	var name := "pool_%d_%d_%d" % [roundi(size.x * 10.0), roundi(size.y * 10.0), roundi(strength * 100.0)]
+	d.shaded(name, POOL, {"color": WARM, "strength": strength, "size": size})
+	d.face(name, c, u, v, "Effects", BOTH)
 
 
 ## The indoors: the Arcade's rooms and gallery and the Atrium, all along
@@ -773,7 +786,7 @@ static func _arcade(kit, d, side: float) -> void:
 		d.box("dark_metal", _at(side, Vector3(cx + (w * 0.5 + 0.7), 2.95, face + 0.3)), Vector3(0.05, 0.05, 0.6), "Fixtures", BOTH)
 		_lantern(d, lamp_at, 0.26)
 		_pool(d, _at(side, Vector3(cx + 1.0, 0.0, face + 1.6)), 2.6)
-		d.face("pool", _at(side, Vector3(cx + w * 0.5 + 0.7, 2.4, face + 0.02)), Vector3(2.6, 0, 0), Vector3(0, 2.6, 0), "Effects", BOTH)
+		_glow(d, _at(side, Vector3(cx + w * 0.5 + 0.7, 2.4, face + 0.02)), Vector3(2.6, 0, 0), Vector3(0, 2.6, 0))
 		_lamp(kit, d, "Door%s%d" % ["W" if side < 0.0 else "E", i], lamp_at + Vector3(0, 0, 0.3), 10.0, 2.2, i != 1, 0.15, side + i)
 		Signs.board(d, _at(side, Vector3(cx, 4.2, face + 0.12)), Basis.IDENTITY, Vector2(maxf(2.4, TRADES[i].length() * 0.16), 0.5),
 				"board", TRADES[i], ITALIC, 0.26, Color(1.0, 0.9, 0.7), "wood")
@@ -786,13 +799,13 @@ static func _arcade(kit, d, side: float) -> void:
 		d.box("wood", c + Vector3(0, 2.1, 0.5), Vector3(3.2, 0.2, 0.3), "Build", BOTH)
 		_fire(d, c + Vector3(0, 0.1, 0.35), 0.6)
 		_lamp(kit, d, "%s%s" % [hearth[1], "W" if side < 0.0 else "E"], c + Vector3(0, 1.0, 1.5), 14.0, 3.0, false, 0.3, hx * side)
-		d.face("pool", c + Vector3(0, 0.02, 2.2), Vector3(2.4, 0, 0), Vector3(0, 0, -2.4), "Effects", BOTH)
+		_glow(d, c + Vector3(0, 0.02, 2.2), Vector3(2.4, 0, 0), Vector3(0, 0, -2.4))
 	# The lamplight falling out of the ground-floor windows onto the snow,
 	# a lantern in the third room.
 	for o: Array in WINDOWS:
 		if float(o[1]) < 3.0:
 			var cx: float = 16.0 + float(o[0]) + float(o[2]) * 0.5
-			d.face("pool", _at(side, Vector3(cx, 0.03, face + 1.8)), Vector3(2.0, 0, 0), Vector3(0, 0, -1.6), "Effects", BOTH)
+			_glow(d, _at(side, Vector3(cx, 0.03, face + 1.8)), Vector3(2.0, 0, 0), Vector3(0, 0, -1.6))
 	var room := _at(side, Vector3(49.0, 3.3, -24.0))
 	d.box("dark_metal", room + Vector3(0, 0.6, 0), Vector3(0.02, 0.9, 0.02), "Fixtures", BOTH)
 	_lantern(d, room, 0.3)
@@ -969,7 +982,7 @@ static func _hall(kit, d) -> void:
 	d.box("black", h + Vector3(0, 0.9, 0.61), Vector3(3.0, 1.6, 0.02), "Build", BOTH)
 	_fire(d, h + Vector3(0, 0.1, 0.4), 1.0)
 	_lamp(kit, d, "HallHearth", h + Vector3(0, 1.2, 2.0), 18.0, 3.4, false, 0.3, 11.0)
-	d.face("pool", h + Vector3(0, 0.03, 3.4), Vector3(3.4, 0, 0), Vector3(0, 0, -3.4), "Effects", BOTH)
+	_glow(d, h + Vector3(0, 0.03, 3.4), Vector3(3.4, 0, 0), Vector3(0, 0, -3.4))
 	# Rings of candles hanging from the roof either side of the skylight.
 	for rx: float in [-10.0, 10.0]:
 		var ring := Vector3(rx, 7.0, -22.0)
@@ -1087,25 +1100,57 @@ static func _street_lamps(kit, d, side: float) -> void:
 		_lamp_post(kit, d, _at(side, Vector3(c.x, 0, c.y)), "Post%s%d%d" % ["W" if side < 0.0 else "E", int(c.x), int(c.y)])
 
 
-## Strings of bulbs slung across the street, from the Arcade's eaves to
-## the kiosks' roofs, sagging; one lamp's worth of light each.
+## A string of bulbs slung from `a` to `b`, sagging `sag` in the middle:
+## the wire, the bulbs on their drops, and `lights` lamps along it, soft
+## and wide, lighting everything under it (the village's light is these),
+## each with its pool on the ground at `ground`.
+static func _string(kit, d, a: Vector3, b: Vector3, sag: float, name: String, lights: int, ground: float) -> void:
+	var count := maxi(6, int(a.distance_to(b) / 0.6))
+	var pts := PackedVector3Array()
+	for k in count + 1:
+		var t := float(k) / count
+		pts.append(a.lerp(b, t) + Vector3(0, -sin(t * PI) * sag, 0))
+	d.path_tube("dark_metal", pts, 0.012, 3, "Fixtures", BOTH)
+	for k in range(1, count):
+		d.tube("dark_metal", pts[k], pts[k] + Vector3(0, -0.06, 0), 0.015, 4, "Fixtures", BOTH)
+		d.ball("bulb", pts[k] + Vector3(0, -0.13, 0), Vector3(0.075, 0.1, 0.075), 2, 6, "Fixtures", BOTH)
+	for k in lights:
+		var t := (k + 0.5) / lights
+		var at := a.lerp(b, t) + Vector3(0, -sin(t * PI) * sag - 0.4, 0)
+		var l := _lamp(kit, d, "%s_%d" % [name, k], at, 13.0, 1.3, k > 0, 0.0, 0.0, BULB)
+		l.omni_attenuation = 0.8
+		_pool(d, Vector3(at.x, ground, at.z), 4.0)
+
+
+## Strings of bulbs everywhere, and their light is the village's: across
+## the street from the Arcade's eaves to the kiosks' roofs, along the
+## walkway, over the canal, from each gate across its yard.
 static func _festoons(kit, d, side: float) -> void:
 	var tag := "W" if side < 0.0 else "E"
-	var spans := [[Vector3(23.5, 8.8, -13.7), Vector3(18.0, 3.95, 13.9)], [Vector3(23.5, 8.8, -13.7), Vector3(34.0, 3.95, 13.9)],
-			[Vector3(35.2, 8.8, -13.7), Vector3(42.0, 3.95, 13.9)], [Vector3(46.5, 8.8, -13.7), Vector3(50.0, 3.95, 13.9)]]
+	# [from, to, sag, lamps, the ground under it]
+	var spans := [[Vector3(23.5, 8.8, -13.7), Vector3(18.0, 3.95, 13.9), 1.4, 2, 0.0],
+			[Vector3(23.5, 8.8, -13.7), Vector3(34.0, 3.95, 13.9), 1.4, 2, 0.0],
+			[Vector3(35.2, 8.8, -13.7), Vector3(42.0, 3.95, 13.9), 1.4, 2, 0.0],
+			[Vector3(46.5, 8.8, -13.7), Vector3(50.0, 3.95, 13.9), 1.4, 2, 0.0],
+			[Vector3(12.0, 3.6, 37.2), Vector3(30.0, 3.6, 37.2), 0.7, 1, 0.0],
+			[Vector3(30.0, 3.6, 37.2), Vector3(54.0, 3.6, 37.2), 0.8, 2, 0.0],
+			[Vector3(33.0, 3.6, 19.6), Vector3(30.0, 3.6, 37.2), 0.8, 1, -3.5],
+			[Vector3(4.0, 3.6, 19.6), Vector3(12.0, 3.6, 37.2), 0.8, 1, -3.5],
+			[Vector3(58.9, 6.9, -9.0), Vector3(71.2, 5.9, -22.0), 1.2, 2, 0.0],
+			[Vector3(58.9, 6.9, -9.0), Vector3(71.2, 5.9, 2.0), 1.2, 2, 0.0],
+			[Vector3(58.9, 6.9, 9.0), Vector3(71.2, 5.9, 26.0), 1.2, 2, 0.0]]
 	for i in spans.size():
-		var a := _at(side, spans[i][0])
-		var b := _at(side, spans[i][1])
-		var pts := PackedVector3Array()
-		var count := 24
-		for k in count + 1:
-			var t := float(k) / count
-			pts.append(a.lerp(b, t) + Vector3(0, -sin(t * PI) * 1.4, 0))
-		d.path_tube("dark_metal", pts, 0.012, 3, "Fixtures", BOTH)
-		for k in range(1, count):
-			d.ball("bulb", pts[k] + Vector3(0, -0.08, 0), Vector3(0.06, 0.08, 0.06), 2, 5, "Fixtures", BOTH)
-		_lamp(kit, d, "Festoon%s%d" % [tag, i], pts[count / 2] + Vector3(0, -0.4, 0), 12.0, 1.8, true)
-		_pool(d, Vector3(pts[count / 2].x, 0.0, pts[count / 2].z), 4.0, true)
+		var sp: Array = spans[i]
+		_string(kit, d, _at(side, sp[0]), _at(side, sp[1]), sp[2], "String%s%d" % [tag, i], sp[3], sp[4])
+
+
+## The strings in the middle: crossed over the Plaza from the hall's front
+## to the lamp posts, down the hall inside, along the walkway.
+static func _middle_strings(kit, d) -> void:
+	for e: float in [-1.0, 1.0]:
+		_string(kit, d, Vector3(10.0 * e, 8.8, -13.7), Vector3(-6.4 * e, 3.8, 9.4), 1.2, "StringPlaza%d" % int(e), 2, 0.0)
+		_string(kit, d, Vector3(12.0 * e, 8.7, -14.4), Vector3(12.0 * e, 8.7, -33.6), 0.6, "StringHall%d" % int(e), 1, 0.0)
+	_string(kit, d, Vector3(-12.0, 3.6, 37.2), Vector3(12.0, 3.6, 37.2), 0.8, "StringWalkway", 1, 0.0)
 
 
 ## The kiosks: A the woodshed, C the boathouse where the skates and the
@@ -1138,7 +1183,7 @@ static func _kiosks(kit, d, side: float) -> void:
 		d.box("dark_metal", _at(side, Vector3(lx, 2.95, face - 0.18)), Vector3(0.05, 0.05, 0.36), "Fixtures", BOTH)
 		_lantern(d, at, 0.24)
 		_pool(d, _at(side, Vector3(lx, 0, face - 1.4)), 3.0)
-		d.face("pool", _at(side, Vector3(lx, 2.4, face - 0.01)), Vector3(2.2, 0, 0), Vector3(0, 2.2, 0), "Effects", BOTH)
+		_glow(d, _at(side, Vector3(lx, 2.4, face - 0.01)), Vector3(2.2, 0, 0), Vector3(0, 2.2, 0))
 		if lx in [17.2, 36.5, 54.8]:
 			_lamp(kit, d, "Kiosk%s%d" % [tag, int(lx)], at + Vector3(0, 0, -0.3), 9.0, 1.8, true, 0.12, lx * side)
 	# The sheds' windows lit.
@@ -1158,7 +1203,7 @@ static func _kiosks(kit, d, side: float) -> void:
 	for wx: float in [34.75, 41.75]:
 		d.box("wood", _at(side, Vector3(wx, 2.52, face - 0.04)), Vector3(2.8, 0.14, 0.1), "Build", BOTH)
 		d.box("snow_cap", _at(side, Vector3(wx, 1.14, face - 0.1)), Vector3(2.7, 0.06, 0.2), "Detail", BOTH)
-		d.face("pool", _at(side, Vector3(wx, 0.03, face - 1.2)), Vector3(1.6, 0, 0), Vector3(0, 0, -1.2), "Effects", BOTH)
+		_glow(d, _at(side, Vector3(wx, 0.03, face - 1.2)), Vector3(1.6, 0, 0), Vector3(0, 0, -1.2))
 	# The shelter: a chestnut stall, its brazier roasting.
 	d.box("snow_cap", _at(side, Vector3(31.0, 3.0, 10.0)), Vector3(6.1, 0.14, 2.1), "Detail", BOTH)
 	d.box("board", _at(side, Vector3(31.0, 0.5, 10.1)), Vector3(3.0, 1.0, 0.7), "Detail", BOTH)
@@ -1418,19 +1463,4 @@ static func _lit_window(d, c: Vector3, n: Vector3, w: float, h: float) -> void:
 	d.box("wood", c + n * 0.03, Vector3(0.05, h, 0.04), "Build", BOTH, b)
 	d.box("wood", c + n * 0.03, Vector3(w, 0.05, 0.04), "Build", BOTH, b)
 	d.box("snow_cap", c - b.y * (h * 0.5 + 0.12) + n * 0.12, Vector3(w + 0.3, 0.08, 0.22), "Detail", BOTH, b)
-	d.face("pool", Vector3(c.x, 0.03, c.z) + n * 1.8, Vector3(1.8, 0, 0), Vector3(0, 0, -1.6), "Effects", BOTH)
-
-
-## The glow of all the village's lamps and fires together, filling the
-## street, the yards and the canal with a soft warm light under the blue:
-## wide lamps, gentle, high up.
-static func _glow_of_the_village(d) -> void:
-	var spots := [Vector3(0, 7.0, 2.0), Vector3(0, 6.0, 26.0)]
-	for side: float in [-1.0, 1.0]:
-		for p: Vector3 in [Vector3(22.0, 7.0, -3.0), Vector3(44.0, 7.0, 3.0), Vector3(65.0, 7.0, 2.0), Vector3(36.0, 6.0, 26.0),
-				Vector3(62.0, 6.0, 28.0)]:
-			spots.append(_at(side, p))
-	for i in spots.size():
-		var l: OmniLight3D = d.omni("VillageGlow_%d" % i, spots[i], Color(1.0, 0.64, 0.34), 24.0, 0.9, 0xFFFFF & ~CAVE_LAYER, true)
-		l.omni_attenuation = 0.5
-		l.light_specular = 0.0
+	_glow(d, Vector3(c.x, 0.03, c.z) + n * 1.8, Vector3(1.8, 0, 0), Vector3(0, 0, -1.6))
