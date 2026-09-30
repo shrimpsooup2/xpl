@@ -106,7 +106,7 @@ This runs the headless movement, UI, combat, cosmetics, map, game and network te
 
 ## Website
 
-`site/` is the game's website: one screen, drawn small on a canvas and blown up in hard pixels like the game's 3D, with the game's boxes: the logo, what the game is, download buttons for pc, mac and the server build, and a picture card you can flip through. The words and buttons are plain HTML in `site/index.html`, laid over the canvas unseen so links, the keyboard and screen readers work, and shown as plain boxes without JavaScript.
+`site/` is the game's website: one screen, drawn small on a canvas and blown up in hard pixels like the game's 3D, with the game's boxes: the logo, what the game is (in Arial), download buttons for pc, mac and the server build, and a picture card you can flip through, with the player hanging upside down from the top. The words and buttons are plain HTML in `site/index.html`, laid over the canvas unseen so links, the keyboard and screen readers work, and shown as plain boxes without JavaScript.
 
 - **Downloads:** put each build's address in its button's `href`. Until then they say *soon :)*.
 - **Pictures:** list them in the picture card's `data-shots` (e.g. `shots/boulevard.png, shots/depot.png`, files in `site/shots/`). They're drawn small, so they come out pixelated like everything else. With none it shows stand-ins, until the maps are decorated.
@@ -117,7 +117,7 @@ This runs the headless movement, UI, combat, cosmetics, map, game and network te
 tools/build_site.sh && python3 -m http.server -d _site
 ```
 
-`.github/workflows/pages.yml` publishes it to GitHub Pages whenever it changes on `main`. It needs, once, **Settings → Pages → Build and deployment → Source: GitHub Actions** in the repository. `tools/gen_icon.gd` makes the favicon (*xpl*, in the logo's style).
+`.github/workflows/pages.yml` publishes it to GitHub Pages whenever it changes on `main`. It needs, once, **Settings → Pages → Build and deployment → Source: GitHub Actions** in the repository. `tools/gen_icon.gd` makes the favicon (*xpl*, in the logo's style), and `tools/gen_site_figure.gd` renders the hanging player (`site/assets/figure.png`) from the game's own body; it needs a real renderer, so run it under `xvfb-run` with `--rendering-driver opengl3` on a machine without a screen.
 
 ## Known issues
 
