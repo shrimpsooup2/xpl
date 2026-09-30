@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/far_surface.gdshader" id="1_sek3c"]
+[ext_resource type="Texture2D" path="res://assets/textures/terrace/far_mall.png" id="2_fbr6d"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_sek3c")
+shader_parameter/albedo_texture = ExtResource("2_fbr6d")
+shader_parameter/tint = Color(0.55, 0.45, 0.45, 1)
+shader_parameter/meters_per_repeat = 12.0

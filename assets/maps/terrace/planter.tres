@@ -1,0 +1,32 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/retro_surface.gdshader" id="1_m1obh"]
+[ext_resource type="Texture2D" path="res://assets/textures/terrace/cladding.png" id="2_dp1pu"]
+[ext_resource type="Texture2D" path="res://assets/textures/terrace/reflection_eclipse.png" id="3_58w4b"]
+[ext_resource type="Texture2D" path="res://assets/textures/terrace/foliage.png" id="4_hy60l"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_m1obh")
+shader_parameter/albedo_texture = ExtResource("2_dp1pu")
+shader_parameter/reflection_map = ExtResource("3_58w4b")
+shader_parameter/tint = Color(1, 1, 1, 1)
+shader_parameter/meters_per_repeat = 2.0
+shader_parameter/gloss = 0.2
+shader_parameter/gloss_grazing = 0.5
+shader_parameter/roughness_value = 0.35
+shader_parameter/specular_value = 0.35
+shader_parameter/use_top = true
+shader_parameter/top_texture = ExtResource("4_hy60l")
+shader_parameter/top_tint = Color(1, 1, 1, 1)
+shader_parameter/top_meters = 1.0
+shader_parameter/use_bottom = null
+shader_parameter/bottom_meters = null
+shader_parameter/use_uv = null
+shader_parameter/lane_color = null
+shader_parameter/lane_period = null
+shader_parameter/lane_width = null
+shader_parameter/lane_length = null
+shader_parameter/caustics = null
+shader_parameter/caustics_color = null
+shader_parameter/caustics_meters = null

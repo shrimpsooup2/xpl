@@ -1,0 +1,13 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/glow.gdshader" id="1_xet1l"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_xet1l")
+shader_parameter/color = Color(0.3, 0.55, 1, 1)
+shader_parameter/energy = 3.2
+shader_parameter/flicker = 0.0
+shader_parameter/blink_period = null
+shader_parameter/blink_duty = null
+shader_parameter/blink_offset = null

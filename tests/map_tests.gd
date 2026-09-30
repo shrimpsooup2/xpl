@@ -254,6 +254,33 @@ func test_stack_is_dressed_and_the_graphics_settings_switch_it() -> void:
 	check(detail.all(func(n: Node) -> bool: return (n as Node3D).visible), "and the detail")
 
 
+func test_terrace_is_a_mall_under_the_eclipse() -> void:
+	await load_map(TERRACE)
+	var desk := level.find_child("Pulpit", true, false) as GreyBox
+	var cliff := level.find_child("Terrace", true, false) as GreyBox
+	check(desk.surface != null and cliff.surface != null, "the blocks wear the map's own surfaces")
+	var env := (level.get_node("WorldEnvironment") as WorldEnvironment).environment
+	check(float((env.sky.sky_material as ShaderMaterial).get_shader_parameter(&"eclipse")) > 0.5, "the sun's in eclipse")
+	var zone := level.find_child("UnderTheBridge", true, false) as AmbientZone
+	check(zone != null and zone.ambient < 0.5, "under the skybridge the sky's light stays out")
+	var lamps := level.find_children("*", "Light3D", true, false)
+	check(lamps.size() >= 25, "lamps all over (%d)" % lamps.size())
+	var glass := level.find_children("skylight*", "MeshInstance3D", true, false)
+	check(not glass.is_empty(), "a glass roof over it all")
+	var build := get_tree().get_nodes_in_group(&"decor_build")
+	check(not build.is_empty(), "shopfronts and the roof built on")
+	# The strings of bulbs hang out of reach, over 9 m.
+	var festoons := level.find_children("Festoon_*", "OmniLight3D", true, false)
+	check(festoons.size() == 10, "five strings of bulbs, two lamps each (%d)" % festoons.size())
+	check(festoons.all(func(l: Node) -> bool: return (l as Node3D).global_position.y > 9.0), "hung out of reach")
+	# Graphics at low keep the architecture (only the small stuff goes).
+	Settings.set_graphics_preset("low", false)
+	Graphics.apply(get_tree(), level)
+	check(build.all(func(n: Node) -> bool: return (n as Node3D).visible), "low: the shops and the roof stay")
+	Settings.set_graphics_preset("high", false)
+	Graphics.apply(get_tree(), level)
+
+
 func test_terrace_climbs_from_the_square_to_the_pulpit() -> void:
 	await load_map(TERRACE)
 	place(Vector3(-2, 0.05, -10), PI)

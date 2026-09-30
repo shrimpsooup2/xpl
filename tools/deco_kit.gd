@@ -9,6 +9,8 @@ extends RefCounted
 ## as files under assets/maps/<map>/, and the scene points at them.
 ##
 ## Groups, which the graphics settings switch (Graphics):
+## - "Build": the architecture dressed onto the blocks and walls
+##   (shopfronts, fascias, rails); never hidden.
 ## - "Fixtures": what the lamps are (tubes, lenses, signs); never hidden, so
 ##   a light always has something to come from.
 ## - "Detail": small stuff; hidden at low detail.
@@ -21,7 +23,7 @@ const SURFACE_SHADER := preload("res://src/render/retro_surface.gdshader")
 const REFLECTION_MAP := preload("res://assets/textures/reflection_map.png")
 ## The fake reflection the map's surfaces use (a night map swaps it).
 var reflection: Texture2D = REFLECTION_MAP
-const GROUPS := ["Solid", "Fixtures", "Detail", "Effects", "Far"]
+const GROUPS := ["Build", "Solid", "Fixtures", "Detail", "Effects", "Far"]
 
 ## Render layers: each floor's lamps light their own floor.
 const LAYER_BOTH := 1
@@ -42,6 +44,11 @@ func _init(level_kit: LevelKit, map_dir: String) -> void:
 	dir = map_dir
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir + "meshes"))
+	# What the last build made goes, so nothing it no longer uses is left.
+	for sub: String in [dir, dir + "meshes/"]:
+		for f in DirAccess.get_files_at(sub):
+			if f.ends_with(".tres") or f.ends_with(".res"):
+				DirAccess.remove_absolute(ProjectSettings.globalize_path(sub + f))
 	root = Node3D.new()
 	root.name = "Decor"
 	kit.root.add_child(root)
@@ -55,6 +62,20 @@ func _init(level_kit: LevelKit, map_dir: String) -> void:
 
 func group(name: String) -> Node3D:
 	return _groups[name]
+
+
+## A basis facing `n` (its z), upright: words and faces on a wall facing `n`
+## read along its x.
+static func facing(n: Vector3) -> Basis:
+	var z := n.normalized()
+	var x := Vector3.UP.cross(z).normalized()
+	return Basis(x, z.cross(x), z)
+
+
+## A basis lying flat, facing up, reading along `along`.
+static func flat(along: Vector3) -> Basis:
+	var x := along.normalized()
+	return Basis(x, Vector3.UP.cross(x), Vector3.UP)
 
 
 # --- Materials ---------------------------------------------------------------------------
@@ -159,6 +180,23 @@ func face(material: String, c: Vector3, u: Vector3, v: Vector3, grp := "Detail",
 		st.add_vertex(corners[i])
 
 
+## A flat four-sided face through four corners (top-left, top-right,
+## bottom-right, bottom-left as you look at its front), for shapes face()
+## can't make. UVs in metres from the top-left corner, v running down.
+func quad(material: String, p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, grp := "Detail", layers := LAYER_BOTH, shadows := false) -> void:
+	var st := _bucket(material, grp, layers, shadows)
+	var eu := (p1 - p0).normalized()
+	var down := p3 - p0
+	var ev := (down - eu * down.dot(eu)).normalized()
+	var n := eu.cross(-ev).normalized()
+	var corners := [p0, p1, p2, p3]
+	for i: int in [0, 1, 2, 0, 2, 3]:
+		var q: Vector3 = corners[i]
+		st.set_normal(n)
+		st.set_uv(Vector2((q - p0).dot(eu), (q - p0).dot(ev)))
+		st.add_vertex(q)
+
+
 ## A box: `c` its middle, `size` along the basis `b`'s axes. `skip` names
 ## faces not to build ("top", "bottom", "front" (−z), "back", "left", "right").
 func box(material: String, c: Vector3, size: Vector3, grp := "Detail", layers := LAYER_BOTH, b := Basis.IDENTITY, shadows := false, skip: Array = []) -> void:
@@ -208,6 +246,68 @@ func tube(material: String, a: Vector3, b: Vector3, radius: float, sides := 8, g
 					st.set_normal(end[1])
 					st.set_uv(Vector2((q - p0).dot(side), (q - p0).dot(up)))
 					st.add_vertex(q)
+
+
+## A tube following `pts` (a bent tube: neon, cable), `radius` round, one
+## smooth piece with its bends shared, `closed` joining the end to the start.
+func path_tube(material: String, pts: PackedVector3Array, radius: float, sides := 6, grp := "Detail", layers := LAYER_BOTH, closed := false) -> void:
+	if closed and pts.size() > 2 and pts[0].distance_to(pts[pts.size() - 1]) > 0.0001:
+		pts.append(pts[0])
+	var n := pts.size()
+	if n < 2:
+		return
+	var st := _bucket(material, grp, layers, false)
+	var tangents: Array[Vector3] = []
+	for i in n:
+		var t := (pts[mini(i + 1, n - 1)] - pts[maxi(i - 1, 0)])
+		if closed and (i == 0 or i == n - 1):
+			t = pts[1] - pts[n - 2]
+		tangents.append(t.normalized() if t.length() > 0.00001 else Vector3.FORWARD)
+	# A frame carried along without twisting.
+	var side := tangents[0].cross(Vector3.UP if absf(tangents[0].y) < 0.9 else Vector3.RIGHT).normalized()
+	var rings: Array = []
+	var along := 0.0
+	for i in n:
+		var t: Vector3 = tangents[i]
+		side = (side - t * side.dot(t)).normalized()
+		var up := side.cross(t)
+		if i > 0:
+			along += pts[i].distance_to(pts[i - 1])
+		var ring := []
+		for k in sides + 1:
+			var a := TAU * k / sides
+			var dir := side * cos(a) + up * sin(a)
+			ring.append([pts[i] + dir * radius, dir, Vector2(TAU * radius * k / sides, along)])
+		rings.append(ring)
+	for i in n - 1:
+		for k in sides:
+			var q := [rings[i][k], rings[i + 1][k], rings[i + 1][k + 1], rings[i][k + 1]]
+			for j: int in [0, 1, 2, 0, 2, 3]:
+				st.set_normal(q[j][1])
+				st.set_uv(q[j][2])
+				st.add_vertex(q[j][0])
+
+
+## A mesh merged in (a word of extruded letters): its faces toward its +z
+## in `front`, the rest (the sides) in `side`.
+func add_mesh(mesh: Mesh, t: Transform3D, front: String, side: String, grp := "Detail", layers := LAYER_BOTH) -> void:
+	var normal_basis := t.basis.inverse().transposed()
+	for surface in mesh.get_surface_count():
+		var arrays := mesh.surface_get_arrays(surface)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+		var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
+		if indices.is_empty():
+			indices = PackedInt32Array(range(verts.size()))
+		for i in range(0, indices.size(), 3):
+			var tri := [indices[i], indices[i + 1], indices[i + 2]]
+			var facing: Vector3 = normals[tri[0]] + normals[tri[1]] + normals[tri[2]]
+			var st := _bucket(front if facing.z > 2.5 else side, grp, layers, false)
+			for v: int in tri:
+				st.set_normal((normal_basis * normals[v]).normalized())
+				var p := verts[v]
+				st.set_uv(Vector2(p.x, -p.y))
+				st.add_vertex(t * p)
 
 
 ## A ball, `rings` from pole to pole.
@@ -274,6 +374,41 @@ func own_mesh(node_name: String, mesh: Mesh, material: Material, t: Transform3D,
 	return mi
 
 
+# --- Things adrift -------------------------------------------------------------------------
+
+## Something floating in the sky (float_prop.gdshader turns it and bobs
+## it): `st` a mesh in vertex colours, saved as its own file.
+func floater(node_name: String, st: SurfaceTool, at: Vector3, params: Dictionary, phase: float, scale := 1.0, layers := LAYER_BOTH) -> void:
+	var p := params.duplicate()
+	p["phase"] = phase
+	var m: ShaderMaterial = shaded("float_" + node_name.to_lower(), "res://src/render/deco/float_prop.gdshader", p)
+	st.index()
+	var mesh := st.commit()
+	var file := dir + "meshes/float_%s.res" % node_name.to_lower()
+	ResourceSaver.save(mesh, file)
+	own_mesh(node_name, load(file), m, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * scale), at), "Detail", layers)
+
+
+## A ball (squashed by `r`) into `st`, in one colour or stripes of `bands`
+## round it.
+static func blob(st: SurfaceTool, c: Vector3, r: Vector3, colour: Color, bands: Array = []) -> void:
+	var rings := 8
+	var sides := 12
+	var at := func(i: int, j: int) -> Vector3:
+		var lat := PI * (float(i) / rings - 0.5)
+		var lon := TAU * j / sides
+		return Vector3(cos(lat) * cos(lon), sin(lat), cos(lat) * sin(lon))
+	for i in rings:
+		for j in sides:
+			var q := [at.call(i, j), at.call(i + 1, j), at.call(i + 1, j + 1), at.call(i, j + 1)]
+			var col: Color = bands[j * bands.size() / sides] if not bands.is_empty() else colour
+			for k: int in [0, 2, 1, 0, 3, 2]:
+				var dir: Vector3 = q[k]
+				st.set_color(col)
+				st.set_normal((dir / r).normalized())
+				st.add_vertex(c + dir * r)
+
+
 # --- Lights and words ----------------------------------------------------------------------
 
 ## A lamp: an OmniLight3D at `at` (the fixture is drawn separately, by the
@@ -322,13 +457,14 @@ func _light(l: Light3D, minor: bool) -> void:
 
 
 ## Words on a surface: `at` their middle, `b` their facing (they read along
-## b.x, face b.z). `glow` over 1 makes them light up (neon, exit signs).
-func words(text: String, at: Vector3, b: Basis, size: float, color: Color, glow := 0.0, grp := "Detail", layers := LAYER_BOTH) -> Label3D:
+## b.x, face b.z). `glow` over 1 makes them light up (exit signs). `font` a
+## file in assets/fonts/ (Liberation Sans by default).
+func words(text: String, at: Vector3, b: Basis, size: float, color: Color, glow := 0.0, grp := "Detail", layers := LAYER_BOTH, font := "LiberationSans-Regular.ttf") -> Label3D:
 	var l := Label3D.new()
 	l.name = ("Words_" + text).validate_node_name().replace(" ", "_").left(40)
 	l.text = text
 	l.transform = Transform3D(b, at)
-	l.font = load("res://assets/fonts/LiberationSans-Regular.ttf")
+	l.font = load("res://assets/fonts/" + font)
 	l.font_size = 32
 	l.pixel_size = size / 32.0
 	l.outline_size = 0
@@ -351,6 +487,8 @@ func finish() -> void:
 	for key: String in _buckets:
 		var b: Array = _buckets[key]
 		var st: SurfaceTool = b[0]
+		# Shared corners stored once: the same triangles, a smaller file.
+		st.index()
 		var mesh := st.commit()
 		var file := dir + "meshes/%s_%s_%d%s.res" % [b[1], String(b[2]).to_lower(), b[3], "_s" if b[4] else ""]
 		ResourceSaver.save(mesh, file)
