@@ -68,10 +68,8 @@ static func build(kit) -> Transform3D:
 	kit.pad("Pad_PistolA", Weapons.PISTOL, Vector3(-21.5, 0, -11.5))
 	kit.pad("Pad_PistolB", Weapons.PISTOL, Vector3(21.5, TOP, 11))
 
-	kit.light("UnderOverpass", Vector3(-5, 2.8, -8.5), Color(1.0, 0.7, 0.3), 9.0)
-	kit.light("Alley", Vector3(0.75, 3.0, 8), Color(0.3, 0.85, 1.0), 8.0)
-	kit.light("Pocket", Vector3(-15, 2.5, -3.5), Color(1.0, 0.4, 0.6), 7.0)
-	kit.light("SlideFoot", Vector3(-10, 2.5, 13), Color(0.6, 0.4, 1.0), 9.0)
+	# The lamps are part of its dressing (terrace_deco.gd): each one has a
+	# fixture to come from.
 
 	kit.label("PULPIT", Vector3(-2.5, 8.5, 0))
 	kit.label("OVERPASS", Vector3(-4.5, 6, -8.5))

@@ -9,3 +9,5 @@ shader_parameter/color = Color(1, 0.1, 0.08, 1)
 shader_parameter/energy = 3.0
 shader_parameter/flicker = null
 shader_parameter/blink_period = 1.6
+shader_parameter/blink_duty = null
+shader_parameter/blink_offset = null

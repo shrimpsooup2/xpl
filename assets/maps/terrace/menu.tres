@@ -1,0 +1,13 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/lightbox.gdshader" id="1_u46ir"]
+[ext_resource type="Texture2D" path="res://assets/textures/terrace/menu.png" id="2_tuic1"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_u46ir")
+shader_parameter/picture = ExtResource("2_tuic1")
+shader_parameter/tint = null
+shader_parameter/energy = 1.1
+shader_parameter/size = Vector2(4, 0.7)
+shader_parameter/flicker = null

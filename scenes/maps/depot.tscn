@@ -22,6 +22,7 @@ shader_parameter/sun_color = null
 shader_parameter/sun_size = null
 shader_parameter/halo = null
 shader_parameter/stars = null
+shader_parameter/eclipse = null
 
 [sub_resource type="Sky" id="Sky_0wjag"]
 sky_material = SubResource("ShaderMaterial_2q6st")
@@ -41,12 +42,12 @@ fog_light_color = Color(0.7, 0.44, 0.58, 1)
 fog_density = 0.005
 fog_sky_affect = 0.25
 
-[node name="Depot" type="Node3D" unique_id=1179691330]
+[node name="Depot" type="Node3D" unique_id=868370941]
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=2026117228]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1534540756]
 environment = SubResource("Environment_h01xj")
 
-[node name="Sun" type="DirectionalLight3D" parent="." unique_id=19033189]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=443652683]
 transform = Transform3D(0.81915206, -0.35312894, 0.45198444, 0, 0.7880108, 0.6156615, -0.57357645, -0.5043204, 0.64550066, 0, 0, 0)
 light_color = Color(1, 0.84, 0.7, 1)
 light_energy = 1.15
@@ -54,9 +55,9 @@ shadow_enabled = true
 directional_shadow_mode = 0
 directional_shadow_max_distance = 130.0
 
-[node name="Lights" type="Node3D" parent="." unique_id=713227866]
+[node name="Lights" type="Node3D" parent="." unique_id=564688369]
 
-[node name="Gantry" type="OmniLight3D" parent="Lights" unique_id=1058898522]
+[node name="Gantry" type="OmniLight3D" parent="Lights" unique_id=385381807]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 13, 0)
 light_color = Color(1, 0.75, 0.35, 1)
 light_energy = 2.2
@@ -64,7 +65,7 @@ light_specular = 0.2
 omni_range = 18.0
 omni_attenuation = 0.6
 
-[node name="BackRoom_Red" type="OmniLight3D" parent="Lights" unique_id=2091017836]
+[node name="BackRoom_Red" type="OmniLight3D" parent="Lights" unique_id=1111108716]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -78, 3.5, 30)
 light_color = Color(1, 0.35, 0.3, 1)
 light_energy = 2.2
@@ -72,7 +73,7 @@ light_specular = 0.2
 omni_range = 16.0
 omni_attenuation = 0.6
 
-[node name="Hall_Red" type="OmniLight3D" parent="Lights" unique_id=1847507836]
+[node name="Hall_Red" type="OmniLight3D" parent="Lights" unique_id=1641695592]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -64, 8, 29)
 light_color = Color(1, 0.8, 0.5, 1)
 light_energy = 2.2
@@ -80,14 +81,14 @@ light_specular = 0.2
 omni_range = 18.0
 omni_attenuation = 0.6
 
-[node name="OpenCar_Red" type="OmniLight3D" parent="Lights" unique_id=727773792]
+[node name="OpenCar_Red" type="OmniLight3D" parent="Lights" unique_id=56933294]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, 2.6, -10)
 light_color = Color(1, 0.5, 0.7, 1)
 light_energy = 2.2
 light_specular = 0.2
 omni_attenuation = 0.6
 
-[node name="BackRoom_Blue" type="OmniLight3D" parent="Lights" unique_id=2066219988]
+[node name="BackRoom_Blue" type="OmniLight3D" parent="Lights" unique_id=677924175]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 78, 3.5, -30)
 light_color = Color(0.35, 0.55, 1, 1)
 light_energy = 2.2
@@ -95,7 +96,7 @@ light_specular = 0.2
 omni_range = 16.0
 omni_attenuation = 0.6
 
-[node name="Hall_Blue" type="OmniLight3D" parent="Lights" unique_id=711866486]
+[node name="Hall_Blue" type="OmniLight3D" parent="Lights" unique_id=2043629258]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 64, 8, -29)
 light_color = Color(1, 0.8, 0.5, 1)
 light_energy = 2.2
@@ -103,1066 +104,1066 @@ light_specular = 0.2
 omni_range = 18.0
 omni_attenuation = 0.6
 
-[node name="OpenCar_Blue" type="OmniLight3D" parent="Lights" unique_id=648025916]
+[node name="OpenCar_Blue" type="OmniLight3D" parent="Lights" unique_id=844070603]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 2.6, 10)
 light_color = Color(1, 0.5, 0.7, 1)
 light_energy = 2.2
 light_specular = 0.2
 omni_attenuation = 0.6
 
-[node name="Geometry" type="Node3D" parent="." unique_id=1944232729]
+[node name="Geometry" type="Node3D" parent="." unique_id=1079768999]
 
-[node name="Ground" type="StaticBody3D" parent="Geometry" unique_id=2086249086]
+[node name="Ground" type="StaticBody3D" parent="Geometry" unique_id=2010397155]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -5.25, 0)
 script = ExtResource("2_ibnna")
 size = Vector3(168, 9.5, 104)
 kind = 0
 
-[node name="GroundFloor" type="StaticBody3D" parent="Geometry" unique_id=418620827]
+[node name="GroundFloor" type="StaticBody3D" parent="Geometry" unique_id=1723369904]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
 script = ExtResource("2_ibnna")
 size = Vector3(168, 0.5, 104)
 kind = 0
 
-[node name="BoundaryN" type="StaticBody3D" parent="Geometry" unique_id=997775333]
+[node name="BoundaryN" type="StaticBody3D" parent="Geometry" unique_id=984788864]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, -52.25)
 script = ExtResource("2_ibnna")
 size = Vector3(169, 14, 0.5)
 
-[node name="BoundaryS" type="StaticBody3D" parent="Geometry" unique_id=1515855843]
+[node name="BoundaryS" type="StaticBody3D" parent="Geometry" unique_id=1029347211]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7, 52.25)
 script = ExtResource("2_ibnna")
 size = Vector3(169, 14, 0.5)
 
-[node name="BoundaryW" type="StaticBody3D" parent="Geometry" unique_id=1563236217]
+[node name="BoundaryW" type="StaticBody3D" parent="Geometry" unique_id=323688460]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -84.25, 7, 0)
 script = ExtResource("2_ibnna")
 size = Vector3(0.5, 14, 104)
 
-[node name="BoundaryE" type="StaticBody3D" parent="Geometry" unique_id=1118882528]
+[node name="BoundaryE" type="StaticBody3D" parent="Geometry" unique_id=1837694822]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 84.25, 7, 0)
 script = ExtResource("2_ibnna")
 size = Vector3(0.5, 14, 104)
 
-[node name="GantryDeck" type="StaticBody3D" parent="Geometry" unique_id=1142652419]
+[node name="GantryDeck" type="StaticBody3D" parent="Geometry" unique_id=1133864351]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8.75, 0)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 0.5, 100)
 kind = 0
 
-[node name="GantryLeg_-1_-1" type="StaticBody3D" parent="Geometry" unique_id=519713839]
+[node name="GantryLeg_-1_-1" type="StaticBody3D" parent="Geometry" unique_id=89664294]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.4, 4.25, -48)
 script = ExtResource("2_ibnna")
 size = Vector3(1.2, 8.5, 4)
 kind = 5
 
-[node name="GantryLeg_-1_1" type="StaticBody3D" parent="Geometry" unique_id=671605215]
+[node name="GantryLeg_-1_1" type="StaticBody3D" parent="Geometry" unique_id=1680008000]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.4, 4.25, 48)
 script = ExtResource("2_ibnna")
 size = Vector3(1.2, 8.5, 4)
 kind = 5
 
-[node name="GantryLeg_1_-1" type="StaticBody3D" parent="Geometry" unique_id=1227116796]
+[node name="GantryLeg_1_-1" type="StaticBody3D" parent="Geometry" unique_id=32461799]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4, 4.25, -48)
 script = ExtResource("2_ibnna")
 size = Vector3(1.2, 8.5, 4)
 kind = 5
 
-[node name="GantryLeg_1_1" type="StaticBody3D" parent="Geometry" unique_id=549825344]
+[node name="GantryLeg_1_1" type="StaticBody3D" parent="Geometry" unique_id=277987030]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.4, 4.25, 48)
 script = ExtResource("2_ibnna")
 size = Vector3(1.2, 8.5, 4)
 kind = 5
 
-[node name="GantryRailE1" type="StaticBody3D" parent="Geometry" unique_id=1796570838]
+[node name="GantryRailE1" type="StaticBody3D" parent="Geometry" unique_id=462936007]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.85, 9.5, -14.5)
 script = ExtResource("2_ibnna")
 size = Vector3(0.29999995, 1, 65)
 kind = 3
 
-[node name="GantryRailE2" type="StaticBody3D" parent="Geometry" unique_id=136504889]
+[node name="GantryRailE2" type="StaticBody3D" parent="Geometry" unique_id=1813043274]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2.85, 9.5, 36.5)
 script = ExtResource("2_ibnna")
 size = Vector3(0.29999995, 1, 27)
 kind = 3
 
-[node name="GantryRailW1" type="StaticBody3D" parent="Geometry" unique_id=654984107]
+[node name="GantryRailW1" type="StaticBody3D" parent="Geometry" unique_id=708500220]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.85, 9.5, -36.5)
 script = ExtResource("2_ibnna")
 size = Vector3(0.29999995, 1, 27)
 kind = 3
 
-[node name="GantryRailW2" type="StaticBody3D" parent="Geometry" unique_id=1283906822]
+[node name="GantryRailW2" type="StaticBody3D" parent="Geometry" unique_id=885091535]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.85, 9.5, 14.5)
 script = ExtResource("2_ibnna")
 size = Vector3(0.29999995, 1, 65)
 kind = 3
 
-[node name="Trolley" type="StaticBody3D" parent="Geometry" unique_id=1780048114]
+[node name="Trolley" type="StaticBody3D" parent="Geometry" unique_id=475170684]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 10, 0)
 script = ExtResource("2_ibnna")
 size = Vector3(4, 2, 6)
 kind = 5
 
-[node name="WarehouseFront_Red_0" type="StaticBody3D" parent="Geometry" unique_id=270605504]
+[node name="WarehouseFront_Red_0" type="StaticBody3D" parent="Geometry" unique_id=865009]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, 2.5, 46)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 5, 12)
 
-[node name="WarehouseFront_Red_1" type="StaticBody3D" parent="Geometry" unique_id=528424178]
+[node name="WarehouseFront_Red_1" type="StaticBody3D" parent="Geometry" unique_id=1263814167]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, 2.5, 28)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 5, 12)
 
-[node name="WarehouseFront_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1861822823]
+[node name="WarehouseFront_Red_2" type="StaticBody3D" parent="Geometry" unique_id=484014484]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, 2.5, 11)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 5, 10)
 
-[node name="WarehouseFront_Red_3" type="StaticBody3D" parent="Geometry" unique_id=1308027337]
+[node name="WarehouseFront_Red_3" type="StaticBody3D" parent="Geometry" unique_id=469710672]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, 5.6, 29)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 1.1999998, 46)
 
-[node name="WarehouseFront_Red_4" type="StaticBody3D" parent="Geometry" unique_id=1349818094]
+[node name="WarehouseFront_Red_4" type="StaticBody3D" parent="Geometry" unique_id=924633933]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, 6.7999997, 49.5)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 1.1999998, 5)
 
-[node name="WarehouseFront_Red_5" type="StaticBody3D" parent="Geometry" unique_id=1567316088]
+[node name="WarehouseFront_Red_5" type="StaticBody3D" parent="Geometry" unique_id=562610271]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, 6.7999997, 37.5)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 1.1999998, 11)
 
-[node name="WarehouseFront_Red_6" type="StaticBody3D" parent="Geometry" unique_id=1988960329]
+[node name="WarehouseFront_Red_6" type="StaticBody3D" parent="Geometry" unique_id=765661642]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, 6.7999997, 20.5)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 1.1999998, 15)
 
-[node name="WarehouseFront_Red_7" type="StaticBody3D" parent="Geometry" unique_id=671968246]
+[node name="WarehouseFront_Red_7" type="StaticBody3D" parent="Geometry" unique_id=1753037246]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, 6.7999997, 7.5)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 1.1999998, 3)
 
-[node name="WarehouseFront_Red_8" type="StaticBody3D" parent="Geometry" unique_id=1453408524]
+[node name="WarehouseFront_Red_8" type="StaticBody3D" parent="Geometry" unique_id=218813838]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58, 8.7, 29)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 2.6000004, 46)
 
-[node name="WarehouseSouth_Red_0" type="StaticBody3D" parent="Geometry" unique_id=2042424691]
+[node name="WarehouseSouth_Red_0" type="StaticBody3D" parent="Geometry" unique_id=983673556]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -63, 1.5, 6)
 script = ExtResource("2_ibnna")
 size = Vector3(10, 3, 0.6)
 
-[node name="WarehouseSouth_Red_1" type="StaticBody3D" parent="Geometry" unique_id=1705849178]
+[node name="WarehouseSouth_Red_1" type="StaticBody3D" parent="Geometry" unique_id=1633968517]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -73, 1.5, 6)
 script = ExtResource("2_ibnna")
 size = Vector3(4, 3, 0.6)
 
-[node name="WarehouseSouth_Red_2" type="StaticBody3D" parent="Geometry" unique_id=791351245]
+[node name="WarehouseSouth_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1268404957]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80.7, 1.5, 6)
 script = ExtResource("2_ibnna")
 size = Vector3(6.6000004, 3, 0.6)
 
-[node name="WarehouseSouth_Red_3" type="StaticBody3D" parent="Geometry" unique_id=1780051774]
+[node name="WarehouseSouth_Red_3" type="StaticBody3D" parent="Geometry" unique_id=205809857]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -63, 3.5, 6)
 script = ExtResource("2_ibnna")
 size = Vector3(10, 1, 0.6)
 
-[node name="WarehouseSouth_Red_4" type="StaticBody3D" parent="Geometry" unique_id=814789150]
+[node name="WarehouseSouth_Red_4" type="StaticBody3D" parent="Geometry" unique_id=1498280990]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -77.5, 3.5, 6)
 script = ExtResource("2_ibnna")
 size = Vector3(13, 1, 0.6)
 
-[node name="WarehouseSouth_Red_5" type="StaticBody3D" parent="Geometry" unique_id=351547962]
+[node name="WarehouseSouth_Red_5" type="StaticBody3D" parent="Geometry" unique_id=1973220875]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -71, 7, 6)
 script = ExtResource("2_ibnna")
 size = Vector3(26, 6, 0.6)
 
-[node name="BackRoom_Red_0" type="StaticBody3D" parent="Geometry" unique_id=1139781597]
+[node name="BackRoom_Red_0" type="StaticBody3D" parent="Geometry" unique_id=723098007]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -72, 1.5, 51)
 script = ExtResource("2_ibnna")
 size = Vector3(0.4, 3, 2)
 
-[node name="BackRoom_Red_1" type="StaticBody3D" parent="Geometry" unique_id=867921302]
+[node name="BackRoom_Red_1" type="StaticBody3D" parent="Geometry" unique_id=199901528]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -72, 1.5, 39.3)
 script = ExtResource("2_ibnna")
 size = Vector3(0.4, 3, 16.6)
 
-[node name="BackRoom_Red_2" type="StaticBody3D" parent="Geometry" unique_id=604895929]
+[node name="BackRoom_Red_2" type="StaticBody3D" parent="Geometry" unique_id=413310560]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -72, 1.5, 20.3)
 script = ExtResource("2_ibnna")
 size = Vector3(0.4, 3, 16.6)
 
-[node name="BackRoom_Red_3" type="StaticBody3D" parent="Geometry" unique_id=1098555655]
+[node name="BackRoom_Red_3" type="StaticBody3D" parent="Geometry" unique_id=2097091563]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -72, 1.5, 7.799999)
 script = ExtResource("2_ibnna")
 size = Vector3(0.4, 3, 3.5999985)
 
-[node name="BackRoom_Red_4" type="StaticBody3D" parent="Geometry" unique_id=2125472220]
+[node name="BackRoom_Red_4" type="StaticBody3D" parent="Geometry" unique_id=1588837733]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -72, 3.75, 29)
 script = ExtResource("2_ibnna")
 size = Vector3(0.4, 1.5, 46)
 
-[node name="WarehouseRoof_Red_0" type="StaticBody3D" parent="Geometry" unique_id=937587903]
+[node name="WarehouseRoof_Red_0" type="StaticBody3D" parent="Geometry" unique_id=1108331095]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -71, 9.75, 14.5)
 script = ExtResource("2_ibnna")
 size = Vector3(26, 0.5, 17)
 kind = 0
 
-[node name="WarehouseRoof_Red_1" type="StaticBody3D" parent="Geometry" unique_id=988619926]
+[node name="WarehouseRoof_Red_1" type="StaticBody3D" parent="Geometry" unique_id=627336795]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -76.5, 9.75, 24.5)
 script = ExtResource("2_ibnna")
 size = Vector3(15, 0.5, 3)
 kind = 0
 
-[node name="WarehouseRoof_Red_2" type="StaticBody3D" parent="Geometry" unique_id=2074261834]
+[node name="WarehouseRoof_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1513193889]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -62, 9.75, 24.5)
 script = ExtResource("2_ibnna")
 size = Vector3(8, 0.5, 3)
 kind = 0
 
-[node name="WarehouseRoof_Red_3" type="StaticBody3D" parent="Geometry" unique_id=1873726904]
+[node name="WarehouseRoof_Red_3" type="StaticBody3D" parent="Geometry" unique_id=327065019]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -71, 9.75, 32.5)
 script = ExtResource("2_ibnna")
 size = Vector3(26, 0.5, 13)
 kind = 0
 
-[node name="WarehouseRoof_Red_4" type="StaticBody3D" parent="Geometry" unique_id=538454965]
+[node name="WarehouseRoof_Red_4" type="StaticBody3D" parent="Geometry" unique_id=1097907112]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -74, 9.75, 40.5)
 script = ExtResource("2_ibnna")
 size = Vector3(20, 0.5, 3)
 kind = 0
 
-[node name="WarehouseRoof_Red_5" type="StaticBody3D" parent="Geometry" unique_id=1322927926]
+[node name="WarehouseRoof_Red_5" type="StaticBody3D" parent="Geometry" unique_id=100390778]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -59.5, 9.75, 40.5)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.5, 3)
 kind = 0
 
-[node name="WarehouseRoof_Red_6" type="StaticBody3D" parent="Geometry" unique_id=1278417719]
+[node name="WarehouseRoof_Red_6" type="StaticBody3D" parent="Geometry" unique_id=944200550]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -71, 9.75, 47)
 script = ExtResource("2_ibnna")
 size = Vector3(26, 0.5, 10)
 kind = 0
 
-[node name="RoofParapet_Red" type="StaticBody3D" parent="Geometry" unique_id=832714882]
+[node name="RoofParapet_Red" type="StaticBody3D" parent="Geometry" unique_id=752524179]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58.2, 10.6, 29)
 script = ExtResource("2_ibnna")
 size = Vector3(0.40000153, 1.1999998, 46)
 kind = 3
 
-[node name="RoofRamp_Red" type="StaticBody3D" parent="Geometry" unique_id=93065687]
+[node name="RoofRamp_Red" type="StaticBody3D" parent="Geometry" unique_id=1759254018]
 transform = Transform3D(0, 0.4856429, 0.87415725, 0, 0.87415725, -0.4856429, -1, 0, 0, -69.14569, 4.737753, 3.5)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.6, 20.59126)
 kind = 2
 
-[node name="RoofLanding_Red" type="StaticBody3D" parent="Geometry" unique_id=1495678566]
+[node name="RoofLanding_Red" type="StaticBody3D" parent="Geometry" unique_id=1374063275]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -81, 9.75, 4)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 0.5, 4)
 kind = 0
 
-[node name="Mezzanine_Red" type="StaticBody3D" parent="Geometry" unique_id=199960783]
+[node name="Mezzanine_Red" type="StaticBody3D" parent="Geometry" unique_id=1655646190]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -62, 4.75, 29)
 script = ExtResource("2_ibnna")
 size = Vector3(8, 0.5, 46)
 kind = 0
 
-[node name="MezzLandingN_Red" type="StaticBody3D" parent="Geometry" unique_id=1128884742]
+[node name="MezzLandingN_Red" type="StaticBody3D" parent="Geometry" unique_id=770840866]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -68, 4.75, 49.5)
 script = ExtResource("2_ibnna")
 size = Vector3(4, 0.5, 5)
 kind = 0
 
-[node name="MezzLandingS_Red" type="StaticBody3D" parent="Geometry" unique_id=435801211]
+[node name="MezzLandingS_Red" type="StaticBody3D" parent="Geometry" unique_id=1596188899]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -68, 4.75, 7.5)
 script = ExtResource("2_ibnna")
 size = Vector3(4, 0.5, 3)
 kind = 0
 
-[node name="MezzStairN_Red" type="StaticBody3D" parent="Geometry" unique_id=922898129]
+[node name="MezzStairN_Red" type="StaticBody3D" parent="Geometry" unique_id=352425213]
 transform = Transform3D(-1, 0, 0, 0, 0.8944272, -0.4472136, 0, -0.4472136, -0.8944272, -68, 2.2316718, 42.134163)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.6, 11.18034)
 kind = 2
 
-[node name="MezzStairS_Red" type="StaticBody3D" parent="Geometry" unique_id=361150166]
+[node name="MezzStairS_Red" type="StaticBody3D" parent="Geometry" unique_id=264382983]
 transform = Transform3D(1, 0, 0, 0, 0.8944272, -0.4472136, 0, 0.4472136, 0.8944272, -68, 2.2316718, 13.865836)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.6, 11.18034)
 kind = 2
 
-[node name="MezzRailing_Red" type="StaticBody3D" parent="Geometry" unique_id=2007586522]
+[node name="MezzRailing_Red" type="StaticBody3D" parent="Geometry" unique_id=1603873429]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -65.85, 5.5, 28)
 script = ExtResource("2_ibnna")
 size = Vector3(0.30000305, 1, 38)
 kind = 3
 
-[node name="HallCrates1_Red" type="StaticBody3D" parent="Geometry" unique_id=1942314744]
+[node name="HallCrates1_Red" type="StaticBody3D" parent="Geometry" unique_id=1220184609]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -62.5, 1, 29.5)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 2, 3)
 kind = 3
 
-[node name="HallCrates2_Red" type="StaticBody3D" parent="Geometry" unique_id=1529963455]
+[node name="HallCrates2_Red" type="StaticBody3D" parent="Geometry" unique_id=1400459175]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -64, 0.6, 14)
 script = ExtResource("2_ibnna")
 size = Vector3(2, 1.2, 4)
 kind = 3
 
-[node name="BackRoomCrate_Red" type="StaticBody3D" parent="Geometry" unique_id=1182727132]
+[node name="BackRoomCrate_Red" type="StaticBody3D" parent="Geometry" unique_id=497735959]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -77, 0.6, 28)
 script = ExtResource("2_ibnna")
 size = Vector3(2, 1.2, 4)
 kind = 3
 
-[node name="Container1_Red" type="StaticBody3D" parent="Geometry" unique_id=1203155064]
+[node name="Container1_Red" type="StaticBody3D" parent="Geometry" unique_id=289258157]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -65, 1.3, -5.25)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 2.6, 2.5)
 kind = 4
 
-[node name="Container2_Red" type="StaticBody3D" parent="Geometry" unique_id=1507259014]
+[node name="Container2_Red" type="StaticBody3D" parent="Geometry" unique_id=794698324]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -77, 1.3, -11.25)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 2.6, 2.5)
 kind = 4
 
-[node name="Container2Top_Red" type="StaticBody3D" parent="Geometry" unique_id=1194544651]
+[node name="Container2Top_Red" type="StaticBody3D" parent="Geometry" unique_id=1557449996]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -77, 3.8999999, -11.25)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 2.6, 2.5)
 kind = 4
 
-[node name="Container3_Red" type="StaticBody3D" parent="Geometry" unique_id=574931085]
+[node name="Container3_Red" type="StaticBody3D" parent="Geometry" unique_id=1994375412]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -63, 1.3, -25.25)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 2.6, 2.5)
 kind = 4
 
-[node name="Container4_Red" type="StaticBody3D" parent="Geometry" unique_id=439403055]
+[node name="Container4_Red" type="StaticBody3D" parent="Geometry" unique_id=615587079]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -73, 1.3, -35.25)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 2.6, 2.5)
 kind = 4
 
-[node name="Container5_Red" type="StaticBody3D" parent="Geometry" unique_id=1553942370]
+[node name="Container5_Red" type="StaticBody3D" parent="Geometry" unique_id=342137668]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -81, 1.3, -43.25)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 2.6, 2.5)
 kind = 4
 
-[node name="Truck_Red" type="StaticBody3D" parent="Geometry" unique_id=2008468956]
+[node name="Truck_Red" type="StaticBody3D" parent="Geometry" unique_id=1392987010]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -79, 1.5, -25.5)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 3, 3)
 kind = 5
 
-[node name="Boxcar_6_-30_Red" type="StaticBody3D" parent="Geometry" unique_id=927002010]
+[node name="Boxcar_6_-30_Red" type="StaticBody3D" parent="Geometry" unique_id=5293996]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.8, 30)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 3.6, 3)
 kind = 5
 
-[node name="Boxcar_22_-30_Red" type="StaticBody3D" parent="Geometry" unique_id=152568653]
+[node name="Boxcar_22_-30_Red" type="StaticBody3D" parent="Geometry" unique_id=969647241]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 1.8, 30)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 3.6, 3)
 kind = 5
 
-[node name="Boxcar_12_-10_Red" type="StaticBody3D" parent="Geometry" unique_id=1429211685]
+[node name="Boxcar_12_-10_Red" type="StaticBody3D" parent="Geometry" unique_id=639856182]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 1.8, 10)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 3.6, 3)
 kind = 5
 
-[node name="Boxcar_40_-10_Red" type="StaticBody3D" parent="Geometry" unique_id=1292828443]
+[node name="Boxcar_40_-10_Red" type="StaticBody3D" parent="Geometry" unique_id=733696509]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -46, 3.6, 10)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 7.2, 3)
 kind = 5
 
-[node name="Boxcar_2_10_Red" type="StaticBody3D" parent="Geometry" unique_id=913420154]
+[node name="Boxcar_2_10_Red" type="StaticBody3D" parent="Geometry" unique_id=1897181465]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -8, 1.8, -10)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 3.6, 3)
 kind = 5
 
-[node name="Boxcar_16_30_Red" type="StaticBody3D" parent="Geometry" unique_id=278366177]
+[node name="Boxcar_16_30_Red" type="StaticBody3D" parent="Geometry" unique_id=1075816989]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 1.8, -30)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 3.6, 3)
 kind = 5
 
-[node name="Boxcar_44_30_Red" type="StaticBody3D" parent="Geometry" unique_id=1526245326]
+[node name="Boxcar_44_30_Red" type="StaticBody3D" parent="Geometry" unique_id=2044651923]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 3.6, -30)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 7.2, 3)
 kind = 5
 
-[node name="CarCrate_15_-8_Red" type="StaticBody3D" parent="Geometry" unique_id=749176793]
+[node name="CarCrate_15_-8_Red" type="StaticBody3D" parent="Geometry" unique_id=1588523107]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 1, 7.5)
 script = ExtResource("2_ibnna")
 size = Vector3(2, 2, 2)
 kind = 3
 
-[node name="CarCrate_23_31_Red" type="StaticBody3D" parent="Geometry" unique_id=2008164337]
+[node name="CarCrate_23_31_Red" type="StaticBody3D" parent="Geometry" unique_id=386603192]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 1, -32.5)
 script = ExtResource("2_ibnna")
 size = Vector3(2, 2, 2)
 kind = 3
 
-[node name="CarCrate_9_-28_Red" type="StaticBody3D" parent="Geometry" unique_id=1327125568]
+[node name="CarCrate_9_-28_Red" type="StaticBody3D" parent="Geometry" unique_id=736950674]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 1, 27.5)
 script = ExtResource("2_ibnna")
 size = Vector3(2, 2, 2)
 kind = 3
 
-[node name="OpenCarN_Red_0" type="StaticBody3D" parent="Geometry" unique_id=450418833]
+[node name="OpenCarN_Red_0" type="StaticBody3D" parent="Geometry" unique_id=763499255]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 1.3, -8.5)
 script = ExtResource("2_ibnna")
 size = Vector3(5, 2.6, 0.3)
 kind = 5
 
-[node name="OpenCarN_Red_1" type="StaticBody3D" parent="Geometry" unique_id=1661092347]
+[node name="OpenCarN_Red_1" type="StaticBody3D" parent="Geometry" unique_id=865199347]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -39.5, 1.3, -8.5)
 script = ExtResource("2_ibnna")
 size = Vector3(5, 2.6, 0.3)
 kind = 5
 
-[node name="OpenCarN_Red_2" type="StaticBody3D" parent="Geometry" unique_id=409213155]
+[node name="OpenCarN_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1753804919]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, 2.9499998, -8.5)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 0.70000005, 0.3)
 kind = 5
 
-[node name="OpenCarS_Red_0" type="StaticBody3D" parent="Geometry" unique_id=1645468334]
+[node name="OpenCarS_Red_0" type="StaticBody3D" parent="Geometry" unique_id=1393664505]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32.5, 1.3, -11.5)
 script = ExtResource("2_ibnna")
 size = Vector3(5, 2.6, 0.3)
 kind = 5
 
-[node name="OpenCarS_Red_1" type="StaticBody3D" parent="Geometry" unique_id=68979454]
+[node name="OpenCarS_Red_1" type="StaticBody3D" parent="Geometry" unique_id=2111139789]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -39.5, 1.3, -11.5)
 script = ExtResource("2_ibnna")
 size = Vector3(5, 2.6, 0.3)
 kind = 5
 
-[node name="OpenCarS_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1110092951]
+[node name="OpenCarS_Red_2" type="StaticBody3D" parent="Geometry" unique_id=1318276266]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, 2.9499998, -11.5)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 0.70000005, 0.3)
 kind = 5
 
-[node name="OpenCarW_Red" type="StaticBody3D" parent="Geometry" unique_id=574189196]
+[node name="OpenCarW_Red" type="StaticBody3D" parent="Geometry" unique_id=1558575487]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 1.65, -10)
 script = ExtResource("2_ibnna")
 size = Vector3(0.3, 3.3, 3)
 kind = 5
 
-[node name="OpenCarE_Red" type="StaticBody3D" parent="Geometry" unique_id=109330789]
+[node name="OpenCarE_Red" type="StaticBody3D" parent="Geometry" unique_id=1252811746]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -42, 1.65, -10)
 script = ExtResource("2_ibnna")
 size = Vector3(0.3, 3.3, 3)
 kind = 5
 
-[node name="OpenCarRoof_Red" type="StaticBody3D" parent="Geometry" unique_id=452188151]
+[node name="OpenCarRoof_Red" type="StaticBody3D" parent="Geometry" unique_id=1912034411]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, 3.4499998, -10)
 script = ExtResource("2_ibnna")
 size = Vector3(12.300001, 0.29999995, 3.2999992)
 kind = 5
 
-[node name="GantryRamp_Red" type="StaticBody3D" parent="Geometry" unique_id=1052933959]
+[node name="GantryRamp_Red" type="StaticBody3D" parent="Geometry" unique_id=1150666626]
 transform = Transform3D(0, -0.46788773, -0.88378793, 0, 0.88378793, -0.46788773, 1, 0, 0, -11.359633, 4.2348638, 48.5)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.6, 19.235384)
 kind = 2
 
-[node name="ContainerStair_0_Red" type="StaticBody3D" parent="Geometry" unique_id=1488445311]
+[node name="ContainerStair_0_Red" type="StaticBody3D" parent="Geometry" unique_id=1840933458]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1.3, -16.75)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 2.6, 2.5)
 kind = 4
 
-[node name="ContainerStair_1_Red" type="StaticBody3D" parent="Geometry" unique_id=379891418]
+[node name="ContainerStair_1_Red" type="StaticBody3D" parent="Geometry" unique_id=96937173]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 2.6, -19.25)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 5.2, 2.5)
 kind = 4
 
-[node name="ContainerStair_2_Red" type="StaticBody3D" parent="Geometry" unique_id=648535791]
+[node name="ContainerStair_2_Red" type="StaticBody3D" parent="Geometry" unique_id=702077027]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 3.9, -21.75)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 7.8, 2.5)
 kind = 4
 
-[node name="Footbridge_Red" type="StaticBody3D" parent="Geometry" unique_id=68730507]
+[node name="Footbridge_Red" type="StaticBody3D" parent="Geometry" unique_id=2084802309]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 6.75, 3.5)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.5, 83)
 kind = 0
 
-[node name="FootbridgeStair_Red" type="StaticBody3D" parent="Geometry" unique_id=1912487551]
+[node name="FootbridgeStair_Red" type="StaticBody3D" parent="Geometry" unique_id=944760237]
 transform = Transform3D(0, -0.48860338, -0.872506, 0, 0.872506, -0.48860338, 1, 0, 0, -37.60342, 3.238248, 43.5)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.6, 14.326549)
 kind = 2
 
-[node name="FootbridgeToSignal_Red" type="StaticBody3D" parent="Geometry" unique_id=831835828]
+[node name="FootbridgeToSignal_Red" type="StaticBody3D" parent="Geometry" unique_id=411688222]
 transform = Transform3D(1, 0, 0, 0, 0.8944272, -0.4472136, 0, 0.4472136, 0.8944272, -30, 8.231672, -41.134163)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.6, 6.708204)
 kind = 2
 
-[node name="FootbridgeRail_-40_28_Red" type="StaticBody3D" parent="Geometry" unique_id=1122575852]
+[node name="FootbridgeRail_-40_28_Red" type="StaticBody3D" parent="Geometry" unique_id=11688967]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.65, 7.5, 30)
 script = ExtResource("2_ibnna")
 size = Vector3(0.29999924, 1, 20)
 kind = 3
 
-[node name="FootbridgeRail_-40_31_Red" type="StaticBody3D" parent="Geometry" unique_id=745869940]
+[node name="FootbridgeRail_-40_31_Red" type="StaticBody3D" parent="Geometry" unique_id=1237262516]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.35, 7.5, 30)
 script = ExtResource("2_ibnna")
 size = Vector3(0.29999924, 1, 20)
 kind = 3
 
-[node name="FootbridgeRail_-14_28_Red" type="StaticBody3D" parent="Geometry" unique_id=237538825]
+[node name="FootbridgeRail_-14_28_Red" type="StaticBody3D" parent="Geometry" unique_id=1953976479]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.65, 7.5, 4)
 script = ExtResource("2_ibnna")
 size = Vector3(0.29999924, 1, 20)
 kind = 3
 
-[node name="FootbridgeRail_-14_31_Red" type="StaticBody3D" parent="Geometry" unique_id=55303713]
+[node name="FootbridgeRail_-14_31_Red" type="StaticBody3D" parent="Geometry" unique_id=1577302591]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.35, 7.5, 4)
 script = ExtResource("2_ibnna")
 size = Vector3(0.29999924, 1, 20)
 kind = 3
 
-[node name="FootbridgeRail_12_28_Red" type="StaticBody3D" parent="Geometry" unique_id=567339005]
+[node name="FootbridgeRail_12_28_Red" type="StaticBody3D" parent="Geometry" unique_id=1420794006]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.65, 7.5, -22)
 script = ExtResource("2_ibnna")
 size = Vector3(0.29999924, 1, 20)
 kind = 3
 
-[node name="FootbridgeRail_12_31_Red" type="StaticBody3D" parent="Geometry" unique_id=398716160]
+[node name="FootbridgeRail_12_31_Red" type="StaticBody3D" parent="Geometry" unique_id=930812306]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.35, 7.5, -22)
 script = ExtResource("2_ibnna")
 size = Vector3(0.29999924, 1, 20)
 kind = 3
 
-[node name="SignalTower_Red" type="StaticBody3D" parent="Geometry" unique_id=266552559]
+[node name="SignalTower_Red" type="StaticBody3D" parent="Geometry" unique_id=1590721664]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 5, -47.5)
 script = ExtResource("2_ibnna")
 size = Vector3(4, 10, 7)
 kind = 5
 
-[node name="SignalRamp_Red" type="StaticBody3D" parent="Geometry" unique_id=773821687]
+[node name="SignalRamp_Red" type="StaticBody3D" parent="Geometry" unique_id=1443916670]
 transform = Transform3D(0, -0.5812382, -0.81373346, 0, 0.81373346, -0.5812382, 1, 0, 0, -38.82563, 4.75588, -49.5)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.6, 17.20465)
 kind = 2
 
-[node name="SignalParapetN1_Red" type="StaticBody3D" parent="Geometry" unique_id=453489273]
+[node name="SignalParapetN1_Red" type="StaticBody3D" parent="Geometry" unique_id=2050877567]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.25, 10.6, -44.2)
 script = ExtResource("2_ibnna")
 size = Vector3(0.5, 1.1999998, 0.40000153)
 kind = 3
 
-[node name="SignalParapetN2_Red" type="StaticBody3D" parent="Geometry" unique_id=607049951]
+[node name="SignalParapetN2_Red" type="StaticBody3D" parent="Geometry" unique_id=232565168]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.75, 10.6, -44.2)
 script = ExtResource("2_ibnna")
 size = Vector3(0.5, 1.1999998, 0.40000153)
 kind = 3
 
-[node name="SignalParapetW_Red" type="StaticBody3D" parent="Geometry" unique_id=1265910537]
+[node name="SignalParapetW_Red" type="StaticBody3D" parent="Geometry" unique_id=1490930782]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.2, 10.6, -47.7)
 script = ExtResource("2_ibnna")
 size = Vector3(0.39999962, 1.1999998, 6.5999985)
 kind = 3
 
-[node name="WarehouseFront_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=1989243323]
+[node name="WarehouseFront_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=2144193295]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, 2.5, -46)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 5, 12)
 
-[node name="WarehouseFront_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=550245702]
+[node name="WarehouseFront_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=388077678]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, 2.5, -28)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 5, 12)
 
-[node name="WarehouseFront_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=1067736587]
+[node name="WarehouseFront_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=200971132]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, 2.5, -11)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 5, 10)
 
-[node name="WarehouseFront_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=1687868947]
+[node name="WarehouseFront_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=2069362539]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, 5.6, -29)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 1.1999998, 46)
 
-[node name="WarehouseFront_Blue_4" type="StaticBody3D" parent="Geometry" unique_id=1800885096]
+[node name="WarehouseFront_Blue_4" type="StaticBody3D" parent="Geometry" unique_id=272672913]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, 6.7999997, -49.5)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 1.1999998, 5)
 
-[node name="WarehouseFront_Blue_5" type="StaticBody3D" parent="Geometry" unique_id=1911728753]
+[node name="WarehouseFront_Blue_5" type="StaticBody3D" parent="Geometry" unique_id=1479916257]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, 6.7999997, -37.5)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 1.1999998, 11)
 
-[node name="WarehouseFront_Blue_6" type="StaticBody3D" parent="Geometry" unique_id=1988245468]
+[node name="WarehouseFront_Blue_6" type="StaticBody3D" parent="Geometry" unique_id=1511474011]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, 6.7999997, -20.5)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 1.1999998, 15)
 
-[node name="WarehouseFront_Blue_7" type="StaticBody3D" parent="Geometry" unique_id=1820567356]
+[node name="WarehouseFront_Blue_7" type="StaticBody3D" parent="Geometry" unique_id=108143595]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, 6.7999997, -7.5)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 1.1999998, 3)
 
-[node name="WarehouseFront_Blue_8" type="StaticBody3D" parent="Geometry" unique_id=487720774]
+[node name="WarehouseFront_Blue_8" type="StaticBody3D" parent="Geometry" unique_id=475648952]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58, 8.7, -29)
 script = ExtResource("2_ibnna")
 size = Vector3(0.6, 2.6000004, 46)
 
-[node name="WarehouseSouth_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=823332470]
+[node name="WarehouseSouth_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=904972515]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 63, 1.5, -6)
 script = ExtResource("2_ibnna")
 size = Vector3(10, 3, 0.6)
 
-[node name="WarehouseSouth_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1573741596]
+[node name="WarehouseSouth_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1054037526]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 73, 1.5, -6)
 script = ExtResource("2_ibnna")
 size = Vector3(4, 3, 0.6)
 
-[node name="WarehouseSouth_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=330295795]
+[node name="WarehouseSouth_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=72100697]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80.7, 1.5, -6)
 script = ExtResource("2_ibnna")
 size = Vector3(6.6000004, 3, 0.6)
 
-[node name="WarehouseSouth_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=330809491]
+[node name="WarehouseSouth_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=1673382719]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 63, 3.5, -6)
 script = ExtResource("2_ibnna")
 size = Vector3(10, 1, 0.6)
 
-[node name="WarehouseSouth_Blue_4" type="StaticBody3D" parent="Geometry" unique_id=1066025048]
+[node name="WarehouseSouth_Blue_4" type="StaticBody3D" parent="Geometry" unique_id=77186891]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 77.5, 3.5, -6)
 script = ExtResource("2_ibnna")
 size = Vector3(13, 1, 0.6)
 
-[node name="WarehouseSouth_Blue_5" type="StaticBody3D" parent="Geometry" unique_id=315198906]
+[node name="WarehouseSouth_Blue_5" type="StaticBody3D" parent="Geometry" unique_id=89099783]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 71, 7, -6)
 script = ExtResource("2_ibnna")
 size = Vector3(26, 6, 0.6)
 
-[node name="BackRoom_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=1094086178]
+[node name="BackRoom_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=184497615]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 72, 1.5, -51)
 script = ExtResource("2_ibnna")
 size = Vector3(0.4, 3, 2)
 
-[node name="BackRoom_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1878718013]
+[node name="BackRoom_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=834808405]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 72, 1.5, -39.3)
 script = ExtResource("2_ibnna")
 size = Vector3(0.4, 3, 16.6)
 
-[node name="BackRoom_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=1157805169]
+[node name="BackRoom_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=901952819]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 72, 1.5, -20.3)
 script = ExtResource("2_ibnna")
 size = Vector3(0.4, 3, 16.6)
 
-[node name="BackRoom_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=1546299148]
+[node name="BackRoom_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=1896477375]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 72, 1.5, -7.799999)
 script = ExtResource("2_ibnna")
 size = Vector3(0.4, 3, 3.5999985)
 
-[node name="BackRoom_Blue_4" type="StaticBody3D" parent="Geometry" unique_id=1110567448]
+[node name="BackRoom_Blue_4" type="StaticBody3D" parent="Geometry" unique_id=2049353475]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 72, 3.75, -29)
 script = ExtResource("2_ibnna")
 size = Vector3(0.4, 1.5, 46)
 
-[node name="WarehouseRoof_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=985880735]
+[node name="WarehouseRoof_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=1944127842]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 71, 9.75, -47)
 script = ExtResource("2_ibnna")
 size = Vector3(26, 0.5, 10)
 kind = 0
 
-[node name="WarehouseRoof_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=447487434]
+[node name="WarehouseRoof_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=950891574]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 59.5, 9.75, -40.5)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.5, 3)
 kind = 0
 
-[node name="WarehouseRoof_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=2102989540]
+[node name="WarehouseRoof_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=937137200]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 74, 9.75, -40.5)
 script = ExtResource("2_ibnna")
 size = Vector3(20, 0.5, 3)
 kind = 0
 
-[node name="WarehouseRoof_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=1309050578]
+[node name="WarehouseRoof_Blue_3" type="StaticBody3D" parent="Geometry" unique_id=1513602171]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 71, 9.75, -32.5)
 script = ExtResource("2_ibnna")
 size = Vector3(26, 0.5, 13)
 kind = 0
 
-[node name="WarehouseRoof_Blue_4" type="StaticBody3D" parent="Geometry" unique_id=1126370724]
+[node name="WarehouseRoof_Blue_4" type="StaticBody3D" parent="Geometry" unique_id=1956010470]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 62, 9.75, -24.5)
 script = ExtResource("2_ibnna")
 size = Vector3(8, 0.5, 3)
 kind = 0
 
-[node name="WarehouseRoof_Blue_5" type="StaticBody3D" parent="Geometry" unique_id=1938744329]
+[node name="WarehouseRoof_Blue_5" type="StaticBody3D" parent="Geometry" unique_id=1149390012]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 76.5, 9.75, -24.5)
 script = ExtResource("2_ibnna")
 size = Vector3(15, 0.5, 3)
 kind = 0
 
-[node name="WarehouseRoof_Blue_6" type="StaticBody3D" parent="Geometry" unique_id=802215152]
+[node name="WarehouseRoof_Blue_6" type="StaticBody3D" parent="Geometry" unique_id=55523460]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 71, 9.75, -14.5)
 script = ExtResource("2_ibnna")
 size = Vector3(26, 0.5, 17)
 kind = 0
 
-[node name="RoofParapet_Blue" type="StaticBody3D" parent="Geometry" unique_id=1183409435]
+[node name="RoofParapet_Blue" type="StaticBody3D" parent="Geometry" unique_id=1103727447]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 58.2, 10.6, -29)
 script = ExtResource("2_ibnna")
 size = Vector3(0.40000153, 1.1999998, 46)
 kind = 3
 
-[node name="RoofRamp_Blue" type="StaticBody3D" parent="Geometry" unique_id=1125042764]
+[node name="RoofRamp_Blue" type="StaticBody3D" parent="Geometry" unique_id=1374814170]
 transform = Transform3D(0, -0.4856429, -0.87415725, 0, 0.87415725, -0.4856429, 1, 0, 0, 69.14569, 4.737753, -3.5)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.6, 20.59126)
 kind = 2
 
-[node name="RoofLanding_Blue" type="StaticBody3D" parent="Geometry" unique_id=704412806]
+[node name="RoofLanding_Blue" type="StaticBody3D" parent="Geometry" unique_id=1068618118]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 81, 9.75, -4)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 0.5, 4)
 kind = 0
 
-[node name="Mezzanine_Blue" type="StaticBody3D" parent="Geometry" unique_id=1818258006]
+[node name="Mezzanine_Blue" type="StaticBody3D" parent="Geometry" unique_id=158837693]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 62, 4.75, -29)
 script = ExtResource("2_ibnna")
 size = Vector3(8, 0.5, 46)
 kind = 0
 
-[node name="MezzLandingN_Blue" type="StaticBody3D" parent="Geometry" unique_id=820864503]
+[node name="MezzLandingN_Blue" type="StaticBody3D" parent="Geometry" unique_id=143124650]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 68, 4.75, -49.5)
 script = ExtResource("2_ibnna")
 size = Vector3(4, 0.5, 5)
 kind = 0
 
-[node name="MezzLandingS_Blue" type="StaticBody3D" parent="Geometry" unique_id=1172213441]
+[node name="MezzLandingS_Blue" type="StaticBody3D" parent="Geometry" unique_id=986479223]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 68, 4.75, -7.5)
 script = ExtResource("2_ibnna")
 size = Vector3(4, 0.5, 3)
 kind = 0
 
-[node name="MezzStairN_Blue" type="StaticBody3D" parent="Geometry" unique_id=520712632]
+[node name="MezzStairN_Blue" type="StaticBody3D" parent="Geometry" unique_id=1234154658]
 transform = Transform3D(1, 0, 0, 0, 0.8944272, -0.4472136, 0, 0.4472136, 0.8944272, 68, 2.2316718, -42.134163)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.6, 11.18034)
 kind = 2
 
-[node name="MezzStairS_Blue" type="StaticBody3D" parent="Geometry" unique_id=410509588]
+[node name="MezzStairS_Blue" type="StaticBody3D" parent="Geometry" unique_id=1988872050]
 transform = Transform3D(-1, 0, 0, 0, 0.8944272, -0.4472136, 0, -0.4472136, -0.8944272, 68, 2.2316718, -13.865836)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.6, 11.18034)
 kind = 2
 
-[node name="MezzRailing_Blue" type="StaticBody3D" parent="Geometry" unique_id=1838752712]
+[node name="MezzRailing_Blue" type="StaticBody3D" parent="Geometry" unique_id=1262776798]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 65.85, 5.5, -28)
 script = ExtResource("2_ibnna")
 size = Vector3(0.30000305, 1, 38)
 kind = 3
 
-[node name="HallCrates1_Blue" type="StaticBody3D" parent="Geometry" unique_id=245943548]
+[node name="HallCrates1_Blue" type="StaticBody3D" parent="Geometry" unique_id=1002057153]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 62.5, 1, -29.5)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 2, 3)
 kind = 3
 
-[node name="HallCrates2_Blue" type="StaticBody3D" parent="Geometry" unique_id=1515209374]
+[node name="HallCrates2_Blue" type="StaticBody3D" parent="Geometry" unique_id=2132123462]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 64, 0.6, -14)
 script = ExtResource("2_ibnna")
 size = Vector3(2, 1.2, 4)
 kind = 3
 
-[node name="BackRoomCrate_Blue" type="StaticBody3D" parent="Geometry" unique_id=86340584]
+[node name="BackRoomCrate_Blue" type="StaticBody3D" parent="Geometry" unique_id=614996843]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 77, 0.6, -28)
 script = ExtResource("2_ibnna")
 size = Vector3(2, 1.2, 4)
 kind = 3
 
-[node name="Container1_Blue" type="StaticBody3D" parent="Geometry" unique_id=63429024]
+[node name="Container1_Blue" type="StaticBody3D" parent="Geometry" unique_id=950753719]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 65, 1.3, 5.25)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 2.6, 2.5)
 kind = 4
 
-[node name="Container2_Blue" type="StaticBody3D" parent="Geometry" unique_id=85526949]
+[node name="Container2_Blue" type="StaticBody3D" parent="Geometry" unique_id=1093032238]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 77, 1.3, 11.25)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 2.6, 2.5)
 kind = 4
 
-[node name="Container2Top_Blue" type="StaticBody3D" parent="Geometry" unique_id=1697055239]
+[node name="Container2Top_Blue" type="StaticBody3D" parent="Geometry" unique_id=660858909]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 77, 3.8999999, 11.25)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 2.6, 2.5)
 kind = 4
 
-[node name="Container3_Blue" type="StaticBody3D" parent="Geometry" unique_id=2011424389]
+[node name="Container3_Blue" type="StaticBody3D" parent="Geometry" unique_id=1649973761]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 63, 1.3, 25.25)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 2.6, 2.5)
 kind = 4
 
-[node name="Container4_Blue" type="StaticBody3D" parent="Geometry" unique_id=52003089]
+[node name="Container4_Blue" type="StaticBody3D" parent="Geometry" unique_id=699283214]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 73, 1.3, 35.25)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 2.6, 2.5)
 kind = 4
 
-[node name="Container5_Blue" type="StaticBody3D" parent="Geometry" unique_id=94834129]
+[node name="Container5_Blue" type="StaticBody3D" parent="Geometry" unique_id=386218287]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 81, 1.3, 43.25)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 2.6, 2.5)
 kind = 4
 
-[node name="Truck_Blue" type="StaticBody3D" parent="Geometry" unique_id=1970277263]
+[node name="Truck_Blue" type="StaticBody3D" parent="Geometry" unique_id=874505836]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 79, 1.5, 25.5)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 3, 3)
 kind = 5
 
-[node name="Boxcar_6_-30_Blue" type="StaticBody3D" parent="Geometry" unique_id=1719357350]
+[node name="Boxcar_6_-30_Blue" type="StaticBody3D" parent="Geometry" unique_id=2099556714]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12, 1.8, -30)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 3.6, 3)
 kind = 5
 
-[node name="Boxcar_22_-30_Blue" type="StaticBody3D" parent="Geometry" unique_id=1967875175]
+[node name="Boxcar_22_-30_Blue" type="StaticBody3D" parent="Geometry" unique_id=1422655417]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28, 1.8, -30)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 3.6, 3)
 kind = 5
 
-[node name="Boxcar_12_-10_Blue" type="StaticBody3D" parent="Geometry" unique_id=1008766755]
+[node name="Boxcar_12_-10_Blue" type="StaticBody3D" parent="Geometry" unique_id=844149184]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 1.8, -10)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 3.6, 3)
 kind = 5
 
-[node name="Boxcar_40_-10_Blue" type="StaticBody3D" parent="Geometry" unique_id=1845935707]
+[node name="Boxcar_40_-10_Blue" type="StaticBody3D" parent="Geometry" unique_id=660887474]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46, 3.6, -10)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 7.2, 3)
 kind = 5
 
-[node name="Boxcar_2_10_Blue" type="StaticBody3D" parent="Geometry" unique_id=473178442]
+[node name="Boxcar_2_10_Blue" type="StaticBody3D" parent="Geometry" unique_id=247087335]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 8, 1.8, 10)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 3.6, 3)
 kind = 5
 
-[node name="Boxcar_16_30_Blue" type="StaticBody3D" parent="Geometry" unique_id=190322716]
+[node name="Boxcar_16_30_Blue" type="StaticBody3D" parent="Geometry" unique_id=548818122]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 1.8, 30)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 3.6, 3)
 kind = 5
 
-[node name="Boxcar_44_30_Blue" type="StaticBody3D" parent="Geometry" unique_id=2078842274]
+[node name="Boxcar_44_30_Blue" type="StaticBody3D" parent="Geometry" unique_id=423613272]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 3.6, 30)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 7.2, 3)
 kind = 5
 
-[node name="CarCrate_15_-8_Blue" type="StaticBody3D" parent="Geometry" unique_id=2085940044]
+[node name="CarCrate_15_-8_Blue" type="StaticBody3D" parent="Geometry" unique_id=823680542]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 1, -7.5)
 script = ExtResource("2_ibnna")
 size = Vector3(2, 2, 2)
 kind = 3
 
-[node name="CarCrate_23_31_Blue" type="StaticBody3D" parent="Geometry" unique_id=872519443]
+[node name="CarCrate_23_31_Blue" type="StaticBody3D" parent="Geometry" unique_id=1482297378]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 24, 1, 32.5)
 script = ExtResource("2_ibnna")
 size = Vector3(2, 2, 2)
 kind = 3
 
-[node name="CarCrate_9_-28_Blue" type="StaticBody3D" parent="Geometry" unique_id=1449538519]
+[node name="CarCrate_9_-28_Blue" type="StaticBody3D" parent="Geometry" unique_id=1956533969]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1, -27.5)
 script = ExtResource("2_ibnna")
 size = Vector3(2, 2, 2)
 kind = 3
 
-[node name="OpenCarN_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=1582021094]
+[node name="OpenCarN_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=749188214]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.5, 1.3, 8.5)
 script = ExtResource("2_ibnna")
 size = Vector3(5, 2.6, 0.3)
 kind = 5
 
-[node name="OpenCarN_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=2072281465]
+[node name="OpenCarN_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1092261120]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39.5, 1.3, 8.5)
 script = ExtResource("2_ibnna")
 size = Vector3(5, 2.6, 0.3)
 kind = 5
 
-[node name="OpenCarN_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=1175876399]
+[node name="OpenCarN_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=183360280]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 2.9499998, 8.5)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 0.70000005, 0.3)
 kind = 5
 
-[node name="OpenCarS_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=901957125]
+[node name="OpenCarS_Blue_0" type="StaticBody3D" parent="Geometry" unique_id=1548921140]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 32.5, 1.3, 11.5)
 script = ExtResource("2_ibnna")
 size = Vector3(5, 2.6, 0.3)
 kind = 5
 
-[node name="OpenCarS_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1363077005]
+[node name="OpenCarS_Blue_1" type="StaticBody3D" parent="Geometry" unique_id=1919212132]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 39.5, 1.3, 11.5)
 script = ExtResource("2_ibnna")
 size = Vector3(5, 2.6, 0.3)
 kind = 5
 
-[node name="OpenCarS_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=1788326575]
+[node name="OpenCarS_Blue_2" type="StaticBody3D" parent="Geometry" unique_id=2065075172]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 2.9499998, 11.5)
 script = ExtResource("2_ibnna")
 size = Vector3(12, 0.70000005, 0.3)
 kind = 5
 
-[node name="OpenCarW_Blue" type="StaticBody3D" parent="Geometry" unique_id=1185487788]
+[node name="OpenCarW_Blue" type="StaticBody3D" parent="Geometry" unique_id=564648445]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 1.65, 10)
 script = ExtResource("2_ibnna")
 size = Vector3(0.3, 3.3, 3)
 kind = 5
 
-[node name="OpenCarE_Blue" type="StaticBody3D" parent="Geometry" unique_id=954489791]
+[node name="OpenCarE_Blue" type="StaticBody3D" parent="Geometry" unique_id=1091473188]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 1.65, 10)
 script = ExtResource("2_ibnna")
 size = Vector3(0.3, 3.3, 3)
 kind = 5
 
-[node name="OpenCarRoof_Blue" type="StaticBody3D" parent="Geometry" unique_id=613026898]
+[node name="OpenCarRoof_Blue" type="StaticBody3D" parent="Geometry" unique_id=1476861007]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 3.4499998, 10)
 script = ExtResource("2_ibnna")
 size = Vector3(12.300001, 0.29999995, 3.2999992)
 kind = 5
 
-[node name="GantryRamp_Blue" type="StaticBody3D" parent="Geometry" unique_id=777496429]
+[node name="GantryRamp_Blue" type="StaticBody3D" parent="Geometry" unique_id=2056705944]
 transform = Transform3D(0, 0.46788773, 0.88378793, 0, 0.88378793, -0.46788773, -1, 0, 0, 11.359633, 4.2348638, -48.5)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.6, 19.235384)
 kind = 2
 
-[node name="ContainerStair_0_Blue" type="StaticBody3D" parent="Geometry" unique_id=1411681221]
+[node name="ContainerStair_0_Blue" type="StaticBody3D" parent="Geometry" unique_id=33201186]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 1.3, 16.75)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 2.6, 2.5)
 kind = 4
 
-[node name="ContainerStair_1_Blue" type="StaticBody3D" parent="Geometry" unique_id=176512536]
+[node name="ContainerStair_1_Blue" type="StaticBody3D" parent="Geometry" unique_id=692306307]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 2.6, 19.25)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 5.2, 2.5)
 kind = 4
 
-[node name="ContainerStair_2_Blue" type="StaticBody3D" parent="Geometry" unique_id=416926139]
+[node name="ContainerStair_2_Blue" type="StaticBody3D" parent="Geometry" unique_id=557181225]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 6, 3.9, 21.75)
 script = ExtResource("2_ibnna")
 size = Vector3(6, 7.8, 2.5)
 kind = 4
 
-[node name="Footbridge_Blue" type="StaticBody3D" parent="Geometry" unique_id=951377236]
+[node name="Footbridge_Blue" type="StaticBody3D" parent="Geometry" unique_id=1287240607]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 6.75, -3.5)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.5, 83)
 kind = 0
 
-[node name="FootbridgeStair_Blue" type="StaticBody3D" parent="Geometry" unique_id=1246521022]
+[node name="FootbridgeStair_Blue" type="StaticBody3D" parent="Geometry" unique_id=1076133131]
 transform = Transform3D(0, 0.48860338, 0.872506, 0, 0.872506, -0.48860338, -1, 0, 0, 37.60342, 3.238248, -43.5)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.6, 14.326549)
 kind = 2
 
-[node name="FootbridgeToSignal_Blue" type="StaticBody3D" parent="Geometry" unique_id=211657240]
+[node name="FootbridgeToSignal_Blue" type="StaticBody3D" parent="Geometry" unique_id=685607510]
 transform = Transform3D(-1, 0, 0, 0, 0.8944272, -0.4472136, 0, -0.4472136, -0.8944272, 30, 8.231672, 41.134163)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.6, 6.708204)
 kind = 2
 
-[node name="FootbridgeRail_-40_28_Blue" type="StaticBody3D" parent="Geometry" unique_id=816375419]
+[node name="FootbridgeRail_-40_28_Blue" type="StaticBody3D" parent="Geometry" unique_id=1821908388]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.65, 7.5, -30)
 script = ExtResource("2_ibnna")
 size = Vector3(0.29999924, 1, 20)
 kind = 3
 
-[node name="FootbridgeRail_-40_31_Blue" type="StaticBody3D" parent="Geometry" unique_id=238316503]
+[node name="FootbridgeRail_-40_31_Blue" type="StaticBody3D" parent="Geometry" unique_id=906374690]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.35, 7.5, -30)
 script = ExtResource("2_ibnna")
 size = Vector3(0.29999924, 1, 20)
 kind = 3
 
-[node name="FootbridgeRail_-14_28_Blue" type="StaticBody3D" parent="Geometry" unique_id=1348565308]
+[node name="FootbridgeRail_-14_28_Blue" type="StaticBody3D" parent="Geometry" unique_id=1068153626]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.65, 7.5, -4)
 script = ExtResource("2_ibnna")
 size = Vector3(0.29999924, 1, 20)
 kind = 3
 
-[node name="FootbridgeRail_-14_31_Blue" type="StaticBody3D" parent="Geometry" unique_id=1837523144]
+[node name="FootbridgeRail_-14_31_Blue" type="StaticBody3D" parent="Geometry" unique_id=257198820]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.35, 7.5, -4)
 script = ExtResource("2_ibnna")
 size = Vector3(0.29999924, 1, 20)
 kind = 3
 
-[node name="FootbridgeRail_12_28_Blue" type="StaticBody3D" parent="Geometry" unique_id=624469498]
+[node name="FootbridgeRail_12_28_Blue" type="StaticBody3D" parent="Geometry" unique_id=1917438317]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.65, 7.5, 22)
 script = ExtResource("2_ibnna")
 size = Vector3(0.29999924, 1, 20)
 kind = 3
 
-[node name="FootbridgeRail_12_31_Blue" type="StaticBody3D" parent="Geometry" unique_id=754766578]
+[node name="FootbridgeRail_12_31_Blue" type="StaticBody3D" parent="Geometry" unique_id=1686566055]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.35, 7.5, 22)
 script = ExtResource("2_ibnna")
 size = Vector3(0.29999924, 1, 20)
 kind = 3
 
-[node name="SignalTower_Blue" type="StaticBody3D" parent="Geometry" unique_id=273847418]
+[node name="SignalTower_Blue" type="StaticBody3D" parent="Geometry" unique_id=1496771477]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 5, 47.5)
 script = ExtResource("2_ibnna")
 size = Vector3(4, 10, 7)
 kind = 5
 
-[node name="SignalRamp_Blue" type="StaticBody3D" parent="Geometry" unique_id=1357387207]
+[node name="SignalRamp_Blue" type="StaticBody3D" parent="Geometry" unique_id=1910671078]
 transform = Transform3D(0, 0.5812382, 0.81373346, 0, 0.81373346, -0.5812382, -1, 0, 0, 38.82563, 4.75588, 49.5)
 script = ExtResource("2_ibnna")
 size = Vector3(3, 0.6, 17.20465)
 kind = 2
 
-[node name="SignalParapetN1_Blue" type="StaticBody3D" parent="Geometry" unique_id=1074168618]
+[node name="SignalParapetN1_Blue" type="StaticBody3D" parent="Geometry" unique_id=1364822833]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.25, 10.6, 44.2)
 script = ExtResource("2_ibnna")
 size = Vector3(0.5, 1.1999998, 0.40000153)
 kind = 3
 
-[node name="SignalParapetN2_Blue" type="StaticBody3D" parent="Geometry" unique_id=1147796047]
+[node name="SignalParapetN2_Blue" type="StaticBody3D" parent="Geometry" unique_id=972647228]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 31.75, 10.6, 44.2)
 script = ExtResource("2_ibnna")
 size = Vector3(0.5, 1.1999998, 0.40000153)
 kind = 3
 
-[node name="SignalParapetW_Blue" type="StaticBody3D" parent="Geometry" unique_id=252128744]
+[node name="SignalParapetW_Blue" type="StaticBody3D" parent="Geometry" unique_id=2036469000]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 28.2, 10.6, 47.7)
 script = ExtResource("2_ibnna")
 size = Vector3(0.39999962, 1.1999998, 6.5999985)
 kind = 3
 
-[node name="Labels" type="Node3D" parent="." unique_id=797170480]
+[node name="Labels" type="Node3D" parent="." unique_id=1986898130]
 
-[node name="GANTRY" type="Label3D" parent="Labels" unique_id=1731234265 groups=["debug_labels"]]
+[node name="GANTRY" type="Label3D" parent="Labels" unique_id=451465044 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 15, 0)
 pixel_size = 0.01
 billboard = 2
@@ -1172,7 +1173,7 @@ text = "GANTRY"
 font_size = 64
 outline_size = 16
 
-[node name="RED_WAREHOUSE" type="Label3D" parent="Labels" unique_id=2144616429 groups=["debug_labels"]]
+[node name="RED_WAREHOUSE" type="Label3D" parent="Labels" unique_id=392889936 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -70, 13, 29)
 pixel_size = 0.01
 billboard = 2
@@ -1182,7 +1183,7 @@ text = "RED WAREHOUSE"
 font_size = 64
 outline_size = 16
 
-[node name="RED_SIGNAL" type="Label3D" parent="Labels" unique_id=498698495 groups=["debug_labels"]]
+[node name="RED_SIGNAL" type="Label3D" parent="Labels" unique_id=2088574213 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 14, -47.5)
 pixel_size = 0.01
 billboard = 2
@@ -1192,7 +1193,7 @@ text = "RED SIGNAL"
 font_size = 64
 outline_size = 16
 
-[node name="BLUE_WAREHOUSE" type="Label3D" parent="Labels" unique_id=2055124278 groups=["debug_labels"]]
+[node name="BLUE_WAREHOUSE" type="Label3D" parent="Labels" unique_id=1480892317 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 70, 13, -29)
 pixel_size = 0.01
 billboard = 2
@@ -1202,7 +1203,7 @@ text = "BLUE WAREHOUSE"
 font_size = 64
 outline_size = 16
 
-[node name="BLUE_SIGNAL" type="Label3D" parent="Labels" unique_id=1942771172 groups=["debug_labels"]]
+[node name="BLUE_SIGNAL" type="Label3D" parent="Labels" unique_id=1085675829 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 14, 47.5)
 pixel_size = 0.01
 billboard = 2
@@ -1212,141 +1213,141 @@ text = "BLUE SIGNAL"
 font_size = 64
 outline_size = 16
 
-[node name="Combat" type="Node3D" parent="." unique_id=1135354652]
+[node name="Combat" type="Node3D" parent="." unique_id=637538300]
 
-[node name="Pad_Rifle" type="Node3D" parent="Combat" unique_id=2090209657]
+[node name="Pad_Rifle" type="Node3D" parent="Combat" unique_id=1619402186]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 11, 0)
 script = ExtResource("3_5jkq8")
 weapon = &"rifle"
 
-[node name="Pad_Pistol_Red" type="Node3D" parent="Combat" unique_id=560534650]
+[node name="Pad_Pistol_Red" type="Node3D" parent="Combat" unique_id=2081484768]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -68, 0, 30)
 script = ExtResource("3_5jkq8")
 
-[node name="Pad_Pistol2_Red" type="Node3D" parent="Combat" unique_id=871835754]
+[node name="Pad_Pistol2_Red" type="Node3D" parent="Combat" unique_id=916881595]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -70, 0, 0)
 script = ExtResource("3_5jkq8")
 
-[node name="Pad_SMG_Red" type="Node3D" parent="Combat" unique_id=1569651307]
+[node name="Pad_SMG_Red" type="Node3D" parent="Combat" unique_id=1397876024]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -62, 5, 28)
 script = ExtResource("3_5jkq8")
 weapon = &"smg"
 
-[node name="Pad_Sniper_Red" type="Node3D" parent="Combat" unique_id=1169825300]
+[node name="Pad_Sniper_Red" type="Node3D" parent="Combat" unique_id=1947269535]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 10, -47.5)
 script = ExtResource("3_5jkq8")
 weapon = &"sniper"
 respawn_time = 0.0
 
-[node name="Resupply_BackRoom_Red" type="Node3D" parent="Combat" unique_id=547490219]
+[node name="Resupply_BackRoom_Red" type="Node3D" parent="Combat" unique_id=575414509]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 0, 40)
 script = ExtResource("4_h5xtw")
 
-[node name="Resupply_Mezzanine_Red" type="Node3D" parent="Combat" unique_id=39853966]
+[node name="Resupply_Mezzanine_Red" type="Node3D" parent="Combat" unique_id=251118626]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 5, 48)
 script = ExtResource("4_h5xtw")
 
-[node name="Resupply_Yard_Red" type="Node3D" parent="Combat" unique_id=1963266524]
+[node name="Resupply_Yard_Red" type="Node3D" parent="Combat" unique_id=573544076]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -64, 0, -16)
 script = ExtResource("4_h5xtw")
 
-[node name="Pad_Shotgun_Red" type="Node3D" parent="Combat" unique_id=242404303]
+[node name="Pad_Shotgun_Red" type="Node3D" parent="Combat" unique_id=370635647]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -36, 0, -10)
 script = ExtResource("3_5jkq8")
 weapon = &"shotgun"
 
-[node name="Pad_Revolver_Red" type="Node3D" parent="Combat" unique_id=1821857870]
+[node name="Pad_Revolver_Red" type="Node3D" parent="Combat" unique_id=1082843644]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -77, 5.2, -11.25)
 script = ExtResource("3_5jkq8")
 weapon = &"revolver"
 
-[node name="Pad_Pistol_Blue" type="Node3D" parent="Combat" unique_id=2147159564]
+[node name="Pad_Pistol_Blue" type="Node3D" parent="Combat" unique_id=323901346]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 68, 0, -30)
 script = ExtResource("3_5jkq8")
 
-[node name="Pad_Pistol2_Blue" type="Node3D" parent="Combat" unique_id=829344158]
+[node name="Pad_Pistol2_Blue" type="Node3D" parent="Combat" unique_id=437564508]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 70, 0, 0)
 script = ExtResource("3_5jkq8")
 
-[node name="Pad_SMG_Blue" type="Node3D" parent="Combat" unique_id=167695463]
+[node name="Pad_SMG_Blue" type="Node3D" parent="Combat" unique_id=1940960329]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 62, 5, -28)
 script = ExtResource("3_5jkq8")
 weapon = &"smg"
 
-[node name="Pad_Sniper_Blue" type="Node3D" parent="Combat" unique_id=106658945]
+[node name="Pad_Sniper_Blue" type="Node3D" parent="Combat" unique_id=1871946157]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 10, 47.5)
 script = ExtResource("3_5jkq8")
 weapon = &"sniper"
 respawn_time = 0.0
 
-[node name="Resupply_BackRoom_Blue" type="Node3D" parent="Combat" unique_id=640801113]
+[node name="Resupply_BackRoom_Blue" type="Node3D" parent="Combat" unique_id=1768873828]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 0, -40)
 script = ExtResource("4_h5xtw")
 
-[node name="Resupply_Mezzanine_Blue" type="Node3D" parent="Combat" unique_id=1227682443]
+[node name="Resupply_Mezzanine_Blue" type="Node3D" parent="Combat" unique_id=37658910]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 5, -48)
 script = ExtResource("4_h5xtw")
 
-[node name="Resupply_Yard_Blue" type="Node3D" parent="Combat" unique_id=2118584582]
+[node name="Resupply_Yard_Blue" type="Node3D" parent="Combat" unique_id=332938664]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 64, 0, 16)
 script = ExtResource("4_h5xtw")
 
-[node name="Pad_Shotgun_Blue" type="Node3D" parent="Combat" unique_id=878340779]
+[node name="Pad_Shotgun_Blue" type="Node3D" parent="Combat" unique_id=187325842]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 36, 0, 10)
 script = ExtResource("3_5jkq8")
 weapon = &"shotgun"
 
-[node name="Pad_Revolver_Blue" type="Node3D" parent="Combat" unique_id=2135875189]
+[node name="Pad_Revolver_Blue" type="Node3D" parent="Combat" unique_id=194729085]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 77, 5.2, 11.25)
 script = ExtResource("3_5jkq8")
 weapon = &"revolver"
 
-[node name="Spawns" type="Node3D" parent="." unique_id=466425002]
+[node name="Spawns" type="Node3D" parent="." unique_id=1706144065]
 
-[node name="SpawnA_Red" type="Marker3D" parent="Spawns" unique_id=1967496702 groups=["spawn"]]
+[node name="SpawnA_Red" type="Marker3D" parent="Spawns" unique_id=472958908 groups=["spawn"]]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -78, 0, 46)
 metadata/team = 0
 
-[node name="SpawnB_Red" type="Marker3D" parent="Spawns" unique_id=645335951 groups=["spawn"]]
+[node name="SpawnB_Red" type="Marker3D" parent="Spawns" unique_id=337014308 groups=["spawn"]]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -78, 0, 36)
 metadata/team = 0
 
-[node name="SpawnC_Red" type="Marker3D" parent="Spawns" unique_id=416510835 groups=["spawn"]]
+[node name="SpawnC_Red" type="Marker3D" parent="Spawns" unique_id=1338606721 groups=["spawn"]]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -78, 0, 22)
 metadata/team = 0
 
-[node name="SpawnD_Red" type="Marker3D" parent="Spawns" unique_id=1756994192 groups=["spawn"]]
+[node name="SpawnD_Red" type="Marker3D" parent="Spawns" unique_id=473112423 groups=["spawn"]]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -78, 0, 12)
 metadata/team = 0
 
-[node name="SpawnA_Blue" type="Marker3D" parent="Spawns" unique_id=1449585788 groups=["spawn"]]
+[node name="SpawnA_Blue" type="Marker3D" parent="Spawns" unique_id=897554013 groups=["spawn"]]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 78, 0, -46)
 metadata/team = 1
 
-[node name="SpawnB_Blue" type="Marker3D" parent="Spawns" unique_id=781098999 groups=["spawn"]]
+[node name="SpawnB_Blue" type="Marker3D" parent="Spawns" unique_id=1292453613 groups=["spawn"]]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 78, 0, -36)
 metadata/team = 1
 
-[node name="SpawnC_Blue" type="Marker3D" parent="Spawns" unique_id=1691080542 groups=["spawn"]]
+[node name="SpawnC_Blue" type="Marker3D" parent="Spawns" unique_id=1871150649 groups=["spawn"]]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 78, 0, -22)
 metadata/team = 1
 
-[node name="SpawnD_Blue" type="Marker3D" parent="Spawns" unique_id=919817057 groups=["spawn"]]
+[node name="SpawnD_Blue" type="Marker3D" parent="Spawns" unique_id=103176323 groups=["spawn"]]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 78, 0, -12)
 metadata/team = 1
 
-[node name="Player" type="CharacterBody3D" parent="." unique_id=474896133 instance=ExtResource("5_r8g3t")]
+[node name="Player" type="CharacterBody3D" parent="." unique_id=472108160 instance=ExtResource("5_r8g3t")]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -78, 0, 46)
 script = ExtResource("6_dnqpn")
 
-[node name="GameUI" type="Node" parent="." unique_id=416100556]
+[node name="GameUI" type="Node" parent="." unique_id=1143304397]
 script = ExtResource("7_en4oe")
 
-[node name="RetroScreen" type="CanvasLayer" parent="." unique_id=1642678239]
+[node name="RetroScreen" type="CanvasLayer" parent="." unique_id=563578243]
 script = ExtResource("8_eqsfh")
 
-[node name="DebugHUD" type="CanvasLayer" parent="." unique_id=115612692]
+[node name="DebugHUD" type="CanvasLayer" parent="." unique_id=1844237312]
 script = ExtResource("9_r4gww")
 
-[node name="TuningPanel" type="CanvasLayer" parent="." unique_id=1343637976]
+[node name="TuningPanel" type="CanvasLayer" parent="." unique_id=1849107709]
 script = ExtResource("10_oy2ef")

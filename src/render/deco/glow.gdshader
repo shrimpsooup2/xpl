@@ -2,7 +2,9 @@ shader_type spatial;
 render_mode unshaded;
 // A lamp's lit part (a fluorescent tube, a pool light's lens, neon, an exit
 // sign): flat colour bright enough to bloom. `flicker` makes it stutter
-// like a failing tube; `blink` turns it on and off (aviation lights).
+// like a failing tube; `blink` turns it on and off (aviation lights), on
+// for `blink_duty` of each period, `blink_offset` later (a marquee's bulbs
+// chasing).
 // Goes dark with the world in the death sequence.
 
 global uniform float world_light;
@@ -11,6 +13,8 @@ uniform vec3 color : source_color = vec3(1.0);
 uniform float energy = 2.0;
 uniform float flicker : hint_range(0.0, 1.0) = 0.0;
 uniform float blink_period = 0.0;
+uniform float blink_duty = 0.18;
+uniform float blink_offset = 0.0;
 
 float hash(float n) { return fract(sin(n * 12.9898) * 43758.5453); }
 
@@ -23,7 +27,7 @@ void fragment() {
 		on = 1.0 - flicker * burst * step(0.45, hash(floor(t * 24.0)));
 	}
 	if (blink_period > 0.0) {
-		on *= step(fract(t / blink_period), 0.18);
+		on *= step(fract(t / blink_period - blink_offset), blink_duty);
 	}
 	ALBEDO = color * energy * on * world_light;
 }

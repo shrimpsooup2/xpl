@@ -57,19 +57,6 @@ static func dress(kit, d) -> void:
 
 # --- Helpers ---------------------------------------------------------------------------
 
-## A basis facing `n` (its z), upright.
-static func _facing(n: Vector3) -> Basis:
-	var z := n.normalized()
-	var x := Vector3.UP.cross(z).normalized()
-	return Basis(x, z.cross(x), z)
-
-
-## A basis lying flat, facing up, reading along `along`.
-static func _flat(along: Vector3) -> Basis:
-	var x := along.normalized()
-	return Basis(x, Vector3.UP.cross(x), Vector3.UP)
-
-
 ## The four walls: [inner face's normal, point on the inner face at height 0].
 const WALLS := [[Vector3(0, 0, 1), Vector3(0, 0, -11)], [Vector3(0, 0, -1), Vector3(0, 0, 11)],
 		[Vector3(1, 0, 0), Vector3(-11, 0, 0)], [Vector3(-1, 0, 0), Vector3(11, 0, 0)]]
@@ -326,7 +313,7 @@ static func _showers(d) -> void:
 static func _doors(d) -> void:
 	for s: float in [-1.0, 1.0]:
 		var n := Vector3(-s, 0, 0)  # Facing into the room.
-		var b := _facing(n)
+		var b := DecoKit.facing(n)
 		var wall := Vector3(s * 11.0, 0, 0)
 		d.box("door", wall + n * 0.02 + Vector3(0, 1.05, 0), Vector3(1.0, 2.1, 0.04), "Detail", LOWER, b)
 		d.box("dark_metal", wall + n * 0.04 + Vector3(0, 2.14, 0), Vector3(1.2, 0.08, 0.08), "Detail", LOWER, b)
@@ -346,7 +333,7 @@ static func _doors(d) -> void:
 static func _windows(d) -> void:
 	for s: float in [-1.0, 1.0]:
 		var n := Vector3(0, 0, s)  # A: the south wall, facing north; B: the north wall.
-		var b := _facing(n)
+		var b := DecoKit.facing(n)
 		var wall := Vector3(0, 0, -s * 11.0)
 		for i in 3:
 			var cx := s * 6.8 + (i - 1) * 2.1
@@ -364,7 +351,7 @@ static func _tellies(d) -> void:
 	for s: float in [-1.0, 1.0]:
 		var corner := Vector3(s * -10.2, 3.55, s * 10.2)
 		var n := Vector3(s, 0, -s).normalized()
-		var b := _facing(n)
+		var b := DecoKit.facing(n)
 		d.box("black", corner - n * 0.05, Vector3(0.72, 0.56, 0.5), "Fixtures", LOWER, b)
 		d.face("telly", corner + n * 0.205, b.x * 0.25, Vector3(0, 0.19, 0), "Fixtures", LOWER)
 		d.tube("dark_metal", corner - n * 0.3 + Vector3(0, 0.25, 0), corner + Vector3(s * -0.55, 0.45, s * 0.55), 0.03, 6, "Detail", LOWER)
@@ -383,11 +370,11 @@ static func _cellar_odds(d) -> void:
 		d.face("hazard", (bottom + top) * 0.5 + right * 1.38 + up * 0.012, right * 0.12, along * 0.5, "Detail", BOTH)
 	for s: float in [-1.0, 1.0]:
 		# "POOL →" on the wall by each ramp's foot, pointing up it.
-		d.words("POOL →", Vector3(s * 7.9, 2.4, s * 10.97), _facing(Vector3(0, 0, -s)), 0.32, Color(0.12, 0.2, 0.3), 0.0, "Detail", LOWER)
+		d.words("POOL →", Vector3(s * 7.9, 2.4, s * 10.97), DecoKit.facing(Vector3(0, 0, -s)), 0.32, Color(0.12, 0.2, 0.3), 0.0, "Detail", LOWER)
 		# Floor drains round the drain's puddle, a painted warning by the spawn.
 		d.box("drain", Vector3(s * 3.8, 0.006, 0), Vector3(0.35, 0.01, 0.35), "Detail", LOWER)
 		d.box("drain", Vector3(0, 0.006, s * 3.8), Vector3(0.35, 0.01, 0.35), "Detail", LOWER)
-		d.words("NO RUNNING", Vector3(s * -5.8, 0.008, s * 7.2), _flat(Vector3(s, 0, 0)), 0.45, Color(0.55, 0.15, 0.15), 0.0, "Detail", LOWER)
+		d.words("NO RUNNING", Vector3(s * -5.8, 0.008, s * 7.2), DecoKit.flat(Vector3(s, 0, 0)), 0.45, Color(0.55, 0.15, 0.15), 0.0, "Detail", LOWER)
 		# A mop bucket by the door, and a wet-floor sign by the drain.
 		var bucket := Vector3(s * -10.3, 0.2, s * -1.3)
 		d.solid(bucket, Vector3(0.5, 0.4, 0.45))
@@ -403,7 +390,7 @@ static func _cellar_odds(d) -> void:
 	# "No diving" on the pillars, facing the drain.
 	for p: Vector2 in [Vector2(-3.5, -3.5), Vector2(3.5, -3.5), Vector2(-3.5, 3.5), Vector2(3.5, 3.5)]:
 		var n := Vector3(-signf(p.x), 0, 0)
-		d.face("no_diving", Vector3(p.x, 2.0, p.y) + n * 0.605, _facing(n).x * 0.22, Vector3(0, 0.22, 0), "Detail", LOWER)
+		d.face("no_diving", Vector3(p.x, 2.0, p.y) + n * 0.605, DecoKit.facing(n).x * 0.22, Vector3(0, 0.22, 0), "Detail", LOWER)
 
 
 # --- The drain -------------------------------------------------------------------------------
@@ -487,7 +474,7 @@ static func _pool_lamps(d) -> void:
 	for w: Array in WALLS:
 		var normal: Vector3 = w[0]
 		var face: Vector3 = w[1]
-		var b := _facing(normal)
+		var b := DecoKit.facing(normal)
 		for along: float in [-5.5, 5.5]:
 			var at := face + b.x * along + Vector3(0, 6.3, 0)
 			d.torus("chrome", at + normal * 0.02, 0.24, 0.04, Basis(b.x, b.z, -b.y), 12, 5, "Fixtures", UPPER)
@@ -521,17 +508,17 @@ static func _pool_fittings(d) -> void:
 		for i in 2:
 			var x := -1.375 + i * 2.75
 			d.box("grip", Vector3(x, 6.225, zc), Vector3(0.6, 0.05, 0.55), "Detail", UPPER, Basis(Vector3.RIGHT, -0.08 * s))
-			d.words(lanes[i], Vector3(x, 5.75, zc + s * 0.31), _facing(pool_side), 0.45, Color(0.95, 0.95, 0.98), 0.0, "Detail", UPPER)
+			d.words(lanes[i], Vector3(x, 5.75, zc + s * 0.31), DecoKit.facing(pool_side), 0.45, Color(0.95, 0.95, 0.98), 0.0, "Detail", UPPER)
 			for hx: float in [-0.18, 0.18]:
 				d.tube("chrome", Vector3(x + hx, 6.1, zc + s * 0.3), Vector3(x + hx, 6.1, zc + s * 0.42), 0.02, 5, "Detail", UPPER)
 			d.tube("chrome", Vector3(x - 0.18, 6.1, zc + s * 0.42), Vector3(x + 0.18, 6.1, zc + s * 0.42), 0.02, 5, "Detail", UPPER)
-		d.face("no_diving", Vector3(0, 5.6, zc + s * 0.305), _facing(pool_side).x * 0.2, Vector3(0, 0.2, 0), "Detail", UPPER)
+		d.face("no_diving", Vector3(0, 5.6, zc + s * 0.305), DecoKit.facing(pool_side).x * 0.2, Vector3(0, 0.2, 0), "Detail", UPPER)
 	# The diving platforms: a big number on the face to the pool, a red edge
 	# round the top, a ladder up the back.
 	for s: float in [-1.0, 1.0]:
 		var c := Vector3(s * -7.0, 6.25, s * -5.0)
 		var front := Vector3(s, 0, 0)
-		d.words("1" if s > 0.0 else "2", c + front * 1.26 + Vector3(0, 0.1, 0), _facing(front), 1.5, Color(0.95, 0.95, 1.0), 0.0, "Detail", UPPER)
+		d.words("1" if s > 0.0 else "2", c + front * 1.26 + Vector3(0, 0.1, 0), DecoKit.facing(front), 1.5, Color(0.95, 0.95, 1.0), 0.0, "Detail", UPPER)
 		for e: Array in [[Vector3(0, 0, 1.2), Vector3(2.5, 0.01, 0.1)], [Vector3(0, 0, -1.2), Vector3(2.5, 0.01, 0.1)],
 				[Vector3(1.2, 0, 0), Vector3(0.1, 0.01, 2.5)], [Vector3(-1.2, 0, 0), Vector3(0.1, 0.01, 2.5)]]:
 			d.box("edge_red", c + e[0] + Vector3(0, 1.255, 0), e[1], "Detail", UPPER)
@@ -574,7 +561,7 @@ static func _pool_fittings(d) -> void:
 static func _pool_markings(d) -> void:
 	for w: Array in WALLS:
 		var normal: Vector3 = w[0]
-		var b := _facing(normal)
+		var b := DecoKit.facing(normal)
 		var face: Vector3 = w[1] + normal * 0.012
 		for along: float in [-7.0, 0.0, 7.0]:
 			var text := "3.0 M"
@@ -589,7 +576,7 @@ static func _neon(d) -> void:
 	for s: Array in [[1.0, "POOL CLOSED", 0.7, Color(1.0, 0.2, 0.3)], [-1.0, "NO LIFEGUARD", 0.0, Color(0.3, 0.55, 1.0)]]:
 		var x: float = s[0] * 11.0
 		var n := Vector3(-s[0], 0, 0)
-		var b := _facing(n)
+		var b := DecoKit.facing(n)
 		var at := Vector3(x, 6.6, 0) + n * 0.06
 		var colour: Color = s[3]
 		d.box("black", at - n * 0.03, Vector3(3.4, 0.62, 0.04), "Fixtures", UPPER, b)
@@ -605,7 +592,6 @@ static func _neon(d) -> void:
 ## Inflatables adrift over the pool, where the water would have taken
 ## them: a flamingo ring, a beach ball, a rubber duck.
 static func _inflatables(d) -> void:
-	var shader := "res://src/render/deco/float_prop.gdshader"
 	var params := {"reflection_map": "stack/reflection_night.png"}
 	# Flamingo ring.
 	var st := SurfaceTool.new()
@@ -613,38 +599,28 @@ static func _inflatables(d) -> void:
 	_ring(st, 1.7, 0.5, Color(1.0, 0.42, 0.62), Color(1.0, 0.92, 0.95))
 	var neck := [Vector3(1.7, 0.3, 0), Vector3(2.0, 0.9, 0), Vector3(2.05, 1.5, 0), Vector3(1.85, 2.0, 0), Vector3(1.5, 2.3, 0)]
 	for i in neck.size():
-		_blob(st, neck[i], Vector3.ONE * lerpf(0.36, 0.26, float(i) / neck.size()), Color(1.0, 0.45, 0.65))
-	_blob(st, Vector3(1.3, 2.4, 0), Vector3(0.36, 0.3, 0.3), Color(1.0, 0.5, 0.7))
-	_blob(st, Vector3(0.95, 2.3, 0), Vector3(0.22, 0.1, 0.1), Color(0.1, 0.1, 0.12))
-	_blob(st, Vector3(1.3, 2.52, 0.2), Vector3(0.06, 0.06, 0.06), Color(0.05, 0.05, 0.05))
-	_floater(d, "Flamingo", st, Vector3(3.0, 12.5, -3.0), shader, params, 0.0)
+		DecoKit.blob(st, neck[i], Vector3.ONE * lerpf(0.36, 0.26, float(i) / neck.size()), Color(1.0, 0.45, 0.65))
+	DecoKit.blob(st, Vector3(1.3, 2.4, 0), Vector3(0.36, 0.3, 0.3), Color(1.0, 0.5, 0.7))
+	DecoKit.blob(st, Vector3(0.95, 2.3, 0), Vector3(0.22, 0.1, 0.1), Color(0.1, 0.1, 0.12))
+	DecoKit.blob(st, Vector3(1.3, 2.52, 0.2), Vector3(0.06, 0.06, 0.06), Color(0.05, 0.05, 0.05))
+	d.floater("Flamingo", st, Vector3(3.0, 12.5, -3.0), params, 0.0, 1.0, BOTH | UPPER)
 	# Beach ball.
 	st = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var colours := [Color(0.95, 0.15, 0.15), Color.WHITE, Color(0.15, 0.35, 0.95), Color(1.0, 0.85, 0.1), Color.WHITE, Color(0.15, 0.8, 0.35)]
-	_blob(st, Vector3.ZERO, Vector3.ONE * 1.1, Color.WHITE, colours)
-	_floater(d, "BeachBall", st, Vector3(-5.5, 11.0, 4.5), shader, params, 2.0)
+	DecoKit.blob(st, Vector3.ZERO, Vector3.ONE * 1.1, Color.WHITE, colours)
+	d.floater("BeachBall", st, Vector3(-5.5, 11.0, 4.5), params, 2.0, 1.0, BOTH | UPPER)
 	# Rubber duck.
 	st = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
 	var yellow := Color(1.0, 0.84, 0.12)
-	_blob(st, Vector3(0, 0, 0), Vector3(1.4, 0.9, 1.0), yellow)
-	_blob(st, Vector3(0.9, 1.0, 0), Vector3(0.7, 0.7, 0.7), yellow)
-	_blob(st, Vector3(-1.2, 0.4, 0), Vector3(0.4, 0.5, 0.35), yellow)
-	_blob(st, Vector3(1.6, 0.9, 0), Vector3(0.35, 0.14, 0.3), Color(1.0, 0.45, 0.1))
+	DecoKit.blob(st, Vector3(0, 0, 0), Vector3(1.4, 0.9, 1.0), yellow)
+	DecoKit.blob(st, Vector3(0.9, 1.0, 0), Vector3(0.7, 0.7, 0.7), yellow)
+	DecoKit.blob(st, Vector3(-1.2, 0.4, 0), Vector3(0.4, 0.5, 0.35), yellow)
+	DecoKit.blob(st, Vector3(1.6, 0.9, 0), Vector3(0.35, 0.14, 0.3), Color(1.0, 0.45, 0.1))
 	for e: float in [-0.32, 0.32]:
-		_blob(st, Vector3(1.3, 1.25, e), Vector3(0.1, 0.12, 0.08), Color(0.05, 0.05, 0.06))
-	_floater(d, "Duck", st, Vector3(-1.0, 14.0, -7.5), shader, params, 4.0, 1.8)
-
-
-static func _floater(d, node_name: String, st: SurfaceTool, at: Vector3, shader: String, params: Dictionary, phase: float, scale := 1.0) -> void:
-	var p := params.duplicate()
-	p["phase"] = phase
-	var m: ShaderMaterial = d.shaded("float_" + node_name.to_lower(), shader, p)
-	var mesh := st.commit()
-	var file: String = d.dir + "meshes/float_%s.res" % node_name.to_lower()
-	ResourceSaver.save(mesh, file)
-	d.own_mesh(node_name, load(file), m, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * scale), at), "Detail", BOTH | UPPER)
+		DecoKit.blob(st, Vector3(1.3, 1.25, e), Vector3(0.1, 0.12, 0.08), Color(0.05, 0.05, 0.06))
+	d.floater("Duck", st, Vector3(-1.0, 14.0, -7.5), params, 4.0, 1.8, BOTH | UPPER)
 
 
 ## A ring, striped in two colours.
@@ -666,25 +642,6 @@ static func _ring(st: SurfaceTool, big: float, small: float, a: Color, b: Color)
 				st.add_vertex(q[k][0])
 
 
-## A ball (squashed by `r`), one colour or stripes of `bands` round it.
-static func _blob(st: SurfaceTool, c: Vector3, r: Vector3, colour: Color, bands: Array = []) -> void:
-	var rings := 8
-	var sides := 12
-	var at := func(i: int, j: int) -> Vector3:
-		var lat := PI * (float(i) / rings - 0.5)
-		var lon := TAU * j / sides
-		return Vector3(cos(lat) * cos(lon), sin(lat), cos(lat) * sin(lon))
-	for i in rings:
-		for j in sides:
-			var q := [at.call(i, j), at.call(i + 1, j), at.call(i + 1, j + 1), at.call(i, j + 1)]
-			var col: Color = bands[j * bands.size() / sides] if not bands.is_empty() else colour
-			for k: int in [0, 2, 1, 0, 3, 2]:
-				var dir: Vector3 = q[k]
-				st.set_color(col)
-				st.set_normal((dir / r).normalized())
-				st.add_vertex(c + dir * r)
-
-
 # --- The city ------------------------------------------------------------------------------
 
 ## The tower the pool sits on, going down into the fog, and the city round
@@ -695,7 +652,7 @@ static func _skyline(d) -> void:
 	for w: Array in WALLS:
 		var n: Vector3 = -(w[0] as Vector3)
 		var face: Vector3 = (w[1] as Vector3) + n * 1.02
-		d.face("far", face + Vector3(0, WALL_TOP - 75.0, 0), _facing(n).x * 12.0, Vector3(0, 75.0, 0), "Far", BOTH)
+		d.face("far", face + Vector3(0, WALL_TOP - 75.0, 0), DecoKit.facing(n).x * 12.0, Vector3(0, 75.0, 0), "Far", BOTH)
 	var towers := [
 		[Vector2(-62, -28), Vector2(18, 18), 30.0], [Vector2(-46, 55), Vector2(14, 20), 12.0], [Vector2(52, -58), Vector2(20, 16), 44.0],
 		[Vector2(78, 18), Vector2(16, 16), 18.0], [Vector2(20, 82), Vector2(24, 14), 26.0], [Vector2(-84, 8), Vector2(20, 28), -4.0],
@@ -722,7 +679,7 @@ static func _skyline(d) -> void:
 	# The hotel sign across the way, facing the pool.
 	var sign_at := Vector3(52, 52.0, -58)
 	var n := (-sign_at * Vector3(1, 0, 1)).normalized()
-	var b := _facing(n)
+	var b := DecoKit.facing(n)
 	d.box("far_dark", sign_at, Vector3(22, 7, 0.6), "Far", BOTH, b)
 	d.words("HOTEL ♥", sign_at + n * 0.4, b, 5.0, Color(1.0, 0.72, 0.88), 0.0, "Far", BOTH).shaded = false
 	d.shaded("halo_hotel", "res://src/render/deco/halo.gdshader", {"color": Color(1.0, 0.3, 0.7), "strength": 1.4, "size": Vector2(26, 9)})

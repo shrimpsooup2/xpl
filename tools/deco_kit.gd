@@ -9,6 +9,8 @@ extends RefCounted
 ## as files under assets/maps/<map>/, and the scene points at them.
 ##
 ## Groups, which the graphics settings switch (Graphics):
+## - "Build": the architecture dressed onto the blocks and walls
+##   (shopfronts, fascias, rails); never hidden.
 ## - "Fixtures": what the lamps are (tubes, lenses, signs); never hidden, so
 ##   a light always has something to come from.
 ## - "Detail": small stuff; hidden at low detail.
@@ -21,7 +23,7 @@ const SURFACE_SHADER := preload("res://src/render/retro_surface.gdshader")
 const REFLECTION_MAP := preload("res://assets/textures/reflection_map.png")
 ## The fake reflection the map's surfaces use (a night map swaps it).
 var reflection: Texture2D = REFLECTION_MAP
-const GROUPS := ["Solid", "Fixtures", "Detail", "Effects", "Far"]
+const GROUPS := ["Build", "Solid", "Fixtures", "Detail", "Effects", "Far"]
 
 ## Render layers: each floor's lamps light their own floor.
 const LAYER_BOTH := 1
@@ -55,6 +57,20 @@ func _init(level_kit: LevelKit, map_dir: String) -> void:
 
 func group(name: String) -> Node3D:
 	return _groups[name]
+
+
+## A basis facing `n` (its z), upright: words and faces on a wall facing `n`
+## read along its x.
+static func facing(n: Vector3) -> Basis:
+	var z := n.normalized()
+	var x := Vector3.UP.cross(z).normalized()
+	return Basis(x, z.cross(x), z)
+
+
+## A basis lying flat, facing up, reading along `along`.
+static func flat(along: Vector3) -> Basis:
+	var x := along.normalized()
+	return Basis(x, Vector3.UP.cross(x), Vector3.UP)
 
 
 # --- Materials ---------------------------------------------------------------------------
@@ -157,6 +173,23 @@ func face(material: String, c: Vector3, u: Vector3, v: Vector3, grp := "Detail",
 		st.set_normal(n)
 		st.set_uv(uvs[i])
 		st.add_vertex(corners[i])
+
+
+## A flat four-sided face through four corners (top-left, top-right,
+## bottom-right, bottom-left as you look at its front), for shapes face()
+## can't make. UVs in metres from the top-left corner, v running down.
+func quad(material: String, p0: Vector3, p1: Vector3, p2: Vector3, p3: Vector3, grp := "Detail", layers := LAYER_BOTH, shadows := false) -> void:
+	var st := _bucket(material, grp, layers, shadows)
+	var eu := (p1 - p0).normalized()
+	var down := p3 - p0
+	var ev := (down - eu * down.dot(eu)).normalized()
+	var n := eu.cross(-ev).normalized()
+	var corners := [p0, p1, p2, p3]
+	for i: int in [0, 1, 2, 0, 2, 3]:
+		var q: Vector3 = corners[i]
+		st.set_normal(n)
+		st.set_uv(Vector2((q - p0).dot(eu), (q - p0).dot(ev)))
+		st.add_vertex(q)
 
 
 ## A box: `c` its middle, `size` along the basis `b`'s axes. `skip` names
@@ -274,6 +307,41 @@ func own_mesh(node_name: String, mesh: Mesh, material: Material, t: Transform3D,
 	return mi
 
 
+# --- Things adrift -------------------------------------------------------------------------
+
+## Something floating in the sky (float_prop.gdshader turns it and bobs
+## it): `st` a mesh in vertex colours, saved as its own file.
+func floater(node_name: String, st: SurfaceTool, at: Vector3, params: Dictionary, phase: float, scale := 1.0, layers := LAYER_BOTH) -> void:
+	var p := params.duplicate()
+	p["phase"] = phase
+	var m: ShaderMaterial = shaded("float_" + node_name.to_lower(), "res://src/render/deco/float_prop.gdshader", p)
+	st.index()
+	var mesh := st.commit()
+	var file := dir + "meshes/float_%s.res" % node_name.to_lower()
+	ResourceSaver.save(mesh, file)
+	own_mesh(node_name, load(file), m, Transform3D(Basis.IDENTITY.scaled(Vector3.ONE * scale), at), "Detail", layers)
+
+
+## A ball (squashed by `r`) into `st`, in one colour or stripes of `bands`
+## round it.
+static func blob(st: SurfaceTool, c: Vector3, r: Vector3, colour: Color, bands: Array = []) -> void:
+	var rings := 8
+	var sides := 12
+	var at := func(i: int, j: int) -> Vector3:
+		var lat := PI * (float(i) / rings - 0.5)
+		var lon := TAU * j / sides
+		return Vector3(cos(lat) * cos(lon), sin(lat), cos(lat) * sin(lon))
+	for i in rings:
+		for j in sides:
+			var q := [at.call(i, j), at.call(i + 1, j), at.call(i + 1, j + 1), at.call(i, j + 1)]
+			var col: Color = bands[j * bands.size() / sides] if not bands.is_empty() else colour
+			for k: int in [0, 2, 1, 0, 3, 2]:
+				var dir: Vector3 = q[k]
+				st.set_color(col)
+				st.set_normal((dir / r).normalized())
+				st.add_vertex(c + dir * r)
+
+
 # --- Lights and words ----------------------------------------------------------------------
 
 ## A lamp: an OmniLight3D at `at` (the fixture is drawn separately, by the
@@ -351,6 +419,8 @@ func finish() -> void:
 	for key: String in _buckets:
 		var b: Array = _buckets[key]
 		var st: SurfaceTool = b[0]
+		# Shared corners stored once: the same triangles, a smaller file.
+		st.index()
 		var mesh := st.commit()
 		var file := dir + "meshes/%s_%s_%d%s.res" % [b[1], String(b[2]).to_lower(), b[3], "_s" if b[4] else ""]
 		ResourceSaver.save(mesh, file)

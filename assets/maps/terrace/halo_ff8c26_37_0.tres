@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/halo.gdshader" id="1_e6x3f"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_e6x3f")
+shader_parameter/color = Color(1, 0.55, 0.15, 1)
+shader_parameter/strength = 1.3
+shader_parameter/size = Vector2(3.7128, 1.008)
+shader_parameter/flicker = 0.0

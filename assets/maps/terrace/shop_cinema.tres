@@ -1,0 +1,18 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/shop_window.gdshader" id="1_5ucsr"]
+[ext_resource type="Texture2D" path="res://assets/textures/stack/caustics.png" id="2_750jt"]
+[ext_resource type="Texture2D" path="res://assets/textures/terrace/reflection_eclipse.png" id="3_ebv0r"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_5ucsr")
+shader_parameter/reflection_map = ExtResource("3_ebv0r")
+shader_parameter/grime = ExtResource("2_750jt")
+shader_parameter/pane_height = null
+shader_parameter/depth = 8.0
+shader_parameter/wall = Color(0.5, 0.2, 0.22, 1)
+shader_parameter/lamp = Color(1, 0.8, 0.5, 1)
+shader_parameter/lit_share = 1.0
+shader_parameter/bare_share = null
+shader_parameter/reflectance = null

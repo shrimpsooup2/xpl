@@ -1,0 +1,13 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/lightbox.gdshader" id="1_cb7eo"]
+[ext_resource type="Texture2D" path="res://assets/textures/terrace/vending_drinks.png" id="2_hcy2h"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_cb7eo")
+shader_parameter/picture = ExtResource("2_hcy2h")
+shader_parameter/tint = null
+shader_parameter/energy = 1.25
+shader_parameter/size = Vector2(1, 2)
+shader_parameter/flicker = null

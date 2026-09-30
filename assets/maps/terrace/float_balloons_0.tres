@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/float_prop.gdshader" id="1_fqmk2"]
+[ext_resource type="Texture2D" path="res://assets/textures/terrace/reflection_eclipse.png" id="2_1hex7"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_fqmk2")
+shader_parameter/reflection_map = ExtResource("2_1hex7")
+shader_parameter/spin = 0.05
+shader_parameter/bob = 0.1
+shader_parameter/bob_speed = 0.4
+shader_parameter/tilt = 0.04
+shader_parameter/phase = 0.0
