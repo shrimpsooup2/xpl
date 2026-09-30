@@ -1,0 +1,30 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/ice.gdshader" id="1_cx6hc"]
+[ext_resource type="Texture2D" path="res://assets/textures/boulevard/ice.png" id="2_fa1ut"]
+[ext_resource type="Texture2D" path="res://assets/textures/boulevard/ice_inner.png" id="3_455x0"]
+[ext_resource type="Texture2D" path="res://assets/textures/boulevard/reflection_ice.png" id="4_5aasl"]
+[ext_resource type="Texture2D" path="res://assets/textures/boulevard/ice_scallops.png" id="5_3xu1a"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_cx6hc")
+shader_parameter/ice = ExtResource("2_fa1ut")
+shader_parameter/scallops = ExtResource("5_3xu1a")
+shader_parameter/inner = ExtResource("3_455x0")
+shader_parameter/reflection_map = ExtResource("4_5aasl")
+shader_parameter/meters = 4.0
+shader_parameter/inner_meters = 6.0
+shader_parameter/bump = null
+shader_parameter/tint = null
+shader_parameter/frost = null
+shader_parameter/glow = 0.8
+shader_parameter/glow_meters = null
+shader_parameter/depth = 1.2
+shader_parameter/inside = null
+shader_parameter/albedo_amount = null
+shader_parameter/gloss = null
+shader_parameter/roughness_value = null
+shader_parameter/sparkle = null
+shader_parameter/glow_heights = Vector2(-10, 44)
+shader_parameter/glow_low = null

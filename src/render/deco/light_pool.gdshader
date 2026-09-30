@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode blend_add, unshaded, depth_draw_never, shadows_disabled;
+render_mode blend_add, unshaded, depth_draw_never, shadows_disabled, fog_disabled;
 // A pool of lamplight faked on a floor or a wall (early-2000s style): an
 // additive glow, round and soft, brightest under the lamp. Cheaper than a
 // light, so a lamp can have one whether or not it's a real light.

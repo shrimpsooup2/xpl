@@ -1,5 +1,5 @@
 shader_type spatial;
-render_mode unshaded, blend_add, depth_draw_never, shadows_disabled, cull_disabled;
+render_mode unshaded, blend_add, depth_draw_never, shadows_disabled, cull_disabled, fog_disabled;
 // A particle that always faces you: spray, dust in a shaft of light.
 
 global uniform float world_light;

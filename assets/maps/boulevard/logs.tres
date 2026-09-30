@@ -1,0 +1,34 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/retro_surface.gdshader" id="1_f54gd"]
+[ext_resource type="Texture2D" path="res://assets/textures/boulevard/logs.png" id="2_06bs6"]
+[ext_resource type="Texture2D" path="res://assets/textures/boulevard/planks.png" id="3_blljg"]
+[ext_resource type="Texture2D" path="res://assets/textures/boulevard/reflection_ice.png" id="4_s54ts"]
+[ext_resource type="Texture2D" path="res://assets/textures/boulevard/snow.png" id="5_cn4hw"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_f54gd")
+shader_parameter/albedo_texture = ExtResource("2_06bs6")
+shader_parameter/reflection_map = ExtResource("4_s54ts")
+shader_parameter/tint = Color(1, 1, 1, 1)
+shader_parameter/meters_per_repeat = 2.0
+shader_parameter/gloss = 0.04
+shader_parameter/gloss_grazing = 0.25
+shader_parameter/roughness_value = 0.8
+shader_parameter/specular_value = 0.2
+shader_parameter/use_top = true
+shader_parameter/top_texture = ExtResource("5_cn4hw")
+shader_parameter/top_tint = Color(1, 1, 1, 1)
+shader_parameter/top_meters = 4.0
+shader_parameter/use_bottom = true
+shader_parameter/bottom_texture = ExtResource("3_blljg")
+shader_parameter/bottom_meters = 2.0
+shader_parameter/use_uv = null
+shader_parameter/lane_color = null
+shader_parameter/lane_period = null
+shader_parameter/lane_width = null
+shader_parameter/lane_length = null
+shader_parameter/caustics = null
+shader_parameter/caustics_color = null
+shader_parameter/caustics_meters = null

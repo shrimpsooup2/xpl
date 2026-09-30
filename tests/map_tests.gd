@@ -570,6 +570,32 @@ func test_rift_bridges_cross_the_canyon() -> void:
 
 # --- Team maps ----------------------------------------------------------------------
 
+func test_boulevard_is_a_village_in_an_ice_cave() -> void:
+	await load_map(BOULEVARD)
+	var front := level.find_child("ArcadeFront_Blue_0", true, false) as GreyBox
+	check(front != null and front.surface != null, "the blocks wear the village's surfaces")
+	# The boundary is the shelf's edge: not drawn (the cave and a fence
+	# are), still there to stop you.
+	var edge := level.find_child("BoundaryN", true, false) as GreyBox
+	check(edge != null and edge.layers == 0 and edge.get_child_count(true) > 0, "the boundary is hidden but solid")
+	# The daylight comes down the openings' shafts, not from the sun.
+	var sun := level.get_node("Sun") as DirectionalLight3D
+	var daylight := level.find_children("Daylight_*", "SpotLight3D", true, false)
+	check(not sun.visible and daylight.size() >= 4, "daylight lamps in the openings (%d), the sun off" % daylight.size())
+	# Every solid prop has its twin on the other half, and none stands on a
+	# spawn or a pad.
+	var solids := level.find_children("Solid_*", "StaticBody3D", true, false)
+	check(not solids.is_empty(), "solid props")
+	var marks := get_tree().get_nodes_in_group(&"spawn") + level.find_children("Pad_*", "Node3D", true, false)
+	for s: StaticBody3D in solids:
+		var p := s.global_position
+		check(solids.any(func(o: StaticBody3D) -> bool: return o.global_position.distance_to(Vector3(-p.x, p.y, p.z)) < 0.05),
+				"%s has a twin across the middle (at %s)" % [s.name, p])
+		for m: Node3D in marks:
+			var flat := Vector2(m.global_position.x - p.x, m.global_position.z - p.z)
+			check(flat.length() > 1.5 or absf(m.global_position.y - p.y) > 2.5, "%s is clear of %s" % [s.name, m.name])
+
+
 func test_team_maps_are_the_same_for_both_teams() -> void:
 	for path: String in TEAM_MAPS:
 		await load_map(path)
