@@ -12,7 +12,11 @@
 //   tools/gen_site_figure.gd). Hover a download and it jolts.
 // - The picture card flips through screenshots (data-shots) with the
 //   game's box wipe, or low-res stand-ins until there are some.
-// - A download without an address yet says "soon :)".
+// - A download without an address yet says "soon :)". Pointing at one (or
+//   tabbing to it) shows its tooltip, from its title in the HTML: an
+//   inverted box over the button, the build and the version on top.
+// - The version (the page's data-version, stamped in from project.godot by
+//   tools/build_site.sh) is a tag stuck under the logo.
 
 (function () {
 	"use strict";
@@ -47,6 +51,14 @@
 	const figureImage = picture("assets/figure.png");
 	const lines = Array.from(infoEl.querySelectorAll("li"), (li) => li.textContent.trim());
 	const caption = picsEl.querySelector(".caption");
+	const version = screen.getAttribute("data-version") || "";
+	// The downloads' tooltips: drawn here, so not the browser's as well;
+	// screen readers get them as the links' descriptions.
+	for (const el of infoEl.querySelectorAll(".hit[title]")) {
+		el.dataset.tip = el.title;
+		el.setAttribute("aria-description", el.title);
+		el.removeAttribute("title");
+	}
 	const shots = (picsEl.getAttribute("data-shots") || "").split(",").map((s) => s.trim()).filter(Boolean).map((src) => picture(src));
 	const STAND_INS = ["pictures soon", "the maps are being decorated", "pictures soon"];
 	const slideCount = shots.length || STAND_INS.length;
@@ -195,7 +207,7 @@
 				bx = pad;
 				by += BUTTON_H + 7;
 			}
-			const b = { el, name: el.getAttribute("data-button"), label, x: bx, y: by, w: bw, h: BUTTON_H };
+			const b = { el, name: el.getAttribute("data-button"), label, tip: el.dataset.tip || "", x: bx, y: by, w: bw, h: BUTTON_H };
 			bx += bw + 8;
 			return b;
 		});
@@ -345,6 +357,7 @@
 	const state = { hover: "", focus: "", press: "" };
 	const blob = { angle: 0.15, spin: 0 }; // The hanging player's swing.
 	let slide = 0, shown = 0, wipeAt = -1, lastTurn = 0;
+	let tipName = "", tipAt = 0; // The tooltip showing, and since when.
 	const pops = [];
 
 	function backOut(t) {
@@ -416,7 +429,8 @@
 		ctx.restore();
 	}
 
-	// The game's logo; the words in a box till it's in.
+	// The game's logo; the words in a box till it's in. The version on a
+	// tag stuck under its corner.
 	function drawLogo(card) {
 		if (logoImage.ready) {
 			ctx.imageSmoothingEnabled = true;
@@ -424,6 +438,16 @@
 		} else {
 			paper(0, 0, card.w, card.h, 11, 9);
 			text(logoText, card.h * 0.35, card.h * 0.64, card.h * 0.38, INK);
+		}
+		if (version) {
+			const label = "v" + version, size = 12;
+			const w = Math.ceil(textWidth(label, size)) + 18, h = 20;
+			ctx.save();
+			ctx.translate(card.w - w / 2 - 14, card.h + 2);
+			ctx.rotate(deg(5));
+			paper(-w / 2, -h / 2, w, h, hash(label), 2.5);
+			text(label, -w / 2 + 9, 4.5, size, INK);
+			ctx.restore();
 		}
 	}
 
@@ -437,6 +461,50 @@
 			paper(b.x + lift, b.y + lift, b.w, b.h, hash(b.name), 3, lit ? INK : null, lit && !down ? 3 : 0);
 			text(b.label, b.x + 12 + lift, b.y + b.h / 2 + BUTTON_TEXT * 0.36 + lift, BUTTON_TEXT, lit ? PAPER : INK);
 		}
+		const pointed = card.buttons.find((b) => b.tip && (state.hover === b.name || state.focus === b.name));
+		if ((pointed ? pointed.name : "") !== tipName) {
+			tipName = pointed ? pointed.name : "";
+			tipAt = now;
+		}
+		if (pointed) drawTip(card, pointed);
+	}
+
+	// A button's tooltip: an inverted box over it, pointing down at it, the
+	// build and the version on top, then what it is. It pops up from the
+	// button.
+	function drawTip(card, b) {
+		const size = 12, lead = 15, padX = 10, padY = 8;
+		const lines = [b.name + (version ? " · v" + version : ""), ...wrap(b.tip, size, 210)];
+		const w = Math.ceil(Math.max(...lines.map((l) => textWidth(l, size)))) + padX * 2;
+		const h = lines.length * lead + padY * 2 - 2;
+		const cx = b.x + b.w / 2;
+		const x = Math.max(-8, Math.min(card.w - w + 8, cx - w / 2));
+		const y = b.y - h - 10;
+		const t = still ? 1 : Math.min(1, (now - tipAt) / 0.16);
+		const k = 0.7 + 0.3 * backOut(t);
+		ctx.save();
+		ctx.globalAlpha *= Math.min(1, t * 4);
+		ctx.translate(cx, b.y - 4);
+		ctx.scale(k, k);
+		ctx.translate(-cx, -(b.y - 4));
+		paper(x, y, w, h, hash(b.name) + 7, 3, INK, 2);
+		// The point, down at the button.
+		ctx.beginPath();
+		ctx.moveTo(cx - 7, y + h - 1);
+		ctx.lineTo(cx + 7, y + h - 1);
+		ctx.lineTo(cx, y + h + 8);
+		ctx.closePath();
+		ctx.fillStyle = PAPER;
+		ctx.fill();
+		ctx.beginPath();
+		ctx.moveTo(cx - 4, y + h - 4);
+		ctx.lineTo(cx + 4, y + h - 4);
+		ctx.lineTo(cx, y + h + 3);
+		ctx.closePath();
+		ctx.fillStyle = INK;
+		ctx.fill();
+		lines.forEach((l, i) => text(l, x + padX, y + padY + size - 1 + i * lead, size, i === 0 ? PINK : PAPER));
+		ctx.restore();
 	}
 
 	function drawPictures(card) {

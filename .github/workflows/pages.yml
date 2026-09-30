@@ -11,6 +11,7 @@ on:
       - "assets/ui/**"
       - "assets/fonts/**"
       - "tools/build_site.sh"
+      - "project.godot"  # The version shown on the site.
       - ".github/workflows/pages.yml"
   workflow_dispatch:
 

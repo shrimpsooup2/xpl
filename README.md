@@ -110,16 +110,17 @@ This runs the headless movement, UI, combat, cosmetics, map, game and network te
 
 `site/` is the game's website: one screen, drawn small on a canvas and blown up in hard pixels like the game's 3D, with the game's boxes: the logo, what the game is (in Arial), download buttons for pc, mac and the server build, and a picture card you can flip through, with the player hanging upside down from the top. The words and buttons are plain HTML in `site/index.html`, laid over the canvas unseen so links, the keyboard and screen readers work, and shown as plain boxes without JavaScript.
 
-- **Downloads:** put each build's address in its button's `href`. Until then they say *soon :)*.
-- **Pictures:** list them in the picture card's `data-shots` (e.g. `shots/boulevard.png, shots/depot.png`, files in `site/shots/`). They're drawn small, so they come out pixelated like everything else. With none it shows stand-ins, until the maps are decorated.
+- **Downloads:** put each build's address in its button's `href` (the latest release's files, set once: [docs/RELEASING.md](docs/RELEASING.md)). Until then they say *soon :)*. Each button's `title` is its tooltip, shown in the site's own box when you point at it, with the build and the version.
+- **The version:** the tag under the logo, stamped in by the build from `project.godot` (`application/config/version`, the one place it's set; the title screen shows it too). Every full release bumps it: [docs/RELEASING.md](docs/RELEASING.md) has the checklist.
+- **Pictures:** list them in the picture card's `data-shots` (files in `site/shots/`: the dressed maps, 640 × 360, as the game draws them, with players posed in them). They're drawn small, so they come out pixelated like everything else. With none it shows stand-ins.
 
-`tools/build_site.sh` puts it together in `_site/` with the logo, the icon and the font from `assets/`; to look at it locally:
+`tools/build_site.sh` puts it together in `_site/` with the logo, the icon and the font from `assets/` and the version from `project.godot`; to look at it locally:
 
 ```sh
 tools/build_site.sh && python3 -m http.server -d _site
 ```
 
-`.github/workflows/pages.yml` publishes it to GitHub Pages whenever it changes on `main`. It needs, once, **Settings → Pages → Build and deployment → Source: GitHub Actions** in the repository. `tools/gen_icon.gd` makes the favicon (*xpl*, in the logo's style), and `tools/gen_site_figure.gd` renders the hanging player (`site/assets/figure.png`) from the game's own body; it needs a real renderer, so run it under `xvfb-run` with `--rendering-driver opengl3` on a machine without a screen.
+`.github/workflows/pages.yml` publishes it to GitHub Pages whenever it (or the version) changes on `main`. It needs, once, **Settings → Pages → Build and deployment → Source: GitHub Actions** in the repository. `tools/gen_icon.gd` makes the favicon (*xpl*, in the logo's style), and `tools/gen_site_figure.gd` renders the hanging player (`site/assets/figure.png`) from the game's own body; it needs a real renderer, so run it under `xvfb-run` with `--rendering-driver opengl3` on a machine without a screen.
 
 ## Known issues
 

@@ -53,5 +53,6 @@ html:not(.js) .card {
 	background: #fff; box-shadow: inset 0 0 0 6px #fff, inset 0 0 0 8px #0d0d0f;
 }
 html:not(.js) h1 { margin: 0; font-weight: normal; font-size: 32px; }
+html:not(.js) .version { margin: 4px 0 0; font-size: 13px; color: #55555c; }
 html:not(.js) ul { margin: 0 0 12px; padding: 0; list-style: none; }
 html:not(.js) .hit { display: inline-block; margin-right: 8px; color: #0d0d0f; }

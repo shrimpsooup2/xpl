@@ -245,7 +245,7 @@ func _build_menu() -> void:
 	_play_list.visible = false
 	col.add_child(_play_list)
 
-	var footer := LofiUI.box("v0.1 · movement prototype", LofiUI.SMALL, LofiUI.Style.GHOST)
+	var footer := LofiUI.box(version_text(), LofiUI.SMALL, LofiUI.Style.GHOST)
 	_footer = footer
 	footer.size_flags_vertical = Control.SIZE_SHRINK_END
 	footer.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
@@ -265,6 +265,12 @@ func _build_menu() -> void:
 	_enter_list(_main_list, 0.25, 0.07)
 	LofiUI.enter(footer, Vector2(0, 10), 0.6, 0.25)
 	LofiUI.enter(picker, Vector2(0, 10), 0.7, 0.25)
+
+
+## The version tag: the game's version (application/config/version in
+## project.godot, the one place it's set; docs/RELEASING.md).
+static func version_text() -> String:
+	return "v%s" % ProjectSettings.get_setting("application/config/version", "0.0.0")
 
 
 ## Quiet rows in small ghost boxes, like the version tag: your name, then
