@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/far_surface.gdshader" id="1_tl36p"]
+[ext_resource type="Texture2D" path="res://assets/textures/rift/flags.png" id="2_wpdt8"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_tl36p")
+shader_parameter/albedo_texture = ExtResource("2_wpdt8")
+shader_parameter/tint = Color(0.82, 0.78, 0.74, 1)
+shader_parameter/meters_per_repeat = 12.0

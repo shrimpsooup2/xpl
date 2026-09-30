@@ -1,0 +1,31 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/retro_surface.gdshader" id="1_n60g4"]
+[ext_resource type="Texture2D" path="res://assets/textures/terrace/wood.png" id="2_ni24n"]
+[ext_resource type="Texture2D" path="res://assets/textures/rift/reflection_day.png" id="3_ldige"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_n60g4")
+shader_parameter/albedo_texture = ExtResource("2_ni24n")
+shader_parameter/reflection_map = ExtResource("3_ldige")
+shader_parameter/tint = Color(0.62, 0.42, 0.34, 1)
+shader_parameter/meters_per_repeat = 1.0
+shader_parameter/gloss = 0.05
+shader_parameter/gloss_grazing = 0.3
+shader_parameter/roughness_value = 0.7
+shader_parameter/specular_value = 0.35
+shader_parameter/use_top = true
+shader_parameter/top_texture = ExtResource("2_ni24n")
+shader_parameter/top_tint = Color(0.45, 0.36, 0.3, 1)
+shader_parameter/top_meters = 1.0
+shader_parameter/use_bottom = null
+shader_parameter/bottom_meters = null
+shader_parameter/use_uv = null
+shader_parameter/lane_color = null
+shader_parameter/lane_period = null
+shader_parameter/lane_width = null
+shader_parameter/lane_length = null
+shader_parameter/caustics = null
+shader_parameter/caustics_color = null
+shader_parameter/caustics_meters = null

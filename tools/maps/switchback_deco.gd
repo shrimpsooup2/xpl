@@ -21,8 +21,8 @@ extends RefCounted
 ## Over the back wall the hill climbs on, and on top of it the car park
 ## carries on up as a spiral tower, its decks lit, until they're lost in the
 ## sky (a sign on the top deck: Levels 5 – ∞, closed). Over the front wall,
-## far below, the city's lights are coming on. A few traffic cones float
-## up there too. The gameplay blocks are untouched, only dressed.
+## far below, the city's lights are coming on. The gameplay blocks are
+## untouched, only dressed.
 
 const DecoKit := preload("res://tools/deco_kit.gd")
 const Signs := preload("res://tools/sign_kit.gd")
@@ -83,7 +83,6 @@ static func dress(kit, d) -> void:
 	_front_wall(d)
 	_floodlights(d)
 	_odds(d)
-	_sky_cones(d)
 	_hill_and_tower(d)
 	_city(d)
 
@@ -833,49 +832,6 @@ static func _skid(d, c: Vector3, r: float, a0: float, a1: float) -> void:
 			var lift := Vector3(0, 0.01, 0)
 			d.quad("skid", q0 - o0 + lift, q1 - o1 + lift, q1 + o1 + lift, q0 + o0 + lift, "Build", BOTH)
 			d.quad("skid", q1 - o1 + lift, q0 - o0 + lift, q0 + o0 + lift, q1 + o1 + lift, "Build", BOTH)
-
-
-# --- Cones adrift -------------------------------------------------------------------------------------
-
-## A few traffic cones floating high over the decks, turning slowly.
-static func _sky_cones(d) -> void:
-	var params := {"reflection_map": "switchback/reflection_dusk.png", "bob": 0.5, "spin": 0.12}
-	for c: Array in [[Vector3(-8.0, 30.0, 4.0), 4.0, 0.0], [Vector3(16.0, 36.0, -14.0), 3.2, 2.5], [Vector3(-24.0, 27.0, -20.0), 2.6, 4.1],
-			[Vector3(10.0, 42.0, 30.0), 5.0, 5.3]]:
-		var st := SurfaceTool.new()
-		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-		_cone_mesh(st)
-		d.floater("Cone_%d" % int(c[2] * 10.0), st, c[0], params, c[2], c[1])
-
-
-## A traffic cone in vertex colours (the floater's mesh), leaning.
-static func _cone_mesh(st: SurfaceTool) -> void:
-	var orange := Color(1.0, 0.36, 0.06)
-	var bands := [[-0.36, 0.33, orange], [0.12, 0.24, Color(0.95, 0.95, 0.95)], [0.3, 0.19, orange], [0.8, 0.04, orange]]
-	var tilt := Basis(Vector3(0, 0, 1), 0.5)
-	var sides := 10
-	for k in 3:
-		for i in sides:
-			var a0 := TAU * i / sides
-			var a1 := TAU * (i + 1) / sides
-			var q := [Vector3(cos(a0) * bands[k][1], bands[k][0], sin(a0) * bands[k][1]), Vector3(cos(a1) * bands[k][1], bands[k][0], sin(a1) * bands[k][1]),
-					Vector3(cos(a1) * bands[k + 1][1], bands[k + 1][0], sin(a1) * bands[k + 1][1]),
-					Vector3(cos(a0) * bands[k + 1][1], bands[k + 1][0], sin(a0) * bands[k + 1][1])]
-			for j: int in [0, 1, 2, 0, 2, 3]:
-				var v: Vector3 = q[j]
-				st.set_color(bands[k][2])
-				st.set_normal((tilt * Vector3(v.x, 0.3, v.z)).normalized())
-				st.add_vertex(tilt * v)
-	# The square base.
-	var base := [Vector3(-0.45, -0.36, -0.45), Vector3(0.45, -0.36, 0.45), Vector3(0.45, -0.36, -0.45),
-			Vector3(-0.45, -0.36, -0.45), Vector3(-0.45, -0.36, 0.45), Vector3(0.45, -0.36, 0.45)]
-	var both := base.duplicate()
-	base.reverse()
-	both.append_array(base)
-	for j: Vector3 in both:
-		st.set_color(Color(0.08, 0.08, 0.08))
-		st.set_normal(tilt * Vector3.DOWN)
-		st.add_vertex(tilt * j)
 
 
 # --- Far off -------------------------------------------------------------------------------------------
