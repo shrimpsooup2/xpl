@@ -92,7 +92,7 @@ Both ways run the same server-authoritative game ([how it works, and its safety 
 | `scenes/` | `main_menu.tscn` (main scene), `test_course.tscn`, `player.tscn`, and the maps in `maps/` |
 | `tests/` | Headless movement, UI, combat, cosmetics, map, game and network tests, and the online tests (real processes talking over the network) |
 | `site/` | The website (below) |
-| `tools/` | Test runner, the website's build script, the scene generator, the decor kit that dresses a map (`deco_kit.gd`, with each dressed map's `<map>_deco.gd`), the level kit (with `level_side.gd` for symmetric team maps) and the map layouts (`maps/`) |
+| `tools/` | Test runner, the website's build script, the scene generator, the decor kit that dresses a map (`deco_kit.gd`, with `sign_kit.gd` for its signs and each dressed map's `<map>_deco.gd`), the level kit (with `level_side.gd` for symmetric team maps) and the map layouts (`maps/`) |
 
 ## Tests
 
@@ -127,4 +127,4 @@ tools/build_site.sh && python3 -m http.server -d _site
 ## Credits
 
 - Animations: [Universal Animation Library](https://quaternius.com/packs/universalanimationlibrary.html) by Quaternius, CC0 (`assets/third_party/quaternius_ual/`).
-- Font: Liberation Sans, SIL Open Font License 1.1 (`assets/fonts/`).
+- Fonts (`assets/fonts/`): Liberation Sans, Serif and Mono, SIL Open Font License 1.1 (`LICENSE-LiberationSans.txt`); DejaVu Sans Bold and DejaVu Serif Bold, the Bitstream Vera licence (`LICENSE-DejaVu.txt`).

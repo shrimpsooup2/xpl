@@ -7,16 +7,16 @@
 radius = 0.35
 height = 1.8
 
-[node name="Player" type="CharacterBody3D" unique_id=472108160]
+[node name="Player" type="CharacterBody3D" unique_id=926723655]
 script = ExtResource("1_g2els")
 
-[node name="Collision" type="CollisionShape3D" parent="." unique_id=1527916189]
+[node name="Collision" type="CollisionShape3D" parent="." unique_id=961324674]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.9, 0)
 shape = SubResource("CapsuleShape3D_dqkch")
 
-[node name="Camera" type="Camera3D" parent="." unique_id=1501543341]
+[node name="Camera" type="Camera3D" parent="." unique_id=1415163055]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
 far = 500.0
 
-[node name="Model" type="Node3D" parent="." unique_id=1487856969]
+[node name="Model" type="Node3D" parent="." unique_id=1379723352]
 script = ExtResource("2_qhqgy")

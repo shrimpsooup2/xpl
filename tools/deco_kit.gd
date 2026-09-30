@@ -44,6 +44,11 @@ func _init(level_kit: LevelKit, map_dir: String) -> void:
 	dir = map_dir
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir))
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(dir + "meshes"))
+	# What the last build made goes, so nothing it no longer uses is left.
+	for sub: String in [dir, dir + "meshes/"]:
+		for f in DirAccess.get_files_at(sub):
+			if f.ends_with(".tres") or f.ends_with(".res"):
+				DirAccess.remove_absolute(ProjectSettings.globalize_path(sub + f))
 	root = Node3D.new()
 	root.name = "Decor"
 	kit.root.add_child(root)
@@ -243,6 +248,68 @@ func tube(material: String, a: Vector3, b: Vector3, radius: float, sides := 8, g
 					st.add_vertex(q)
 
 
+## A tube following `pts` (a bent tube: neon, cable), `radius` round, one
+## smooth piece with its bends shared, `closed` joining the end to the start.
+func path_tube(material: String, pts: PackedVector3Array, radius: float, sides := 6, grp := "Detail", layers := LAYER_BOTH, closed := false) -> void:
+	if closed and pts.size() > 2 and pts[0].distance_to(pts[pts.size() - 1]) > 0.0001:
+		pts.append(pts[0])
+	var n := pts.size()
+	if n < 2:
+		return
+	var st := _bucket(material, grp, layers, false)
+	var tangents: Array[Vector3] = []
+	for i in n:
+		var t := (pts[mini(i + 1, n - 1)] - pts[maxi(i - 1, 0)])
+		if closed and (i == 0 or i == n - 1):
+			t = pts[1] - pts[n - 2]
+		tangents.append(t.normalized() if t.length() > 0.00001 else Vector3.FORWARD)
+	# A frame carried along without twisting.
+	var side := tangents[0].cross(Vector3.UP if absf(tangents[0].y) < 0.9 else Vector3.RIGHT).normalized()
+	var rings: Array = []
+	var along := 0.0
+	for i in n:
+		var t: Vector3 = tangents[i]
+		side = (side - t * side.dot(t)).normalized()
+		var up := side.cross(t)
+		if i > 0:
+			along += pts[i].distance_to(pts[i - 1])
+		var ring := []
+		for k in sides + 1:
+			var a := TAU * k / sides
+			var dir := side * cos(a) + up * sin(a)
+			ring.append([pts[i] + dir * radius, dir, Vector2(TAU * radius * k / sides, along)])
+		rings.append(ring)
+	for i in n - 1:
+		for k in sides:
+			var q := [rings[i][k], rings[i + 1][k], rings[i + 1][k + 1], rings[i][k + 1]]
+			for j: int in [0, 1, 2, 0, 2, 3]:
+				st.set_normal(q[j][1])
+				st.set_uv(q[j][2])
+				st.add_vertex(q[j][0])
+
+
+## A mesh merged in (a word of extruded letters): its faces toward its +z
+## in `front`, the rest (the sides) in `side`.
+func add_mesh(mesh: Mesh, t: Transform3D, front: String, side: String, grp := "Detail", layers := LAYER_BOTH) -> void:
+	var normal_basis := t.basis.inverse().transposed()
+	for surface in mesh.get_surface_count():
+		var arrays := mesh.surface_get_arrays(surface)
+		var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+		var normals: PackedVector3Array = arrays[Mesh.ARRAY_NORMAL]
+		var indices: PackedInt32Array = arrays[Mesh.ARRAY_INDEX] if arrays[Mesh.ARRAY_INDEX] != null else PackedInt32Array()
+		if indices.is_empty():
+			indices = PackedInt32Array(range(verts.size()))
+		for i in range(0, indices.size(), 3):
+			var tri := [indices[i], indices[i + 1], indices[i + 2]]
+			var facing: Vector3 = normals[tri[0]] + normals[tri[1]] + normals[tri[2]]
+			var st := _bucket(front if facing.z > 2.5 else side, grp, layers, false)
+			for v: int in tri:
+				st.set_normal((normal_basis * normals[v]).normalized())
+				var p := verts[v]
+				st.set_uv(Vector2(p.x, -p.y))
+				st.add_vertex(t * p)
+
+
 ## A ball, `rings` from pole to pole.
 func ball(material: String, c: Vector3, radius: Vector3, rings := 6, sides := 10, grp := "Detail", layers := LAYER_BOTH, shadows := false) -> void:
 	var st := _bucket(material, grp, layers, shadows)
@@ -390,13 +457,14 @@ func _light(l: Light3D, minor: bool) -> void:
 
 
 ## Words on a surface: `at` their middle, `b` their facing (they read along
-## b.x, face b.z). `glow` over 1 makes them light up (neon, exit signs).
-func words(text: String, at: Vector3, b: Basis, size: float, color: Color, glow := 0.0, grp := "Detail", layers := LAYER_BOTH) -> Label3D:
+## b.x, face b.z). `glow` over 1 makes them light up (exit signs). `font` a
+## file in assets/fonts/ (Liberation Sans by default).
+func words(text: String, at: Vector3, b: Basis, size: float, color: Color, glow := 0.0, grp := "Detail", layers := LAYER_BOTH, font := "LiberationSans-Regular.ttf") -> Label3D:
 	var l := Label3D.new()
 	l.name = ("Words_" + text).validate_node_name().replace(" ", "_").left(40)
 	l.text = text
 	l.transform = Transform3D(b, at)
-	l.font = load("res://assets/fonts/LiberationSans-Regular.ttf")
+	l.font = load("res://assets/fonts/" + font)
 	l.font_size = 32
 	l.pixel_size = size / 32.0
 	l.outline_size = 0

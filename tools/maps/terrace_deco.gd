@@ -24,6 +24,13 @@ extends RefCounted
 ## untouched, only dressed: the map plays as it did.
 
 const DecoKit := preload("res://tools/deco_kit.gd")
+const Signs := preload("res://tools/sign_kit.gd")
+## Typefaces (assets/fonts/): signage, painted and printed words.
+const SANS := "DejaVuSans-Bold.ttf"
+const SERIF := "DejaVuSerif-Bold.ttf"
+const ITALIC := "LiberationSerif-Italic.ttf"
+const SWASH := "LiberationSerif-BoldItalic.ttf"
+const TYPED := "LiberationMono-Bold.ttf"
 const BOTH := DecoKit.LAYER_BOTH
 const TOP := 4.0
 
@@ -31,7 +38,6 @@ const BULB := Color(1.0, 0.72, 0.40)
 const CORONA := Color(0.78, 0.82, 1.0)
 const WARM := Color(1.0, 0.84, 0.62)
 const GLOW := "res://src/render/deco/glow.gdshader"
-const HALO := "res://src/render/deco/halo.gdshader"
 const LIGHTBOX := "res://src/render/deco/lightbox.gdshader"
 const SHOP := "res://src/render/deco/shop_window.gdshader"
 
@@ -48,28 +54,28 @@ const FACETS := 12
 const MISSING := [Vector2i(3, 5), Vector2i(8, 2), Vector2i(10, 9)]
 const TARPS := [Vector2i(5, 7), Vector2i(1, 3)]
 
-## Shopfronts: [foot of the middle on the wall (x, z), facing, width, name,
-## colour, style ("neon", "box" or "" for none), shutter (0 up .. 1 shut)].
+## Shopfronts: [foot of the middle on the wall (x, z), facing, width, which
+## shop (its sign, _shop_sign()), shutter (0 up .. 1 shut)].
 const TOWN_SHOPS := [
-	[Vector2(-24, -15), Vector3(1, 0, 0), 5.0, "PET PALACE", Color(0.3, 0.75, 1.0), "box", 1.0],
-	[Vector2(-24, -8), Vector3(1, 0, 0), 5.0, "PRETZEL STAR", Color(1.0, 0.55, 0.15), "neon", 0.5],
-	[Vector2(-24, 8), Vector3(1, 0, 0), 5.0, "SPACE AVAILABLE", Color.WHITE, "", 0.0],
-	[Vector2(-24, 14.5), Vector3(1, 0, 0), 5.0, "SHOE CITY", Color(1.0, 0.4, 0.4), "box", 0.35],
-	[Vector2(-20.5, -18), Vector3(0, 0, 1), 5.0, "GYRO GALAXY", Color(0.3, 0.55, 1.0), "neon", 0.6],
-	[Vector2(-14.5, -18), Vector3(0, 0, 1), 5.0, "SOUP STATION", Color(1.0, 0.85, 0.4), "box", 1.0],
-	[Vector2(-8.5, -18), Vector3(0, 0, 1), 5.0, "PHOTO 1 HR", Color(0.5, 1.0, 0.6), "box", 0.0],
-	[Vector2(-20.5, 18), Vector3(0, 0, -1), 5.0, "FROZEN YOGURT", Color(1.0, 0.4, 0.8), "neon", 0.4],
-	[Vector2(-14.5, 18), Vector3(0, 0, -1), 5.0, "CARDS & GIFTS", Color(0.9, 0.5, 1.0), "box", 1.0],
+	[Vector2(-24, -15), Vector3(1, 0, 0), 5.0, "pet", 1.0],
+	[Vector2(-24, -8), Vector3(1, 0, 0), 5.0, "pretzel", 0.5],
+	[Vector2(-24, 8), Vector3(1, 0, 0), 5.0, "space", 0.0],
+	[Vector2(-24, 14.5), Vector3(1, 0, 0), 5.0, "shoes", 0.35],
+	[Vector2(-20.5, -18), Vector3(0, 0, 1), 5.0, "gyro", 0.6],
+	[Vector2(-14.5, -18), Vector3(0, 0, 1), 5.0, "soup", 1.0],
+	[Vector2(-8.5, -18), Vector3(0, 0, 1), 5.0, "photo", 0.0],
+	[Vector2(-20.5, 18), Vector3(0, 0, -1), 5.0, "froyo", 0.4],
+	[Vector2(-14.5, 18), Vector3(0, 0, -1), 5.0, "cards", 1.0],
 ]
 const UPPER_SHOPS := [
-	[Vector2(5.5, -18), Vector3(0, 0, 1), 4.5, "BOOKS", Color(1.0, 0.9, 0.7), "box", 0.8],
-	[Vector2(10.5, -18), Vector3(0, 0, 1), 4.5, "RECORDS", Color(0.7, 0.4, 1.0), "neon", 0.3],
-	[Vector2(15.5, -18), Vector3(0, 0, 1), 4.0, "TOYS", Color(1.0, 0.6, 0.2), "box", 1.0],
-	[Vector2(5.5, 18), Vector3(0, 0, -1), 4.5, "SHADES", Color(1.0, 0.85, 0.2), "neon", 0.0],
-	[Vector2(20.0, 18), Vector3(0, 0, -1), 5.0, "CAFE", Color(1.0, 0.6, 0.35), "neon", 0.6],
-	[Vector2(24, -8.5), Vector3(-1, 0, 0), 5.0, "SPACE AVAILABLE", Color.WHITE, "", 0.0],
-	[Vector2(24, 5.0), Vector3(-1, 0, 0), 5.0, "PHONE REPAIR", Color(0.5, 0.9, 1.0), "box", 1.0],
-	[Vector2(24, 11.5), Vector3(-1, 0, 0), 5.0, "PERFUME", Color(1.0, 0.7, 0.85), "box", 0.5],
+	[Vector2(5.5, -18), Vector3(0, 0, 1), 4.5, "books", 0.8],
+	[Vector2(10.5, -18), Vector3(0, 0, 1), 4.5, "records", 0.3],
+	[Vector2(15.5, -18), Vector3(0, 0, 1), 4.0, "toys", 1.0],
+	[Vector2(5.5, 18), Vector3(0, 0, -1), 4.5, "shades", 0.0],
+	[Vector2(20.0, 18), Vector3(0, 0, -1), 5.0, "cafe", 0.6],
+	[Vector2(24, -8.5), Vector3(-1, 0, 0), 5.0, "space", 0.0],
+	[Vector2(24, 5.0), Vector3(-1, 0, 0), 5.0, "phone", 1.0],
+	[Vector2(24, 11.5), Vector3(-1, 0, 0), 5.0, "perfume", 0.5],
 ]
 
 
@@ -203,7 +209,17 @@ static func _materials(d) -> void:
 			["tile_lemon", "stack/pool_tiles", 1.0, Color(1.15, 0.98, 0.42), 0.25, 0.6, 0.3],
 			["roof_steel", "stack/steel", 1.0, Color(1.1, 1.1, 1.08), 0.35, 0.7, 0.3],
 			["stucco", "terrace/stucco", 4.0, Color.WHITE, 0.04, 0.25, 0.8],
-			["tarp", "stack/steel", 2.0, Color(0.18, 0.36, 0.9), 0.08, 0.3, 0.7]]:
+			["tarp", "stack/steel", 2.0, Color(0.18, 0.36, 0.9), 0.08, 0.3, 0.7],
+			["red_lacquer", "stack/steel", 1.0, Color(0.62, 0.07, 0.08), 0.5, 0.85, 0.2],
+			["board_blue", "terrace/wood", 1.0, Color(0.55, 0.85, 1.2), 0.15, 0.5, 0.5],
+			["board_green", "terrace/wood", 1.0, Color(0.25, 0.5, 0.35), 0.15, 0.5, 0.5],
+			["blade_red", "stack/steel", 1.0, Color(0.62, 0.1, 0.12), 0.3, 0.6, 0.3],
+			["vinyl", "stack/steel", 1.0, Color(0.03, 0.03, 0.035), 0.6, 0.9, 0.15],
+			["stripe_orange", "terrace/stucco", 2.0, Color(1.25, 0.55, 0.2), 0.03, 0.2, 0.85],
+			["stripe_cream", "terrace/stucco", 2.0, Color(1.3, 1.2, 1.0), 0.03, 0.2, 0.85],
+			["stripe_red", "terrace/stucco", 2.0, Color(1.05, 0.18, 0.18), 0.03, 0.2, 0.85],
+			["stripe_white", "terrace/stucco", 2.0, Color(1.35, 1.35, 1.35), 0.03, 0.2, 0.85],
+			["stripe_brown", "terrace/stucco", 2.0, Color(0.55, 0.34, 0.24), 0.03, 0.2, 0.85]]:
 		d.surface(m[0], {"side": m[1], "meters": m[2], "tint": m[3], "gloss": m[4], "grazing": m[5], "roughness": m[6], "uv": true})
 	# Things that glow.
 	d.shaded("bulb", GLOW, {"color": BULB, "energy": 3.2})
@@ -217,6 +233,14 @@ static func _materials(d) -> void:
 	d.shaded("sodium", GLOW, {"color": Color(1.0, 0.55, 0.18), "energy": 2.6})
 	d.shaded("marquee_a", GLOW, {"color": Color(1.0, 0.85, 0.5), "energy": 3.0, "blink_period": 0.6, "blink_duty": 0.5})
 	d.shaded("marquee_b", GLOW, {"color": Color(1.0, 0.85, 0.5), "energy": 3.0, "blink_period": 0.6, "blink_duty": 0.5, "blink_offset": 0.5})
+	# Signs: lit letter faces, printed lightboxes, bulbs chasing.
+	for f: Array in [["face_green", Color(0.2, 0.9, 0.3)], ["face_yellow", Color(1.0, 0.8, 0.15)], ["face_pink", Color(1.0, 0.25, 0.6)],
+			["face_warm", Color(1.0, 0.86, 0.62)], ["face_purple", Color(0.6, 0.3, 1.0)], ["face_red", Color(1.0, 0.2, 0.18)],
+			["face_blue", Color(0.25, 0.55, 1.0)], ["box_blue", Color(0.2, 0.5, 1.0)], ["box_white", Color(1.0, 0.98, 0.94)],
+			["box_yellow", Color(1.0, 0.82, 0.2)], ["lantern", Color(1.0, 0.25, 0.15)]]:
+		d.shaded(f[0], GLOW, {"color": f[1], "energy": 1.4})
+	for f: Array in [["bulb_pink", Color(1.0, 0.35, 0.75)], ["bulb_cyan", Color(0.35, 0.9, 1.0)], ["bulb_yellow", Color(1.0, 0.85, 0.3)]]:
+		d.shaded(f[0], GLOW, {"color": f[1], "energy": 3.0})
 	d.shaded("ride_lamp", GLOW, {"color": Color(1.0, 0.3, 0.25), "energy": 2.5, "blink_period": 0.9, "blink_duty": 0.5})
 	d.shaded("menu", LIGHTBOX, {"picture": "terrace/menu.png", "size": Vector2(4.0, 0.7), "energy": 1.1})
 	d.shaded("directory", LIGHTBOX, {"picture": "terrace/directory.png", "size": Vector2(1.6, 1.2), "energy": 1.2})
@@ -285,7 +309,7 @@ static func _under_the_bridge(kit, d) -> void:
 		n += 1
 	# "FOOD COURT" along the bridge's side to the street.
 	var b := DecoKit.facing(Vector3(0, 0, 1))
-	d.words("FOOD COURT", Vector3(-4.5, TOP - 0.25, -6.985), b, 0.32, Color(0.9, 0.78, 0.5), 0.0, "Build", BOTH)
+	d.words("Food Court", Vector3(-4.5, TOP - 0.25, -6.985), b, 0.4, Color(0.9, 0.78, 0.5), 0.0, "Build", BOTH, ITALIC)
 	# Brass along its edges.
 	for z: float in [-10.0, -7.0]:
 		d.tube("brass", Vector3(-11, TOP, z), Vector3(2, TOP, z), 0.03, 6, "Build", BOTH)
@@ -316,17 +340,16 @@ static func _shops(d) -> void:
 
 static func _shop_from(d, s: Array, foot: float) -> void:
 	var p: Vector2 = s[0]
-	var name: String = s[3]
-	_shopfront(d, Vector3(p.x, foot, p.y), s[1], s[2], name, s[4], s[5], s[6])
-	if name == "SPACE AVAILABLE":
-		_space_available(d, Vector3(p.x, foot, p.y), s[1])
+	var at := Vector3(p.x, foot, p.y)
+	_shopfront(d, at, s[1], s[2], s[4])
+	_shop_sign(d, s[3], at, s[1], s[2])
 
 
 ## A shopfront against a wall: `at` the middle of its foot on the wall's
 ## face, `n` the way it faces, `width` across. Glass with a shop behind it,
-## piers either side, a kickplate, a fascia with the name on it (in neon,
-## or a lightbox), and a shutter `shutter` of the way down.
-static func _shopfront(d, at: Vector3, n: Vector3, width: float, name: String, colour: Color, style: String, shutter: float, glass := "shop") -> void:
+## piers either side, a kickplate, a fascia, and a shutter `shutter` of the
+## way down.
+static func _shopfront(d, at: Vector3, n: Vector3, width: float, shutter: float, glass := "shop") -> void:
 	var b := DecoKit.facing(n)
 	var gw := width - 0.6
 	for e: float in [-1.0, 1.0]:
@@ -342,33 +365,89 @@ static func _shopfront(d, at: Vector3, n: Vector3, width: float, name: String, c
 		var sh := 2.6 * shutter
 		d.box("shutter", at + n * 0.05 + Vector3(0, 2.94 - sh * 0.5, 0), Vector3(gw, sh, 0.03), "Build", BOTH, b)
 		d.box("dark_metal", at + n * 0.065 + Vector3(0, 2.94 - sh, 0), Vector3(gw, 0.06, 0.05), "Build", BOTH, b)
-	var sign_at := at + n * 0.142 + Vector3(0, 3.35, 0)
-	if style == "neon":
-		_neon(d, name, sign_at, b, 0.42, colour)
-	elif style == "box":
-		var w := minf(width - 0.8, name.length() * 0.24 + 0.6)
-		d.face("sign_white", sign_at, b.x * w * 0.5, Vector3(0, 0.24, 0), "Fixtures", BOTH)
-		d.words(name, sign_at + n * 0.005, b, 0.3, colour.darkened(0.7), 0.0, "Fixtures", BOTH)
 
 
-## A lease board over an empty shop's glass.
-static func _space_available(d, at: Vector3, n: Vector3) -> void:
+## Each shop's sign, each built its own way: neon in tubes, neon tracing a
+## typeface, channel letters, bulbs, painted boards, awnings, blades, cheap
+## lightboxes. `at` the shopfront's foot, `n` its facing.
+static func _shop_sign(d, id: String, at: Vector3, n: Vector3, width: float) -> void:
 	var b := DecoKit.facing(n)
-	d.box("paper", at + n * 0.03 + Vector3(0, 1.7, 0), Vector3(2.6, 1.2, 0.02), "Build", BOTH, b)
-	d.words("SPACE AVAILABLE", at + n * 0.045 + Vector3(0, 1.95, 0), b, 0.26, Color(0.1, 0.12, 0.3), 0.0, "Build", BOTH)
-	d.words("LEASING  555-0199", at + n * 0.045 + Vector3(0, 1.55, 0), b, 0.14, Color(0.6, 0.1, 0.12), 0.0, "Build", BOTH)
+	var fascia := at + n * 0.14 + Vector3(0, 3.35, 0)
+	var above := at + Vector3(0, 3.95, 0)
+	match id:
+		"pet":
+			Signs.lightbox(d, fascia + n * 0.04, b, Vector2(3.2, 0.5), "box_blue", "Pet Palace", SANS, 0.36, Color(1, 1, 1))
+		"pretzel":
+			Signs.awning(d, at + n * 0.14 + Vector3(0, 3.02, 0), b, width - 0.4, 0.9, 0.45, ["stripe_orange", "stripe_cream"], "Pretzel Star", SERIF, Color(0.35, 0.18, 0.08))
+			var knot := [Signs._arc(Vector2(-0.45, 0.2), 0.45, -60, 250), Signs._arc(Vector2(0.45, 0.2), 0.45, -70, 240),
+					Signs._line(Vector2(-0.65, -0.2), Vector2(0.35, 0.55)), Signs._line(Vector2(0.65, -0.2), Vector2(-0.35, 0.55))]
+			Signs.neon_drawing(d, knot, above + b.x * -0.6 + Vector3(0, 0.55, 0), b, 0.5, Color(1.0, 0.6, 0.2))
+			var star := PackedVector2Array()
+			for k in 11:
+				var r := 0.5 if k % 2 == 0 else 0.22
+				var a := deg_to_rad(90.0 + k * 36.0)
+				star.append(Vector2(cos(a), sin(a)) * r)
+			Signs.neon_drawing(d, [star], above + b.x * 0.7 + Vector3(0, 0.6, 0), b, 0.5, Color(1.0, 0.9, 0.35))
+			_lamp(d, "Pretzel", above + n * 0.8 + Vector3(0, 0.5, 0), Color(1.0, 0.65, 0.3), true)
+		"space":
+			d.box("paper", at + n * 0.03 + Vector3(0, 1.7, 0), Vector3(2.6, 1.2, 0.02), "Build", BOTH, b)
+			d.words("Space Available", at + n * 0.045 + Vector3(0, 1.95, 0), b, 0.3, Color(0.1, 0.12, 0.3), 0.0, "Build", BOTH, SANS)
+			d.words("leasing  555-0199", at + n * 0.045 + Vector3(0, 1.55, 0), b, 0.16, Color(0.6, 0.1, 0.12), 0.0, "Build", BOTH, TYPED)
+		"shoes":
+			Signs.blade(d, at + b.x * (width * 0.5 - 0.15) + n * 0.12 + Vector3(0, 3.6, 0), n, Vector2(0.8, 1.1), "blade_red", "Shoes", SERIF, 0.26, Color(1, 0.95, 0.85))
+			d.words("Shoe City", fascia + n * 0.005, b, 0.4, Color(0.95, 0.8, 0.5), 0.0, "Build", BOTH, SWASH)
+		"gyro":
+			Signs.outline_neon(d, SWASH, "Gyro Galaxy", above + Vector3(0, 0.12, 0), b, 0.7, Color(0.3, 0.55, 1.0))
+			_lamp(d, "Gyro", above + n * 0.8 + Vector3(0, 0.4, 0), Color(0.35, 0.55, 1.0), true)
+		"soup":
+			Signs.awning(d, at + n * 0.14 + Vector3(0, 3.02, 0), b, width - 0.4, 0.9, 0.45, ["stripe_red", "stripe_white"], "Soup Station", SERIF, Color(0.12, 0.1, 0.1))
+			d.words("soup  ·  salad  ·  bread", fascia + n * 0.005 + Vector3(0, 0.12, 0), b, 0.2, Color(0.9, 0.85, 0.75), 0.0, "Build", BOTH, ITALIC)
+		"photo":
+			Signs.blade(d, at + b.x * -(width * 0.5 - 0.15) + n * 0.12 + Vector3(0, 3.5, 0), n, Vector2(0.7, 1.3), "box_yellow", "Photo", SANS, 0.24, Color(0.75, 0.08, 0.05))
+			d.box("paper", at + n * 0.02 + b.x * 1.0 + Vector3(0, 1.8, 0), Vector3(0.8, 0.5, 0.005), "Detail", BOTH, b)
+			d.words("prints in\n1 hour", at + n * 0.026 + b.x * 1.0 + Vector3(0, 1.8, 0), b, 0.1, Color(0.1, 0.1, 0.12), 0.0, "Detail", BOTH, TYPED)
+		"froyo":
+			Signs.neon(d, "Frozen Yogurt", above + Vector3(-0.3, 0.25, 0.0), b, 0.24, Color(1.0, 0.4, 0.8), 0.12, "grid")
+			var cone := [PackedVector2Array([Vector2(-0.35, 0.6), Vector2(0, -0.5), Vector2(0.35, 0.6)]),
+					Signs._join([Signs._arc(Vector2(0, 0.75), 0.4, 200, -20), Signs._arc(Vector2(0.05, 1.0), 0.28, 20, 200), Signs._arc(Vector2(0.05, 1.2), 0.14, 180, 60)])]
+			Signs.neon_drawing(d, cone, above + b.x * 2.2 + Vector3(0, 0.25, 0), b, 0.5, Color(1.0, 0.85, 0.6))
+			_lamp(d, "Froyo", above + n * 0.8 + Vector3(0, 0.4, 0), Color(1.0, 0.45, 0.8), true)
+		"cards":
+			Signs.channel(d, ITALIC, "Cards & Gifts", fascia + Vector3(0, -0.2, 0), b, 0.55, ["face_purple"], "dark_metal", 0.06)
+		"books":
+			Signs.blade(d, at + b.x * (width * 0.5 - 0.15) + n * 0.12 + Vector3(0, 3.6, 0), n, Vector2(0.8, 1.0), "board_green", "Books", SERIF, 0.24, Color(1.0, 0.85, 0.45))
+			d.words("new  &  used", fascia + n * 0.005, b, 0.26, Color(0.9, 0.8, 0.55), 0.0, "Build", BOTH, ITALIC)
+		"records":
+			Signs.neon(d, "Records", above + b.x * -0.5 + Vector3(0, 0.15, 0), b, 0.24, Color(0.7, 0.4, 1.0), 0.18, "")
+			var disc := above + b.x * 1.35 + Vector3(0, 0.45, 0) + n * 0.03
+			d.ball("vinyl", disc, Vector3(0.42, 0.42, 0.42) * (Vector3.ONE - n.abs() * 0.97), 2, 16, "Build", BOTH)
+			Signs.neon_drawing(d, [Signs._arc(Vector2.ZERO, 0.46, 0, 360), Signs._arc(Vector2.ZERO, 0.12, 0, 360)], disc, b, 1.0, Color(0.95, 0.55, 1.0), 0.05)
+			_lamp(d, "Records", above + n * 0.8 + Vector3(0, 0.4, 0), Color(0.7, 0.4, 1.0), true)
+		"toys":
+			Signs.channel(d, SANS, "toys", fascia + Vector3(0, -0.24, 0), b, 0.62, ["face_red", "face_yellow", "face_blue", "face_green"], "white", 0.1, 0.0, 0.1)
+		"shades":
+			Signs.outline_neon(d, SWASH, "Shades", above + b.x * -0.4 + Vector3(0, 0.1, 0), b, 0.75, Color(1.0, 0.85, 0.25), "")
+			var glasses := [Signs._ellipse(Vector2(-0.42, 0), Vector2(0.34, 0.24), 0, 360), Signs._ellipse(Vector2(0.42, 0), Vector2(0.34, 0.24), 0, 360),
+					Signs._arc(Vector2(0, 0.02), 0.09, 20, 160), Signs._line(Vector2(-0.76, 0.1), Vector2(-0.9, 0.2)), Signs._line(Vector2(0.76, 0.1), Vector2(0.9, 0.2))]
+			Signs.neon_drawing(d, glasses, above + b.x * 1.55 + Vector3(0, 0.4, 0), b, 0.6, Color(0.3, 0.9, 1.0))
+			_lamp(d, "Shades", above + n * 0.8 + Vector3(0, 0.4, 0), Color(1.0, 0.85, 0.3), true)
+		"cafe":
+			Signs.awning(d, at + n * 0.14 + Vector3(0, 3.02, 0), b, width - 0.4, 0.9, 0.45, ["stripe_brown", "stripe_cream"], "Café", SWASH, Color(0.2, 0.1, 0.05))
+			Signs.neon(d, "café", above + Vector3(0, 0.15, 0), b, 0.24, Color(1.0, 0.7, 0.4), 0.2, "")
+			_lamp(d, "Cafe", above + n * 0.8 + Vector3(0, 0.4, 0), Color(1.0, 0.65, 0.35), true)
+		"phone":
+			Signs.lightbox(d, fascia + n * 0.04, b, Vector2(3.4, 0.46), "box_white", "Phone Repair", SANS, 0.3, Color(0.1, 0.25, 0.75))
+			Signs.lightbox(d, at + n * 0.06 + Vector3(0, 2.6, 0) + b.x * 1.3, b, Vector2(1.5, 0.24), "box_white", "cases · chargers · screens", SANS, 0.1, Color(0.1, 0.1, 0.12))
+		"perfume":
+			Signs.channel(d, ITALIC, "Parfum", fascia + Vector3(0, -0.22, 0), b, 0.6, ["brass"], "brass", 0.05)
+			for e: float in [-1.0, 1.0]:
+				d.ball("downlight", fascia + b.x * e * 1.2 + n * 0.08 + Vector3(0, -0.36, 0), Vector3(0.05, 0.03, 0.05), 2, 8, "Fixtures", BOTH)
 
 
-## A name in neon: the letters, a haze round them, a lamp throwing their
-## colour about. `lamp` 2 makes it one of the extra lamps.
-static func _neon(d, text: String, at: Vector3, b: Basis, size: float, colour: Color, flicker := 0.0, lamp := 1) -> void:
-	d.words(text, at + b.z * 0.012, b, size, colour.lightened(0.6), 0.0, "Fixtures", BOTH).shaded = false
-	var width := size * 0.62 * text.length() + size * 1.4
-	var halo := "halo_%s_%d_%d" % [colour.to_html(false), roundi(width * 10.0), roundi(flicker * 10.0)]
-	d.shaded(halo, HALO, {"color": colour, "strength": 1.3, "size": Vector2(width, size * 2.4), "flicker": flicker})
-	d.face(halo, at + b.z * 0.006, b.x * width * 0.5, Vector3(0, size * 1.2, 0), "Fixtures", BOTH)
-	if lamp > 0:
-		d.omni("Neon_" + text.validate_node_name().replace(" ", "_"), at + b.z * 0.9, colour, 6.5, 1.1, BOTH, lamp == 2)
+## A lamp for a sign, throwing its colour about; `minor` ones go with the
+## extra-lamps setting.
+static func _lamp(d, name: String, at: Vector3, colour: Color, minor := false, reach := 6.5, energy := 1.1) -> void:
+	d.omni("Sign_" + name, at, colour, reach, energy, BOTH, minor)
 
 
 ## The mall's front doors at the street's end: four glass doors in a
@@ -393,30 +472,73 @@ static func _entrance(d) -> void:
 		d.torus("steel", at + b.x * (-0.5 + i * 0.2) + n * 0.13 + Vector3(0, y, 0), 0.06, 0.012, Basis(b.x, b.z, -b.y), 8, 3, "Detail", BOTH)
 	d.box("brass", at + n * 0.14 + Vector3(0, 0.88, 0), Vector3(0.12, 0.15, 0.05), "Detail", BOTH, b)
 	d.box("paper", at + b.x * 1.3 + n * 0.035 + Vector3(0, 1.55, 0), Vector3(0.6, 0.45, 0.005), "Detail", BOTH, b)
-	d.words("CLOSED\nFOR THE\nECLIPSE", at + b.x * 1.3 + n * 0.04 + Vector3(0, 1.55, 0), b, 0.1, Color(0.1, 0.1, 0.12), 0.0, "Detail", BOTH)
-	d.words("ENTRANCE", at + n * 0.205 + Vector3(0, 3.6, 0), b, 0.34, Color(0.85, 0.72, 0.45), 0.0, "Build", BOTH)
+	d.words("closed for\nthe eclipse.\nsorry!", at + b.x * 1.3 + n * 0.04 + Vector3(0, 1.55, 0), b, 0.09, Color(0.1, 0.1, 0.12), 0.0, "Detail", BOTH, TYPED)
+	d.words("Entrance", at + n * 0.205 + Vector3(0, 3.6, 0), b, 0.42, Color(0.85, 0.72, 0.45), 0.0, "Build", BOTH, ITALIC)
 
 
 # --- The food court ----------------------------------------------------------------------------
 
 ## Block A: three food stalls round a kitchen, each a tiled counter, a
-## service window with its shutter half down, a menu board and a name in
-## neon. Round the back, the staff door.
+## service window with its shutter half down, a menu board, and its name
+## its own way: Burger Moon in neon on a grid with a moon and a burger,
+## taco comet in slanted channel letters with a comet going past, Noodle
+## Orbit painted on red lacquer between paper lanterns. Round the back, the
+## staff door.
 static func _food_stalls(d) -> void:
-	for s: Array in [[Vector3(-16, 0, -5), Vector3(0, 0, 1), 8.0, "BURGER MOON", Color(1.0, 0.6, 0.12), "tile_burger"],
-			[Vector3(-12, 0, -8), Vector3(1, 0, 0), 6.0, "TACO COMET", Color(0.3, 1.0, 0.45), "tile_taco"],
-			[Vector3(-16, 0, -11), Vector3(0, 0, -1), 8.0, "NOODLE ORBIT", Color(1.0, 0.25, 0.32), "tile_noodle"]]:
-		_stall(d, s[0], s[1], s[2], s[3], s[4], s[5])
-	var n := Vector3(-1, 0, 0)
+	# Burger Moon.
+	var at := Vector3(-15.5, 0, -5)
+	var n := Vector3(0, 0, 1)
 	var b := DecoKit.facing(n)
-	var at := Vector3(-20, 0, -5.8)
+	_stall(d, at, n, 9.0, "tile_burger")
+	var sign_at := at + n * 0.06 + Vector3(0.3, 3.36, 0)
+	Signs.neon(d, "Burger Moon", sign_at, b, 0.29, Color(1.0, 0.62, 0.18), 0.18, "grid")
+	var moon := [Signs._join([Signs._arc(Vector2.ZERO, 1.0, 70, 290), Signs._arc(Vector2(0.45, 0), 0.82, 250, 110)])]
+	Signs.neon_drawing(d, moon, sign_at + b.x * -2.95 + Vector3(0, 0.24, 0), b, 0.3, Color(1.0, 0.9, 0.45))
+	var burger := [Signs._arc(Vector2(0, 0.15), 0.6, 0, 180), Signs._line(Vector2(-0.62, 0.05), Vector2(0.62, 0.05)),
+			Signs._line(Vector2(-0.6, -0.15), Vector2(0.6, -0.15)), Signs._join([Signs._line(Vector2(-0.58, -0.3), Vector2(0.58, -0.3)), Signs._arc(Vector2(0, -0.3), 0.58, 0, -180)])]
+	Signs.neon_drawing(d, burger, sign_at + b.x * 3.1 + Vector3(0, 0.2, 0), b, 0.3, Color(1.0, 0.5, 0.15))
+	_lamp(d, "BurgerMoon", sign_at + n * 0.9 + Vector3(0, 0.1, 0), Color(1.0, 0.6, 0.2))
+	# taco comet.
+	# The skybridge meets this face over the stall, so its name goes where
+	# the menu board would.
+	at = Vector3(-11, 0, -8.5)
+	n = Vector3(1, 0, 0)
+	b = DecoKit.facing(n)
+	_stall(d, at, n, 7.0, "tile_taco", false)
+	sign_at = at + n * 0.02 + Vector3(0, 2.4, 0)
+	Signs.channel(d, SANS, "taco comet", sign_at + b.x * -0.4, b, 0.62, ["face_green", "face_yellow", "face_pink"], "dark_metal", 0.1, 0.22, 0.07)
+	var head := sign_at + b.x * 2.45 + Vector3(0, 0.45, 0) + n * 0.15
+	d.ball("face_yellow", head, Vector3(0.13, 0.13, 0.13), 4, 10, "Fixtures", BOTH)
+	for k in 7:
+		var t := float(k + 1) / 8.0
+		d.ball("face_yellow" if k < 3 else "face_pink", head + b.x * t * 1.1 + Vector3(0, t * 0.35, 0), Vector3.ONE * 0.1 * (1.0 - t * 0.85), 2, 8, "Fixtures", BOTH)
+	_lamp(d, "TacoComet", sign_at + n * 0.9 + Vector3(0, 0.2, 0), Color(0.4, 1.0, 0.5))
+	# Noodle Orbit.
+	at = Vector3(-15.5, 0, -12)
+	n = Vector3(0, 0, -1)
+	b = DecoKit.facing(n)
+	_stall(d, at, n, 9.0, "tile_noodle")
+	sign_at = at + n * 0.05 + Vector3(0, 3.56, 0)
+	Signs.board(d, sign_at, b, Vector2(5.6, 0.62), "red_lacquer", "Noodle Orbit", SERIF, 0.46, Color(1.0, 0.8, 0.35), "black")
+	for e: float in [-1.0, 1.0]:
+		var hook := sign_at + b.x * e * 3.3 + n * 0.3 + Vector3(0, 0.25, 0)
+		d.tube("dark_metal", hook - n * 0.3, hook, 0.015, 4, "Build", BOTH)
+		d.tube("black", hook, hook - Vector3(0, 0.25, 0), 0.006, 3, "Build", BOTH)
+		d.ball("lantern", hook - Vector3(0, 0.5, 0), Vector3(0.2, 0.26, 0.2), 4, 10, "Fixtures", BOTH)
+		for y: float in [-0.25, -0.75]:
+			d.tube("black", hook + Vector3(0, y, 0), hook + Vector3(0, y - 0.03, 0), 0.1, 8, "Fixtures", BOTH)
+	_lamp(d, "NoodleOrbit", sign_at + n * 0.9 + Vector3(0, -0.4, 0), Color(1.0, 0.35, 0.25))
+	# The staff door round the back.
+	n = Vector3(-1, 0, 0)
+	b = DecoKit.facing(n)
+	at = Vector3(-20, 0, -5.8)
 	d.box("door_blue", at + n * 0.03 + Vector3(0, 1.05, 0), Vector3(1.0, 2.1, 0.05), "Build", BOTH, b)
-	d.words("STAFF ONLY", at + n * 0.06 + Vector3(0, 1.6, 0), b, 0.12, Color(0.9, 0.9, 0.9), 0.0, "Detail", BOTH)
+	d.words("Staff only", at + n * 0.06 + Vector3(0, 1.6, 0), b, 0.13, Color(0.9, 0.9, 0.9), 0.0, "Detail", BOTH, SANS)
 	d.box("exit", at + n * 0.06 + Vector3(0, 2.35, 0), Vector3(0.5, 0.18, 0.06), "Fixtures", BOTH, b)
 
 
 ## A stall front: `at` the middle of its foot, `n` its facing.
-static func _stall(d, at: Vector3, n: Vector3, width: float, name: String, colour: Color, tile: String) -> void:
+static func _stall(d, at: Vector3, n: Vector3, width: float, tile: String, menu := true) -> void:
 	var b := DecoKit.facing(n)
 	var w := width - 0.8
 	d.box(tile, at + n * 0.08 + Vector3(0, 0.5, 0), Vector3(w, 1.0, 0.16), "Build", BOTH, b)
@@ -424,24 +546,26 @@ static func _stall(d, at: Vector3, n: Vector3, width: float, name: String, colou
 	d.face("kitchen", at + n * 0.012 + Vector3(0, 1.65, 0), b.x * w * 0.5, Vector3(0, 0.6, 0), "Build", BOTH)
 	d.box("shutter", at + n * 0.04 + Vector3(0, 2.05, 0), Vector3(w, 0.5, 0.03), "Build", BOTH, b)
 	d.box("dark_metal", at + n * 0.055 + Vector3(0, 1.79, 0), Vector3(w, 0.05, 0.05), "Build", BOTH, b)
-	d.box("dark_metal", at + n * 0.05 + Vector3(0, 2.72, 0), Vector3(4.2, 0.82, 0.1), "Build", BOTH, b)
-	d.face("menu", at + n * 0.101 + Vector3(0, 2.72, 0), b.x * 2.0, Vector3(0, 0.35, 0), "Fixtures", BOTH)
-	d.box("black", at + n * 0.06 + Vector3(0, 3.55, 0), Vector3(width, 0.7, 0.12), "Build", BOTH, b)
-	_neon(d, name, at + n * 0.121 + Vector3(0, 3.55, 0), b, 0.46, colour)
+	if menu:
+		d.box("dark_metal", at + n * 0.05 + Vector3(0, 2.72, 0), Vector3(4.2, 0.82, 0.1), "Build", BOTH, b)
+		d.face("menu", at + n * 0.101 + Vector3(0, 2.72, 0), b.x * 2.0, Vector3(0, 0.35, 0), "Fixtures", BOTH)
 	# A card on the counter: closed.
-	d.box("paper", at + b.x * (w * 0.3) + n * 0.2 + Vector3(0, 1.17, 0), Vector3(0.36, 0.24, 0.01), "Detail", BOTH, b * Basis(Vector3.RIGHT, -0.25))
+	var card := at + b.x * (w * 0.3) + n * 0.2 + Vector3(0, 1.17, 0)
+	var tilt := b * Basis(Vector3.RIGHT, -0.25)
+	d.box("paper", card, Vector3(0.36, 0.24, 0.01), "Detail", BOTH, tilt)
+	d.words("closed", card + tilt.z * 0.007, tilt, 0.1, Color(0.7, 0.1, 0.1), 0.0, "Detail", BOTH, TYPED)
 
 
 ## Block B: a restaurant, two storeys. Big windows to the street, its name
 ## in cyan with a ringed planet, windows upstairs; a side door with an OPEN
 ## sign that's lying.
 static func _restaurant(d) -> void:
-	_shopfront(d, Vector3(-15.5, 0, 5), Vector3(0, 0, -1), 9.0, "", Color.WHITE, "", 0.25)
+	_shopfront(d, Vector3(-15.5, 0, 5), Vector3(0, 0, -1), 9.0, 0.25)
 	var n := Vector3(0, 0, -1)
 	var b := DecoKit.facing(n)
 	var face := Vector3(-15.5, 0, 5)
-	d.box("black", face + n * 0.06 + Vector3(-0.7, 4.55, 0), Vector3(7.2, 0.9, 0.12), "Build", BOTH, b)
-	_neon(d, "SUSHI SATURN", face + n * 0.121 + Vector3(-0.7, 4.55, 0), b, 0.62, Color(0.25, 0.85, 1.0))
+	Signs.outline_neon(d, SWASH, "Sushi Saturn", face + b.x * -0.8 + Vector3(0, 4.25, 0), b, 0.95, Color(0.25, 0.85, 1.0))
+	_lamp(d, "SushiSaturn", face + n * 1.0 + Vector3(0, 4.5, 0), Color(0.3, 0.85, 1.0))
 	# The planet: a glowing ball in a tilted ring.
 	d.shaded("planet", GLOW, {"color": Color(1.0, 0.75, 0.35), "energy": 2.2})
 	d.shaded("planet_ring", GLOW, {"color": Color(0.35, 0.9, 1.0), "energy": 2.6})
@@ -457,8 +581,8 @@ static func _restaurant(d) -> void:
 	var sb := DecoKit.facing(sn)
 	var side := Vector3(-11, 0, 8)
 	d.box("door_blue", side + sn * 0.03 + Vector3(0, 1.05, 0), Vector3(1.1, 2.1, 0.05), "Build", BOTH, sb)
-	d.box("black", side + sn * 0.05 + sb.x * -1.4 + Vector3(0, 1.9, 0), Vector3(0.9, 0.36, 0.04), "Build", BOTH, sb)
-	_neon(d, "OPEN", side + sn * 0.075 + sb.x * -1.4 + Vector3(0, 1.9, 0), sb, 0.24, Color(1.0, 0.2, 0.2), 0.8, 2)
+	Signs.neon(d, "Open", side + sb.x * -1.45 + Vector3(0, 1.75, 0), sb, 0.16, Color(1.0, 0.2, 0.2), 0.12, "", 0.8, 0.05)
+	_lamp(d, "Open", side + sn * 0.6 + sb.x * -1.45 + Vector3(0, 1.9, 0), Color(1.0, 0.25, 0.2), true, 4.0, 0.7)
 
 
 ## Block C: the restrooms, tiled all over (the ride tiles). Everything on
@@ -469,13 +593,13 @@ static func _restrooms(d) -> void:
 	var b := DecoKit.facing(n)
 	var at := Vector3(-4.25, 3.6, 5) + n * 0.015
 	d.face("sign_white", at, b.x * 1.3, Vector3(0, 0.24, 0), "Fixtures", BOTH)
-	d.words("RESTROOMS  →", at + n * 0.005, b, 0.3, Color(0.1, 0.18, 0.35), 0.0, "Fixtures", BOTH)
+	d.words("Restrooms  →", at + n * 0.005, b, 0.3, Color(0.1, 0.18, 0.35), 0.0, "Fixtures", BOTH, SANS)
 	var wn := Vector3(-1, 0, 0)
 	var wb := DecoKit.facing(wn)
-	for door: Array in [[6.8, "MEN"], [9.2, "WOMEN"]]:
+	for door: Array in [[6.8, "Men"], [9.2, "Women"]]:
 		var dc := Vector3(-8, 0, door[0]) + wn * 0.015
 		d.face("door_blue", dc + Vector3(0, 1.05, 0), wb.x * 0.5, Vector3(0, 1.05, 0), "Build", BOTH)
-		d.words(door[1], dc + wn * 0.005 + Vector3(0, 1.7, 0), wb, 0.16, Color(0.95, 0.95, 0.95), 0.0, "Build", BOTH)
+		d.words(door[1], dc + wn * 0.005 + Vector3(0, 1.7, 0), wb, 0.18, Color(0.95, 0.95, 0.95), 0.0, "Build", BOTH, SANS)
 	# The alley's lamp: a bulkhead in a cage, lighting the way up.
 	var en := Vector3(1, 0, 0)
 	var lamp := Vector3(-0.5, 3.3, 8.0) + en * 0.08
@@ -484,7 +608,7 @@ static func _restrooms(d) -> void:
 		d.box("dark_metal", lamp + Vector3(0, 0, dz), Vector3(0.14, 0.3, 0.015), "Fixtures", BOTH)
 	d.omni("AlleyLamp", lamp + en * 0.5, Color(0.55, 0.9, 1.0), 8.0, 1.2, BOTH)
 	d.face("sign_white", Vector3(-0.5, 2.4, 6.2) + en * 0.015, DecoKit.facing(en).x * 0.4, Vector3(0, 0.1, 0), "Fixtures", BOTH)
-	d.words("STAFF ONLY", Vector3(-0.5, 2.4, 6.2) + en * 0.02, DecoKit.facing(en), 0.12, Color(0.6, 0.1, 0.1), 0.0, "Fixtures", BOTH)
+	d.words("Staff only", Vector3(-0.5, 2.4, 6.2) + en * 0.02, DecoKit.facing(en), 0.13, Color(0.6, 0.1, 0.1), 0.0, "Fixtures", BOTH, SANS)
 
 
 ## The Kiosk is the mall's directory: the map on each face, lit, with a red
@@ -497,8 +621,8 @@ static func _directory(d) -> void:
 		var at: Vector3 = f[0]
 		d.box("dark_metal", at + n * 0.015 + Vector3(0, 1.5, 0), Vector3(1.72, 1.32, 0.03), "Build", BOTH, b)
 		d.face("directory", at + n * 0.032 + Vector3(0, 1.5, 0), b.x * 0.8, Vector3(0, 0.6, 0), "Fixtures", BOTH)
-		d.words("DIRECTORY", at + n * 0.02 + Vector3(0, 2.3, 0), b, 0.18, Color(0.95, 0.9, 0.8), 0.0, "Fixtures", BOTH).shaded = false
-		d.words("● YOU ARE HERE", at + n * 0.02 + Vector3(0, 0.7, 0), b, 0.11, Color(1.0, 0.3, 0.3), 0.0, "Fixtures", BOTH).shaded = false
+		d.words("Directory", at + n * 0.02 + Vector3(0, 2.3, 0), b, 0.2, Color(0.95, 0.9, 0.8), 0.0, "Fixtures", BOTH, SANS).shaded = false
+		d.words("●  you are here", at + n * 0.02 + Vector3(0, 0.7, 0), b, 0.12, Color(1.0, 0.3, 0.3), 0.0, "Fixtures", BOTH, SANS).shaded = false
 	d.box("sign_white", Vector3(-8, 2.47, 1), Vector3(2.02, 0.06, 2.02), "Fixtures", BOTH)
 	d.omni("Directory", Vector3(-8, 3.1, 1), Color(0.95, 0.92, 1.0), 5.0, 0.8, BOTH, true)
 
@@ -547,12 +671,12 @@ static func _escalators(d) -> void:
 			d.box("steel", c, Vector3(0.7, 0.012, 3.0), "Build", BOTH)
 			d.box("yellow_line", c + Vector3(-0.3 * end[1], 0.004, 0), Vector3(0.06, 0.012, 3.0), "Build", BOTH)
 	# Signs on the walls over them.
-	for s: Array in [["UPPER LEVEL  ↑", Vector3(-1.5, 4.6, -18), Vector3(0, 0, 1)], ["FOOD COURT  ↓", Vector3(-3.5, 4.6, 18), Vector3(0, 0, -1)]]:
+	for s: Array in [["Upper Level  ↑", Vector3(-1.5, 4.6, -18), Vector3(0, 0, 1)], ["Food Court  ↓", Vector3(-3.5, 4.6, 18), Vector3(0, 0, -1)]]:
 		var n: Vector3 = s[2]
 		var b := DecoKit.facing(n)
 		d.box("dark_metal", s[1] + n * 0.04, Vector3(2.5, 0.55, 0.08), "Fixtures", BOTH, b)
 		d.face("sign_white", s[1] + n * 0.081, b.x * 1.18, Vector3(0, 0.22, 0), "Fixtures", BOTH)
-		d.words(s[0], s[1] + n * 0.086, b, 0.28, Color(0.1, 0.12, 0.2), 0.0, "Fixtures", BOTH)
+		d.words(s[0], s[1] + n * 0.086, b, 0.3, Color(0.1, 0.12, 0.2), 0.0, "Fixtures", BOTH, SANS)
 
 
 ## The Pulpit is the information desk: its name in brass on the faces to
@@ -563,9 +687,9 @@ static func _information(d) -> void:
 		var at: Vector3 = f[0]
 		var n: Vector3 = f[1]
 		var b := DecoKit.facing(n)
-		d.words("INFORMATION", at + n * 0.015 + Vector3(0, 1.25, 0), b, 0.34, Color(1.0, 0.8, 0.45), 0.0, "Build", BOTH)
+		d.words("Information", at + n * 0.015 + Vector3(0, 1.25, 0), b, 0.44, Color(1.0, 0.8, 0.45), 0.0, "Build", BOTH, ITALIC)
 		d.torus("brass", at + n * 0.03 + Vector3(0, 0.6, 0), 0.24, 0.025, Basis(b.x, b.z, -b.y), 16, 4, "Build", BOTH)
-		d.words("i", at + n * 0.02 + Vector3(0, 0.6, 0), b, 0.34, Color(1.0, 0.8, 0.45), 0.0, "Build", BOTH)
+		d.words("i", at + n * 0.02 + Vector3(0, 0.6, 0), b, 0.36, Color(1.0, 0.8, 0.45), 0.0, "Build", BOTH, SERIF)
 	for r: Array in [[Vector3(-4, 5.9, -2), Vector3(-1, 5.9, -2)], [Vector3(-4, 5.9, 2), Vector3(-1, 5.9, 2)],
 			[Vector3(-4, 5.9, -2), Vector3(-4, 5.9, 2)], [Vector3(-1, 5.9, -2), Vector3(-1, 5.9, 2)]]:
 		d.tube("brass", r[0], r[1], 0.025, 6, "Build", BOTH)
@@ -584,8 +708,9 @@ static func _edges(d) -> void:
 		var along := (b - a) / length
 		var size := Vector3(absf(along.x) * length + absf(inward.x) * 0.1, 0.008, absf(along.z) * length + absf(inward.z) * 0.1)
 		d.box("yellow_line", (a + b) * 0.5 + inward * 0.35 + Vector3(0, 0.004, 0), size, "Build", BOTH)
-	for r: Array in [[Vector3(-20, TOP, -11), Vector3(-12, TOP, -11)], [Vector3(-20, TOP, -5), Vector3(-12, TOP, -5)],
-			[Vector3(-20, TOP, -11), Vector3(-20, TOP, -5)], [Vector3(-12, TOP, -11), Vector3(-12, TOP, -5)]]:
+	# Block A's roof (the bridge meets its east edge).
+	for r: Array in [[Vector3(-20, TOP, -12), Vector3(-11, TOP, -12)], [Vector3(-20, TOP, -5), Vector3(-11, TOP, -5)],
+			[Vector3(-20, TOP, -12), Vector3(-20, TOP, -5)], [Vector3(-11, TOP, -12), Vector3(-11, TOP, -10)], [Vector3(-11, TOP, -7), Vector3(-11, TOP, -5)]]:
 		d.tube("brass", r[0], r[1], 0.03, 6, "Build", BOTH)
 
 
@@ -601,8 +726,15 @@ static func _upper_level(d) -> void:
 	d.box("steel", at + n * 0.12 + Vector3(0, 1.025, 0), Vector3(5.3, 0.05, 0.26), "Build", BOTH, b)
 	d.face("kitchen", at + n * 0.012 + Vector3(0, 1.65, 0), b.x * 2.6, Vector3(0, 0.6, 0), "Build", BOTH)
 	d.box("dark_metal", at + n * 0.03 + Vector3(0, 2.28, 0), Vector3(5.2, 0.06, 0.05), "Build", BOTH, b)
-	d.box("black", at + n * 0.06 + Vector3(0, 2.66, 0), Vector3(5.6, 0.6, 0.12), "Build", BOTH, b)
-	_neon(d, "LEMONADE", at + n * 0.121 + Vector3(0, 2.66, 0), b, 0.4, Color(1.0, 0.9, 0.2))
+	# A painted board, a lamp on a gooseneck over it.
+	var board_at := at + n * 0.06 + Vector3(0, 2.62, 0)
+	Signs.board(d, board_at, b, Vector2(4.4, 0.62), "board_blue", "Lemonade", SWASH, 0.55, Color(1.0, 0.92, 0.25), "wood").outline_size = 6
+	var lamp := board_at + n * 0.55 + Vector3(0, 0.5, 0)
+	d.tube("dark_metal", board_at + Vector3(0, 0.33, 0), board_at + Vector3(0, 0.62, 0), 0.015, 4, "Fixtures", BOTH)
+	d.tube("dark_metal", board_at + Vector3(0, 0.62, 0), lamp, 0.015, 4, "Fixtures", BOTH)
+	d.ball("black", lamp, Vector3(0.12, 0.08, 0.12), 3, 8, "Fixtures", BOTH)
+	d.ball("downlight", lamp - Vector3(0, 0.05, 0), Vector3(0.09, 0.02, 0.09), 2, 8, "Fixtures", BOTH)
+	d.spot("Lemonade", lamp - Vector3(0, 0.08, 0), -n * 0.6 + Vector3.DOWN, WARM, 3.0, 2.0, 50.0, BOTH, true)
 	for s: Array in [[Vector3(12, TOP, -3), Vector3(0, 0, -1)], [Vector3(12, TOP, 3), Vector3(0, 0, 1)], [Vector3(14, TOP, 0), Vector3(1, 0, 0)]]:
 		var sn: Vector3 = s[1]
 		var sb := DecoKit.facing(sn)
@@ -616,32 +748,67 @@ static func _upper_level(d) -> void:
 		d.ball("foliage", Vector3(c.x, 1.3, c.y), Vector3(0.4, 0.2, 0.28), 3, 8, "Detail", BOTH)
 
 
-## The arcade on the south wall (lit, its name in pink) and the cinema on
-## the east (a marquee with chasing bulbs over lit doors).
+## The arcade on the south wall (lit, its name in chasing bulbs) and the
+## cinema on the east (a blade over a marquee of chasing bulbs, lit doors).
 static func _arcade_and_cinema(d) -> void:
 	var n := Vector3(0, 0, -1)
 	var b := DecoKit.facing(n)
 	var at := Vector3(12.5, TOP, 18)
-	_shopfront(d, at, n, 7.0, "", Color.WHITE, "", 0.0, "shop_arcade")
-	_neon(d, "ARCADE", at + n * 0.142 + Vector3(0, 3.35, 0), b, 0.5, Color(1.0, 0.3, 0.8), 0.0, 1)
+	_shopfront(d, at, n, 7.0, 0.0, "shop_arcade")
+	var board := at + n * 0.1 + Vector3(0, 3.95, 0)
+	d.box("black", board, Vector3(5.6, 1.5, 0.08), "Build", BOTH, b)
+	Signs.bulbs(d, SANS, "Arcade", at + n * 0.12 + Vector3(0, 3.55, 0), b, 0.07, 14, ["bulb_pink", "bulb_cyan", "bulb_yellow"], 0.03)
+	# Bulbs chasing round the board's edge.
+	var k := 0
+	for i in 40:
+		var t := float(i) / 40.0
+		var p := Vector2.ZERO
+		if t < 0.35:
+			p = Vector2(lerpf(-2.7, 2.7, t / 0.35), 0.68)
+		elif t < 0.5:
+			p = Vector2(2.7, lerpf(0.68, -0.68, (t - 0.35) / 0.15))
+		elif t < 0.85:
+			p = Vector2(lerpf(2.7, -2.7, (t - 0.5) / 0.35), -0.68)
+		else:
+			p = Vector2(-2.7, lerpf(-0.68, 0.68, (t - 0.85) / 0.15))
+		d.ball("marquee_a" if k % 2 == 0 else "marquee_b", board + b.x * p.x + Vector3(0, p.y, 0) + n * 0.05, Vector3(0.035, 0.035, 0.035), 2, 6, "Fixtures", BOTH)
+		k += 1
 	d.omni("Arcade", at + n * 1.6 + Vector3(0, 1.6, 0), Color(0.8, 0.4, 1.0), 7.0, 1.2, BOTH)
 	var cn := Vector3(-1, 0, 0)
 	var cb := DecoKit.facing(cn)
 	var cat := Vector3(24, TOP, -2)
-	_shopfront(d, cat, cn, 6.0, "", Color.WHITE, "", 0.0, "shop_cinema")
-	# The marquee: a lit box over the doors, bulbs round its edge.
+	_shopfront(d, cat, cn, 6.0, 0.0, "shop_cinema")
+	# The marquee: a lit box over the doors, bulbs round its edge, the
+	# programme in its letters.
 	var m := cat + cn * 0.35 + Vector3(0, 3.35, 0)
 	d.box("black", m, Vector3(6.4, 0.9, 0.5), "Build", BOTH, cb)
 	d.face("sign_white", m + cn * 0.251, cb.x * 2.8, Vector3(0, 0.3, 0), "Fixtures", BOTH)
-	d.words("TOTAL ECLIPSE  ·  12:00", m + cn * 0.256, cb, 0.26, Color(0.1, 0.1, 0.12), 0.0, "Fixtures", BOTH)
-	var k := 0
+	d.words("TOTAL ECLIPSE   12:00", m + cn * 0.256, cb, 0.28, Color(0.1, 0.1, 0.12), 0.0, "Fixtures", BOTH, SANS)
+	k = 0
 	for i in 17:
 		var x := -3.1 + i * 6.2 / 16.0
 		for y: float in [-0.42, 0.42]:
 			d.ball("marquee_a" if k % 2 == 0 else "marquee_b", m + cn * 0.26 + cb.x * x + Vector3(0, y, 0), Vector3(0.04, 0.04, 0.04), 2, 6, "Fixtures", BOTH)
 			k += 1
-	d.box("black", cat + cn * 0.06 + Vector3(0, 4.35, 0), Vector3(4.0, 0.8, 0.1), "Build", BOTH, cb)
-	_neon(d, "CINEMA", cat + cn * 0.12 + Vector3(0, 4.35, 0), cb, 0.56, Color(1.0, 0.2, 0.15))
+	# The blade: standing out from the wall over the marquee, the name down
+	# it in lit letters both sides, bulbs chasing round its edge.
+	var blade := cat + cn * 0.75 + Vector3(0, 5.75, 0)
+	var side := DecoKit.facing(Vector3(0, 0, 1))
+	d.box("blade_red", blade, Vector3(1.4, 3.6, 0.3), "Build", BOTH, side)
+	for letter in 6:
+		var y := 1.45 - letter * 0.58
+		for s: float in [1.0, -1.0]:
+			var face := Basis(side.x * s, side.y, side.z * s)
+			Signs.channel(d, SERIF, "CINEMA"[letter], blade + side.z * s * 0.15 + Vector3(0, y - 0.2, 0), face, 0.62, ["face_warm"], "dark_metal", 0.06)
+	var edge := 0
+	for i in 22:
+		var t := float(i) / 21.0
+		for s: float in [1.0, -1.0]:
+			for x: float in [-0.62, 0.62]:
+				d.ball("marquee_a" if edge % 2 == 0 else "marquee_b", blade + side.x * x + side.z * s * 0.16 + Vector3(0, lerpf(-1.72, 1.72, t), 0), Vector3(0.035, 0.035, 0.035), 2, 6, "Fixtures", BOTH)
+				edge += 1
+	d.tube("dark_metal", cat + Vector3(0, 7.5, 0), blade + Vector3(0, 1.8, 0), 0.03, 4, "Build", BOTH)
+	_lamp(d, "Cinema", blade + cn * 0.2 + Vector3(0, -0.5, 0), Color(1.0, 0.75, 0.5), false, 7.0, 1.2)
 
 
 ## The corner is a stage for the eclipse party: a banner, speakers, a mic
@@ -650,8 +817,8 @@ static func _stage(d) -> void:
 	var top := TOP + 1.5
 	var nb := DecoKit.facing(Vector3(0, 0, 1))
 	d.face("banner", Vector3(21, 7.5, -17.985), nb.x * 2.7, Vector3(0, 1.1, 0), "Build", BOTH)
-	d.words("ECLIPSE WATCH PARTY", Vector3(21, 7.95, -17.975), nb, 0.42, Color(1.0, 0.85, 0.3), 0.0, "Build", BOTH)
-	d.words("TODAY  ·  12:00  ·  FREE GLASSES", Vector3(21, 7.15, -17.975), nb, 0.22, Color(0.95, 0.95, 1.0), 0.0, "Build", BOTH)
+	d.words("Eclipse Watch Party!", Vector3(21, 7.9, -17.975), nb, 0.62, Color(1.0, 0.85, 0.3), 0.0, "Build", BOTH, SWASH)
+	d.words("today  ·  12:00  ·  free glasses", Vector3(21, 7.05, -17.975), nb, 0.24, Color(0.95, 0.95, 1.0), 0.0, "Build", BOTH, SANS)
 	var eb := DecoKit.facing(Vector3(-1, 0, 0))
 	d.face("banner", Vector3(23.985, 7.5, -15.5), eb.x * 2.2, Vector3(0, 1.1, 0), "Build", BOTH)
 	d.shaded("banner_ring", GLOW, {"color": Color(1.0, 0.9, 0.7), "energy": 1.6})
@@ -709,7 +876,7 @@ static func _court(d) -> void:
 		var out := Vector3(cos(a), 0, sin(a))
 		d.box("white", r + out * 0.38 + Vector3(0, 0.45, 0), Vector3(0.22, 0.4, 0.05), "Solid", BOTH, Basis(Vector3.UP, -a))
 		d.ball("ride_lamp", r + out * 0.3 + Vector3(0, 1.0, 0), Vector3(0.05, 0.05, 0.05), 2, 6, "Fixtures", BOTH)
-	d.words("RIDE 50¢", r + Vector3(0, 0.13, -0.56), DecoKit.facing(Vector3(0, 0, -1)), 0.12, Color(0.8, 0.1, 0.1), 0.0, "Detail", BOTH)
+	d.words("Ride 50¢", r + Vector3(0, 0.13, -0.56), DecoKit.facing(Vector3(0, 0, -1)), 0.14, Color(0.8, 0.1, 0.1), 0.0, "Detail", BOTH, SANS)
 	d.omni("RocketRide", r + Vector3(0, 1.6, -0.8), Color(1.0, 0.4, 0.35), 4.0, 0.7, BOTH, true)
 	# The eclipse set in the floor: a brass sun, a dark stone moon nearly
 	# over it, rays of brass round them.
@@ -906,7 +1073,7 @@ static func _sag(z: float) -> float:
 static func _mall_sign(d) -> void:
 	var n := Vector3(1, 0, 0)
 	var b := DecoKit.facing(n)
-	_neon(d, "HALO GALLERIA", Vector3(-23.9, 6.6, 0), b, 1.3, Color(1.0, 0.82, 0.55), 0.0, 0)
+	Signs.channel(d, ITALIC, "Halo Galleria", Vector3(-24.0, 6.2, 0), b, 1.5, ["face_warm"], "brass", 0.12)
 	d.shaded("halo_ring", GLOW, {"color": Color(1.0, 0.9, 0.7), "energy": 2.8})
 	d.torus("halo_ring", Vector3(-23.85, 8.35, 0), 0.55, 0.05, Basis(Vector3(0, 1, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1)), 20, 4, "Fixtures", BOTH)
 	d.omni("MallSign", Vector3(-22.4, 7.0, 0), Color(1.0, 0.82, 0.55), 11.0, 1.5, BOTH)
@@ -950,7 +1117,7 @@ static func _outside(d) -> void:
 		d.face(w[4], c, DecoKit.facing(n).x * w[2], Vector3(0, w[3], 0), "Far", BOTH)
 		# Its roof, going back.
 		d.face("far_dark", c + Vector3(0, w[3], 0) - n * 10.0, DecoKit.facing(n).x * w[2], -n * 10.0, "Far", BOTH)
-	d.words("DEPARTMENT STORE", Vector3(4, 15.0, -33.9), DecoKit.facing(Vector3(0, 0, 1)), 1.5, Color(1.0, 0.9, 0.75), 0.0, "Far", BOTH).shaded = false
+	d.words("Department Store", Vector3(4, 15.0, -33.9), DecoKit.facing(Vector3(0, 0, 1)), 2.2, Color(1.0, 0.9, 0.75), 0.0, "Far", BOTH, ITALIC).shaded = false
 	# The dome over the old wing.
 	d.ball("far_dark", Vector3(-46, 20.0, 0), Vector3(12, 8, 12), 6, 16, "Far", BOTH)
 	d.shaded("dome_ring", GLOW, {"color": Color(1.0, 0.75, 0.45), "energy": 1.6})
@@ -965,7 +1132,7 @@ static func _outside(d) -> void:
 	var pb := DecoKit.facing(pn)
 	d.box("far_dark", pylon + Vector3(0, 16, 0), Vector3(1.4, 32, 1.4), "Far", BOTH, pb)
 	d.box("far_dark", pylon + Vector3(0, 32, 0), Vector3(14, 5, 1.2), "Far", BOTH, pb)
-	d.words("HALO GALLERIA", pylon + Vector3(0, 32, 0) + pn * 0.65, pb, 2.6, Color(1.0, 0.85, 0.6), 0.0, "Far", BOTH).shaded = false
+	d.words("Halo Galleria", pylon + Vector3(0, 32, 0) + pn * 0.65, pb, 3.4, Color(1.0, 0.85, 0.6), 0.0, "Far", BOTH, ITALIC).shaded = false
 	d.torus("halo_ring", pylon + Vector3(0, 36.5, 0), 2.2, 0.2, Basis.IDENTITY, 24, 4, "Far", BOTH)
 	# Sodium lamps across the lots to the east and south.
 	for i in 14:
