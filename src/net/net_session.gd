@@ -20,6 +20,10 @@ extends Node
 ## Someone who leaves a game in progress and comes back to it (the same
 ## token) gets their score and side back. Your look can change any time
 ## (send_look): the server checks it and tells everyone.
+##
+## A server marked public (advertise) can be found (ServerList): on the
+## local network, and on a list server if one's set. The lobby's roster
+## comes with the game's options, so everyone sees what the host picked.
 
 signal roster_changed
 ## A client's join finished: in (ok), or refused or failed (reason).
@@ -59,9 +63,18 @@ var role := Role.OFFLINE
 var peer: ENetMultiplayerPeer
 var server_name := "xtrapartial"
 var max_players := 8
+## The port a server listens on.
+var port := 0
 var rules: GameRules
-## The style the host has picked, as clients see it in the lobby.
+## The style and options the host has picked, as clients see them in the
+## lobby (null until the server says).
 var lobby_style := ""
+var lobby_rules: GameRules
+## Whether the server can be found (advertise), what it's listed as, and
+## the thing doing it.
+var public := false
+var listing_id := ""
+var advert: ServerAdvert
 ## Where a client joined, and whether it's a dedicated server.
 var address := ""
 var dedicated := false
@@ -92,8 +105,11 @@ var _joined := false
 ## Hosts a game from this machine (a listen server): you're player 1 and
 ## the server. With `upnp`, asks the router to forward the port (in the
 ## background; public_address is filled in if it works).
-static func host(tree: SceneTree, port: int, game_rules: GameRules, players := 8, password := "", upnp := false) -> Error:
+static func host(tree: SceneTree, port: int, game_rules: GameRules, players := 8, password := "", upnp := false,
+		name := "") -> Error:
 	var s := _make(tree, Role.HOST)
+	if name.strip_edges() != "":
+		s.server_name = Cosmetics.clean_name(name, 32)
 	var err := s._listen(port, players, password)
 	if err != OK:
 		s.close()
@@ -175,16 +191,43 @@ func close(reason := "") -> void:
 	queue_free()
 
 
-func _listen(port: int, players: int, password: String) -> Error:
+func _listen(at_port: int, players: int, password: String) -> Error:
 	max_players = clampi(players, 1, PLAYER_LIMIT)
 	_password = password
+	port = at_port
+	listing_id = Crypto.new().generate_random_bytes(8).hex_encode()
 	peer = ENetMultiplayerPeer.new()
-	var err := peer.create_server(port, max_players)
+	var err := peer.create_server(at_port, max_players)
 	if err != OK:
-		_log("couldn't open port %d (%s)" % [port, error_string(err)])
+		_log("couldn't open port %d (%s)" % [at_port, error_string(err)])
 		return err
 	_setup_multiplayer()
 	return OK
+
+
+## Makes the server public (it can be found: on the local network, and on
+## `list_server` if one's given) or not. A public game can still have a
+## password; it's shown locked.
+func advertise(on: bool, list_server := "") -> void:
+	if not is_server():
+		return
+	public = on
+	if advert and is_instance_valid(advert):
+		advert.queue_free()
+		advert.name = "OldAdvert"
+		advert = null
+	if on:
+		advert = ServerAdvert.new()
+		advert.name = "Advert"
+		advert.session = self
+		advert.list_server = list_server.strip_edges()
+		add_child(advert)
+		_log("public: it can be found on this network%s" % (" and on %s" % list_server if list_server.strip_edges() != "" else ""))
+
+
+## Whether it takes a password.
+func locked() -> bool:
+	return _password != ""
 
 
 func _setup_multiplayer() -> void:
@@ -403,18 +446,20 @@ func send_roster() -> void:
 	for info: PlayerInfo in roster.values():
 		data.append(info.to_dict())
 	lobby_style = rules.display_name if rules else ""
-	_roster.rpc(data, lobby_style)
+	lobby_rules = rules
+	_roster.rpc(data, rules.to_dict() if rules else {})
 	roster_changed.emit()
 
 
-## The server's roster (a client). Players already known are updated in
-## place (the game in progress holds on to them); newcomers are added and
-## the gone removed, in the game too.
+## The server's roster (a client), and the game's options. Players already
+## known are updated in place (the game in progress holds on to them);
+## newcomers are added and the gone removed, in the game too.
 @rpc("authority", "call_remote", "reliable")
-func _roster(data: Array, style: String) -> void:
-	if multiplayer.get_remote_sender_id() != 1 or data.size() > PLAYER_LIMIT * 2:
+func _roster(data: Array, options: Dictionary) -> void:
+	if multiplayer.get_remote_sender_id() != 1 or data.size() > PLAYER_LIMIT * 2 or options.size() > 64:
 		return
-	lobby_style = style.left(32)
+	lobby_rules = GameRules.from_dict(options) if not options.is_empty() else null
+	lobby_style = ("teams" if lobby_rules.is_teams() else "free-for-all") if lobby_rules else ""
 	var mine := local_id()
 	var seen := {}
 	for d: Variant in data:

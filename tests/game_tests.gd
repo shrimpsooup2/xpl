@@ -332,6 +332,84 @@ func test_ffa_players_wear_their_own_colours_and_no_resupply() -> void:
 	check(p.weapons.primary_ammo == 3, "and don't refill anything")
 
 
+# --- The host's options ------------------------------------------------------------
+
+func test_the_host_picks_the_health_and_the_guns_in_play() -> void:
+	var rules := quick(GameRules.free_for_all(), "stack")
+	rules.guns = PackedStringArray(["rifle"])
+	rules.max_health = 150.0
+	rules.spawn_weapon = Weapons.RIFLE
+	var infos := people(2)
+	var m := Game.start(get_tree(), rules, infos)
+	check(await until_state(m, Match.State.LIVE), "live")
+	var pads := Match._all_of(m.level, "WeaponPad")
+	check(not pads.is_empty() and pads.all(func(p: WeaponPad) -> bool: return p.weapon == Weapons.RIFLE),
+			"every pad hands out the one gun in play (%s)" % [pads.map(func(p: WeaponPad) -> StringName: return p.weapon)])
+	var pickups := get_tree().get_nodes_in_group(WeaponPickup.GROUP).filter(func(w: WeaponPickup) -> bool: return not w.is_queued_for_deletion())
+	check(pickups.size() == pads.size() and pickups.all(func(w: WeaponPickup) -> bool: return w.def.id == Weapons.RIFLE),
+			"and has one on it now")
+	check(infos[0].player.max_health == 150.0 and infos[0].player.health == 150.0, "everyone has the health picked")
+	check(infos[1].player.weapons.primary == Weapons.get_def(Weapons.RIFLE), "and spawns with the gun picked")
+	Game.end(get_tree(), false)
+	await frames(2)
+	var none := quick(GameRules.free_for_all(), "stack")
+	none.guns = PackedStringArray()
+	none.spawn_weapon = Weapons.RIFLE
+	var more := people(2)
+	var m2 := Game.start(get_tree(), none, more)
+	check(await until_state(m2, Match.State.LIVE), "live again")
+	check(Match._all_of(m2.level, "WeaponPad").is_empty(), "no guns in play: no pads")
+	check(get_tree().get_nodes_in_group(WeaponPickup.GROUP).filter(func(w: WeaponPickup) -> bool: return not w.is_queued_for_deletion()).is_empty(),
+			"and nothing to pick up")
+	check(more[0].player.weapons.primary == null, "fists only, whatever you'd spawn with")
+
+
+func test_teams_only_the_guns_in_play_can_be_picked() -> void:
+	var rules := quick(GameRules.teams(), "boulevard")
+	rules.guns = PackedStringArray(["smg", "shotgun"])
+	var infos := people(2)
+	infos[0].gun = Weapons.SNIPER
+	infos[1].gun = Weapons.SHOTGUN
+	var m := Game.start(get_tree(), rules, infos)
+	check(await until_state(m, Match.State.COUNTDOWN), "counting down")
+	check(infos[0].player.weapons.primary == Weapons.get_def(Weapons.SMG), "a pick out of play gets the first gun in play")
+	check(infos[1].player.weapons.primary == Weapons.get_def(Weapons.SHOTGUN), "a pick in play is kept")
+	m.choose_gun(infos[1], Weapons.RIFLE)
+	check(infos[1].gun == Weapons.SHOTGUN and infos[1].player.weapons.primary == Weapons.get_def(Weapons.SHOTGUN),
+			"a gun out of play can't be picked")
+	m.choose_gun(infos[1], Weapons.SMG)
+	check(infos[1].player.weapons.primary == Weapons.get_def(Weapons.SMG), "one in play can")
+	var picks := {}
+	for i in 40:
+		picks[rules.random_gun()] = true
+	check(picks.keys().all(func(g: StringName) -> bool: return rules.allows(g)) and picks.size() == 2, "bots pick from the guns in play")
+
+
+func test_game_options_off_the_network_are_checked() -> void:
+	var d := GameRules.free_for_all().to_dict()
+	d.guns = PackedStringArray(["rifle", "nuke", "rifle", "sniper"])
+	d.map_pool = PackedStringArray(["stack", "stack", "../../etc/passwd", "rift"])
+	d.max_health = 150.0
+	d.round_time = -5.0
+	var r := GameRules.from_dict(d)
+	check(r.guns == PackedStringArray(["rifle", "sniper"]), "only real guns, each once, in pad order (%s)" % r.guns)
+	check(r.map_pool == PackedStringArray(["stack", "rift"]), "only real maps, each once (%s)" % r.map_pool)
+	check(r.max_health == 150.0 and r.round_time == GameRules.free_for_all().round_time, "sensible values kept, the rest the preset's")
+	d.guns = PackedStringArray()
+	check(GameRules.from_dict(d).guns.is_empty(), "no guns at all is allowed: fists only")
+	d.erase("guns")
+	check(GameRules.from_dict(d).guns.size() == Weapons.GUNS.size(), "and without a say, every gun")
+	d.guns = "rifle"
+	check(GameRules.from_dict(d).guns.size() == Weapons.GUNS.size(), "the wrong type is ignored")
+	var two := GameRules.free_for_all()
+	two.guns = PackedStringArray(["smg", "sniper"])
+	check(two.stand_in(Weapons.PISTOL) == Weapons.SMG and two.stand_in(Weapons.RIFLE) == Weapons.SNIPER
+			and two.stand_in(Weapons.SNIPER) == Weapons.SNIPER, "a pad's gun out of play: the next one in play after it")
+	check(two.loadout_gun(Weapons.PISTOL) == Weapons.SMG and two.loadout_gun(Weapons.SNIPER) == Weapons.SNIPER, "and a pick's")
+	two.guns = PackedStringArray()
+	check(two.stand_in(Weapons.PISTOL) == &"" and two.loadout_gun(Weapons.RIFLE) == &"" and two.random_gun() == &"", "none: fists")
+
+
 # --- Teams ------------------------------------------------------------------------
 
 func test_teams_you_spawn_with_the_gun_you_picked_and_change_it_while_down() -> void:

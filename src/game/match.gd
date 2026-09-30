@@ -131,6 +131,8 @@ func setup_level(scene: Node) -> void:
 		baked.queue_free()
 	if rules.ammo_boxes:
 		_ammo_for_guns(scene)
+	else:
+		_only_guns_in_play(scene)
 	for pad in _all_of(scene, "WeaponPad"):
 		if pad.respawn_time <= 0.0:
 			if rules.power_pad_respawn > 0.0:
@@ -175,11 +177,25 @@ func _ammo_for_guns(scene: Node) -> void:
 		spot.queue_free()
 
 
+## Pads for guns out of play (GameRules.guns) hand out one in play instead;
+## with none in play, the pads go (the same on every machine).
+func _only_guns_in_play(scene: Node) -> void:
+	for pad: WeaponPad in _all_of(scene, "WeaponPad"):
+		var gun := rules.stand_in(pad.weapon)
+		if gun == &"":
+			if pad.pickup:
+				pad.pickup.queue_free()
+			pad.get_parent().remove_child(pad)
+			pad.queue_free()
+		elif gun != pad.weapon:
+			pad.set_weapon(gun)
+
+
 ## `info` picks gun `id` (games where you pick, GameRules.loadout): theirs
 ## from their next spawn, or at once in the countdown before the game
 ## (nobody's fired yet).
 func choose_gun(info: PlayerInfo, id: StringName) -> void:
-	if not rules.loadout or info == null or not id in Weapons.GUNS:
+	if not rules.loadout or info == null or not rules.allows(id):
 		return
 	info.gun = id
 	if authority and state == State.COUNTDOWN and info.alive():
@@ -386,9 +402,11 @@ func _spawn(info: PlayerInfo, used: Array) -> Node3D:
 	body.spawn_at(at)
 	if rules.loadout:
 		if info.bot:
-			info.gun = Weapons.GUNS.pick_random()  # Something different each life.
-		body.weapons.give(Weapons.get_def(info.gun))
-	elif rules.spawn_weapon != &"":
+			info.gun = rules.random_gun()  # Something different each life.
+		var gun := rules.loadout_gun(info.gun)
+		if gun != &"":
+			body.weapons.give(Weapons.get_def(gun))
+	elif rules.spawn_weapon != &"" and rules.allows(rules.spawn_weapon):
 		body.weapons.give(Weapons.get_def(rules.spawn_weapon))
 	spawned.emit(info, at)
 	return best

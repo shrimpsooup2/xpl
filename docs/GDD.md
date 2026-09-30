@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 3.4 (draft) |
+| **Version** | 3.5 (draft) |
 | **Date** | 2026-09-30 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -47,6 +47,7 @@
 | 3.2 | Rift is dressed (§9.3): Nimbus, the last station of a mountain railway cut into a peak above a sea of cloud, at dawn: the canyon its cutting, tracks down the floor and up the end ramps as rack inclines, the shelves galleries, the bridges iron footbridges with the station clock under the high one, the Arch the station building, the colonnade a roofless train shed, a signal box on each rim; the sun just up straight down the cutting, pink peaks all round. Switchback loses its floating traffic cones. |
 | 3.3 | Rift reworked (§9.3): the cutting's walls dressed limestone carrying the wall-ride band; a ring of snowy mountains all round across the cloud, lower in the east where the sun comes up, the viaducts crossing two notches in it; at the edges the turf runs out to rocks on the brink and a jagged cliff below instead of a straight corner; a cloudy dawn (the sky can carry cloud cover, §11.2), the sun breaking through; grass, lanterns and small details all over; its textures redone in the house style. The view reaches 600 m (was 500), so the far side of the ring isn't cut off. |
 | 3.4 | Boulevard is dressed (§9.3): Rimehollow, a village in a great ice cave, on a shelf of old ice with a crevasse all round it (the edge of the map); jagged ice walls round in plan, a closed vault arching forty-odd metres up with icicles, columns, spikes and crystals of ice, all real shapes; the ice a dim blue with a hint of violet in its depths; timber-framed houses along the Arcade, the Atrium the village hall, the street strung with lights, the canal frozen, the kiosks a woodshed, a café and a boathouse, braziers and banners in the team yards; the village lit by its own strings of bulbs slung everywhere, lanterns and fires, warm against the blue. Ice glows from within, scalloped, with bubbles and fractures you look into. |
+| 3.5 | The title screen's buttons are *play*, *sandbox*, *settings*, *quit*; *play* splits into *vs bots* and *online* (§13.4). Games are the host's to customise (§8.5): health and getting it back, round length and rounds to win (or the kill target and time limit), respawn time, friendly fire, which maps, which guns are in play (pads for the rest hand out one that is, and only those can be picked; none is fists only), what you spawn holding, how fast pads refill, combos; remembered per style, and shown to everyone in the lobby. Online games can be made public: found on the local network, and on a list server anyone can run (§15.2, [NETWORKING.md](NETWORKING.md)); a public game can still have a password (shown locked). *Find a game* lists them, searchable by name, style or map. |
 
 ---
 
@@ -616,7 +617,9 @@ Two styles, each a `GameRules` preset (`src/game/game_rules.gd`), run by a `Matc
 
 The flow: loading (the Match finds the new level and puts everyone in it: the local person in the level's own Player, everyone else in a new one), countdown (the round card's "go" lands on the moment weapons come on), live, round end (a result card), then the next round or the match end (the winner, the rounds) and back to the menu. The HUD follows along: the score (your side on the left), the round or game timer, a killfeed of every kill, and a real scoreboard on Tab.
 
-**Practice bots** (`src/game/bot_brain.gd`) make both styles playable offline: free-for-all against three, teams four against four. A bot drives its Player through the same input commands a person does: to the nearest gun when empty-handed, then at the nearest enemy it can see, strafing and shooting (down the sights beyond 12 m) with a reaction time and aim error, jumping what's in the way and refusing to walk into the void. They don't navigate (no navigation mesh yet), so on multi-level maps they can get stuck.
+**Custom games.** The presets above are where a game starts: whoever hosts it changes what they like (*play → vs bots* on this machine, or *options* in an online lobby; a dedicated server takes them from its command line or config). The options card (`src/ui/rules_editor.gd`) has health (50–300) and when it comes back (never, or after 3, 5 or 8 s), then by style the round length (30 s to 3 min, or none) and round wins to take the match (1–10), or the kill target (10–150, or none) and the time limit (3–30 min, or none), the respawn time and friendly fire; which maps are played (at least one; any map in either style), which guns are in play, what you spawn holding in free-for-all (fists or a gun in play), how fast pads refill, whether a new map comes every round, and kill combos. Guns out of play never appear: each pad for one hands out the next gun in play after it instead (in pad order, so every machine agrees), and with none in play the pads go and it's fists only; in teams you can only pick a gun in play (the others greyed in the picker), and bots pick from them. Each style's options are remembered for next time, only what the card changes (so a later change to a preset still comes through), and *defaults* puts them back. Online they travel with the lobby's roster and are checked on arrival like anything else from the network; everyone in the lobby sees them on one line.
+
+**Practice bots** (`src/game/bot_brain.gd`) make both styles playable offline (*play → vs bots*): free-for-all against three, teams four against four, or up to fifteen. A bot drives its Player through the same input commands a person does: to the nearest gun when empty-handed, then at the nearest enemy it can see, strafing and shooting (down the sights beyond 12 m) with a reaction time and aim error, jumping what's in the way and refusing to walk into the void. They don't navigate (no navigation mesh yet), so on multi-level maps they can get stuck.
 
 *Not built yet:* warmup, the map unloading (sudden death), the barrier at spawn during the countdown, a rematch vote.
 
@@ -937,7 +940,7 @@ The HUD hides during your death sequence and springs back in on respawn. Code: `
 
 | Screen | Status | Description |
 |---|---|---|
-| Main menu | Built | Your blob idles (and sometimes dances) under a spotlight on a dark stage. Logo top left, boxed menu below (*free-for-all*, *teams*, *online*, *sandbox*, *settings*, *quit*), version in a ghost box. The blob wears your hat, in red or blue at random. A small ghost-box hat picker sits in the bottom-right corner, `<` *hat: name* `>` (or ← →): each step drops the next hat onto the blob, which nods under it. The pick is saved and is the hat you wear in a match. |
+| Main menu | Built | Your blob idles (and sometimes dances) under a spotlight on a dark stage. Logo top left, boxed menu below (*play*, *sandbox*, *settings*, *quit*), version in a ghost box. *Play* swaps them for *vs bots*, *online* and *back* (esc goes back up too). *Vs bots* opens a page in place of the buttons, the logo stepping aside: *free-for-all* and *teams* as tabs, a card with the bots (0–15) and the game's options (§8.5), then *start*, *defaults*, *back*; the blob wears your colour or a team's to match. *Online* opens the online page (below). The blob wears your hat, in red or blue at random. A small ghost-box hat picker sits in the bottom-right corner, `<` *hat: name* `>` (or ← →): each step drops the next hat onto the blob, which nods under it. The pick is saved and is the hat you wear in a match. |
 | Pause (Esc) | Built | Dim + boxed list: *resume*, *respawn*, *settings*, *tuning*, *main menu*, *quit*. The game keeps running underneath (it's multiplayer). Opens while you're down and watching someone too, but not over the death cinematic, which plays over everything. |
 | Map card + countdown | Built (preview) | *round 3* over the map name, a fake loading bar of boxes, then *3 · 2 · 1 · go*. |
 | Round result | Built (preview) | Huge *round won* (inverted) or *round lost* banner over the score. |
@@ -945,9 +948,10 @@ The HUD hides during your death sequence and springs back in on respawn. Code: `
 | Match end | Built (preview) | *you won* / *you lost*, final score, and a list of every round: map, winner, and how. |
 | Death | Built | See §10.5. Caption in the same boxed style. |
 | Settings | Built | From the title screen (in place of the buttons, the logo stepping aside) and the pause menu (in its place); esc comes back. Tabs, each a white card of rows, a name then a slider (a bar filled black to the value, arrows either side, the value after) or a `<` choice `>`: **controls** (sensitivity, aim sensitivity, invert look, toggle aim), **keys** (every action with two slots: click one, press a key or mouse button; esc cancels, backspace clears; a key taken off another action says so and that row shakes), **video** (window: windowed / fullscreen / exclusive, vsync, frame cap, pixels: the 3D picture's height, colours, and the graphics: a *quality* preset (low / medium / high, or custom), *shadows* off / low / high, *extra lamps* (exit signs, tellies, neon), *detail* (small decor: pipes, props, signs; a lamp's fitting and the architecture dressed onto the blocks, shopfronts and roofs, always stay), *effects* (water, beams, dust, caustics and flicker, held still when off) and *bloom*; `src/world/graphics.gd`), **camera** (field of view, speed fov, camera motion, smoothing, screen shake, wall ride tilt, ui motion, landing dip, speed lines, impact frames) and **sound** (volume, ready for when there are sounds). Everything takes effect at once and is saved as it changes, only what differs from the defaults (`user://settings.cfg`), so a default tuned later still reaches you; *defaults* puts the open tab back. Code: `src/ui/settings.gd`, `src/ui/settings_menu.gd`. |
-| Lobby | Planned (M3) | Invite / join code, ready-up. |
+| Online | Built | Three tabs: **find a game** (a search box, then the public games found on this network and on the list server, one boxed row each, a page of six at a time: *name · style · map · players · password · this network*; greyed if full or another version; pick one to join, and a locked one asks for its password in a row under the list; the list server's address below, remembered), **host a game** (name, style, port, password, *public: on/off*, *open the port*, *host*) and **join by address** (address, password, *join*, *rejoin*). A status line by *back* says what's happening, or why a join failed. Code: `src/ui/online_menu.gd`. |
+| Lobby | Built | Before and between online games, on the online page. Who's in (in boxes, yours solid), where friends can reach you and whether it's public, and the game's options on one line. The host has the style and bots steppers, *public*, *start*, *options* (the options card in place of the roster; *players* brings it back) and *close the game*; everyone else *leave* and a status line (*waiting for the host to start*). |
 
-"Preview" screens run on made-up data (press **F8** in the test course to cycle them) until rounds exist in M3. Code: `src/ui/overlays.gd`, `src/ui/pause_menu.gd`, `src/ui/main_menu.gd`, `src/ui/settings_menu.gd`, wired together by `src/ui/game_ui.gd`.
+"Preview" screens run on made-up data (press **F8** in the test course to cycle them) until rounds exist in M3. Code: `src/ui/overlays.gd`, `src/ui/pause_menu.gd`, `src/ui/main_menu.gd`, `src/ui/bots_menu.gd`, `src/ui/rules_editor.gd`, `src/ui/online_menu.gd`, `src/ui/settings_menu.gd`, wired together by `src/ui/game_ui.gd`.
 
 ### 13.5 Motion
 The boxes are plain, so the motion carries the energy. The UI should feel as alive as the movement: it reacts to what you do and never just blinks things on and off.
@@ -981,10 +985,10 @@ Code: the motion kit is in `src/ui/lofi_ui.gd` (`enter`, `leave`, `pop`, `stamp`
 | Mode | Phase | Notes |
 |---|---|---|
 | 1v1 online (private lobby) | MVP | Invite or join code |
-| Free-for-all (classic) | Built, offline vs bots | Short rounds, see §8.5 |
-| Teams | Built, offline vs bots | One long game, see §8.5 |
+| Free-for-all (classic) | Built, vs bots and online | Short rounds, see §8.5 |
+| Teams | Built, vs bots and online | One long game, see §8.5 |
 | Movement sandbox | MVP | See [§9.4](#94-movement-sandbox) |
-| Custom rules | MVP (basic) | Rounds to win, weapon pool filters ("precision only", "melee only", "random roulette"), Heartshot on/off, round timer |
+| Custom rules | Built (basic) | The host's options (§8.5): health, round timer, rounds to win, kill target, time limit, maps, the guns in play, spawn weapon. Still to come: Heartshot on/off, "random roulette" |
 | 2v2 | Post-MVP | Team maps built (§9.3) |
 | FFA (3–4) | Post-MVP | |
 | Ranked 1v1 | Post-MVP | Needs dedicated servers |
@@ -1010,7 +1014,7 @@ Movement is a custom kinematic controller on top of `CharacterBody3D`, with our 
 
 ### 15.2 Simulation and netcode
 
-The plan, the choices behind it, what's built and the security model are in [NETWORKING.md](NETWORKING.md). In short: both a listen server (a player hosts from the menu) and a headless dedicated server run the same server-authoritative code over Godot's own ENet networking. Built so far: the authority, tick, local player, remote player, hit, pickup and validation rows below (interpolation is 100 ms, with no extrapolation yet, but a stalled player carries on with their last command for up to 300 ms). Projectiles are lag compensated differently from the plan: the server's projectile flies in present time from the muzzle, and is tested against the players as the shooter saw them all along its flight.
+The plan, the choices behind it, what's built and the security model are in [NETWORKING.md](NETWORKING.md). In short: both a listen server (a player hosts from the menu) and a headless dedicated server run the same server-authoritative code over Godot's own ENet networking. Built so far: the authority, tick, local player, remote player, hit, pickup and validation rows below (interpolation is 100 ms, with no extrapolation yet, but a stalled player carries on with their last command for up to 300 ms). Projectiles are lag compensated differently from the plan: the server's projectile flies in present time from the muzzle, and is tested against the players as the shooter saw them all along its flight. Public games are found on the local network and through a list server anyone can run; the host's own rules travel with the lobby's roster.
 
 | Topic | Plan |
 |---|---|
