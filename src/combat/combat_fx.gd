@@ -88,10 +88,7 @@ static func casing(space: Node3D, at: Vector3, right: Vector3, up: Vector3, shel
 	mesh.radial_segments = 6
 	mesh.rings = 1
 	c.mesh = mesh
-	c.material_override = WeaponModel.material(true)
-	c.set_instance_shader_parameter(&"color", color)
-	c.set_instance_shader_parameter(&"gloss", 0.8)
-	c.set_instance_shader_parameter(&"roughness_amount", 0.15)
+	c.material_override = Gloss.material(color, [0.8, 0.0, 0.0, 0.15], true)
 	c.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	space.add_child(c)
 	c.position = at
@@ -167,10 +164,7 @@ static func _blob(world: Node, at: Vector3, velocity: Vector3, radius: float, co
 		_sphere.radial_segments = 8
 		_sphere.rings = 4
 	m.mesh = _sphere
-	m.material_override = WeaponModel.material(false)
-	m.set_instance_shader_parameter(&"color", color)
-	m.set_instance_shader_parameter(&"gloss", 0.5)
-	m.set_instance_shader_parameter(&"glow", 0.6 if color == PlayerModel.HEART_COLOR else 0.0)
+	m.material_override = Gloss.material(color, [0.5, 0.0, 0.6 if color == PlayerModel.HEART_COLOR else 0.0, 0.25])
 	m.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	world.add_child(m)
 	m.global_position = at

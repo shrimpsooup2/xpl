@@ -58,7 +58,7 @@ func head_position(m: PlayerModel) -> Vector3:
 func colors_of(hat: Node3D) -> Array[Color]:
 	var out: Array[Color] = []
 	for mi: MeshInstance3D in hat.find_children("*", "MeshInstance3D", true, false):
-		out.append(mi.get_instance_shader_parameter(&"color"))
+		out.append((mi.material_override as ShaderMaterial).get_shader_parameter(&"color"))  # Shared: Gloss.
 	return out
 
 

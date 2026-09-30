@@ -63,7 +63,6 @@ const NAMES := {
 }
 
 static var _meshes := {}
-static var _materials := {}
 
 
 static func team_color(team: Team) -> Color:
@@ -143,26 +142,11 @@ static func _part(p: Array, tint: Color) -> Node3D:
 	var scale: Vector3 = p[5] if p.size() > 5 else Vector3.ONE
 	var mi := MeshInstance3D.new()
 	mi.mesh = _mesh(shape, dims)
-	mi.material_override = _material(shape == "ring" or shape == "dome")
-	var finish: Array = FINISH.get(key, FINISH[&"team"])
-	mi.set_instance_shader_parameter(&"color", color(key, tint))
-	mi.set_instance_shader_parameter(&"gloss", finish[0])
-	mi.set_instance_shader_parameter(&"rim_amount", finish[1])
-	mi.set_instance_shader_parameter(&"glow", finish[2])
-	mi.set_instance_shader_parameter(&"roughness_amount", finish[3])
+	mi.material_override = Gloss.material(color(key, tint), FINISH.get(key, FINISH[&"team"]), false, shape == "ring" or shape == "dome")
 	mi.transform = Transform3D(Basis.from_euler(rot * (PI / 180.0)) * Basis.from_scale(scale), at)
 	if p.size() > 6 and p[6] == &"spin":
 		mi.set_meta(&"spin", true)
 	return mi
-
-
-static func _material(double_sided: bool) -> ShaderMaterial:
-	if not _materials.has(double_sided):
-		var m := ShaderMaterial.new()
-		m.shader = preload("res://src/render/gloss_double.gdshader") if double_sided else preload("res://src/render/gloss.gdshader")
-		m.set_shader_parameter(&"reflection_map", preload("res://assets/textures/reflection_map.png"))
-		_materials[double_sided] = m
-	return _materials[double_sided]
 
 
 static func _mesh(shape: String, d: Vector3) -> Mesh:
