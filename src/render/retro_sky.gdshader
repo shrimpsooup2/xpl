@@ -3,7 +3,10 @@ shader_type sky;
 // hard bands; 0 keeps it smooth. At night (a dressed map's sky) the sun is a
 // moon with a halo round it, and `stars` scatters pixel stars. `eclipse`
 // puts the moon in front of the sun: a black disc in a white corona with
-// streamers fanning out, one bright bead on its rim.
+// streamers fanning out, one bright bead on its rim. `clouds` covers the
+// sky in cloud from `cloud_map` (0: clear), grey where it's thick, paler
+// where it thins, thinning round the sun so it shines through, lit gold
+// along the edges there; clear in a band just over the horizon.
 
 global uniform float world_light;
 
@@ -17,6 +20,13 @@ uniform float sun_size = 0.035;
 uniform float halo = 0.0;
 uniform float stars = 0.0;
 uniform float eclipse = 0.0;
+uniform sampler2D cloud_map : filter_linear_mipmap, repeat_enable;
+uniform float clouds = 0.0;
+uniform vec3 cloud_thick : source_color = vec3(0.46, 0.46, 0.54);
+uniform vec3 cloud_thin : source_color = vec3(0.74, 0.72, 0.78);
+uniform vec3 cloud_lining : source_color = vec3(1.0, 0.76, 0.5);
+// How much the cloud thins round the sun.
+uniform float cloud_break = 0.5;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
@@ -61,6 +71,16 @@ void sky() {
 		} else if (d < sun_size) {
 			c = sun_color * 2.0;
 		}
+	}
+	if (clouds > 0.0 && h > 0.0) {
+		// On a plane overhead, so it bunches up toward the horizon.
+		vec2 uv = EYEDIR.xz / (h + 0.1) * 0.3;
+		float n = texture(cloud_map, uv).r * 0.65 + texture(cloud_map, uv * 2.7 + vec2(0.31, 0.17)).r * 0.35;
+		float to_sun = LIGHT0_ENABLED ? max(dot(EYEDIR, LIGHT0_DIRECTION), 0.0) : 0.0;
+		float density = smoothstep(0.3, 0.7, n + clouds - 0.5 - cloud_break * pow(to_sun, 6.0)) * smoothstep(0.015, 0.1, h);
+		vec3 cloud = mix(cloud_thin, cloud_thick, smoothstep(0.45, 0.85, n));
+		cloud = mix(cloud, cloud_lining, pow(to_sun, 5.0) * (1.0 - smoothstep(0.5, 0.9, n) * 0.6));
+		c = mix(c, cloud, density * 0.96);
 	}
 	COLOR = c * world_light;
 }

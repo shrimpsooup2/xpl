@@ -539,17 +539,19 @@ func test_rift_is_a_station_above_the_clouds_at_dawn() -> void:
 	check(zone != null and zone.ambient < 0.5, "the tunnel through the station keeps the sky out")
 	var lamps := level.find_children("*", "Light3D", true, false)
 	check(lamps.size() >= 12, "the station's lamps still lit (%d)" % lamps.size())
-	# The solid props stand against walls: benches on the galleries.
+	# The solid props stand against walls (benches on the galleries, the
+	# station's chimneys) or at the shoulders' outer edges (benches).
 	for s: StaticBody3D in level.find_children("Solid_*", "StaticBody3D", true, false):
 		var z := absf(s.global_position.z)
-		check(z > 14.5 and z < 16.0, "%s is against a gallery wall (at %s)" % [s.name, s.global_position])
-	# The line goes on far off, not from the edge: nothing to step onto.
+		check((z > 14.5 and z < 16.0) or z > 41.0, "%s is against a wall or at the edge (at %s)" % [s.name, s.global_position])
+	# The line goes on far off, across the notches in the mountains round
+	# the station, not from the edge: nothing to step onto.
 	var far := level.find_children("far_stone*", "MeshInstance3D", true, false)
 	check(not far.is_empty(), "viaducts across the cloud")
 	var near := 0
 	for m: MeshInstance3D in far:
 		for v: Vector3 in m.mesh.get_faces():
-			if absf(v.z) < 250.0:
+			if Vector2(v.x, v.z).length() < 250.0:
 				near += 1
 	check(near == 0, "they're far off (%d points nearer)" % near)
 

@@ -1,0 +1,15 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/cloud_deck.gdshader" id="1_0us82"]
+[ext_resource type="Texture2D" path="res://assets/textures/rift/billows.png" id="2_uya6i"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_0us82")
+shader_parameter/billows = ExtResource("2_uya6i")
+shader_parameter/to_sun = Vector3(0.87126786, 0.3746066, 0.31711558)
+shader_parameter/thick = null
+shader_parameter/thin = null
+shader_parameter/lining = null
+shader_parameter/cover = null
+shader_parameter/reach = null

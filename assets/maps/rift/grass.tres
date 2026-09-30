@@ -1,0 +1,8 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/grass.gdshader" id="1_wdwfn"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_wdwfn")
+shader_parameter/sway = null

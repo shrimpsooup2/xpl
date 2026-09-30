@@ -165,7 +165,7 @@ func _build_player() -> Node:
 	cam.name = "Camera"
 	cam.position = Vector3(0, 1.6, 0)
 	cam.near = 0.05
-	cam.far = 500.0
+	cam.far = 600.0
 	player.add_child(cam)
 
 	var model := Node3D.new()

@@ -1,0 +1,20 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/mountain.gdshader" id="1_veb7f"]
+[ext_resource type="Texture2D" path="res://assets/textures/rift/cliff.png" id="2_f5lco"]
+[ext_resource type="Texture2D" path="res://assets/textures/rift/scree.png" id="3_mnlq1"]
+[ext_resource type="Texture2D" path="res://assets/textures/rift/snow.png" id="4_mfju2"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_veb7f")
+shader_parameter/rock = ExtResource("2_f5lco")
+shader_parameter/snow = ExtResource("4_mfju2")
+shader_parameter/scree = ExtResource("3_mnlq1")
+shader_parameter/rock_meters = 14.0
+shader_parameter/snow_meters = 16.0
+shader_parameter/snowline = 60.0
+shader_parameter/snow_fade = 30.0
+shader_parameter/scree_line = -170.0
+shader_parameter/rock_tint = Color(0.86, 0.84, 0.84, 1)
+shader_parameter/sky_light = 0.9
