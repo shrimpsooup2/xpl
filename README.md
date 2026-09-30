@@ -12,7 +12,7 @@ A round-based, movement-first arena FPS. Two players duel through short rounds o
 
 1. Install **Godot 4.7.2**, the standard build (not .NET): <https://godotengine.org/download>
 2. Clone this repo, open Godot, choose **Import**, and select `project.godot`.
-3. Press **F5** to play. The main menu opens: **free-for-all** starts a practice game of short rounds against three bots, **teams** a long four-against-four game with bots (pick your gun with 1–6 in the countdown or while you're down; ammo boxes stand where the guns would be; kills close together chain into combos), **online** hosts or joins a game over the network (below), and **sandbox** the movement test course. In the bottom-right corner you type your name and pick your hat and your free-for-all colour; they're saved and worn in every game. In the sandbox the gun pads are just to your left, and the shooting range is beyond them; its dummies play for blue. Press **F9** to step through the maps: Stack, Terrace, Switchback, Archipelago and Rift, then the team maps Boulevard, Holdfast and Depot (greybox, [GDD §9.3](docs/GDD.md#93-built-maps)).
+3. Press **F5** to play. The main menu opens: **free-for-all** starts a practice game of short rounds against three bots, **teams** a long four-against-four game with bots (pick your gun with 1–6 in the countdown or while you're down; ammo boxes stand where the guns would be; kills close together chain into combos), **online** hosts or joins a game over the network (below), and **sandbox** the movement test course. In the bottom-right corner you type your name and pick your hat and your free-for-all colour; they're saved and worn in every game. In the sandbox the gun pads are just to your left, and the shooting range is beyond them; its dummies play for blue. Press **F9** to step through the maps: Stack, Terrace, Switchback, Archipelago and Rift, then the team maps Boulevard, Holdfast and Depot ([GDD §9.3](docs/GDD.md#93-built-maps)). Stack is dressed, as the drained rooftop pool of a hotel at night; the others are still greybox.
 
 ### Controls
 
@@ -47,7 +47,7 @@ Wall ride and mantle are automatic: jump along a wall to ride it, and move into 
 
 - **controls:** sensitivity, aim sensitivity, invert look, toggle aim.
 - **keys:** rebind every action, two keys each. Click a slot and press a key or mouse button; Esc cancels, Backspace clears.
-- **video:** window mode, vsync, frame cap, pixels (the 3D picture's height: 360 by default, *screen* for native), and colours (an optional 16-bit colour and dither mode).
+- **video:** window mode, vsync, frame cap, pixels (the 3D picture's height: 360 by default, *screen* for native), colours (an optional 16-bit colour and dither mode), and graphics to trade looks for speed: a quality preset (low / medium / high), shadows (off / low / high), extra lamps, detail, effects and bloom.
 - **camera:** field of view, speed FOV, camera motion, smoothing, screen shake, wall ride tilt, UI motion, landing dip, speed lines, impact frames.
 - **sound:** volume. There are no sounds yet.
 
@@ -84,15 +84,15 @@ Both ways run the same server-authoritative game ([how it works, and its safety 
 | `src/ui/` | The UI: style and motion kit (`LofiUI`, `LofiSlider`), low-res canvas (`LofiLayer`), HUD and its ammo column, crosshair and ammo ring, overlays, pause and main menus, the online page and lobby (`OnlineMenu`), the settings page (`SettingsMenu`) and what it saves (`Settings`), scene wipe |
 | `src/game/` | Games: `GameRules` (the free-for-all and teams presets), `Match` (runs a game across maps), `Game` (starts and ends one), `PlayerInfo` (each player's name, side and score), `BotBrain` (practice bots) |
 | `src/net/` | Online play: `NetSession` (host, join, handshake, roster), `DedicatedServer`, `MatchSync` (a networked game's messages), `Prediction` and `Puppet` (your player and everyone else on a client), `NetCodec` (the wire format, checked) |
-| `src/world/` | `GreyBox` blocks (size and surface kind) and `Maps` (the map list F9 steps through) |
-| `src/render/` | Surface, sky, screen, prop and viewmodel shaders, and `RetroScreen` (low-res rendering) |
+| `src/world/` | `GreyBox` blocks (size, surface kind, or a dressed map's own surface), `Maps` (the map list F9 steps through), `AmbientZone` (an indoor zone the sky's light stays out of), `Graphics` (the graphics settings, applied to a level) and `Flicker` (a failing lamp) |
+| `src/render/` | Surface, sky, screen, prop and viewmodel shaders, `RetroScreen` (low-res rendering), and the decor's shaders in `deco/` (glowing fittings, water, puddles, light shafts, city windows, a telly, the skyline, floating props) |
 | `assets/` | Pixel textures, the reflection map, the logo, the generated body and chunk meshes, and third-party assets |
 | `src/debug/` | Debug HUD and the live tuning panel |
 | `data/` | Tuning resources |
 | `scenes/` | `main_menu.tscn` (main scene), `test_course.tscn`, `player.tscn`, and the maps in `maps/` |
 | `tests/` | Headless movement, UI, combat, cosmetics, map, game and network tests, and the online tests (real processes talking over the network) |
 | `site/` | The website (below) |
-| `tools/` | Test runner, the website's build script, the scene generator, the level kit (with `level_side.gd` for symmetric team maps) and the map layouts (`maps/`) |
+| `tools/` | Test runner, the website's build script, the scene generator, the decor kit that dresses a map (`deco_kit.gd`, with each dressed map's `<map>_deco.gd`), the level kit (with `level_side.gd` for symmetric team maps) and the map layouts (`maps/`) |
 
 ## Tests
 
@@ -102,11 +102,11 @@ tools/run_tests.sh
 
 This runs the headless movement, UI, combat, cosmetics, map, game and network tests (the map tests drive a player through each map's routes), then the online tests in real time: a dedicated server started in a second Godot process, this one joining it (and a third joining late), then this one hosting a game a friend's process joins. `SKIP_ONLINE=1` skips those. Set `TEST_ONLY` to part of a test's name to run just those. It uses `$GODOT` or `godot` on your PATH; on Linux x86_64 it downloads Godot 4.7.2 into `.tools/` if neither is found.
 
-`tools/build_scenes.gd` regenerates the input map, `player.tscn`, the greybox test course, and the maps (each laid out by a script in `tools/maps/` with the kit in `tools/level_kit.gd`). Once you edit the course by hand in the editor, stop regenerating it (pass `-- --skip-course`). `tools/gen_textures.gd` and `tools/gen_logo.gd` regenerate the placeholder textures and the logo; paint over the PNGs freely instead. `tools/gen_body.gd` regenerates the player's body and its pre-diced chunks from `src/player/body_shape.gd` (about a minute; add `-- --body-only` to skip the dicing while tuning the shape).
+`tools/build_scenes.gd` regenerates the input map, `player.tscn`, the greybox test course, and the maps (each laid out by a script in `tools/maps/` with the kit in `tools/level_kit.gd`). Once you edit the course by hand in the editor, stop regenerating it (pass `-- --skip-course`). `tools/gen_textures.gd` and `tools/gen_logo.gd` regenerate the placeholder textures and the logo, and `tools/gen_stack_textures.gd` Stack's; paint over the PNGs freely instead. `tools/gen_body.gd` regenerates the player's body and its pre-diced chunks from `src/player/body_shape.gd` (about a minute; add `-- --body-only` to skip the dicing while tuning the shape).
 
 ## Website
 
-`site/` is the game's website: one screen, drawn small on a canvas and blown up in hard pixels like the game's 3D, with the game's boxes: the logo, what the game is, download buttons for pc, mac and the server build, and a picture card you can flip through. The words and buttons are plain HTML in `site/index.html`, laid over the canvas unseen so links, the keyboard and screen readers work, and shown as plain boxes without JavaScript.
+`site/` is the game's website: one screen, drawn small on a canvas and blown up in hard pixels like the game's 3D, with the game's boxes: the logo, what the game is (in Arial), download buttons for pc, mac and the server build, and a picture card you can flip through, with the player hanging upside down from the top. The words and buttons are plain HTML in `site/index.html`, laid over the canvas unseen so links, the keyboard and screen readers work, and shown as plain boxes without JavaScript.
 
 - **Downloads:** put each build's address in its button's `href`. Until then they say *soon :)*.
 - **Pictures:** list them in the picture card's `data-shots` (e.g. `shots/boulevard.png, shots/depot.png`, files in `site/shots/`). They're drawn small, so they come out pixelated like everything else. With none it shows stand-ins, until the maps are decorated.
@@ -117,7 +117,7 @@ This runs the headless movement, UI, combat, cosmetics, map, game and network te
 tools/build_site.sh && python3 -m http.server -d _site
 ```
 
-`.github/workflows/pages.yml` publishes it to GitHub Pages whenever it changes on `main`. It needs, once, **Settings → Pages → Build and deployment → Source: GitHub Actions** in the repository. `tools/gen_icon.gd` makes the favicon (*xpl*, in the logo's style).
+`.github/workflows/pages.yml` publishes it to GitHub Pages whenever it changes on `main`. It needs, once, **Settings → Pages → Build and deployment → Source: GitHub Actions** in the repository. `tools/gen_icon.gd` makes the favicon (*xpl*, in the logo's style), and `tools/gen_site_figure.gd` renders the hanging player (`site/assets/figure.png`) from the game's own body; it needs a real renderer, so run it under `xvfb-run` with `--rendering-driver opengl3` on a machine without a screen.
 
 ## Known issues
 

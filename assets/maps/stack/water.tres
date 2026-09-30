@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/water.gdshader" id="1_dgeaw"]
+[ext_resource type="Texture2D" path="res://assets/textures/stack/water.png" id="2_8uth8"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_dgeaw")
+shader_parameter/streaks = ExtResource("2_8uth8")
+shader_parameter/color = Color(0.55, 0.78, 0.95, 1)
+shader_parameter/opacity = 0.4
+shader_parameter/speed = null
+shader_parameter/meters = Vector2(0.4, 1.6)
+shader_parameter/height = 5.0

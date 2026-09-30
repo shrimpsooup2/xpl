@@ -59,11 +59,8 @@ static func build(kit) -> Transform3D:
 	kit.pad("Pad_RifleA", Weapons.RIFLE, Vector3(-7, ROOF + 2.5, -5))
 	kit.pad("Pad_RifleB", Weapons.RIFLE, Vector3(7, ROOF + 2.5, 5))
 
-	kit.light("CellarAmber", Vector3(-6, 3.8, 6), Color(1.0, 0.7, 0.3), 9.0)
-	kit.light("CellarCyan", Vector3(6, 3.8, -6), Color(0.3, 0.85, 1.0), 9.0)
-	kit.light("CellarViolet", Vector3(-6, 3.8, -6), Color(0.6, 0.4, 1.0), 9.0)
-	kit.light("CellarRose", Vector3(6, 3.8, 6), Color(1.0, 0.4, 0.6), 9.0)
-	kit.light("WellGlow", Vector3(0, 2.5, 0), Color(1.0, 0.95, 0.8), 6.0, 1.5)
+	# The lamps are part of its dressing (stack_deco.gd): each one has a
+	# fixture to come from.
 
 	kit.label("THE WELL", Vector3(0, 7.2, 0))
 	kit.label("CRATE CLIMB", Vector3(-6, 3.5, 3))

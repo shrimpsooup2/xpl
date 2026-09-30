@@ -1,14 +1,15 @@
 // xtrapartial's website: one screen, drawn small and blown up in hard
 // pixels like the game's 3D (360 lines, point-filtered), with the game's
 // boxes: white cards with a crooked black frame set in from the edge
-// (src/ui/paper_box.gd). The words and buttons come from the page's HTML,
-// which stays over the canvas unseen so links, the keyboard and screen
-// readers work.
+// (src/ui/paper_box.gd), the logo card being the game's logo. The words
+// and buttons come from the page's HTML, which stays over the canvas
+// unseen so links, the keyboard and screen readers work.
 //
 // - The background dithers from black to maroon in 16-bit colour, like
 //   the game's optional colours mode.
-// - A blob hangs upside down from the top, swinging. Hover a download and
-//   it jolts.
+// - The player hangs upside down from the top by its feet, swinging
+//   (assets/figure.png, rendered from the game by
+//   tools/gen_site_figure.gd). Hover a download and it jolts.
 // - The picture card flips through screenshots (data-shots) with the
 //   game's box wipe, or low-res stand-ins until there are some.
 // - A download without an address yet says "soon :)".
@@ -21,16 +22,18 @@
 	const canvas = document.getElementById("pixels");
 	const ctx = canvas.getContext("2d");
 	const status = document.getElementById("status");
-	const FONT = '"Liberation Sans", Arial, Helvetica, sans-serif';
+	const FONT = 'Arial, "Liberation Sans", Helvetica, sans-serif';
 	const INK = "#0d0d0f";
 	const PAPER = "#ffffff";
 	const GREY = "#8c8c94";
 	const PINK = "#ff3d73";
-	// The layout wide screens get, in canvas pixels; narrower ones stack,
-	// on a canvas about TALL_LOW pixels across. Each canvas pixel is a
-	// whole number of screen pixels, and type sits on whole pixels.
-	const DESIGN = { w: 400, h: 222 };
-	const TALL_LOW = 180;
+	// The layout wide screens get, in layout units, scaled to fill the
+	// screen; narrower ones stack, TALL units across. The canvas is about
+	// DESIGN.w pixels across (TALL_LOW on a phone), and each of its pixels
+	// is a whole number of screen pixels.
+	const DESIGN = { w: 640, h: 360 };
+	const TALL = 270;
+	const TALL_LOW = 200;
 	const SLIDE_TIME = 5.0;
 	const WIPE_TIME = 0.5;
 
@@ -40,16 +43,23 @@
 	const infoEl = document.querySelector('[data-card="info"]');
 	const picsEl = document.querySelector('[data-card="pictures"]');
 	const logoText = logoEl.querySelector("h1").textContent.trim();
+	const logoImage = picture("assets/logo.png", () => layout());
+	const figureImage = picture("assets/figure.png");
 	const lines = Array.from(infoEl.querySelectorAll("li"), (li) => li.textContent.trim());
 	const caption = picsEl.querySelector(".caption");
-	const shots = (picsEl.getAttribute("data-shots") || "").split(",").map((s) => s.trim()).filter(Boolean).map((src) => {
-		const img = new Image();
-		img.src = src;
-		img.onload = () => { img.ready = true; };
-		return img;
-	});
+	const shots = (picsEl.getAttribute("data-shots") || "").split(",").map((s) => s.trim()).filter(Boolean).map((src) => picture(src));
 	const STAND_INS = ["pictures soon", "the maps are being decorated", "pictures soon"];
 	const slideCount = shots.length || STAND_INS.length;
+
+	function picture(src, loaded) {
+		const img = new Image();
+		img.onload = () => {
+			img.ready = true;
+			if (loaded) loaded();
+		};
+		img.src = src;
+		return img;
+	}
 
 	// --- Which hand drew it -----------------------------------------------------
 
@@ -79,25 +89,19 @@
 	let W = 0, H = 0;   // The canvas, in its own pixels.
 	let WU = 0, HU = 0; // The canvas, in layout units.
 	let wide = true;
-	let cards = {};     // name -> {x, y, w, h, angle, delay, parts}
+	let cards = {};     // name -> {x, y, w, h, angle, delay, ...}
 	let hits = [];      // {el, name, card, x, y, w, h}: card-local, from its top-left.
 	let background = null;
-	let blobX = 0;
+	let hanger = { x: 0, y: 0, h: 0 }; // The figure: where its feet hang from, and how tall.
 
 	function font(size) {
 		return size + "px " + FONT;
 	}
 
-	// Type is drawn at whole canvas pixels, so this is in layout units at
-	// the size it'll really be drawn.
+	// In layout units.
 	function textWidth(text, size) {
-		const px = pixels(size);
-		ctx.font = font(px);
-		return ctx.measureText(text).width / U;
-	}
-
-	function pixels(size) {
-		return Math.max(6, Math.round(size * U));
+		ctx.font = font(size);
+		return ctx.measureText(text).width;
 	}
 
 	function wrap(text, size, width) {
@@ -116,76 +120,94 @@
 		return out;
 	}
 
+	// Wrapped, with no word left on a line of its own.
+	function balanced(text, size, width) {
+		const lines = wrap(text, size, width);
+		const n = lines.length;
+		if (n > 1 && !/\s/.test(lines[n - 1])) {
+			const words = lines[n - 2].split(" ");
+			if (words.length > 2) {
+				lines[n - 1] = words.pop() + " " + lines[n - 1];
+				lines[n - 2] = words.join(" ");
+			}
+		}
+		return lines;
+	}
+
 	const deg = (d) => d * Math.PI / 180;
+
+	function logoAspect() {
+		return logoImage.ready ? logoImage.naturalWidth / logoImage.naturalHeight : 3.5;
+	}
 
 	function layout() {
 		const vw = document.documentElement.clientWidth;
 		const vh = window.innerHeight;
-		const fit = Math.floor(Math.min(vw / DESIGN.w, vh / DESIGN.h));
-		wide = fit >= 2 && vw / vh > 1.2;
+		wide = vw / vh > 1.2 && vw >= 640;
 		const buttons = Array.from(infoEl.querySelectorAll(".hit"));
-		let logo, info, pics, size, textSize;
-		U = 1;
+		let logo, info, pics, textSize;
 		if (wide) {
-			S = fit;
+			S = Math.max(2, Math.round(Math.min(vw / DESIGN.w, vh / DESIGN.h)));
 			W = Math.ceil(vw / S);
 			H = Math.ceil(vh / S);
-			WU = W;
-			HU = H;
-			const ox = Math.floor((WU - DESIGN.w) / 2), oy = Math.floor((HU - DESIGN.h) / 2);
-			logo = { x: ox + 17, y: oy + 18, w: 164, h: 56, angle: deg(-3) };
-			info = { x: ox + 21, y: oy + 94, w: 158, angle: deg(-1.5) };
-			pics = { x: ox + 214, y: oy + 98, w: 166, h: 104, angle: deg(-2) };
-			blobX = ox + 262;
-			size = 17;
-			textSize = 10;
+			U = Math.min(W / DESIGN.w, H / DESIGN.h);
+			WU = W / U;
+			HU = H / U;
+			const ox = (WU - DESIGN.w) / 2, oy = (HU - DESIGN.h) / 2;
+			logo = { x: ox + 30, y: oy + 28, w: 282, angle: deg(-3) };
+			logo.h = logo.w / logoAspect();
+			info = { x: ox + 34, y: oy + 136, w: 272, angle: deg(-1.5) };
+			pics = { x: ox + 342, y: oy + 142, w: 262, h: 172, angle: deg(-2) };
+			hanger = { x: ox + 474, y: -64, h: 170 };
+			textSize = 16;
 		} else {
 			S = Math.max(2, Math.round(vw / TALL_LOW));
-			W = Math.floor(vw / S);
-			WU = W;
-			const cw = Math.min(WU - 24, 230);
-			const cx = Math.floor((WU - cw) / 2);
-			logo = { x: cx, y: 14, w: Math.min(cw - 34, 170), h: 46, angle: deg(-3) };
-			pics = { x: cx + 12, y: 78, w: cw - 24, angle: deg(-2) };
+			W = Math.ceil(vw / S);
+			U = W / TALL;
+			WU = TALL;
+			const cw = WU - 28;
+			const cx = 14;
+			logo = { x: cx + 2, y: 16, w: cw - 62, angle: deg(-3) };
+			logo.h = logo.w / logoAspect();
+			pics = { x: cx + 18, y: logo.y + logo.h + 34, w: cw - 36, angle: deg(-2) };
 			pics.h = Math.round(pics.w * 0.64);
-			info = { x: cx, y: pics.y + pics.h + 20, w: cw, angle: deg(-1.5) };
-			blobX = WU - 24;
-			size = Math.min(17, Math.floor(logo.w / 7));
-			textSize = 10;
+			info = { x: cx, y: pics.y + pics.h + 26, w: cw, angle: deg(-1.5) };
+			hanger = { x: WU - 34, y: -54, h: 118 };
+			textSize = 15;
 		}
-		logo.size = size;
 		logo.delay = 0;
 		pics.delay = 0.12;
 		info.delay = 0.24;
 
 		// The info card: its lines wrapped, then the buttons, wrapping too.
-		const pad = 13;
+		const pad = 18, lead = Math.round(textSize * 1.3);
 		const wrapped = [];
-		for (const line of lines) wrapped.push(...wrap(line, textSize, info.w - pad * 2));
+		for (const line of lines) wrapped.push(...balanced(line, textSize, info.w - pad * 2));
 		info.lines = wrapped;
 		info.textSize = textSize;
-		let bx = pad, by = pad + wrapped.length * 12 + 7;
+		info.lead = lead;
+		info.pad = pad;
+		let bx = pad, by = pad + wrapped.length * lead + 10;
 		info.buttons = buttons.map((el) => {
 			const label = el.getAttribute("data-label") || el.textContent.trim();
-			const words = ARROWS[label[0]] && label[1] === " " ? label.slice(2) : label;
-			const bw = Math.ceil(textWidth(words, 9)) + 14 + (words !== label ? ARROWS[label[0]][0].length + 3 : 0);
-			if (bx + bw > info.w - pad + 2 && bx > pad) {
+			const bw = Math.ceil(textWidth(label, BUTTON_TEXT)) + 24;
+			if (bx + bw > info.w - pad + 3 && bx > pad) {
 				bx = pad;
-				by += 20;
+				by += BUTTON_H + 7;
 			}
-			const b = { el, name: el.getAttribute("data-button"), label, x: bx, y: by, w: bw, h: 17 };
-			bx += bw + 5;
+			const b = { el, name: el.getAttribute("data-button"), label, x: bx, y: by, w: bw, h: BUTTON_H };
+			bx += bw + 8;
 			return b;
 		});
-		info.h = by + 17 + pad;
+		info.h = by + BUTTON_H + pad;
 
 		// The picture card: the picture, dots under it, arrows either side.
-		pics.image = { x: 9, y: 9, w: pics.w - 18, h: pics.h - 22 };
-		pics.prev = { el: picsEl.querySelector('[data-button="prev"]'), name: "prev", x: -17, y: pics.h / 2 - 15, w: 14, h: 30 };
-		pics.next = { el: picsEl.querySelector('[data-button="next"]'), name: "next", x: pics.w + 3, y: pics.h / 2 - 15, w: 14, h: 30 };
+		pics.image = { x: 12, y: 12, w: pics.w - 24, h: pics.h - 32 };
+		pics.prev = { el: picsEl.querySelector('[data-button="prev"]'), name: "prev", x: -28, y: pics.h / 2 - 24, w: 22, h: 48 };
+		pics.next = { el: picsEl.querySelector('[data-button="next"]'), name: "next", x: pics.w + 6, y: pics.h / 2 - 24, w: 22, h: 48 };
 
 		if (!wide) {
-			HU = Math.max(window.innerHeight / S / U, info.y + info.h + 20);
+			HU = Math.max(window.innerHeight / S / U, info.y + info.h + 26);
 			H = Math.ceil(HU * U);
 		}
 		cards = { logo, info, pictures: pics };
@@ -204,7 +226,6 @@
 			});
 		}
 
-		lettering.clear();
 		canvas.width = W;
 		canvas.height = H;
 		canvas.style.width = W * S + "px";
@@ -212,6 +233,9 @@
 		screen.style.height = wide ? "100vh" : H * S + "px";
 		background = dither(W, H);
 	}
+
+	const BUTTON_TEXT = 14;
+	const BUTTON_H = 26;
 
 	function place(el, card) {
 		const k = U * S;
@@ -303,76 +327,23 @@
 		}
 		path(inner);
 		ctx.strokeStyle = INK;
-		ctx.lineWidth = margin > 4 ? 1.4 : 1;
+		ctx.lineWidth = margin > 4 ? 2 : 1.2;
 		ctx.stroke();
 	}
 
-	// Words as one-bit pixel lettering: set small, every pixel either ink or
-	// nothing, so a tilted card turns them without smearing thin strokes
-	// away. Kept once made.
-	const lettering = new Map();
-
-	function letters(str, px, color) {
-		const key = str + "|" + px + "|" + color;
-		let made = lettering.get(key);
-		if (made) return made;
-		const c = document.createElement("canvas");
-		const g = c.getContext("2d");
-		g.font = font(px);
-		const base = Math.round(px * 1.05) + 1;
-		c.width = Math.ceil(g.measureText(str).width) + 2;
-		c.height = base + Math.ceil(px * 0.3) + 1;
-		g.font = font(px);
-		g.fillStyle = color;
-		g.textBaseline = "alphabetic";
-		g.fillText(str, 1, base);
-		const img = g.getImageData(0, 0, c.width, c.height);
-		const rgb = [parseInt(color.slice(1, 3), 16), parseInt(color.slice(3, 5), 16), parseInt(color.slice(5, 7), 16)];
-		for (let i = 0; i < img.data.length; i += 4) {
-			img.data[i] = rgb[0];
-			img.data[i + 1] = rgb[1];
-			img.data[i + 2] = rgb[2];
-			img.data[i + 3] = img.data[i + 3] > 64 ? 255 : 0;
-		}
-		g.putImageData(img, 0, 0);
-		made = { canvas: c, base };
-		lettering.set(key, made);
-		return made;
-	}
-
-	// `str` with its baseline at (x, y), in layout units.
+	// `str` in Arial with its baseline at (x, y), in layout units.
 	function text(str, x, y, size, color) {
-		const made = letters(str, pixels(size), color);
-		ctx.imageSmoothingEnabled = false;
-		ctx.drawImage(made.canvas, x - 1 / U, y - made.base / U, made.canvas.width / U, made.canvas.height / U);
-	}
-
-	// A button's words, a leading ↓ or ← drawn as a little pixel arrow (the
-	// glyph is lost at this size).
-	const ARROWS = {
-		"↓": ["..#..", "..#..", "..#..", "#####", ".###.", "..#.."],
-		"←": ["..#...", ".##...", "######", ".##...", "..#..."],
-	};
-
-	function label(str, x, y, size, color) {
-		const icon = ARROWS[str[0]];
-		if (icon && str[1] === " ") {
-			ctx.fillStyle = color;
-			const top = Math.round(y - icon.length - 1);
-			icon.forEach((row, j) => {
-				for (let i = 0; i < row.length; i++) if (row[i] === "#") ctx.fillRect(Math.round(x) + i, top + j, 1, 1);
-			});
-			x += icon[0].length + 3;
-			str = str.slice(2);
-		}
-		text(str, x, y, size, color);
+		ctx.font = font(size);
+		ctx.fillStyle = color;
+		ctx.textBaseline = "alphabetic";
+		ctx.fillText(str, x, y);
 	}
 
 	// --- Motion ------------------------------------------------------------------------
 
 	let now = 0;
 	const state = { hover: "", focus: "", press: "" };
-	const blob = { angle: 0.15, spin: 0 };
+	const blob = { angle: 0.15, spin: 0 }; // The hanging player's swing.
 	let slide = 0, shown = 0, wipeAt = -1, lastTurn = 0;
 	const pops = [];
 
@@ -425,7 +396,7 @@
 		ctx.drawImage(background, 0, 0);
 		// Everything else in layout units.
 		ctx.setTransform(U, 0, 0, U, 0, 0);
-		drawBlob();
+		drawHanger();
 		drawCard(cards.logo, drawLogo);
 		drawCard(cards.pictures, drawPictures);
 		drawCard(cards.info, drawInfo);
@@ -445,20 +416,26 @@
 		ctx.restore();
 	}
 
+	// The game's logo; the words in a box till it's in.
 	function drawLogo(card) {
-		paper(0, 0, card.w, card.h, 11, 7);
-		text(logoText, 17, card.h / 2 + card.size * 0.36, card.size, INK);
+		if (logoImage.ready) {
+			ctx.imageSmoothingEnabled = true;
+			ctx.drawImage(logoImage, 0, 0, card.w, card.h);
+		} else {
+			paper(0, 0, card.w, card.h, 11, 9);
+			text(logoText, card.h * 0.35, card.h * 0.64, card.h * 0.38, INK);
+		}
 	}
 
 	function drawInfo(card) {
-		paper(0, 0, card.w, card.h, 23, 6);
-		card.lines.forEach((line, i) => text(line, 13, 13 + 9 + i * 12, card.textSize, INK));
+		paper(0, 0, card.w, card.h, 23, 9);
+		card.lines.forEach((line, i) => text(line, card.pad, card.pad + card.textSize + i * card.lead, card.textSize, INK));
 		for (const b of card.buttons) {
 			const lit = state.hover === b.name || state.focus === b.name;
 			const down = state.press === b.name;
-			const lift = lit && !down ? -1 : down ? 1 : 0;
-			paper(b.x + lift, b.y + lift, b.w, b.h, hash(b.name), 2, lit ? INK : null, lit && !down ? 2 : 0);
-			label(b.label, b.x + 7 + lift, b.y + 12 + lift, 9, lit ? PAPER : INK);
+			const lift = lit && !down ? -1.5 : down ? 1.5 : 0;
+			paper(b.x + lift, b.y + lift, b.w, b.h, hash(b.name), 3, lit ? INK : null, lit && !down ? 3 : 0);
+			text(b.label, b.x + 12 + lift, b.y + b.h / 2 + BUTTON_TEXT * 0.36 + lift, BUTTON_TEXT, lit ? PAPER : INK);
 		}
 	}
 
@@ -482,14 +459,14 @@
 		drawWipe(r);
 		ctx.restore();
 		ctx.strokeStyle = INK;
-		ctx.lineWidth = 1;
-		ctx.strokeRect(r.x + 0.5, r.y + 0.5, r.w - 1, r.h - 1);
+		ctx.lineWidth = 2;
+		ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
 		// A dot for each picture, the one showing filled.
 		const dots = slideCount;
-		const x0 = card.w / 2 - (dots * 6 - 3) / 2;
+		const x0 = card.w / 2 - (dots * 10 - 5) / 2;
 		for (let i = 0; i < dots; i++) {
 			ctx.fillStyle = i === slide ? INK : "#c9c9cf";
-			ctx.fillRect(Math.round(x0 + i * 6), Math.round(card.h - 10), 3, 3);
+			ctx.fillRect(x0 + i * 10, card.h - 15, 5, 5);
 		}
 		arrow(card.prev, -1);
 		arrow(card.next, 1);
@@ -498,18 +475,19 @@
 	// A chunky hand-drawn chevron, nudged out when you point at it.
 	function arrow(a, dir) {
 		const lit = state.hover === a.name || state.focus === a.name;
-		const push = (lit ? 2 : 0) + (state.press === a.name ? 2 : 0);
+		const push = (lit ? 3 : 0) + (state.press === a.name ? 3 : 0);
 		const rand = hand(hash(a.name));
+		const k = a.h / 30;
 		const cx = a.x + a.w / 2 + dir * push, cy = a.y + a.h / 2;
-		const pts = [[cx - dir * 3, cy - 10], [cx + dir * 4, cy + rand(-1, 1)], [cx - dir * 3 + rand(-1, 1), cy + 10]];
+		const pts = [[cx - dir * 3 * k, cy - 10 * k], [cx + dir * 4 * k, cy + rand(-1, 1) * k], [cx - dir * 3 * k + rand(-1, 1) * k, cy + 10 * k]];
 		ctx.beginPath();
 		ctx.moveTo(pts[0][0], pts[0][1]);
-		ctx.quadraticCurveTo(cx + dir * 2, cy - 4, pts[1][0], pts[1][1]);
-		ctx.quadraticCurveTo(cx + dir * 1, cy + 5, pts[2][0], pts[2][1]);
+		ctx.quadraticCurveTo(cx + dir * 2 * k, cy - 4 * k, pts[1][0], pts[1][1]);
+		ctx.quadraticCurveTo(cx + dir * 1 * k, cy + 5 * k, pts[2][0], pts[2][1]);
 		ctx.lineCap = "round";
 		ctx.lineJoin = "round";
 		ctx.strokeStyle = lit ? PINK : PAPER;
-		ctx.lineWidth = lit ? 2.6 : 2;
+		ctx.lineWidth = lit ? 3.6 : 3;
 		ctx.stroke();
 	}
 
@@ -573,97 +551,55 @@
 				ctx.fillRect(Math.round(x), Math.round(top), Math.round(bw), 1);
 				x += bw + (i === 0 ? rand(0, 4) : rand(6, 18));
 			}
-			if (i === 2) figure(r.x + r.w * 0.5, r.y + r.h * 0.56, r.h * 0.4, Math.sin(now * 2) * 0.1);
+			if (i === 2) figure(r.x + r.w * 0.5, r.y + r.h * 0.66, r.h * 0.36, Math.sin(now * 2) * 0.1);
 			ctx.fillStyle = "rgba(179,112,143,.35)";
 			ctx.fillRect(r.x, r.y + r.h * 0.7, r.w, r.h * 0.3);
 		}
 		const label = STAND_INS[i];
-		const size = 9;
-		const lw = Math.ceil(textWidth(label, size)) + 16;
-		const lx = Math.round(r.x + (r.w - lw) / 2), ly = Math.round(r.y + 5);
+		const size = 13;
+		const lw = Math.ceil(textWidth(label, size)) + 22;
+		const lx = r.x + (r.w - lw) / 2, ly = r.y + 8;
 		ctx.globalAlpha *= 0.9;
-		paper(lx, ly, lw, 14, hash(label), 2);
+		paper(lx, ly, lw, 22, hash(label), 3);
 		ctx.globalAlpha /= 0.9;
-		text(label, lx + 8, ly + 10.5, size, INK);
+		text(label, lx + 11, ly + 15.5, size, INK);
 	}
 
-	// The game's blank glossy figure, standing: a slab of a body, stubby
-	// legs, a ball of a head, and a pink heart in its chest.
+	// The player (assets/figure.png: hanging by its feet, arms dangling),
+	// `height` tall from its soles at (x, y), turned `angle`; the right way
+	// up it's cheering.
+	function player(x, y, height, angle) {
+		if (!figureImage.ready) return;
+		const w = height * figureImage.naturalWidth / figureImage.naturalHeight;
+		ctx.save();
+		ctx.translate(x, y);
+		ctx.rotate(angle);
+		ctx.imageSmoothingEnabled = true;
+		ctx.drawImage(figureImage, -w / 2, 0, w, height);
+		ctx.restore();
+	}
+
+	// Stood up in a stand-in picture, bobbing.
 	function figure(x, feet, height, lean) {
-		ctx.save();
-		ctx.translate(x, feet);
-		ctx.rotate(lean);
-		const u = height / 10;
-		ctx.fillStyle = "#f2eef7";
-		ctx.fillRect(-2.2 * u, -3.2 * u, 1.8 * u, 3.2 * u);
-		ctx.fillRect(0.4 * u, -3.2 * u, 1.8 * u, 3.2 * u);
-		roundRect(-2.4 * u, -7.2 * u, 4.8 * u, 4.4 * u, 1.2 * u);
-		ctx.fill();
-		ctx.beginPath();
-		ctx.arc(0, -8.4 * u, 1.7 * u, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.fillStyle = PINK;
-		ctx.fillRect(Math.round(0.4 * u), Math.round(-6 * u), Math.max(1, Math.round(u * 0.8)), Math.max(1, Math.round(u * 0.8)));
-		ctx.restore();
+		player(x, feet, height, Math.PI + lean);
 	}
 
-	function roundRect(x, y, w, h, r) {
-		ctx.beginPath();
-		ctx.moveTo(x + r, y);
-		ctx.arcTo(x + w, y, x + w, y + h, r);
-		ctx.arcTo(x + w, y + h, x, y + h, r);
-		ctx.arcTo(x, y + h, x, y, r);
-		ctx.arcTo(x, y, x + w, y, r);
-		ctx.closePath();
-	}
-
-	// The blob hanging upside down from the top of the screen: chest, neck
-	// and a ball of a head, its heart's beads going round.
-	function drawBlob() {
-		const drop = still ? 0 : Math.min(0, -60 * (1 - backOut(Math.max(0, Math.min(1, (now - 0.45) / 0.6)))));
-		ctx.save();
-		ctx.translate(blobX, 4 + drop);
-		ctx.rotate(blob.angle);
-		const body = ctx.createLinearGradient(-18, -10, 16, 44);
-		body.addColorStop(0, "#fbf8ff");
-		body.addColorStop(0.6, "#d8cfe4");
-		body.addColorStop(1, "#8f84a3");
-		ctx.fillStyle = body;
-		roundRect(-19, -40, 38, 50, 10);
-		ctx.fill();
-		ctx.fillRect(-6, 6, 12, 10);
-		ctx.beginPath();
-		ctx.arc(0, 27, 13, 0, Math.PI * 2);
-		ctx.fill();
-		// A glint on the head.
-		ctx.fillStyle = "rgba(255,255,255,.9)";
-		ctx.fillRect(-7, 21, 3, 2);
-		// The heart: a dark pocket, pink at the rim, beads going round.
-		const hx = 5, hy = -4;
-		ctx.fillStyle = "#b02551";
-		ctx.beginPath();
-		ctx.arc(hx, hy, 4.5, 0, Math.PI * 2);
-		ctx.fill();
-		ctx.fillStyle = "#1a0710";
-		ctx.beginPath();
-		ctx.arc(hx, hy, 3.3, 0, Math.PI * 2);
-		ctx.fill();
-		for (let i = 0; i < 6; i++) {
-			const a = -now * Math.PI * 2 * 0.9 + i * Math.PI / 3;
-			ctx.fillStyle = i === 0 ? "#fff4f7" : PINK;
-			ctx.fillRect(Math.round(hx + Math.cos(a) * 2.2 - 0.5), Math.round(hy + Math.sin(a) * 2.2 - 0.5), 1, 1);
-		}
-		ctx.restore();
+	// Hanging upside down from the top of the screen, legs out of sight,
+	// swinging. It drops in once the cards are down.
+	function drawHanger() {
+		const drop = still ? 0 : Math.min(0, -hanger.h * (1 - backOut(Math.max(0, Math.min(1, (now - 0.45) / 0.6)))));
+		player(hanger.x, hanger.y + drop, hanger.h, blob.angle);
 	}
 
 	// "soon :)" in letter tiles over a button that has nowhere to go yet:
 	// they slam down, hold, then drop away.
 	function drawPops() {
+		const step = 17;
 		for (const pop of pops) {
 			const age = now - pop.born;
-			let x = pop.x - (pop.text.length * 10) / 2;
+			let x = pop.x - (pop.text.length * step) / 2;
 			const rand = hand(hash(pop.text) + Math.floor(pop.born * 10));
-			for (let i = 0; i < pop.text.length; i++, x += 10) {
+			for (let i = 0; i < pop.text.length; i++, x += step) {
 				const ch = pop.text[i];
 				if (ch === " ") continue;
 				const t = Math.max(0, Math.min(1, (age - i * 0.04) / 0.14));
@@ -672,12 +608,14 @@
 				const scale = 1 + 1.2 * (1 - t);
 				const turn = rand(-0.12, 0.12) + (1 - t) * rand(-0.6, 0.6) + fall * rand(-6, 6);
 				ctx.save();
-				ctx.translate(x + 4.5, pop.y + 6 + fall * fall * 220);
+				ctx.translate(x + 8, pop.y + 10 + fall * fall * 380);
 				ctx.rotate(turn);
 				ctx.scale(scale, scale);
 				ctx.globalAlpha = Math.min(1, t * 3) * Math.max(0, 1 - fall * 1.5);
-				paper(-5, -7, 10, 13, hash(ch) + i, 1.5, INK);
-				text(ch, -3, 3, 9, PAPER);
+				paper(-8, -11, 16, 21, hash(ch) + i, 2, INK);
+				ctx.textAlign = "center";
+				text(ch, 0, 5, 15, PAPER);
+				ctx.textAlign = "left";
 				ctx.restore();
 			}
 		}
@@ -730,7 +668,7 @@
 		pops.push({
 			text: "soon :)", born: now,
 			x: c.x + c.w / 2 + lx * cos - ly * sin,
-			y: c.y + c.h / 2 + lx * sin + ly * cos - 17,
+			y: c.y + c.h / 2 + lx * sin + ly * cos - 28,
 		});
 		jolt(3);
 		status.textContent = "";
@@ -756,14 +694,23 @@
 			then = t;
 			requestAnimationFrame(frame);
 		});
-		// Lay out again once the font's in, since the words' widths change.
-		if (window.FontFace && document.fonts) {
+		// Without Arial, its look-alike from assets/, laid out again once in
+		// since the words' widths change.
+		if (!hasArial() && window.FontFace && document.fonts) {
 			const face = new FontFace("Liberation Sans", 'local("Liberation Sans"), url("assets/LiberationSans-Regular.ttf")');
 			face.load().then((f) => {
 				document.fonts.add(f);
 				layout();
 			}).catch(() => {});
 		}
+	}
+
+	function hasArial() {
+		const probe = "mmmmmmmmmmlli";
+		ctx.font = "40px monospace";
+		const fallback = ctx.measureText(probe).width;
+		ctx.font = "40px Arial, monospace";
+		return ctx.measureText(probe).width !== fallback;
 	}
 
 	go();

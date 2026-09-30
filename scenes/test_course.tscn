@@ -20,6 +20,8 @@ shader_parameter/ground_color = null
 shader_parameter/bands = null
 shader_parameter/sun_color = null
 shader_parameter/sun_size = null
+shader_parameter/halo = null
+shader_parameter/stars = null
 
 [sub_resource type="Sky" id="Sky_pbrj7"]
 sky_material = SubResource("ShaderMaterial_ru2dx")
@@ -38,12 +40,12 @@ fog_enabled = true
 fog_light_color = Color(0.7, 0.44, 0.58, 1)
 fog_sky_affect = 0.25
 
-[node name="TestCourse" type="Node3D" unique_id=1922325493]
+[node name="TestCourse" type="Node3D" unique_id=110719027]
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1138783081]
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1663396383]
 environment = SubResource("Environment_gclrj")
 
-[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1423225497]
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=730092840]
 transform = Transform3D(0.81915206, -0.35312894, 0.45198444, 0, 0.7880108, 0.6156615, -0.57357645, -0.5043204, 0.64550066, 0, 0, 0)
 light_color = Color(1, 0.84, 0.7, 1)
 light_energy = 1.15
@@ -51,364 +53,368 @@ shadow_enabled = true
 directional_shadow_mode = 0
 directional_shadow_max_distance = 80.0
 
-[node name="Lights" type="Node3D" parent="." unique_id=1857303817]
+[node name="Lights" type="Node3D" parent="." unique_id=1467120198]
 
-[node name="PinkLamp" type="OmniLight3D" parent="Lights" unique_id=524929598]
+[node name="PinkLamp" type="OmniLight3D" parent="Lights" unique_id=1362066507]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 4, 18)
 light_color = Color(1, 0.35, 0.65, 1)
 light_energy = 2.2
+light_specular = 0.2
 omni_range = 16.0
 omni_attenuation = 0.6
 
-[node name="CyanLamp" type="OmniLight3D" parent="Lights" unique_id=550354500]
+[node name="CyanLamp" type="OmniLight3D" parent="Lights" unique_id=1108237277]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38.5, 5, -18)
 light_color = Color(0.3, 0.9, 1, 1)
 light_energy = 2.2
+light_specular = 0.2
 omni_range = 20.0
 omni_attenuation = 0.6
 
-[node name="AmberLamp" type="OmniLight3D" parent="Lights" unique_id=2033023531]
+[node name="AmberLamp" type="OmniLight3D" parent="Lights" unique_id=781888296]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 4, 17)
 light_color = Color(1, 0.7, 0.25, 1)
 light_energy = 2.2
+light_specular = 0.2
 omni_range = 16.0
 omni_attenuation = 0.6
 
-[node name="VioletLamp" type="OmniLight3D" parent="Lights" unique_id=2028185297]
+[node name="VioletLamp" type="OmniLight3D" parent="Lights" unique_id=96518743]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 3, -10)
 light_color = Color(0.6, 0.4, 1, 1)
 light_energy = 2.2
+light_specular = 0.2
 omni_range = 14.0
 omni_attenuation = 0.6
 
-[node name="Geometry" type="Node3D" parent="." unique_id=1184418114]
+[node name="Geometry" type="Node3D" parent="." unique_id=1310839785]
 
-[node name="Floor" type="StaticBody3D" parent="Geometry" unique_id=91701054]
+[node name="Floor" type="StaticBody3D" parent="Geometry" unique_id=1012466366]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.5, 0)
 script = ExtResource("2_o0ea6")
 size = Vector3(200, 1, 200)
 kind = 0
 
-[node name="Pole_L1" type="StaticBody3D" parent="Geometry" unique_id=1876629061]
+[node name="Pole_L1" type="StaticBody3D" parent="Geometry" unique_id=844681908]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.5, -10)
 script = ExtResource("2_o0ea6")
 size = Vector3(0.3, 3, 0.3)
 kind = 6
 
-[node name="Pole_R1" type="StaticBody3D" parent="Geometry" unique_id=97471841]
+[node name="Pole_R1" type="StaticBody3D" parent="Geometry" unique_id=1867808520]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.5, -10)
 script = ExtResource("2_o0ea6")
 size = Vector3(0.3, 3, 0.3)
 kind = 6
 
-[node name="Pole_L2" type="StaticBody3D" parent="Geometry" unique_id=176779346]
+[node name="Pole_L2" type="StaticBody3D" parent="Geometry" unique_id=1478050729]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.5, -20)
 script = ExtResource("2_o0ea6")
 size = Vector3(0.3, 3, 0.3)
 kind = 6
 
-[node name="Pole_R2" type="StaticBody3D" parent="Geometry" unique_id=1095073564]
+[node name="Pole_R2" type="StaticBody3D" parent="Geometry" unique_id=1849217856]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.5, -20)
 script = ExtResource("2_o0ea6")
 size = Vector3(0.3, 3, 0.3)
 kind = 6
 
-[node name="Pole_L3" type="StaticBody3D" parent="Geometry" unique_id=1883520401]
+[node name="Pole_L3" type="StaticBody3D" parent="Geometry" unique_id=868245093]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.5, -30)
 script = ExtResource("2_o0ea6")
 size = Vector3(0.3, 3, 0.3)
 kind = 6
 
-[node name="Pole_R3" type="StaticBody3D" parent="Geometry" unique_id=1963618146]
+[node name="Pole_R3" type="StaticBody3D" parent="Geometry" unique_id=103676347]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.5, -30)
 script = ExtResource("2_o0ea6")
 size = Vector3(0.3, 3, 0.3)
 kind = 6
 
-[node name="Pole_L4" type="StaticBody3D" parent="Geometry" unique_id=829454584]
+[node name="Pole_L4" type="StaticBody3D" parent="Geometry" unique_id=2097919158]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.5, -40)
 script = ExtResource("2_o0ea6")
 size = Vector3(0.3, 3, 0.3)
 kind = 6
 
-[node name="Pole_R4" type="StaticBody3D" parent="Geometry" unique_id=2138408580]
+[node name="Pole_R4" type="StaticBody3D" parent="Geometry" unique_id=1834110045]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.5, -40)
 script = ExtResource("2_o0ea6")
 size = Vector3(0.3, 3, 0.3)
 kind = 6
 
-[node name="Pole_L5" type="StaticBody3D" parent="Geometry" unique_id=353374853]
+[node name="Pole_L5" type="StaticBody3D" parent="Geometry" unique_id=292077586]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.5, -50)
 script = ExtResource("2_o0ea6")
 size = Vector3(0.3, 3, 0.3)
 kind = 6
 
-[node name="Pole_R5" type="StaticBody3D" parent="Geometry" unique_id=298727004]
+[node name="Pole_R5" type="StaticBody3D" parent="Geometry" unique_id=558076727]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.5, -50)
 script = ExtResource("2_o0ea6")
 size = Vector3(0.3, 3, 0.3)
 kind = 6
 
-[node name="Pole_L6" type="StaticBody3D" parent="Geometry" unique_id=1181774728]
+[node name="Pole_L6" type="StaticBody3D" parent="Geometry" unique_id=1325239900]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 1.5, -60)
 script = ExtResource("2_o0ea6")
 size = Vector3(0.3, 3, 0.3)
 kind = 6
 
-[node name="Pole_R6" type="StaticBody3D" parent="Geometry" unique_id=1869797165]
+[node name="Pole_R6" type="StaticBody3D" parent="Geometry" unique_id=796863644]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 5, 1.5, -60)
 script = ExtResource("2_o0ea6")
 size = Vector3(0.3, 3, 0.3)
 kind = 6
 
-[node name="Step_0_2" type="StaticBody3D" parent="Geometry" unique_id=453548720]
+[node name="Step_0_2" type="StaticBody3D" parent="Geometry" unique_id=1852456987]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 0.1, -12)
 script = ExtResource("2_o0ea6")
 size = Vector3(2.4, 0.2, 6)
 kind = 3
 
-[node name="Step_0_3" type="StaticBody3D" parent="Geometry" unique_id=1360465788]
+[node name="Step_0_3" type="StaticBody3D" parent="Geometry" unique_id=1977807573]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13, 0.15, -12)
 script = ExtResource("2_o0ea6")
 size = Vector3(2.4, 0.3, 6)
 kind = 3
 
-[node name="Step_0_4" type="StaticBody3D" parent="Geometry" unique_id=812503860]
+[node name="Step_0_4" type="StaticBody3D" parent="Geometry" unique_id=1364938711]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 0.2, -12)
 script = ExtResource("2_o0ea6")
 size = Vector3(2.4, 0.4, 6)
 kind = 3
 
-[node name="Step_0_45" type="StaticBody3D" parent="Geometry" unique_id=399896897]
+[node name="Step_0_45" type="StaticBody3D" parent="Geometry" unique_id=1199933151]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 19, 0.225, -12)
 script = ExtResource("2_o0ea6")
 size = Vector3(2.4, 0.45, 6)
 kind = 3
 
-[node name="Stair_0" type="StaticBody3D" parent="Geometry" unique_id=1789614333]
+[node name="Stair_0" type="StaticBody3D" parent="Geometry" unique_id=1805482540]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.125, -10.175)
 script = ExtResource("2_o0ea6")
 size = Vector3(4, 0.25, 0.35)
 
-[node name="Stair_1" type="StaticBody3D" parent="Geometry" unique_id=1453327580]
+[node name="Stair_1" type="StaticBody3D" parent="Geometry" unique_id=1022837066]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.25, -10.525)
 script = ExtResource("2_o0ea6")
 size = Vector3(4, 0.5, 0.35)
 
-[node name="Stair_2" type="StaticBody3D" parent="Geometry" unique_id=1111953611]
+[node name="Stair_2" type="StaticBody3D" parent="Geometry" unique_id=744710657]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.375, -10.875)
 script = ExtResource("2_o0ea6")
 size = Vector3(4, 0.75, 0.35)
 
-[node name="Stair_3" type="StaticBody3D" parent="Geometry" unique_id=2039976079]
+[node name="Stair_3" type="StaticBody3D" parent="Geometry" unique_id=1466693979]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.5, -11.225)
 script = ExtResource("2_o0ea6")
 size = Vector3(4, 1, 0.35)
 
-[node name="Stair_4" type="StaticBody3D" parent="Geometry" unique_id=2081450157]
+[node name="Stair_4" type="StaticBody3D" parent="Geometry" unique_id=1059242198]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.625, -11.575)
 script = ExtResource("2_o0ea6")
 size = Vector3(4, 1.25, 0.35)
 
-[node name="Stair_5" type="StaticBody3D" parent="Geometry" unique_id=943145238]
+[node name="Stair_5" type="StaticBody3D" parent="Geometry" unique_id=357165352]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.75, -11.925)
 script = ExtResource("2_o0ea6")
 size = Vector3(4, 1.5, 0.35)
 
-[node name="Stair_6" type="StaticBody3D" parent="Geometry" unique_id=1248499451]
+[node name="Stair_6" type="StaticBody3D" parent="Geometry" unique_id=777034655]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 0.875, -12.275)
 script = ExtResource("2_o0ea6")
 size = Vector3(4, 1.75, 0.35)
 
-[node name="Stair_7" type="StaticBody3D" parent="Geometry" unique_id=823781806]
+[node name="Stair_7" type="StaticBody3D" parent="Geometry" unique_id=602719443]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 1, -12.625)
 script = ExtResource("2_o0ea6")
 size = Vector3(4, 2, 0.35)
 
-[node name="StairLanding" type="StaticBody3D" parent="Geometry" unique_id=184817114]
+[node name="StairLanding" type="StaticBody3D" parent="Geometry" unique_id=928458633]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 1, -14.3)
 script = ExtResource("2_o0ea6")
 size = Vector3(4, 2, 3)
 
-[node name="Ledge_0_6" type="StaticBody3D" parent="Geometry" unique_id=370729677]
+[node name="Ledge_0_6" type="StaticBody3D" parent="Geometry" unique_id=420713259]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 0.3, -14)
 script = ExtResource("2_o0ea6")
 size = Vector3(3, 0.6, 3)
 kind = 3
 
-[node name="Ledge_1_0" type="StaticBody3D" parent="Geometry" unique_id=1243068839]
+[node name="Ledge_1_0" type="StaticBody3D" parent="Geometry" unique_id=752152998]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 0.5, -14)
 script = ExtResource("2_o0ea6")
 size = Vector3(3, 1, 3)
 kind = 3
 
-[node name="Ledge_1_4" type="StaticBody3D" parent="Geometry" unique_id=1753181232]
+[node name="Ledge_1_4" type="StaticBody3D" parent="Geometry" unique_id=1264505677]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -18, 0.7, -14)
 script = ExtResource("2_o0ea6")
 size = Vector3(3, 1.4, 3)
 kind = 3
 
-[node name="Ledge_1_8" type="StaticBody3D" parent="Geometry" unique_id=74435597]
+[node name="Ledge_1_8" type="StaticBody3D" parent="Geometry" unique_id=1691533434]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0.9, -14)
 script = ExtResource("2_o0ea6")
 size = Vector3(3, 1.8, 3)
 kind = 3
 
-[node name="Ledge_2_2" type="StaticBody3D" parent="Geometry" unique_id=1346388476]
+[node name="Ledge_2_2" type="StaticBody3D" parent="Geometry" unique_id=1732774569]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26, 1.1, -14)
 script = ExtResource("2_o0ea6")
 size = Vector3(3, 2.2, 3)
 kind = 3
 
-[node name="Ledge_2_6" type="StaticBody3D" parent="Geometry" unique_id=682162908]
+[node name="Ledge_2_6" type="StaticBody3D" parent="Geometry" unique_id=1758581122]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 1.3, -14)
 script = ExtResource("2_o0ea6")
 size = Vector3(3, 2.6, 3)
 kind = 3
 
-[node name="HillTop" type="StaticBody3D" parent="Geometry" unique_id=1101440485]
+[node name="HillTop" type="StaticBody3D" parent="Geometry" unique_id=1567188897]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3, 30)
 script = ExtResource("2_o0ea6")
 size = Vector3(8, 6, 6)
 kind = 2
 
-[node name="SlideRamp" type="StaticBody3D" parent="Geometry" unique_id=474265940]
+[node name="SlideRamp" type="StaticBody3D" parent="Geometry" unique_id=1422526135]
 transform = Transform3D(1, 0, 0, 0, 0.9396926, 0.34202012, 0, -0.34202012, 0.9396926, 0, 2.6711075, 18.877275)
 script = ExtResource("2_o0ea6")
 size = Vector3(8, 0.7, 17.542826)
 kind = 2
 
-[node name="WalkRamp" type="StaticBody3D" parent="Geometry" unique_id=871113415]
+[node name="WalkRamp" type="StaticBody3D" parent="Geometry" unique_id=68713632]
 transform = Transform3D(1, 0, 0, 0, 0.8660254, -0.5, 0, 0.5, 0.8660254, 0, 2.696891, 38.021152)
 script = ExtResource("2_o0ea6")
 size = Vector3(8, 0.7, 12)
 kind = 2
 
-[node name="RideWall_A" type="StaticBody3D" parent="Geometry" unique_id=942671696]
+[node name="RideWall_A" type="StaticBody3D" parent="Geometry" unique_id=288254783]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34.5, 3, -25)
 script = ExtResource("2_o0ea6")
 size = Vector3(1, 6, 50)
 kind = 4
 
-[node name="RideWall_B" type="StaticBody3D" parent="Geometry" unique_id=1744180709]
+[node name="RideWall_B" type="StaticBody3D" parent="Geometry" unique_id=1451279365]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42.5, 3, -25)
 script = ExtResource("2_o0ea6")
 size = Vector3(1, 6, 50)
 kind = 4
 
-[node name="ZigWall_0" type="StaticBody3D" parent="Geometry" unique_id=1389457196]
+[node name="ZigWall_0" type="StaticBody3D" parent="Geometry" unique_id=443199294]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 4, -6)
 script = ExtResource("2_o0ea6")
 size = Vector3(1, 8, 6)
 kind = 4
 
-[node name="ZigWall_1" type="StaticBody3D" parent="Geometry" unique_id=655901256]
+[node name="ZigWall_1" type="StaticBody3D" parent="Geometry" unique_id=35171702]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 4, -13)
 script = ExtResource("2_o0ea6")
 size = Vector3(1, 8, 6)
 kind = 4
 
-[node name="ZigWall_2" type="StaticBody3D" parent="Geometry" unique_id=1181896381]
+[node name="ZigWall_2" type="StaticBody3D" parent="Geometry" unique_id=1370831459]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 4, -20)
 script = ExtResource("2_o0ea6")
 size = Vector3(1, 8, 6)
 kind = 4
 
-[node name="ZigWall_3" type="StaticBody3D" parent="Geometry" unique_id=1744429233]
+[node name="ZigWall_3" type="StaticBody3D" parent="Geometry" unique_id=1175279698]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 4, -27)
 script = ExtResource("2_o0ea6")
 size = Vector3(1, 8, 6)
 kind = 4
 
-[node name="ZigWall_4" type="StaticBody3D" parent="Geometry" unique_id=632776383]
+[node name="ZigWall_4" type="StaticBody3D" parent="Geometry" unique_id=1481083966]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52, 4, -34)
 script = ExtResource("2_o0ea6")
 size = Vector3(1, 8, 6)
 kind = 4
 
-[node name="ZigWall_5" type="StaticBody3D" parent="Geometry" unique_id=2074256247]
+[node name="ZigWall_5" type="StaticBody3D" parent="Geometry" unique_id=143405029]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 4, -41)
 script = ExtResource("2_o0ea6")
 size = Vector3(1, 8, 6)
 kind = 4
 
-[node name="Tower_0" type="StaticBody3D" parent="Geometry" unique_id=71376359]
+[node name="Tower_0" type="StaticBody3D" parent="Geometry" unique_id=1918693121]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 1, 22)
 script = ExtResource("2_o0ea6")
 size = Vector3(3, 2, 3)
 kind = 5
 
-[node name="Tower_1" type="StaticBody3D" parent="Geometry" unique_id=132743813]
+[node name="Tower_1" type="StaticBody3D" parent="Geometry" unique_id=536755442]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25.2, 2, 22)
 script = ExtResource("2_o0ea6")
 size = Vector3(3, 4, 3)
 kind = 5
 
-[node name="Tower_2" type="StaticBody3D" parent="Geometry" unique_id=1970134939]
+[node name="Tower_2" type="StaticBody3D" parent="Geometry" unique_id=2076236333]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28.4, 3, 22)
 script = ExtResource("2_o0ea6")
 size = Vector3(3, 6, 3)
 kind = 5
 
-[node name="Tower_3" type="StaticBody3D" parent="Geometry" unique_id=506774221]
+[node name="Tower_3" type="StaticBody3D" parent="Geometry" unique_id=6537081]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -31.6, 4, 22)
 script = ExtResource("2_o0ea6")
 size = Vector3(3, 8, 3)
 kind = 5
 
-[node name="Tower_4" type="StaticBody3D" parent="Geometry" unique_id=758892677]
+[node name="Tower_4" type="StaticBody3D" parent="Geometry" unique_id=1960667776]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34.8, 5, 22)
 script = ExtResource("2_o0ea6")
 size = Vector3(3, 10, 3)
 kind = 5
 
-[node name="TowerTop" type="StaticBody3D" parent="Geometry" unique_id=1714436674]
+[node name="TowerTop" type="StaticBody3D" parent="Geometry" unique_id=1943440606]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -38, 5, 22)
 script = ExtResource("2_o0ea6")
 size = Vector3(4, 10, 4)
 kind = 5
 
-[node name="ValleyLeft" type="StaticBody3D" parent="Geometry" unique_id=919297762]
+[node name="ValleyLeft" type="StaticBody3D" parent="Geometry" unique_id=752809008]
 transform = Transform3D(0.81915206, 0.57357645, 0, -0.57357645, 0.81915206, 0, 0, 0, 1, 25.703487, 2.5811791, 34)
 script = ExtResource("2_o0ea6")
 size = Vector3(10, 0.7, 10)
 kind = 2
 
-[node name="ValleyRight" type="StaticBody3D" parent="Geometry" unique_id=2089371404]
+[node name="ValleyRight" type="StaticBody3D" parent="Geometry" unique_id=1158330390]
 transform = Transform3D(0.81915206, -0.57357645, 0, 0.57357645, 0.81915206, 0, 0, 0, 1, 34.296513, 2.5811791, 34)
 script = ExtResource("2_o0ea6")
 size = Vector3(10, 0.7, 10)
 kind = 2
 
-[node name="TunnelRoof" type="StaticBody3D" parent="Geometry" unique_id=1603689877]
+[node name="TunnelRoof" type="StaticBody3D" parent="Geometry" unique_id=435435635]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.45, 14)
 script = ExtResource("2_o0ea6")
 size = Vector3(4, 0.5, 8)
 
-[node name="TunnelWall_L" type="StaticBody3D" parent="Geometry" unique_id=1441357677]
+[node name="TunnelWall_L" type="StaticBody3D" parent="Geometry" unique_id=1722422584]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14.25, 0.85, 14)
 script = ExtResource("2_o0ea6")
 size = Vector3(0.5, 1.7, 8)
 
-[node name="TunnelWall_R" type="StaticBody3D" parent="Geometry" unique_id=1366386181]
+[node name="TunnelWall_R" type="StaticBody3D" parent="Geometry" unique_id=947242551]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9.75, 0.85, 14)
 script = ExtResource("2_o0ea6")
 size = Vector3(0.5, 1.7, 8)
 
-[node name="DummyBlock" type="StaticBody3D" parent="Geometry" unique_id=792750450]
+[node name="DummyBlock" type="StaticBody3D" parent="Geometry" unique_id=335779254]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32, 1.5, 5)
 script = ExtResource("2_o0ea6")
 size = Vector3(3, 3, 3)
 kind = 3
 
-[node name="RangeBackstop" type="StaticBody3D" parent="Geometry" unique_id=661417271]
+[node name="RangeBackstop" type="StaticBody3D" parent="Geometry" unique_id=308555328]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 4, -1)
 script = ExtResource("2_o0ea6")
 size = Vector3(1, 8, 26)
 
-[node name="Labels" type="Node3D" parent="." unique_id=583641001]
+[node name="Labels" type="Node3D" parent="." unique_id=1849898696]
 
-[node name="RUN_LANE__(poles_every_10_m)" type="Label3D" parent="Labels" unique_id=788511922 groups=["debug_labels"]]
+[node name="RUN_LANE__(poles_every_10_m)" type="Label3D" parent="Labels" unique_id=59307973 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.5, -8)
 pixel_size = 0.01
 billboard = 2
@@ -418,7 +424,7 @@ text = "RUN LANE  (poles every 10 m)"
 font_size = 64
 outline_size = 16
 
-[node name="STEPS__0_2___0_3___0_4___0_45" type="Label3D" parent="Labels" unique_id=1167877605 groups=["debug_labels"]]
+[node name="STEPS__0_2___0_3___0_4___0_45" type="Label3D" parent="Labels" unique_id=2122586019 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 14, 3, -6)
 pixel_size = 0.01
 billboard = 2
@@ -428,7 +434,7 @@ text = "STEPS  0.2 / 0.3 / 0.4 / 0.45"
 font_size = 64
 outline_size = 16
 
-[node name="STAIRS" type="Label3D" parent="Labels" unique_id=104639618 groups=["debug_labels"]]
+[node name="STAIRS" type="Label3D" parent="Labels" unique_id=327612514 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 25, 3.5, -6)
 pixel_size = 0.01
 billboard = 2
@@ -438,7 +444,7 @@ text = "STAIRS"
 font_size = 64
 outline_size = 16
 
-[node name="MANTLE__0_6_→_2_6_m" type="Label3D" parent="Labels" unique_id=1410294727 groups=["debug_labels"]]
+[node name="MANTLE__0_6_→_2_6_m" type="Label3D" parent="Labels" unique_id=20211523 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 3.8, -6)
 pixel_size = 0.01
 billboard = 2
@@ -448,7 +454,7 @@ text = "MANTLE  0.6 → 2.6 m"
 font_size = 64
 outline_size = 16
 
-[node name="SLIDE_HILL" type="Label3D" parent="Labels" unique_id=387740735 groups=["debug_labels"]]
+[node name="SLIDE_HILL" type="Label3D" parent="Labels" unique_id=1458958467 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 8, 24)
 pixel_size = 0.01
 billboard = 2
@@ -458,7 +464,7 @@ text = "SLIDE HILL"
 font_size = 64
 outline_size = 16
 
-[node name="WALL_RIDE_CORRIDOR" type="Label3D" parent="Labels" unique_id=325787517 groups=["debug_labels"]]
+[node name="WALL_RIDE_CORRIDOR" type="Label3D" parent="Labels" unique_id=1322250933 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 38, 7, 2)
 pixel_size = 0.01
 billboard = 2
@@ -468,7 +474,7 @@ text = "WALL RIDE CORRIDOR"
 font_size = 64
 outline_size = 16
 
-[node name="ZIGZAG_WALL_JUMPS" type="Label3D" parent="Labels" unique_id=1315568715 groups=["debug_labels"]]
+[node name="ZIGZAG_WALL_JUMPS" type="Label3D" parent="Labels" unique_id=1134668453 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 56, 7, 2)
 pixel_size = 0.01
 billboard = 2
@@ -478,7 +484,7 @@ text = "ZIGZAG WALL JUMPS"
 font_size = 64
 outline_size = 16
 
-[node name="SMASH_TOWER__(climb,_then_smashdown)" type="Label3D" parent="Labels" unique_id=1323920895 groups=["debug_labels"]]
+[node name="SMASH_TOWER__(climb,_then_smashdown)" type="Label3D" parent="Labels" unique_id=403932031 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 13, 22)
 pixel_size = 0.01
 billboard = 2
@@ -488,7 +494,7 @@ text = "SMASH TOWER  (climb, then smashdown)"
 font_size = 64
 outline_size = 16
 
-[node name="SLIDE_VALLEY" type="Label3D" parent="Labels" unique_id=1085031091 groups=["debug_labels"]]
+[node name="SLIDE_VALLEY" type="Label3D" parent="Labels" unique_id=1642705268 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 6, 30)
 pixel_size = 0.01
 billboard = 2
@@ -498,7 +504,7 @@ text = "SLIDE VALLEY"
 font_size = 64
 outline_size = 16
 
-[node name="LOW_TUNNEL__(slide_under)" type="Label3D" parent="Labels" unique_id=1039878615 groups=["debug_labels"]]
+[node name="LOW_TUNNEL__(slide_under)" type="Label3D" parent="Labels" unique_id=613947489 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 3, 8)
 pixel_size = 0.01
 billboard = 2
@@ -508,7 +514,7 @@ text = "LOW TUNNEL  (slide under)"
 font_size = 64
 outline_size = 16
 
-[node name="ARMORY__(walk_over_a_gun_·_E_swap_·_Q_throw_·_1_2_switch)" type="Label3D" parent="Labels" unique_id=1864233637 groups=["debug_labels"]]
+[node name="ARMORY__(walk_over_a_gun_·_E_swap_·_Q_throw_·_1_2_switch)" type="Label3D" parent="Labels" unique_id=1823434277 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 3.2, -3)
 pixel_size = 0.01
 billboard = 2
@@ -518,7 +524,7 @@ text = "ARMORY  (walk over a gun · E swap · Q throw · 1/2 switch)"
 font_size = 64
 outline_size = 16
 
-[node name="SHOOTING_RANGE__(7___12___22___42_m)" type="Label3D" parent="Labels" unique_id=625181430 groups=["debug_labels"]]
+[node name="SHOOTING_RANGE__(7___12___22___42_m)" type="Label3D" parent="Labels" unique_id=1638093662 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -14, 3.5, 6)
 pixel_size = 0.01
 billboard = 2
@@ -528,74 +534,74 @@ text = "SHOOTING RANGE  (7 / 12 / 22 / 42 m)"
 font_size = 64
 outline_size = 16
 
-[node name="Combat" type="Node3D" parent="." unique_id=1753595610]
+[node name="Combat" type="Node3D" parent="." unique_id=525314822]
 
-[node name="Pad_Pistol" type="Node3D" parent="Combat" unique_id=520981751]
+[node name="Pad_Pistol" type="Node3D" parent="Combat" unique_id=339219562]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 2.5)
 script = ExtResource("3_exie0")
 respawn_time = 3.0
 
-[node name="Pad_Revolver" type="Node3D" parent="Combat" unique_id=896057148]
+[node name="Pad_Revolver" type="Node3D" parent="Combat" unique_id=1090202417]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, 0.3)
 script = ExtResource("3_exie0")
 weapon = &"revolver"
 respawn_time = 3.0
 
-[node name="Pad_Smg" type="Node3D" parent="Combat" unique_id=1949722526]
+[node name="Pad_Smg" type="Node3D" parent="Combat" unique_id=1339093779]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -1.9)
 script = ExtResource("3_exie0")
 weapon = &"smg"
 respawn_time = 3.0
 
-[node name="Pad_Rifle" type="Node3D" parent="Combat" unique_id=2124396676]
+[node name="Pad_Rifle" type="Node3D" parent="Combat" unique_id=2103743895]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -4.1)
 script = ExtResource("3_exie0")
 weapon = &"rifle"
 respawn_time = 3.0
 
-[node name="Pad_Shotgun" type="Node3D" parent="Combat" unique_id=381710173]
+[node name="Pad_Shotgun" type="Node3D" parent="Combat" unique_id=805200076]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -6.3)
 script = ExtResource("3_exie0")
 weapon = &"shotgun"
 respawn_time = 3.0
 
-[node name="Pad_Sniper" type="Node3D" parent="Combat" unique_id=702530093]
+[node name="Pad_Sniper" type="Node3D" parent="Combat" unique_id=1460036082]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -4, 0, -8.5)
 script = ExtResource("3_exie0")
 weapon = &"sniper"
 respawn_time = 3.0
 
-[node name="Dummy_7m" type="Node3D" parent="Combat" unique_id=265371190]
+[node name="Dummy_7m" type="Node3D" parent="Combat" unique_id=59088854]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 0, -1)
 script = ExtResource("4_8fa2n")
 facing = -1.5707963267948966
 hat = &"top_hat"
 
-[node name="Dummy_12m" type="Node3D" parent="Combat" unique_id=1465088434]
+[node name="Dummy_12m" type="Node3D" parent="Combat" unique_id=1075475796]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 0, 2)
 script = ExtResource("4_8fa2n")
 facing = -1.5707963267948966
 hat = &"cowboy_hat"
 
-[node name="Dummy_22m" type="Node3D" parent="Combat" unique_id=776642322]
+[node name="Dummy_22m" type="Node3D" parent="Combat" unique_id=2041876322]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -27, 0, -4)
 script = ExtResource("4_8fa2n")
 facing = -1.5707963267948966
 hat = &"none"
 
-[node name="Dummy_42m" type="Node3D" parent="Combat" unique_id=365505528]
+[node name="Dummy_42m" type="Node3D" parent="Combat" unique_id=1604871594]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -47, 0, -1)
 script = ExtResource("4_8fa2n")
 facing = -1.5707963267948966
 hat = &"viking_helmet"
 
-[node name="Dummy_Up" type="Node3D" parent="Combat" unique_id=272729279]
+[node name="Dummy_Up" type="Node3D" parent="Combat" unique_id=1472128628]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32, 3, 5)
 script = ExtResource("4_8fa2n")
 facing = -1.5707963267948966
 hat = &"crown"
 
-[node name="Dummy_Walker" type="Node3D" parent="Combat" unique_id=394960945]
+[node name="Dummy_Walker" type="Node3D" parent="Combat" unique_id=434586230]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 0, -7)
 script = ExtResource("4_8fa2n")
 patrol = Vector3(0, 0, 11)
@@ -603,7 +609,7 @@ patrol_speed = 1.6
 facing = -1.5707963267948966
 hat = &"party_hat"
 
-[node name="Dummy_Runner" type="Node3D" parent="Combat" unique_id=1049318048]
+[node name="Dummy_Runner" type="Node3D" parent="Combat" unique_id=77718343]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -37, 0, 4)
 script = ExtResource("4_8fa2n")
 patrol = Vector3(0, 0, -11)
@@ -611,17 +617,19 @@ patrol_speed = 4.5
 facing = -1.5707963267948966
 hat = &"propeller_cap"
 
-[node name="Player" type="CharacterBody3D" parent="." unique_id=1964676009 instance=ExtResource("5_wajh4")]
+[node name="Spawns" type="Node3D" parent="." unique_id=243766333]
+
+[node name="Player" type="CharacterBody3D" parent="." unique_id=474896133 instance=ExtResource("5_wajh4")]
 script = ExtResource("6_neci2")
 
-[node name="GameUI" type="Node" parent="." unique_id=384760898]
+[node name="GameUI" type="Node" parent="." unique_id=983476819]
 script = ExtResource("7_1v75j")
 
-[node name="RetroScreen" type="CanvasLayer" parent="." unique_id=72520835]
+[node name="RetroScreen" type="CanvasLayer" parent="." unique_id=443373081]
 script = ExtResource("8_ua8pd")
 
-[node name="DebugHUD" type="CanvasLayer" parent="." unique_id=1594086349]
+[node name="DebugHUD" type="CanvasLayer" parent="." unique_id=1521117887]
 script = ExtResource("9_mp16c")
 
-[node name="TuningPanel" type="CanvasLayer" parent="." unique_id=967098338]
+[node name="TuningPanel" type="CanvasLayer" parent="." unique_id=633795365]
 script = ExtResource("10_hg2ui")

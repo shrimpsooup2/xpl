@@ -2,7 +2,10 @@
 class_name GreyBox
 extends StaticBody3D
 ## A solid greybox block. Set `size` and `kind` in the inspector; the mesh and
-## collision are rebuilt to match, so never scale the node itself.
+## collision are rebuilt to match, so never scale the node itself. A dressed
+## map (GDD §9.3) gives it its own `surface` instead of the kind's greybox
+## look, and puts it on render `layers` so each floor's lamps light only
+## that floor.
 
 enum Kind { FLOOR, WALL, RAMP, LEDGE, RIDE, TOWER, MARKER }
 
@@ -28,6 +31,16 @@ static var _materials: Dictionary = {}
 	set(value):
 		kind = value
 		_rebuild()
+## Its own material (a dressed map's), in place of the kind's.
+@export var surface: Material:
+	set(value):
+		surface = value
+		_rebuild()
+## Which render layers it's drawn on (lights pick layers to light).
+@export_flags_3d_render var layers := 1:
+	set(value):
+		layers = value
+		_rebuild()
 
 var _mesh_instance: MeshInstance3D
 var _collision: CollisionShape3D
@@ -49,7 +62,8 @@ func _rebuild() -> void:
 	var mesh := BoxMesh.new()
 	mesh.size = size
 	_mesh_instance.mesh = mesh
-	_mesh_instance.material_override = material_for(kind)
+	_mesh_instance.material_override = surface if surface else material_for(kind)
+	_mesh_instance.layers = layers
 	var shape := BoxShape3D.new()
 	shape.size = size
 	_collision.shape = shape

@@ -209,6 +209,8 @@ func light(light_name: String, at: Vector3, color: Color, reach: float, energy :
 	omni.omni_range = reach
 	omni.light_energy = energy
 	omni.omni_attenuation = 0.6
+	# Dim highlights: bright ones on glossy tiles bloom into blobs.
+	omni.light_specular = 0.2
 	lights.add_child(omni)
 
 

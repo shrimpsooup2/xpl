@@ -40,6 +40,7 @@ const MOUSE_ACTIONS := {
 
 const K := GreyBox.Kind
 const LevelKit := preload("res://tools/level_kit.gd")
+const DecoKit := preload("res://tools/deco_kit.gd")
 ## The maps (GDD §9.3): each script's build(kit) lays it out and returns spawn A.
 const MAPS := {
 	"Stack": ["res://tools/maps/stack.gd", "res://scenes/maps/stack.tscn"],
@@ -67,6 +68,12 @@ func _initialize() -> void:
 	for map_name: String in MAPS:
 		var kit := LevelKit.new(map_name, _make_environment())
 		var spawn: Transform3D = load(MAPS[map_name][0]).build(kit)
+		# A dressed map (GDD §9.3) has its decor in <map>_deco.gd.
+		var deco_script: String = MAPS[map_name][0].replace(".gd", "_deco.gd")
+		if ResourceLoader.exists(deco_script):
+			var deco := DecoKit.new(kit, "res://assets/maps/%s/" % map_name.to_lower())
+			load(deco_script).dress(kit, deco)
+			deco.finish()
 		_save_scene(kit.finish(spawn), MAPS[map_name][1])
 	_save_scene(_build_main_menu(), "res://scenes/main_menu.tscn")
 	ProjectSettings.set_setting("application/run/main_scene", "res://scenes/main_menu.tscn")
@@ -85,6 +92,14 @@ func _configure_rendering() -> void:
 	ProjectSettings.set_setting("rendering/lights_and_shadows/directional_shadow/size", 2048)
 	# 1 normally; the death sequence drops it to 0 to black out the world.
 	ProjectSettings.set_setting("shader_globals/world_light", {"type": "float", "value": 1.0})
+	# A level's indoor zone (AmbientZone) and the effects setting (Graphics).
+	ProjectSettings.set_setting("shader_globals/indoor_min", {"type": "vec3", "value": Vector3.ZERO})
+	ProjectSettings.set_setting("shader_globals/indoor_max", {"type": "vec3", "value": Vector3.ZERO})
+	ProjectSettings.set_setting("shader_globals/indoor_ambient", {"type": "float", "value": 1.0})
+	ProjectSettings.set_setting("shader_globals/effects", {"type": "float", "value": 1.0})
+	# Dressed maps light a big floor with more lamps than the OpenGL
+	# fallback's default of 8 per object.
+	ProjectSettings.set_setting("rendering/limits/opengl/max_lights_per_object", 16)
 	# Boot splash: the logo at its own size on white.
 	ProjectSettings.set_setting("application/boot_splash/image", "res://assets/ui/logo.png")
 	ProjectSettings.set_setting("application/boot_splash/bg_color", Color.WHITE)

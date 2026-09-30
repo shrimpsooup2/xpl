@@ -2,7 +2,8 @@ class_name Settings
 extends RefCounted
 ## Your settings, kept between sessions in user://settings.cfg: the view
 ## (ViewSettings: mouse, camera, look), the window, vsync, the frame cap,
-## the volume, and your keys. Only what you've changed from the defaults is
+## the graphics (Graphics: shadows, lamps, detail, effects, bloom), the
+## volume, and your keys. Only what you've changed from the defaults is
 ## saved, so a default tuned later still reaches you. The settings page
 ## (SettingsMenu) and the F1 tuning panel both edit it.
 
@@ -77,6 +78,9 @@ static func apply_saved() -> void:
 	if cfg.has_section_key("display", "fps_cap"):
 		set_fps_cap(int(cfg.get_value("display", "fps_cap")), false)
 	set_volume(float(cfg.get_value("audio", "volume", 1.0)), false)
+	Graphics.shadows = clampi(int(cfg.get_value("graphics", "shadows", Graphics.Shadows.HIGH)), 0, Graphics.Shadows.HIGH) as Graphics.Shadows
+	for key: String in GRAPHICS_TOGGLES:
+		Graphics.set_toggle(key, cfg.get_value("graphics", key, true) == true)
 	for action: StringName in ACTIONS:
 		if cfg.has_section_key("keys", action):
 			var events: Array[InputEvent] = []
@@ -89,10 +93,11 @@ static func apply_saved() -> void:
 
 ## Forgets what's been read and applied (tests, after pointing `path`
 ## somewhere else).
-static func reload() -> void:
+static func forget() -> void:
 	_view = null
 	_applied = false
 	_volume = 1.0
+	set_graphics_preset("high", false)
 
 
 # --- View -------------------------------------------------------------------------
@@ -187,6 +192,50 @@ static func set_volume(v: float, save := true) -> void:
 	AudioServer.set_bus_mute(0, _volume <= 0.0)
 	if save:
 		_save_value("audio", "volume", _volume)
+
+
+# --- Graphics ---------------------------------------------------------------------
+
+## The on/off graphics settings, by their names in Graphics.
+const GRAPHICS_TOGGLES := ["extra_lamps", "detail", "effects", "bloom"]
+
+
+static func set_shadows(quality: Graphics.Shadows, save := true) -> void:
+	Graphics.shadows = clampi(quality, 0, Graphics.Shadows.HIGH) as Graphics.Shadows
+	_graphics_changed()
+	if save:
+		_save_value("graphics", "shadows", int(Graphics.shadows))
+
+
+## One of GRAPHICS_TOGGLES on or off.
+static func set_graphics(key: String, on: bool, save := true) -> void:
+	if not key in GRAPHICS_TOGGLES:
+		return
+	Graphics.set_toggle(key, on)
+	_graphics_changed()
+	if save:
+		_save_value("graphics", key, on)
+
+
+## Every graphics setting at once, from Graphics.PRESETS.
+static func set_graphics_preset(name: String, save := true) -> void:
+	var p: Array = Graphics.PRESETS.get(name, Graphics.PRESETS.high)
+	Graphics.shadows = p[0]
+	for i in GRAPHICS_TOGGLES.size():
+		Graphics.set_toggle(GRAPHICS_TOGGLES[i], p[i + 1])
+	_graphics_changed()
+	if save:
+		var cfg := _load()
+		cfg.set_value("graphics", "shadows", int(Graphics.shadows))
+		for key: String in GRAPHICS_TOGGLES:
+			cfg.set_value("graphics", key, Graphics.toggle(key))
+		cfg.save(path)
+
+
+static func _graphics_changed() -> void:
+	var tree := Engine.get_main_loop() as SceneTree
+	if tree:
+		Graphics.apply(tree)
 
 
 # --- Keys -------------------------------------------------------------------------
