@@ -61,8 +61,6 @@ static func build(kit) -> Transform3D:
 	kit.pad("Pad_Rifle", Weapons.RIFLE, Vector3(0, 2.2, 3))
 	kit.pad("Pad_Shotgun", Weapons.SHOTGUN, Vector3(0, 5, -31.5))
 	kit.pad("Pad_Revolver", Weapons.REVOLVER, Vector3(0, -3.5, 25))
-	kit.light("Atrium", Vector3(0, 7, -24), Color(1.0, 0.75, 0.4), 16.0)
-	kit.light("UnderBridge", Vector3(0, -1.5, 25), Color(0.3, 0.85, 1.0), 8.0)
 	kit.label("ATRIUM", Vector3(0, 12, -24))
 	kit.label("PLAZA", Vector3(0, 6, 3))
 	kit.label("CANAL", Vector3(0, 2, 25))
@@ -144,11 +142,6 @@ static func _half(side, team_name: String) -> Transform3D:
 	side.resupply("Resupply_Arcade", Vector3(52, 0, -30))
 	side.resupply("Resupply_Walkway", Vector3(52, 0, 36))
 
-	var color := Color(1.0, 0.35, 0.3) if side.team == Hats.Team.RED else Color(0.35, 0.55, 1.0)
-	side.light("Yard", Vector3(65, 5, 0), color, 20.0)
-	side.light("ArcadeRooms", Vector3(36, 3.5, -24), Color(1.0, 0.8, 0.5), 14.0)
-	side.light("Gallery", Vector3(36, 8, -24), Color(0.9, 0.7, 1.0), 14.0)
-	side.light("KioskB", Vector3(38, 3, 17), Color(1.0, 0.5, 0.7), 6.0)
 	side.label(team_name + " YARD", Vector3(65, 6, 0))
 	side.label(team_name + " TOWER", Vector3(53, 16, -17))
 

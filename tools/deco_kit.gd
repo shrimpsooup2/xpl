@@ -35,7 +35,11 @@ var root: Node3D
 var dir: String
 var _groups := {}
 var _materials := {}
-var _buckets := {}   # key -> [SurfaceTool, material name, group, layers, shadows]
+var _buckets := {}   # key -> [SurfaceTool, material name, group, layers, shadows, zone]
+## Decor added while this is set goes into meshes of its own for the zone
+## (a map's west, middle and east): a mesh across a whole big map gets
+## only the nearest lamps (16 an object), a zone's gets its own.
+var zone := ""
 var _mesh_count := 0
 
 
@@ -156,11 +160,11 @@ func mat(name: String) -> Material:
 # --- Geometry ------------------------------------------------------------------------
 
 func _bucket(material: String, grp: String, layers: int, shadows: bool) -> SurfaceTool:
-	var key := "%s|%s|%d|%d" % [material, grp, layers, int(shadows)]
+	var key := "%s|%s|%d|%d|%s" % [material, grp, layers, int(shadows), zone]
 	if not _buckets.has(key):
 		var st := SurfaceTool.new()
 		st.begin(Mesh.PRIMITIVE_TRIANGLES)
-		_buckets[key] = [st, material, grp, layers, shadows]
+		_buckets[key] = [st, material, grp, layers, shadows, zone]
 	return _buckets[key][0]
 
 
@@ -490,7 +494,8 @@ func finish() -> void:
 		# Shared corners stored once: the same triangles, a smaller file.
 		st.index()
 		var mesh := st.commit()
-		var file := dir + "meshes/%s_%s_%d%s.res" % [b[1], String(b[2]).to_lower(), b[3], "_s" if b[4] else ""]
+		var file := dir + "meshes/%s_%s_%d%s%s.res" % [b[1], String(b[2]).to_lower(), b[3], "_s" if b[4] else "",
+				"" if b[5] == "" else "_" + String(b[5]).to_lower()]
 		ResourceSaver.save(mesh, file)
 		var mi := MeshInstance3D.new()
 		mi.name = "%s_%d" % [b[1], _mesh_count]

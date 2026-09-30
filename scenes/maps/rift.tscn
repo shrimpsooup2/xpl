@@ -1,196 +1,274 @@
 [gd_scene format=3]
 
-[ext_resource type="Shader" path="res://src/render/retro_sky.gdshader" id="1_6f7uh"]
-[ext_resource type="Script" path="res://src/world/grey_box.gd" id="2_rud38"]
-[ext_resource type="Material" path="res://assets/maps/rift/trackbed.tres" id="3_tawcs"]
-[ext_resource type="Material" path="res://assets/maps/rift/wall.tres" id="4_7bvya"]
-[ext_resource type="Material" path="res://assets/maps/rift/incline.tres" id="5_q2hrf"]
-[ext_resource type="Material" path="res://assets/maps/rift/gallery.tres" id="6_n2yoj"]
-[ext_resource type="Material" path="res://assets/maps/rift/passage.tres" id="7_v20pb"]
-[ext_resource type="Material" path="res://assets/maps/rift/footbridge.tres" id="8_icckd"]
-[ext_resource type="Material" path="res://assets/maps/rift/brick.tres" id="9_swt3h"]
-[ext_resource type="Material" path="res://assets/maps/rift/wagon.tres" id="10_vx15t"]
-[ext_resource type="Material" path="res://assets/maps/rift/luggage.tres" id="11_kyiwe"]
-[ext_resource type="Material" path="res://assets/maps/rift/kiosk.tres" id="12_b656w"]
-[ext_resource type="Material" path="res://assets/maps/rift/stone.tres" id="13_hobdl"]
-[ext_resource type="Material" path="res://assets/maps/rift/pier.tres" id="14_f3lgl"]
-[ext_resource type="Material" path="res://assets/maps/rift/overhang.tres" id="15_jp62d"]
-[ext_resource type="Material" path="res://assets/maps/rift/drystone.tres" id="16_jnr2n"]
-[ext_resource type="Material" path="res://assets/maps/rift/rockery.tres" id="17_anvxi"]
-[ext_resource type="Script" path="res://src/combat/weapon_pad.gd" id="18_waywr"]
-[ext_resource type="FontFile" path="res://assets/fonts/DejaVuSans-Bold.ttf" id="19_uqd4t"]
-[ext_resource type="FontFile" path="res://assets/fonts/LiberationSerif-Italic.ttf" id="20_jqltb"]
-[ext_resource type="FontFile" path="res://assets/fonts/DejaVuSerif-Bold.ttf" id="21_1wsup"]
-[ext_resource type="Material" path="res://assets/maps/rift/rail.tres" id="22_dawhu"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/rail_build_1.res" id="23_fv4vv"]
-[ext_resource type="Material" path="res://assets/maps/rift/dark_metal.tres" id="24_dya3g"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/dark_metal_build_1.res" id="25_hcivb"]
-[ext_resource type="Material" path="res://assets/maps/rift/hazard.tres" id="26_kvrfb"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/hazard_build_1.res" id="27_kd0cd"]
-[ext_resource type="Material" path="res://assets/maps/rift/tile_maroon.tres" id="28_81e7q"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/tile_maroon_build_1.res" id="29_2ng1k"]
-[ext_resource type="Material" path="res://assets/maps/rift/tile_cream.tres" id="30_x2fne"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/tile_cream_build_1.res" id="31_j1yx3"]
-[ext_resource type="Material" path="res://assets/maps/rift/brass.tres" id="32_fkiwb"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/brass_build_1.res" id="33_kwtft"]
-[ext_resource type="Material" path="res://assets/maps/rift/navy.tres" id="34_v56us"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/navy_build_1.res" id="35_ocufh"]
-[ext_resource type="Material" path="res://assets/maps/rift/letters.tres" id="36_hv1he"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/letters_build_1.res" id="37_x1kl8"]
-[ext_resource type="Material" path="res://assets/maps/rift/maroon.tres" id="38_jdrro"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/maroon_build_1.res" id="39_0vqui"]
-[ext_resource type="Material" path="res://assets/maps/rift/white.tres" id="40_1nkq4"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/white_build_1.res" id="41_42071"]
-[ext_resource type="Material" path="res://assets/maps/rift/paint_yellow.tres" id="42_db2yd"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/paint_yellow_build_1.res" id="43_rq7nl"]
-[ext_resource type="Material" path="res://assets/maps/rift/paint_white.tres" id="44_t4tfj"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/paint_white_build_1.res" id="45_1n1im"]
-[ext_resource type="Material" path="res://assets/maps/rift/black.tres" id="46_010lh"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/black_build_1.res" id="47_uaa6b"]
-[ext_resource type="Material" path="res://assets/maps/rift/iron.tres" id="48_lb4bd"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/iron_build_1.res" id="49_db3oc"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/stone_build_1.res" id="50_kstsx"]
-[ext_resource type="Material" path="res://assets/maps/rift/brick_dark.tres" id="51_k640n"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/brick_dark_build_1.res" id="52_1ebgx"]
-[ext_resource type="Material" path="res://assets/maps/rift/glass_dark.tres" id="53_crmwn"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/glass_dark_build_1.res" id="54_c2pgf"]
-[ext_resource type="Material" path="res://assets/maps/rift/trunk_navy.tres" id="55_ntj0a"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/trunk_navy_build_1.res" id="56_bifrx"]
-[ext_resource type="Material" path="res://assets/maps/rift/trunk_green.tres" id="57_paf4x"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/trunk_green_build_1.res" id="58_bhp6t"]
-[ext_resource type="Material" path="res://assets/maps/rift/leather.tres" id="59_6qmjq"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/leather_build_1.res" id="60_lih4g"]
-[ext_resource type="Material" path="res://assets/maps/rift/canvas.tres" id="61_xvar3"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/canvas_build_1.res" id="62_wb67g"]
-[ext_resource type="Material" path="res://assets/maps/rift/window_warm.tres" id="63_4wyfa"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/window_warm_build_1.res" id="64_wbh02"]
-[ext_resource type="Material" path="res://assets/maps/rift/cream.tres" id="65_cf3tu"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/cream_build_1.res" id="66_2n8j4"]
-[ext_resource type="Material" path="res://assets/maps/rift/wood.tres" id="67_54jta"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/wood_build_1.res" id="68_kuduy"]
-[ext_resource type="Material" path="res://assets/maps/rift/red.tres" id="69_uupnf"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/red_build_1.res" id="70_22oak"]
-[ext_resource type="Material" path="res://assets/maps/rift/cliff_face.tres" id="71_m83q2"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/cliff_face_build_1.res" id="72_ed7t8"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/iron_solid_1.res" id="73_n17cq"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/wood_solid_1.res" id="74_htap0"]
-[ext_resource type="FontFile" path="res://assets/fonts/LiberationMono-Bold.ttf" id="75_30qm1"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/dark_metal_fixtures_1.res" id="76_mexb3"]
-[ext_resource type="Material" path="res://assets/maps/rift/lamp.tres" id="77_4f1qj"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/lamp_fixtures_1.res" id="78_1bph2"]
-[ext_resource type="Material" path="res://assets/maps/rift/poster_peak.tres" id="79_85l21"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/poster_peak_fixtures_1.res" id="80_qogou"]
-[ext_resource type="Material" path="res://assets/maps/rift/poster_viaduct.tres" id="81_2ehj0"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/poster_viaduct_fixtures_1.res" id="82_1ajqp"]
-[ext_resource type="Material" path="res://assets/maps/rift/poster_balloon.tres" id="83_6b32s"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/poster_balloon_fixtures_1.res" id="84_73lcw"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/iron_fixtures_1.res" id="85_8na8g"]
-[ext_resource type="Material" path="res://assets/maps/rift/signal_green.tres" id="86_3jfgr"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/signal_green_fixtures_1.res" id="87_irl8q"]
-[ext_resource type="Material" path="res://assets/maps/rift/signal_red.tres" id="88_n1rdp"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/signal_red_fixtures_1.res" id="89_apiis"]
-[ext_resource type="Material" path="res://assets/maps/rift/sleeper.tres" id="90_ruikb"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/sleeper_detail_1.res" id="91_jwu75"]
-[ext_resource type="Material" path="res://assets/maps/rift/far_cliff_shade.tres" id="92_xatib"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/far_cliff_shade_far_1.res" id="93_dru7o"]
-[ext_resource type="Material" path="res://assets/maps/rift/far_cliff_lit.tres" id="94_7agey"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/far_cliff_lit_far_1.res" id="95_hwf5s"]
-[ext_resource type="Material" path="res://assets/maps/rift/far_cliff_mid.tres" id="96_7r03n"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/far_cliff_mid_far_1.res" id="97_ka0gl"]
-[ext_resource type="Material" path="res://assets/maps/rift/far_scree_shade.tres" id="98_ojcn8"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/far_scree_shade_far_1.res" id="99_vrhkr"]
-[ext_resource type="Material" path="res://assets/maps/rift/far_scree_lit.tres" id="100_bb6m0"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/far_scree_lit_far_1.res" id="101_dche7"]
-[ext_resource type="Material" path="res://assets/maps/rift/far_scree_mid.tres" id="102_7dyof"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/far_scree_mid_far_1.res" id="103_ujf0b"]
-[ext_resource type="Material" path="res://assets/maps/rift/far_cloud.tres" id="104_sexof"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/far_cloud_far_1.res" id="105_yisdo"]
-[ext_resource type="Material" path="res://assets/maps/rift/far_snow_lit.tres" id="106_84g06"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/far_snow_lit_far_1.res" id="107_4u5ty"]
-[ext_resource type="Material" path="res://assets/maps/rift/far_snow_shade.tres" id="108_f8f36"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/far_snow_shade_far_1.res" id="109_wp471"]
-[ext_resource type="Material" path="res://assets/maps/rift/far_snow_mid.tres" id="110_13fv1"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/far_snow_mid_far_1.res" id="111_p7aaw"]
-[ext_resource type="Material" path="res://assets/maps/rift/far_stone.tres" id="112_oje8c"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/far_stone_far_1.res" id="113_w80s8"]
-[ext_resource type="Material" path="res://assets/maps/rift/far_maroon.tres" id="114_jh7tp"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/far_maroon_far_1.res" id="115_0ue6u"]
-[ext_resource type="Material" path="res://assets/maps/rift/far_cream.tres" id="116_ie63o"]
-[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/far_cream_far_1.res" id="117_map4x"]
-[ext_resource type="Script" path="res://src/world/ambient_zone.gd" id="118_ogxu6"]
-[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="119_3v4kh"]
-[ext_resource type="Script" path="res://src/player/player.gd" id="120_c51wd"]
-[ext_resource type="Script" path="res://src/ui/game_ui.gd" id="121_7r6gp"]
-[ext_resource type="Script" path="res://src/render/retro_screen.gd" id="122_vvwah"]
-[ext_resource type="Script" path="res://src/debug/debug_hud.gd" id="123_7slqf"]
-[ext_resource type="Script" path="res://src/debug/tuning_panel.gd" id="124_7xrgx"]
+[ext_resource type="Shader" path="res://src/render/retro_sky.gdshader" id="1_x1kl8"]
+[ext_resource type="Texture2D" path="res://assets/textures/rift/billows.png" id="2_jdrro"]
+[ext_resource type="Script" path="res://src/world/grey_box.gd" id="3_0vqui"]
+[ext_resource type="Material" path="res://assets/maps/rift/trackbed.tres" id="4_1nkq4"]
+[ext_resource type="Material" path="res://assets/maps/rift/wall.tres" id="5_42071"]
+[ext_resource type="Material" path="res://assets/maps/rift/incline.tres" id="6_db2yd"]
+[ext_resource type="Material" path="res://assets/maps/rift/gallery.tres" id="7_rq7nl"]
+[ext_resource type="Material" path="res://assets/maps/rift/passage.tres" id="8_t4tfj"]
+[ext_resource type="Material" path="res://assets/maps/rift/footbridge.tres" id="9_1n1im"]
+[ext_resource type="Material" path="res://assets/maps/rift/brick.tres" id="10_010lh"]
+[ext_resource type="Material" path="res://assets/maps/rift/wagon.tres" id="11_uaa6b"]
+[ext_resource type="Material" path="res://assets/maps/rift/luggage.tres" id="12_lb4bd"]
+[ext_resource type="Material" path="res://assets/maps/rift/kiosk.tres" id="13_db3oc"]
+[ext_resource type="Material" path="res://assets/maps/rift/stone.tres" id="14_kstsx"]
+[ext_resource type="Material" path="res://assets/maps/rift/pier.tres" id="15_k640n"]
+[ext_resource type="Material" path="res://assets/maps/rift/overhang.tres" id="16_1ebgx"]
+[ext_resource type="Material" path="res://assets/maps/rift/drystone.tres" id="17_crmwn"]
+[ext_resource type="Material" path="res://assets/maps/rift/rockery.tres" id="18_c2pgf"]
+[ext_resource type="Script" path="res://src/combat/weapon_pad.gd" id="19_ntj0a"]
+[ext_resource type="FontFile" path="res://assets/fonts/DejaVuSans-Bold.ttf" id="20_bifrx"]
+[ext_resource type="FontFile" path="res://assets/fonts/LiberationSerif-Italic.ttf" id="21_paf4x"]
+[ext_resource type="FontFile" path="res://assets/fonts/DejaVuSerif-Bold.ttf" id="22_bhp6t"]
+[ext_resource type="Material" path="res://assets/maps/rift/cliff_rock.tres" id="23_6qmjq"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/cliffs.res" id="24_lih4g"]
+[ext_resource type="FontFile" path="res://assets/fonts/LiberationMono-Bold.ttf" id="25_xvar3"]
+[ext_resource type="Material" path="res://assets/maps/rift/rail.tres" id="26_wb67g"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/rail_build_1.res" id="27_4wyfa"]
+[ext_resource type="Material" path="res://assets/maps/rift/dark_metal.tres" id="28_wbh02"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/dark_metal_build_1.res" id="29_cf3tu"]
+[ext_resource type="Material" path="res://assets/maps/rift/hazard.tres" id="30_2n8j4"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/hazard_build_1.res" id="31_54jta"]
+[ext_resource type="Material" path="res://assets/maps/rift/tile_maroon.tres" id="32_kuduy"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/tile_maroon_build_1.res" id="33_uupnf"]
+[ext_resource type="Material" path="res://assets/maps/rift/tile_cream.tres" id="34_22oak"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/tile_cream_build_1.res" id="35_m83q2"]
+[ext_resource type="Material" path="res://assets/maps/rift/brass.tres" id="36_ed7t8"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/brass_build_1.res" id="37_n17cq"]
+[ext_resource type="Material" path="res://assets/maps/rift/navy.tres" id="38_htap0"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/navy_build_1.res" id="39_30qm1"]
+[ext_resource type="Material" path="res://assets/maps/rift/letters.tres" id="40_mexb3"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/letters_build_1.res" id="41_4f1qj"]
+[ext_resource type="Material" path="res://assets/maps/rift/maroon.tres" id="42_1bph2"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/maroon_build_1.res" id="43_85l21"]
+[ext_resource type="Material" path="res://assets/maps/rift/white.tres" id="44_qogou"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/white_build_1.res" id="45_2ehj0"]
+[ext_resource type="Material" path="res://assets/maps/rift/paint_yellow.tres" id="46_1ajqp"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/paint_yellow_build_1.res" id="47_6b32s"]
+[ext_resource type="Material" path="res://assets/maps/rift/paint_white.tres" id="48_73lcw"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/paint_white_build_1.res" id="49_8na8g"]
+[ext_resource type="Material" path="res://assets/maps/rift/black.tres" id="50_3jfgr"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/black_build_1.res" id="51_irl8q"]
+[ext_resource type="Material" path="res://assets/maps/rift/iron.tres" id="52_n1rdp"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/iron_build_1.res" id="53_apiis"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/stone_build_1.res" id="54_ruikb"]
+[ext_resource type="Material" path="res://assets/maps/rift/brick_dark.tres" id="55_jwu75"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/brick_dark_build_1.res" id="56_xatib"]
+[ext_resource type="Material" path="res://assets/maps/rift/glass_dark.tres" id="57_dru7o"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/glass_dark_build_1.res" id="58_7agey"]
+[ext_resource type="Material" path="res://assets/maps/rift/trunk_navy.tres" id="59_hwf5s"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/trunk_navy_build_1.res" id="60_7r03n"]
+[ext_resource type="Material" path="res://assets/maps/rift/trunk_green.tres" id="61_ka0gl"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/trunk_green_build_1.res" id="62_ojcn8"]
+[ext_resource type="Material" path="res://assets/maps/rift/leather.tres" id="63_vrhkr"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/leather_build_1.res" id="64_bb6m0"]
+[ext_resource type="Material" path="res://assets/maps/rift/canvas.tres" id="65_dche7"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/canvas_build_1.res" id="66_7dyof"]
+[ext_resource type="Material" path="res://assets/maps/rift/window_warm.tres" id="67_ujf0b"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/window_warm_build_1.res" id="68_sexof"]
+[ext_resource type="Material" path="res://assets/maps/rift/cream.tres" id="69_yisdo"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/cream_build_1.res" id="70_84g06"]
+[ext_resource type="Material" path="res://assets/maps/rift/wood.tres" id="71_4u5ty"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/wood_build_1.res" id="72_f8f36"]
+[ext_resource type="Material" path="res://assets/maps/rift/red.tres" id="73_wp471"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/red_build_1.res" id="74_13fv1"]
+[ext_resource type="Material" path="res://assets/maps/rift/paper.tres" id="75_p7aaw"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/paper_build_1.res" id="76_oje8c"]
+[ext_resource type="FontFile" path="res://assets/fonts/LiberationSerif-BoldItalic.ttf" id="77_w80s8"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/iron_solid_1.res" id="78_jh7tp"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/wood_solid_1.res" id="79_0ue6u"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/brick_solid_1.res" id="80_ie63o"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/stone_solid_1.res" id="81_map4x"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/brick_dark_solid_1.res" id="82_ogxu6"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/red_solid_1.res" id="83_3v4kh"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/black_solid_1.res" id="84_c51wd"]
+[ext_resource type="Material" path="res://assets/maps/rift/enamel_red.tres" id="85_7r6gp"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/enamel_red_solid_1.res" id="86_vvwah"]
+[ext_resource type="Material" path="res://assets/maps/rift/enamel_green.tres" id="87_7slqf"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/enamel_green_solid_1.res" id="88_7xrgx"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/dark_metal_solid_1.res" id="89_wkg4y"]
+[ext_resource type="Material" path="res://assets/maps/rift/sleeper.tres" id="90_ud5a8"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/sleeper_solid_1.res" id="91_3mki0"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/dark_metal_fixtures_1.res" id="92_qd8g7"]
+[ext_resource type="Material" path="res://assets/maps/rift/lamp.tres" id="93_7h4np"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/lamp_fixtures_1.res" id="94_wga2v"]
+[ext_resource type="Material" path="res://assets/maps/rift/poster_peak.tres" id="95_kf76l"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/poster_peak_fixtures_1.res" id="96_cvtsi"]
+[ext_resource type="Material" path="res://assets/maps/rift/poster_viaduct.tres" id="97_oe02i"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/poster_viaduct_fixtures_1.res" id="98_ni4wh"]
+[ext_resource type="Material" path="res://assets/maps/rift/poster_balloon.tres" id="99_0h5rx"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/poster_balloon_fixtures_1.res" id="100_ypc21"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/iron_fixtures_1.res" id="101_vah31"]
+[ext_resource type="Material" path="res://assets/maps/rift/signal_green.tres" id="102_115ac"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/signal_green_fixtures_1.res" id="103_tnd0i"]
+[ext_resource type="Material" path="res://assets/maps/rift/signal_red.tres" id="104_blqcv"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/signal_red_fixtures_1.res" id="105_nir44"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/black_fixtures_1.res" id="106_2uriv"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/window_warm_fixtures_1.res" id="107_j7n1v"]
+[ext_resource type="Material" path="res://assets/maps/rift/grass.tres" id="108_g348h"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/grass.res" id="109_jonaa"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/weeds.res" id="110_6euhd"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/sleeper_detail_1.res" id="111_b4bm5"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/white_detail_1.res" id="112_1l1yx"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/black_detail_1.res" id="113_ru7n3"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/signal_red_detail_1.res" id="114_nolpb"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/signal_green_detail_1.res" id="115_gegjd"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/red_detail_1.res" id="116_ex4sa"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/iron_detail_1.res" id="117_agj3t"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/maroon_detail_1.res" id="118_71i6e"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/brass_detail_1.res" id="119_mc1er"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/wood_detail_1.res" id="120_3pcbt"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/cream_detail_1.res" id="121_qe0ck"]
+[ext_resource type="Material" path="res://assets/maps/rift/boulder.tres" id="122_0c16g"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/boulder_detail_1.res" id="123_y6udy"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/paper_detail_1.res" id="124_w2kn2"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/dark_metal_detail_1.res" id="125_yju5b"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/enamel_red_detail_1.res" id="126_nmphw"]
+[ext_resource type="Material" path="res://assets/maps/rift/enamel_yellow.tres" id="127_sqa84"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/enamel_yellow_detail_1.res" id="128_l5wp7"]
+[ext_resource type="Material" path="res://assets/maps/rift/enamel_blue.tres" id="129_vip45"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/enamel_blue_detail_1.res" id="130_ep528"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/enamel_green_detail_1.res" id="131_nv1i1"]
+[ext_resource type="Material" path="res://assets/maps/rift/snow_drift.tres" id="132_7h3bh"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/snow_drift_detail_1.res" id="133_265uc"]
+[ext_resource type="Material" path="res://assets/maps/rift/pool.tres" id="134_ej5fb"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/pool_effects_1.res" id="135_5386x"]
+[ext_resource type="Material" path="res://assets/maps/rift/puddle.tres" id="136_n2bpr"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/puddle_effects_1.res" id="137_fpnxb"]
+[ext_resource type="Material" path="res://assets/maps/rift/oil.tres" id="138_2eqww"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/oil_effects_1.res" id="139_dkkct"]
+[ext_resource type="Material" path="res://assets/maps/rift/sunbeam.tres" id="140_ugyvt"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/sunbeam_effects_1.res" id="141_pghd1"]
+[ext_resource type="Material" path="res://assets/maps/rift/range.tres" id="142_foj52"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/range.res" id="143_p628s"]
+[ext_resource type="Material" path="res://assets/maps/rift/cloud_sea.tres" id="144_7tiya"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/cloud_sea.res" id="145_wvq34"]
+[ext_resource type="Material" path="res://assets/maps/rift/cloud_deck.tres" id="146_qgwe2"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/cloud_deck.res" id="147_di1ad"]
+[ext_resource type="Material" path="res://assets/maps/rift/far_stone.tres" id="148_mbpfd"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/far_stone_far_1.res" id="149_mnnby"]
+[ext_resource type="Material" path="res://assets/maps/rift/far_maroon.tres" id="150_0pt22"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/far_maroon_far_1.res" id="151_el20y"]
+[ext_resource type="Material" path="res://assets/maps/rift/far_cream.tres" id="152_g26ur"]
+[ext_resource type="ArrayMesh" path="res://assets/maps/rift/meshes/far_cream_far_1.res" id="153_6an7n"]
+[ext_resource type="Script" path="res://src/world/ambient_zone.gd" id="154_mjdjq"]
+[ext_resource type="PackedScene" path="res://scenes/player.tscn" id="155_1nqn4"]
+[ext_resource type="Script" path="res://src/player/player.gd" id="156_1k7au"]
+[ext_resource type="Script" path="res://src/ui/game_ui.gd" id="157_mxc34"]
+[ext_resource type="Script" path="res://src/render/retro_screen.gd" id="158_2tn4b"]
+[ext_resource type="Script" path="res://src/debug/debug_hud.gd" id="159_2mv8k"]
+[ext_resource type="Script" path="res://src/debug/tuning_panel.gd" id="160_5oryb"]
 
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_wkg4y"]
-shader = ExtResource("1_6f7uh")
-shader_parameter/top_color = Color(0.1, 0.17, 0.4, 1)
-shader_parameter/upper_color = Color(0.34, 0.4, 0.66, 1)
-shader_parameter/horizon_color = Color(1, 0.7, 0.52, 1)
-shader_parameter/ground_color = Color(0.94, 0.8, 0.74, 1)
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_oywmu"]
+shader = ExtResource("1_x1kl8")
+shader_parameter/top_color = Color(0.36, 0.38, 0.5, 1)
+shader_parameter/upper_color = Color(0.56, 0.54, 0.64, 1)
+shader_parameter/horizon_color = Color(1, 0.74, 0.54, 1)
+shader_parameter/ground_color = Color(0.86, 0.78, 0.78, 1)
 shader_parameter/bands = null
-shader_parameter/sun_color = Color(1, 0.84, 0.62, 1)
-shader_parameter/sun_size = 0.04
-shader_parameter/halo = 0.55
+shader_parameter/sun_color = Color(1, 0.86, 0.66, 1)
+shader_parameter/sun_size = 0.035
+shader_parameter/halo = 0.9
 shader_parameter/stars = 0.0
 shader_parameter/eclipse = null
+shader_parameter/cloud_map = ExtResource("2_jdrro")
+shader_parameter/clouds = 0.8
+shader_parameter/cloud_thick = null
+shader_parameter/cloud_thin = null
+shader_parameter/cloud_lining = null
+shader_parameter/cloud_break = null
 
-[sub_resource type="Sky" id="Sky_ud5a8"]
-sky_material = SubResource("ShaderMaterial_wkg4y")
+[sub_resource type="Sky" id="Sky_d1c4v"]
+sky_material = SubResource("ShaderMaterial_oywmu")
 radiance_size = 0
 
-[sub_resource type="Environment" id="Environment_3mki0"]
+[sub_resource type="Environment" id="Environment_2u1g0"]
 background_mode = 2
-sky = SubResource("Sky_ud5a8")
+sky = SubResource("Sky_d1c4v")
 ambient_light_source = 2
-ambient_light_color = Color(0.46, 0.52, 0.76, 1)
-ambient_light_energy = 0.55
+ambient_light_color = Color(0.58, 0.58, 0.7, 1)
+ambient_light_energy = 0.66
 reflected_light_source = 1
 glow_enabled = true
 glow_intensity = 0.6
 fog_enabled = true
-fog_light_color = Color(0.86, 0.72, 0.72, 1)
-fog_density = 0.0018
+fog_light_color = Color(0.64, 0.64, 0.72, 1)
+fog_density = 0.0013
 fog_sky_affect = 0.0
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_qd8g7"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_1qjxj"]
 size = Vector3(1.9, 0.9, 0.55)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_7h4np"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_ll3oh"]
 size = Vector3(1.9, 0.9, 0.55)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_wga2v"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_rfycy"]
 size = Vector3(1.9, 0.9, 0.55)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_kf76l"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_hitoq"]
 size = Vector3(1.9, 0.9, 0.55)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_cvtsi"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_ukhpu"]
 size = Vector3(1.9, 0.9, 0.55)
 
-[sub_resource type="BoxShape3D" id="BoxShape3D_oe02i"]
+[sub_resource type="BoxShape3D" id="BoxShape3D_ppqr7"]
 size = Vector3(1.9, 0.9, 0.55)
 
-[node name="Rift" type="Node3D" unique_id=1037162839]
+[sub_resource type="BoxShape3D" id="BoxShape3D_8rw7u"]
+size = Vector3(1.4, 2.4, 1.2)
 
-[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1090321835]
-environment = SubResource("Environment_3mki0")
+[sub_resource type="BoxShape3D" id="BoxShape3D_75ayw"]
+size = Vector3(1.4, 2.4, 1.2)
 
-[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1538726453]
-transform = Transform3D(0.34202015, -0.29038098, 0.89370084, 0, 0.95105654, 0.309017, -0.9396926, -0.10569004, 0.32528052, 0, 0, 0)
-light_color = Color(1, 0.74, 0.52, 1)
-light_energy = 1.15
-light_specular = 0.25
+[sub_resource type="BoxShape3D" id="BoxShape3D_3015u"]
+size = Vector3(1.9, 0.9, 0.55)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_gxuff"]
+size = Vector3(1.9, 0.9, 0.55)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_1f2sd"]
+size = Vector3(1.9, 0.9, 0.55)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_jraxx"]
+size = Vector3(1.9, 0.9, 0.55)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_xn1ep"]
+size = Vector3(1.9, 0.9, 0.55)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_2oixy"]
+size = Vector3(1.9, 0.9, 0.55)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_qlanm"]
+size = Vector3(0.56, 1.5, 0.56)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_86l3j"]
+size = Vector3(0.8, 1.8, 0.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_rdjdy"]
+size = Vector3(0.6, 1.9, 0.5)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_gq0wr"]
+size = Vector3(2.6, 0.66, 1.1)
+
+[node name="Rift" type="Node3D" unique_id=1456229706]
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1255020998]
+environment = SubResource("Environment_2u1g0")
+
+[node name="Sun" type="DirectionalLight3D" parent="." unique_id=1038058102]
+transform = Transform3D(0.34202015, -0.35201508, 0.87126786, 0, 0.92718387, 0.3746066, -0.9396926, -0.12812302, 0.31711558, 0, 0, 0)
+light_color = Color(1, 0.78, 0.56, 1)
+light_energy = 0.85
+light_specular = 0.2
 shadow_enabled = true
 directional_shadow_mode = 0
 directional_shadow_max_distance = 160.0
 
-[node name="Lights" type="Node3D" parent="." unique_id=417602616]
+[node name="Lights" type="Node3D" parent="." unique_id=147049857]
 
-[node name="WallLamp_0" type="OmniLight3D" parent="Lights" unique_id=1356995900 groups=["minor_lights"]]
+[node name="WallLamp_0" type="OmniLight3D" parent="Lights" unique_id=433476507 groups=["minor_lights"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 37.5, 4.4, -14.79)
 light_color = Color(1, 0.84, 0.6, 1)
 light_specular = 0.15
@@ -198,7 +276,7 @@ light_cull_mask = 1
 omni_range = 9.0
 omni_attenuation = 1.2
 
-[node name="WallLamp_1" type="OmniLight3D" parent="Lights" unique_id=295452649 groups=["minor_lights"]]
+[node name="WallLamp_1" type="OmniLight3D" parent="Lights" unique_id=12378682 groups=["minor_lights"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -37.5, 4.4, 14.79)
 light_color = Color(1, 0.84, 0.6, 1)
 light_specular = 0.15
@@ -206,55 +284,7 @@ light_cull_mask = 1
 omni_range = 9.0
 omni_attenuation = 1.2
 
-[node name="WallLamp_2" type="OmniLight3D" parent="Lights" unique_id=107173951 groups=["minor_lights"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -37.5, 15.799999, -14.79)
-light_color = Color(1, 0.84, 0.6, 1)
-light_specular = 0.15
-light_cull_mask = 1
-omni_range = 9.0
-omni_attenuation = 1.2
-
-[node name="WallLamp_3" type="OmniLight3D" parent="Lights" unique_id=661665563 groups=["minor_lights"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 15.799999, -14.79)
-light_color = Color(1, 0.84, 0.6, 1)
-light_specular = 0.15
-light_cull_mask = 1
-omni_range = 9.0
-omni_attenuation = 1.2
-
-[node name="WallLamp_4" type="OmniLight3D" parent="Lights" unique_id=1395948200 groups=["minor_lights"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 15.799999, -14.79)
-light_color = Color(1, 0.84, 0.6, 1)
-light_specular = 0.15
-light_cull_mask = 1
-omni_range = 9.0
-omni_attenuation = 1.2
-
-[node name="WallLamp_5" type="OmniLight3D" parent="Lights" unique_id=1495683450 groups=["minor_lights"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 13.799999, 14.79)
-light_color = Color(1, 0.84, 0.6, 1)
-light_specular = 0.15
-light_cull_mask = 1
-omni_range = 9.0
-omni_attenuation = 1.2
-
-[node name="WallLamp_6" type="OmniLight3D" parent="Lights" unique_id=1612357388 groups=["minor_lights"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 13.799999, 14.79)
-light_color = Color(1, 0.84, 0.6, 1)
-light_specular = 0.15
-light_cull_mask = 1
-omni_range = 9.0
-omni_attenuation = 1.2
-
-[node name="WallLamp_7" type="OmniLight3D" parent="Lights" unique_id=745749913 groups=["minor_lights"]]
-transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 37.5, 13.799999, 14.79)
-light_color = Color(1, 0.84, 0.6, 1)
-light_specular = 0.15
-light_cull_mask = 1
-omni_range = 9.0
-omni_attenuation = 1.2
-
-[node name="WallLamp_8" type="OmniLight3D" parent="Lights" unique_id=168256895 groups=["minor_lights"]]
+[node name="WallLamp_2" type="OmniLight3D" parent="Lights" unique_id=1717075498 groups=["minor_lights"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -37.5, 4.4, -10.79)
 light_color = Color(1, 0.84, 0.6, 1)
 light_specular = 0.15
@@ -262,7 +292,7 @@ light_cull_mask = 1
 omni_range = 9.0
 omni_attenuation = 1.2
 
-[node name="WallLamp_9" type="OmniLight3D" parent="Lights" unique_id=1133766776 groups=["minor_lights"]]
+[node name="WallLamp_3" type="OmniLight3D" parent="Lights" unique_id=1925873322 groups=["minor_lights"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 4.4, -10.79)
 light_color = Color(1, 0.84, 0.6, 1)
 light_specular = 0.15
@@ -270,7 +300,7 @@ light_cull_mask = 1
 omni_range = 9.0
 omni_attenuation = 1.2
 
-[node name="WallLamp_10" type="OmniLight3D" parent="Lights" unique_id=614336046 groups=["minor_lights"]]
+[node name="WallLamp_4" type="OmniLight3D" parent="Lights" unique_id=748427548 groups=["minor_lights"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 4.4, -10.79)
 light_color = Color(1, 0.84, 0.6, 1)
 light_specular = 0.15
@@ -278,7 +308,7 @@ light_cull_mask = 1
 omni_range = 9.0
 omni_attenuation = 1.2
 
-[node name="WallLamp_11" type="OmniLight3D" parent="Lights" unique_id=2114377956 groups=["minor_lights"]]
+[node name="WallLamp_5" type="OmniLight3D" parent="Lights" unique_id=909379629 groups=["minor_lights"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12.5, 4.4, 10.79)
 light_color = Color(1, 0.84, 0.6, 1)
 light_specular = 0.15
@@ -286,7 +316,7 @@ light_cull_mask = 1
 omni_range = 9.0
 omni_attenuation = 1.2
 
-[node name="WallLamp_12" type="OmniLight3D" parent="Lights" unique_id=189359781 groups=["minor_lights"]]
+[node name="WallLamp_6" type="OmniLight3D" parent="Lights" unique_id=1053963349 groups=["minor_lights"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 12.5, 4.4, 10.79)
 light_color = Color(1, 0.84, 0.6, 1)
 light_specular = 0.15
@@ -294,7 +324,7 @@ light_cull_mask = 1
 omni_range = 9.0
 omni_attenuation = 1.2
 
-[node name="WallLamp_13" type="OmniLight3D" parent="Lights" unique_id=1085041843 groups=["minor_lights"]]
+[node name="WallLamp_7" type="OmniLight3D" parent="Lights" unique_id=65156361 groups=["minor_lights"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 37.5, 4.4, 10.79)
 light_color = Color(1, 0.84, 0.6, 1)
 light_specular = 0.15
@@ -302,7 +332,7 @@ light_cull_mask = 1
 omni_range = 9.0
 omni_attenuation = 1.2
 
-[node name="Clock" type="OmniLight3D" parent="Lights" unique_id=1618501649 groups=["minor_lights"]]
+[node name="Clock" type="OmniLight3D" parent="Lights" unique_id=908558656 groups=["minor_lights"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 20, 0)
 light_color = Color(1, 0.84, 0.6, 1)
 light_energy = 0.6
@@ -311,7 +341,7 @@ light_cull_mask = 1
 omni_range = 8.0
 omni_attenuation = 1.2
 
-[node name="Tunnel_32" type="OmniLight3D" parent="Lights" unique_id=1120061738]
+[node name="Tunnel_32" type="OmniLight3D" parent="Lights" unique_id=1934674341]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32, 2.2, 0)
 light_color = Color(1, 0.84, 0.6, 1)
 light_specular = 0.15
@@ -319,7 +349,7 @@ light_cull_mask = 1
 omni_range = 6.0
 omni_attenuation = 1.2
 
-[node name="Tunnel_28" type="OmniLight3D" parent="Lights" unique_id=1902135547]
+[node name="Tunnel_28" type="OmniLight3D" parent="Lights" unique_id=1944159447]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 2.2, 0)
 light_color = Color(1, 0.84, 0.6, 1)
 light_specular = 0.15
@@ -327,7 +357,7 @@ light_cull_mask = 1
 omni_range = 6.0
 omni_attenuation = 1.2
 
-[node name="Kiosk" type="OmniLight3D" parent="Lights" unique_id=556845119 groups=["minor_lights"]]
+[node name="Kiosk" type="OmniLight3D" parent="Lights" unique_id=1704509637 groups=["minor_lights"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.8, 3.2)
 light_color = Color(1, 0.82, 0.58, 1)
 light_energy = 0.6
@@ -336,7 +366,7 @@ light_cull_mask = 1
 omni_range = 4.0
 omni_attenuation = 1.2
 
-[node name="WaitingRoom" type="OmniLight3D" parent="Lights" unique_id=1744324399 groups=["minor_lights"]]
+[node name="WaitingRoom" type="OmniLight3D" parent="Lights" unique_id=2049628997 groups=["minor_lights"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 2, -9.2)
 light_color = Color(1, 0.82, 0.58, 1)
 light_energy = 0.6
@@ -345,7 +375,7 @@ light_cull_mask = 1
 omni_range = 4.0
 omni_attenuation = 1.2
 
-[node name="Shed_30" type="OmniLight3D" parent="Lights" unique_id=2021915955 groups=["minor_lights"]]
+[node name="Shed_30" type="OmniLight3D" parent="Lights" unique_id=1008589103 groups=["minor_lights"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 6, 0)
 light_color = Color(1, 0.84, 0.6, 1)
 light_energy = 0.7
@@ -354,7 +384,7 @@ light_cull_mask = 1
 omni_range = 10.0
 omni_attenuation = 1.2
 
-[node name="Shed_46" type="OmniLight3D" parent="Lights" unique_id=1438707685 groups=["minor_lights"]]
+[node name="Shed_46" type="OmniLight3D" parent="Lights" unique_id=1914401950 groups=["minor_lights"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46, 6, 0)
 light_color = Color(1, 0.84, 0.6, 1)
 light_energy = 0.7
@@ -363,389 +393,471 @@ light_cull_mask = 1
 omni_range = 10.0
 omni_attenuation = 1.2
 
-[node name="Geometry" type="Node3D" parent="." unique_id=188498066]
+[node name="Box_-60" type="OmniLight3D" parent="Lights" unique_id=1419667637]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 34, -28.2)
+light_color = Color(1, 0.8, 0.55, 1)
+light_energy = 0.9
+light_specular = 0.15
+light_cull_mask = 1
+omni_range = 10.0
+omni_attenuation = 1.2
 
-[node name="Floor" type="StaticBody3D" parent="Geometry" unique_id=884248884]
+[node name="Box_60" type="OmniLight3D" parent="Lights" unique_id=480035034]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 26, 28.2)
+light_color = Color(1, 0.8, 0.55, 1)
+light_energy = 0.9
+light_specular = 0.15
+light_cull_mask = 1
+omni_range = 10.0
+omni_attenuation = 1.2
+
+[node name="Lantern_0" type="OmniLight3D" parent="Lights" unique_id=1864173678 groups=["minor_lights"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34, 15.15, -13.25)
+light_color = Color(1, 0.84, 0.6, 1)
+light_specular = 0.15
+light_cull_mask = 1
+omni_range = 8.0
+omni_attenuation = 1.2
+
+[node name="Lantern_2" type="OmniLight3D" parent="Lights" unique_id=1818599597 groups=["minor_lights"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -9, 15.15, -13.25)
+light_color = Color(1, 0.84, 0.6, 1)
+light_specular = 0.15
+light_cull_mask = 1
+omni_range = 8.0
+omni_attenuation = 1.2
+
+[node name="Lantern_4" type="OmniLight3D" parent="Lights" unique_id=1618628613 groups=["minor_lights"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 15.15, -13.25)
+light_color = Color(1, 0.84, 0.6, 1)
+light_specular = 0.15
+light_cull_mask = 1
+omni_range = 8.0
+omni_attenuation = 1.2
+
+[node name="Lantern_6" type="OmniLight3D" parent="Lights" unique_id=1313887965 groups=["minor_lights"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -24, 13.15, 13.25)
+light_color = Color(1, 0.84, 0.6, 1)
+light_specular = 0.15
+light_cull_mask = 1
+omni_range = 8.0
+omni_attenuation = 1.2
+
+[node name="Lantern_8" type="OmniLight3D" parent="Lights" unique_id=1696681282 groups=["minor_lights"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 13.15, 13.25)
+light_color = Color(1, 0.84, 0.6, 1)
+light_specular = 0.15
+light_cull_mask = 1
+omni_range = 8.0
+omni_attenuation = 1.2
+
+[node name="Lantern_10" type="OmniLight3D" parent="Lights" unique_id=1487187112 groups=["minor_lights"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 13.15, 13.25)
+light_color = Color(1, 0.84, 0.6, 1)
+light_specular = 0.15
+light_cull_mask = 1
+omni_range = 8.0
+omni_attenuation = 1.2
+
+[node name="Pendant_1" type="OmniLight3D" parent="Lights" unique_id=1341540394 groups=["minor_lights"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 17.6, 8)
+light_color = Color(1, 0.84, 0.6, 1)
+light_specular = 0.15
+light_cull_mask = 1
+omni_range = 12.0
+omni_attenuation = 1.2
+
+[node name="Pendant_3" type="OmniLight3D" parent="Lights" unique_id=146400837 groups=["minor_lights"]]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 7.3833337, 5)
+light_color = Color(1, 0.84, 0.6, 1)
+light_specular = 0.15
+light_cull_mask = 1
+omni_range = 12.0
+omni_attenuation = 1.2
+
+[node name="Geometry" type="Node3D" parent="." unique_id=1411362574]
+
+[node name="Floor" type="StaticBody3D" parent="Geometry" unique_id=1823942001]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -6.25, 0)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(200, 11.5, 32)
 kind = 0
-surface = ExtResource("3_tawcs")
+surface = ExtResource("4_1nkq4")
 
-[node name="FloorFloor" type="StaticBody3D" parent="Geometry" unique_id=893936210]
+[node name="FloorFloor" type="StaticBody3D" parent="Geometry" unique_id=82669313]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.25, 0)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(200, 0.5, 32)
 kind = 0
-surface = ExtResource("3_tawcs")
+surface = ExtResource("4_1nkq4")
 
-[node name="NorthRim" type="StaticBody3D" parent="Geometry" unique_id=523021291]
+[node name="NorthRim" type="StaticBody3D" parent="Geometry" unique_id=919560069]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 7.75, -30)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(200, 39.5, 28)
 kind = 4
-surface = ExtResource("4_7bvya")
+surface = ExtResource("5_42071")
 
-[node name="NorthRimFloor" type="StaticBody3D" parent="Geometry" unique_id=63231783]
+[node name="NorthRimFloor" type="StaticBody3D" parent="Geometry" unique_id=131926233]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 27.75, -30)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(200, 0.5, 28)
 kind = 0
-surface = ExtResource("4_7bvya")
+surface = ExtResource("5_42071")
 
-[node name="SouthRim" type="StaticBody3D" parent="Geometry" unique_id=1409995755]
+[node name="SouthRim" type="StaticBody3D" parent="Geometry" unique_id=249758927]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 3.75, 30)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(200, 31.5, 28)
 kind = 4
-surface = ExtResource("4_7bvya")
+surface = ExtResource("5_42071")
 
-[node name="SouthRimFloor" type="StaticBody3D" parent="Geometry" unique_id=1096842887]
+[node name="SouthRimFloor" type="StaticBody3D" parent="Geometry" unique_id=145218093]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 19.75, 30)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(200, 0.5, 28)
 kind = 0
-surface = ExtResource("4_7bvya")
+surface = ExtResource("5_42071")
 
-[node name="WestRamp" type="StaticBody3D" parent="Geometry" unique_id=1990027825]
+[node name="WestRamp" type="StaticBody3D" parent="Geometry" unique_id=1272853389]
 transform = Transform3D(0, 0.4472136, 0.8944272, 0, 0.8944272, -0.4472136, -1, 0, 0, -80.156525, 9.686951, 0)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(32, 0.7, 44.72136)
 kind = 2
-surface = ExtResource("5_q2hrf")
+surface = ExtResource("6_db2yd")
 
-[node name="EastRamp" type="StaticBody3D" parent="Geometry" unique_id=44987436]
+[node name="EastRamp" type="StaticBody3D" parent="Geometry" unique_id=1812529016]
 transform = Transform3D(0, -0.57346237, -0.8192319, 0, 0.8192319, -0.57346237, 1, 0, 0, 80.200714, 13.713269, 0)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(32, 0.7, 48.82622)
 kind = 2
-surface = ExtResource("5_q2hrf")
+surface = ExtResource("6_db2yd")
 
-[node name="NorthShelf" type="StaticBody3D" parent="Geometry" unique_id=1746781270]
+[node name="NorthShelf" type="StaticBody3D" parent="Geometry" unique_id=1177988926]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 5.75, -14)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(70, 11.5, 4)
 kind = 4
-surface = ExtResource("6_n2yoj")
+surface = ExtResource("7_rq7nl")
 
-[node name="NorthShelfFloor" type="StaticBody3D" parent="Geometry" unique_id=1731764528]
+[node name="NorthShelfFloor" type="StaticBody3D" parent="Geometry" unique_id=1337866077]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -5, 11.75, -14)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(70, 0.5, 4)
 kind = 0
-surface = ExtResource("6_n2yoj")
+surface = ExtResource("7_rq7nl")
 
-[node name="FloorToNorthShelf" type="StaticBody3D" parent="Geometry" unique_id=2018864503]
+[node name="FloorToNorthShelf" type="StaticBody3D" parent="Geometry" unique_id=664435307]
 transform = Transform3D(0, 0.41905817, 0.90795934, 0, 0.90795934, -0.41905817, -1, 0, 0, 40.69518, 1.0062237, -14)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 11, 28.635643)
 kind = 2
-surface = ExtResource("7_v20pb")
+surface = ExtResource("8_t4tfj")
 
-[node name="NorthShelfToRim" type="StaticBody3D" parent="Geometry" unique_id=1970289720]
+[node name="NorthShelfToRim" type="StaticBody3D" parent="Geometry" unique_id=468226864]
 transform = Transform3D(0, 0.5001735, 0.86592525, 0, 0.86592525, -0.5001735, -1, 0, 0, -54.00005, 19.740223, -14)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 0.6, 31.988901)
 kind = 2
-surface = ExtResource("7_v20pb")
+surface = ExtResource("8_t4tfj")
 
-[node name="NorthShelfToRimTop" type="StaticBody3D" parent="Geometry" unique_id=1731329693]
+[node name="NorthShelfToRimTop" type="StaticBody3D" parent="Geometry" unique_id=870538347]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -69.7, 27.7, -14)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 0.6000004, 4)
 kind = 0
-surface = ExtResource("7_v20pb")
+surface = ExtResource("8_t4tfj")
 
-[node name="SouthShelf" type="StaticBody3D" parent="Geometry" unique_id=1524535228]
+[node name="SouthShelf" type="StaticBody3D" parent="Geometry" unique_id=805380872]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 4.75, 14)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(80, 9.5, 4)
 kind = 4
-surface = ExtResource("6_n2yoj")
+surface = ExtResource("7_rq7nl")
 
-[node name="SouthShelfFloor" type="StaticBody3D" parent="Geometry" unique_id=376133311]
+[node name="SouthShelfFloor" type="StaticBody3D" parent="Geometry" unique_id=450195580]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 9.75, 14)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(80, 0.5, 4)
 kind = 0
-surface = ExtResource("6_n2yoj")
+surface = ExtResource("7_rq7nl")
 
-[node name="FloorToSouthShelf" type="StaticBody3D" parent="Geometry" unique_id=2098927751]
+[node name="FloorToSouthShelf" type="StaticBody3D" parent="Geometry" unique_id=431219252]
 transform = Transform3D(0, -0.35897908, -0.93334556, 0, 0.93334556, -0.35897908, 1, 0, 0, -41.205105, 0.33327198, 14)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 10, 27.856777)
 kind = 2
-surface = ExtResource("7_v20pb")
+surface = ExtResource("8_t4tfj")
 
-[node name="SouthShelfToRim" type="StaticBody3D" parent="Geometry" unique_id=245625605]
+[node name="SouthShelfToRim" type="StaticBody3D" parent="Geometry" unique_id=660465917]
 transform = Transform3D(0, -0.5004443, -0.8657688, 0, 0.8657688, -0.5004443, 1, 0, 0, 58.800137, 14.74027, 14)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 0.6, 19.982244)
 kind = 2
-surface = ExtResource("7_v20pb")
+surface = ExtResource("8_t4tfj")
 
-[node name="SouthShelfToRimTop" type="StaticBody3D" parent="Geometry" unique_id=1934384101]
+[node name="SouthShelfToRimTop" type="StaticBody3D" parent="Geometry" unique_id=725059592]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 69.3, 19.7, 14)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 0.6000004, 4)
 kind = 0
-surface = ExtResource("7_v20pb")
+surface = ExtResource("8_t4tfj")
 
-[node name="HighBridge" type="StaticBody3D" parent="Geometry" unique_id=920849752]
+[node name="HighBridge" type="StaticBody3D" parent="Geometry" unique_id=1778838990]
 transform = Transform3D(1, 0, 0, 0, 0.97014254, -0.24253564, 0, 0.24253564, 0.97014254, 0, 23.708958, -0.072760694)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(3, 0.6, 32.984844)
 kind = 0
-surface = ExtResource("8_icckd")
+surface = ExtResource("9_1n1im")
 
-[node name="MidBridge" type="StaticBody3D" parent="Geometry" unique_id=148019484]
+[node name="MidBridge" type="StaticBody3D" parent="Geometry" unique_id=2044884506]
 transform = Transform3D(1, 0, 0, 0, 0.9965458, -0.08304548, 0, 0.08304548, 0.9965458, 10, 10.701036, -0.024913646)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(3, 0.6, 24.083189)
 kind = 0
-surface = ExtResource("8_icckd")
+surface = ExtResource("9_1n1im")
 
-[node name="ArchN" type="StaticBody3D" parent="Geometry" unique_id=998296661]
+[node name="ArchN" type="StaticBody3D" parent="Geometry" unique_id=1975545694]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 2, -9.25)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(8, 4, 13.5)
 kind = 5
-surface = ExtResource("9_swt3h")
+surface = ExtResource("10_010lh")
 
-[node name="ArchS" type="StaticBody3D" parent="Geometry" unique_id=718384803]
+[node name="ArchS" type="StaticBody3D" parent="Geometry" unique_id=927476505]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 2, 9.25)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(8, 4, 13.5)
 kind = 5
-surface = ExtResource("9_swt3h")
+surface = ExtResource("10_010lh")
 
-[node name="ArchRoof" type="StaticBody3D" parent="Geometry" unique_id=32134642]
+[node name="ArchRoof" type="StaticBody3D" parent="Geometry" unique_id=112197364]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 3.5, 0)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(8, 1, 5)
 kind = 5
-surface = ExtResource("9_swt3h")
+surface = ExtResource("10_010lh")
 
-[node name="ArchCrateW" type="StaticBody3D" parent="Geometry" unique_id=748061309]
+[node name="ArchCrateW" type="StaticBody3D" parent="Geometry" unique_id=181394418]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -35, 1, -9)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(2, 2, 2)
 kind = 3
-surface = ExtResource("10_vx15t")
+surface = ExtResource("11_uaa6b")
 
-[node name="ArchCrateE" type="StaticBody3D" parent="Geometry" unique_id=1530112895]
+[node name="ArchCrateE" type="StaticBody3D" parent="Geometry" unique_id=1371472605]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 1, 9)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(2, 2, 2)
 kind = 3
-surface = ExtResource("10_vx15t")
+surface = ExtResource("11_uaa6b")
 
-[node name="Ruin1" type="StaticBody3D" parent="Geometry" unique_id=1841040702]
+[node name="Ruin1" type="StaticBody3D" parent="Geometry" unique_id=933200248]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -48, 1.5, -4)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 3, 4)
 kind = 3
-surface = ExtResource("11_kyiwe")
+surface = ExtResource("12_lb4bd")
 
-[node name="Ruin2" type="StaticBody3D" parent="Geometry" unique_id=148659253]
+[node name="Ruin2" type="StaticBody3D" parent="Geometry" unique_id=1695278721]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 1.25, 6)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 2.5, 4)
 kind = 3
-surface = ExtResource("12_b656w")
+surface = ExtResource("13_db3oc")
 
-[node name="Ruin3" type="StaticBody3D" parent="Geometry" unique_id=100349688]
+[node name="Ruin3" type="StaticBody3D" parent="Geometry" unique_id=198293938]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 1.75, -6)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 3.5, 4)
 kind = 3
-surface = ExtResource("9_swt3h")
+surface = ExtResource("10_010lh")
 
-[node name="UnderBridge" type="StaticBody3D" parent="Geometry" unique_id=127080866]
+[node name="UnderBridge" type="StaticBody3D" parent="Geometry" unique_id=1716503964]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.6, 0)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(8, 1.2, 6)
 kind = 3
-surface = ExtResource("13_hobdl")
+surface = ExtResource("14_kstsx")
 
-[node name="Column_26_-5" type="StaticBody3D" parent="Geometry" unique_id=367711752]
+[node name="Column_26_-5" type="StaticBody3D" parent="Geometry" unique_id=351689714]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 2.5, -5)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(1.5, 5, 1.5)
 kind = 5
-surface = ExtResource("14_f3lgl")
+surface = ExtResource("15_k640n")
 
-[node name="Column_26_5" type="StaticBody3D" parent="Geometry" unique_id=881972710]
+[node name="Column_26_5" type="StaticBody3D" parent="Geometry" unique_id=215052874]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 26, 2.5, 5)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(1.5, 5, 1.5)
 kind = 5
-surface = ExtResource("14_f3lgl")
+surface = ExtResource("15_k640n")
 
-[node name="Column_34_-5" type="StaticBody3D" parent="Geometry" unique_id=2042302189]
+[node name="Column_34_-5" type="StaticBody3D" parent="Geometry" unique_id=1135807878]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 2.5, -5)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(1.5, 5, 1.5)
 kind = 5
-surface = ExtResource("14_f3lgl")
+surface = ExtResource("15_k640n")
 
-[node name="Column_34_5" type="StaticBody3D" parent="Geometry" unique_id=1927932645]
+[node name="Column_34_5" type="StaticBody3D" parent="Geometry" unique_id=2115258707]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 2.5, 5)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(1.5, 5, 1.5)
 kind = 5
-surface = ExtResource("14_f3lgl")
+surface = ExtResource("15_k640n")
 
-[node name="Column_42_-5" type="StaticBody3D" parent="Geometry" unique_id=418451025]
+[node name="Column_42_-5" type="StaticBody3D" parent="Geometry" unique_id=358949443]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 2.5, -5)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(1.5, 5, 1.5)
 kind = 5
-surface = ExtResource("14_f3lgl")
+surface = ExtResource("15_k640n")
 
-[node name="Column_42_5" type="StaticBody3D" parent="Geometry" unique_id=1733483288]
+[node name="Column_42_5" type="StaticBody3D" parent="Geometry" unique_id=39437089]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 2.5, 5)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(1.5, 5, 1.5)
 kind = 5
-surface = ExtResource("14_f3lgl")
+surface = ExtResource("15_k640n")
 
-[node name="Column_50_-5" type="StaticBody3D" parent="Geometry" unique_id=432060857]
+[node name="Column_50_-5" type="StaticBody3D" parent="Geometry" unique_id=1360898439]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 2.5, -5)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(1.5, 5, 1.5)
 kind = 5
-surface = ExtResource("14_f3lgl")
+surface = ExtResource("15_k640n")
 
-[node name="Column_50_5" type="StaticBody3D" parent="Geometry" unique_id=1255521610]
+[node name="Column_50_5" type="StaticBody3D" parent="Geometry" unique_id=1575250676]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 50, 2.5, 5)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(1.5, 5, 1.5)
 kind = 5
-surface = ExtResource("14_f3lgl")
+surface = ExtResource("15_k640n")
 
-[node name="Overhang" type="StaticBody3D" parent="Geometry" unique_id=942936229]
+[node name="Overhang" type="StaticBody3D" parent="Geometry" unique_id=481638152]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 45, 27, -12.5)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(30, 2, 7)
 kind = 4
-surface = ExtResource("15_jp62d")
+surface = ExtResource("16_1ebgx")
 
-[node name="NorthTower" type="StaticBody3D" parent="Geometry" unique_id=798222009]
+[node name="NorthTower" type="StaticBody3D" parent="Geometry" unique_id=1201389143]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 32, -32)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(6, 8, 6)
 kind = 5
-surface = ExtResource("9_swt3h")
+surface = ExtResource("10_010lh")
 
-[node name="NorthTowerRamp" type="StaticBody3D" parent="Geometry" unique_id=561100201]
+[node name="NorthTowerRamp" type="StaticBody3D" parent="Geometry" unique_id=1747050630]
 transform = Transform3D(0, 0.49613893, 0.86824316, 0, 0.86824316, -0.49613893, -1, 0, 0, -50.14884, 31.739527, -32)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(3, 0.6, 16.124516)
 kind = 2
-surface = ExtResource("7_v20pb")
+surface = ExtResource("8_t4tfj")
 
-[node name="NorthTowerWall" type="StaticBody3D" parent="Geometry" unique_id=1559086476]
+[node name="NorthTowerWall" type="StaticBody3D" parent="Geometry" unique_id=1672817164]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 36.6, -29.3)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(6, 1.2000008, 0.6000004)
 kind = 3
-surface = ExtResource("13_hobdl")
+surface = ExtResource("14_kstsx")
 
-[node name="SouthTower" type="StaticBody3D" parent="Geometry" unique_id=1419607747]
+[node name="SouthTower" type="StaticBody3D" parent="Geometry" unique_id=325830438]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 24, 32)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(6, 8, 6)
 kind = 5
-surface = ExtResource("9_swt3h")
+surface = ExtResource("10_010lh")
 
-[node name="SouthTowerRamp" type="StaticBody3D" parent="Geometry" unique_id=2139894073]
+[node name="SouthTowerRamp" type="StaticBody3D" parent="Geometry" unique_id=981534440]
 transform = Transform3D(0, -0.49613893, -0.86824316, 0, 0.86824316, -0.49613893, 1, 0, 0, 50.14884, 23.739527, 32)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(3, 0.6, 16.124516)
 kind = 2
-surface = ExtResource("7_v20pb")
+surface = ExtResource("8_t4tfj")
 
-[node name="SouthTowerWall" type="StaticBody3D" parent="Geometry" unique_id=1532715320]
+[node name="SouthTowerWall" type="StaticBody3D" parent="Geometry" unique_id=39374494]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 28.6, 29.3)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(6, 1.2000008, 0.6000004)
 kind = 3
-surface = ExtResource("13_hobdl")
+surface = ExtResource("14_kstsx")
 
-[node name="NorthRimCover_-80" type="StaticBody3D" parent="Geometry" unique_id=1307703651]
+[node name="NorthRimCover_-80" type="StaticBody3D" parent="Geometry" unique_id=855333804]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 28.8, -20)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 1.6000004, 2)
 kind = 3
-surface = ExtResource("16_jnr2n")
+surface = ExtResource("17_crmwn")
 
-[node name="SouthRimCover_-80" type="StaticBody3D" parent="Geometry" unique_id=630622127]
+[node name="SouthRimCover_-80" type="StaticBody3D" parent="Geometry" unique_id=1491209159]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 20.8, 20)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 1.6000004, 2)
 kind = 3
-surface = ExtResource("16_jnr2n")
+surface = ExtResource("17_crmwn")
 
-[node name="NorthRimCover_-20" type="StaticBody3D" parent="Geometry" unique_id=1121626169]
+[node name="NorthRimCover_-20" type="StaticBody3D" parent="Geometry" unique_id=174828981]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 28.8, -20)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 1.6000004, 2)
 kind = 3
-surface = ExtResource("16_jnr2n")
+surface = ExtResource("17_crmwn")
 
-[node name="SouthRimCover_-20" type="StaticBody3D" parent="Geometry" unique_id=444278514]
+[node name="SouthRimCover_-20" type="StaticBody3D" parent="Geometry" unique_id=930156259]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 20.8, 20)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 1.6000004, 2)
 kind = 3
-surface = ExtResource("16_jnr2n")
+surface = ExtResource("17_crmwn")
 
-[node name="NorthRimCover_20" type="StaticBody3D" parent="Geometry" unique_id=1976576299]
+[node name="NorthRimCover_20" type="StaticBody3D" parent="Geometry" unique_id=690798795]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 28.8, -20)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 1.6000004, 2)
 kind = 3
-surface = ExtResource("16_jnr2n")
+surface = ExtResource("17_crmwn")
 
-[node name="SouthRimCover_20" type="StaticBody3D" parent="Geometry" unique_id=991284641]
+[node name="SouthRimCover_20" type="StaticBody3D" parent="Geometry" unique_id=1610100762]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 20.8, 20)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 1.6000004, 2)
 kind = 3
-surface = ExtResource("16_jnr2n")
+surface = ExtResource("17_crmwn")
 
-[node name="NorthRimCover_80" type="StaticBody3D" parent="Geometry" unique_id=472850845]
+[node name="NorthRimCover_80" type="StaticBody3D" parent="Geometry" unique_id=1135245784]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 80, 28.8, -20)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 1.6000004, 2)
 kind = 3
-surface = ExtResource("16_jnr2n")
+surface = ExtResource("17_crmwn")
 
-[node name="SouthRimCover_80" type="StaticBody3D" parent="Geometry" unique_id=23353334]
+[node name="SouthRimCover_80" type="StaticBody3D" parent="Geometry" unique_id=1168687801]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -80, 20.8, 20)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(4, 1.6000004, 2)
 kind = 3
-surface = ExtResource("16_jnr2n")
+surface = ExtResource("17_crmwn")
 
-[node name="NorthRock" type="StaticBody3D" parent="Geometry" unique_id=952613324]
+[node name="NorthRock" type="StaticBody3D" parent="Geometry" unique_id=1070102052]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 29.5, -35)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(8, 3, 6)
 kind = 5
-surface = ExtResource("17_anvxi")
+surface = ExtResource("18_c2pgf")
 
-[node name="SouthRock" type="StaticBody3D" parent="Geometry" unique_id=245592140]
+[node name="SouthRock" type="StaticBody3D" parent="Geometry" unique_id=2051154419]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 2, 21.5, 35)
-script = ExtResource("2_rud38")
+script = ExtResource("3_0vqui")
 size = Vector3(8, 3, 6)
 kind = 5
-surface = ExtResource("17_anvxi")
+surface = ExtResource("18_c2pgf")
 
-[node name="Labels" type="Node3D" parent="." unique_id=938073949]
+[node name="Labels" type="Node3D" parent="." unique_id=742866105]
 
-[node name="NORTH_RIM" type="Label3D" parent="Labels" unique_id=1378682950 groups=["debug_labels"]]
+[node name="NORTH_RIM" type="Label3D" parent="Labels" unique_id=526576512 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 32, -30)
 pixel_size = 0.01
 billboard = 2
@@ -755,7 +867,7 @@ text = "NORTH RIM"
 font_size = 64
 outline_size = 16
 
-[node name="SOUTH_RIM" type="Label3D" parent="Labels" unique_id=1423321031 groups=["debug_labels"]]
+[node name="SOUTH_RIM" type="Label3D" parent="Labels" unique_id=1196999676 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 24, 30)
 pixel_size = 0.01
 billboard = 2
@@ -765,7 +877,7 @@ text = "SOUTH RIM"
 font_size = 64
 outline_size = 16
 
-[node name="HIGH_BRIDGE" type="Label3D" parent="Labels" unique_id=45898185 groups=["debug_labels"]]
+[node name="HIGH_BRIDGE" type="Label3D" parent="Labels" unique_id=825406596 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 31, 0)
 pixel_size = 0.01
 billboard = 2
@@ -775,7 +887,7 @@ text = "HIGH BRIDGE"
 font_size = 64
 outline_size = 16
 
-[node name="ARCH" type="Label3D" parent="Labels" unique_id=890130940 groups=["debug_labels"]]
+[node name="ARCH" type="Label3D" parent="Labels" unique_id=1916900940 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 7, 0)
 pixel_size = 0.01
 billboard = 2
@@ -785,7 +897,7 @@ text = "ARCH"
 font_size = 64
 outline_size = 16
 
-[node name="NORTH_SHELF" type="Label3D" parent="Labels" unique_id=415747967 groups=["debug_labels"]]
+[node name="NORTH_SHELF" type="Label3D" parent="Labels" unique_id=1681512394 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 15, -14)
 pixel_size = 0.01
 billboard = 2
@@ -795,7 +907,7 @@ text = "NORTH SHELF"
 font_size = 64
 outline_size = 16
 
-[node name="SOUTH_SHELF" type="Label3D" parent="Labels" unique_id=30209735 groups=["debug_labels"]]
+[node name="SOUTH_SHELF" type="Label3D" parent="Labels" unique_id=345798965 groups=["debug_labels"]]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 13, 14)
 pixel_size = 0.01
 billboard = 2
@@ -805,255 +917,255 @@ text = "SOUTH SHELF"
 font_size = 64
 outline_size = 16
 
-[node name="Combat" type="Node3D" parent="." unique_id=232989997]
+[node name="Combat" type="Node3D" parent="." unique_id=456989095]
 
-[node name="Pad_SniperNorth" type="Node3D" parent="Combat" unique_id=1876207418]
+[node name="Pad_SniperNorth" type="Node3D" parent="Combat" unique_id=1014371345]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 36, -32)
-script = ExtResource("18_waywr")
+script = ExtResource("19_ntj0a")
 weapon = &"sniper"
 respawn_time = 0.0
 
-[node name="Pad_SniperSouth" type="Node3D" parent="Combat" unique_id=433493976]
+[node name="Pad_SniperSouth" type="Node3D" parent="Combat" unique_id=1802321131]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 28, 32)
-script = ExtResource("18_waywr")
+script = ExtResource("19_ntj0a")
 weapon = &"sniper"
 respawn_time = 0.0
 
-[node name="Pad_RifleNorth" type="Node3D" parent="Combat" unique_id=246543788]
+[node name="Pad_RifleNorth" type="Node3D" parent="Combat" unique_id=2067125585]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 20, 28, -34)
-script = ExtResource("18_waywr")
+script = ExtResource("19_ntj0a")
 weapon = &"rifle"
 
-[node name="Pad_RifleSouth" type="Node3D" parent="Combat" unique_id=972578446]
+[node name="Pad_RifleSouth" type="Node3D" parent="Combat" unique_id=137486210]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 20, 34)
-script = ExtResource("18_waywr")
+script = ExtResource("19_ntj0a")
 weapon = &"rifle"
 
-[node name="Pad_SMG" type="Node3D" parent="Combat" unique_id=1396721984]
+[node name="Pad_SMG" type="Node3D" parent="Combat" unique_id=1526461161]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 6)
-script = ExtResource("18_waywr")
+script = ExtResource("19_ntj0a")
 weapon = &"smg"
 
-[node name="Pad_Shotgun" type="Node3D" parent="Combat" unique_id=859994314]
+[node name="Pad_Shotgun" type="Node3D" parent="Combat" unique_id=5115156]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 0, 0)
-script = ExtResource("18_waywr")
+script = ExtResource("19_ntj0a")
 weapon = &"shotgun"
 
-[node name="Pad_RevolverNorth" type="Node3D" parent="Combat" unique_id=235187136]
+[node name="Pad_RevolverNorth" type="Node3D" parent="Combat" unique_id=1656284376]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -20, 12, -14)
-script = ExtResource("18_waywr")
+script = ExtResource("19_ntj0a")
 weapon = &"revolver"
 
-[node name="Pad_RevolverSouth" type="Node3D" parent="Combat" unique_id=2100512535]
+[node name="Pad_RevolverSouth" type="Node3D" parent="Combat" unique_id=1008926518]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 30, 10, 14)
-script = ExtResource("18_waywr")
+script = ExtResource("19_ntj0a")
 weapon = &"revolver"
 
-[node name="Pad_PistolA" type="Node3D" parent="Combat" unique_id=1814130420]
+[node name="Pad_PistolA" type="Node3D" parent="Combat" unique_id=836139320]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 34, 28, -30)
-script = ExtResource("18_waywr")
+script = ExtResource("19_ntj0a")
 
-[node name="Pad_PistolB" type="Node3D" parent="Combat" unique_id=1714533606]
+[node name="Pad_PistolB" type="Node3D" parent="Combat" unique_id=291037879]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -34, 20, 30)
-script = ExtResource("18_waywr")
+script = ExtResource("19_ntj0a")
 
-[node name="Pad_PistolC" type="Node3D" parent="Combat" unique_id=1582532041]
+[node name="Pad_PistolC" type="Node3D" parent="Combat" unique_id=187244473]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -50, 0, 10)
-script = ExtResource("18_waywr")
+script = ExtResource("19_ntj0a")
 
-[node name="Pad_PistolD" type="Node3D" parent="Combat" unique_id=743831609]
+[node name="Pad_PistolD" type="Node3D" parent="Combat" unique_id=1234031538]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 54, 0, 10)
-script = ExtResource("18_waywr")
+script = ExtResource("19_ntj0a")
 
-[node name="Spawns" type="Node3D" parent="." unique_id=336963574]
+[node name="Spawns" type="Node3D" parent="." unique_id=863143395]
 
-[node name="SpawnA" type="Marker3D" parent="Spawns" unique_id=1881794580 groups=["spawn"]]
+[node name="SpawnA" type="Marker3D" parent="Spawns" unique_id=1557623723 groups=["spawn"]]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 30, 28, -30)
 
-[node name="SpawnB" type="Marker3D" parent="Spawns" unique_id=83045676 groups=["spawn"]]
+[node name="SpawnB" type="Marker3D" parent="Spawns" unique_id=1237717113 groups=["spawn"]]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -30, 20, 30)
 
-[node name="SpawnC" type="Marker3D" parent="Spawns" unique_id=2059208626 groups=["spawn"]]
+[node name="SpawnC" type="Marker3D" parent="Spawns" unique_id=1681073637 groups=["spawn"]]
 transform = Transform3D(-4.371139e-08, 0, -1, 0, 1, 0, 1, 0, -4.371139e-08, -50, 0, 6)
 
-[node name="SpawnD" type="Marker3D" parent="Spawns" unique_id=1676770755 groups=["spawn"]]
+[node name="SpawnD" type="Marker3D" parent="Spawns" unique_id=1877320159 groups=["spawn"]]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 54, 0, 6)
 
-[node name="Decor" type="Node3D" parent="." unique_id=2119734483]
+[node name="Decor" type="Node3D" parent="." unique_id=1167548202]
 
-[node name="Build" type="Node3D" parent="Decor" unique_id=1927013503 groups=["decor_build"]]
+[node name="Build" type="Node3D" parent="Decor" unique_id=210765087 groups=["decor_build"]]
 
-[node name="Words_Cloud_Line" type="Label3D" parent="Decor/Build" unique_id=1218922416]
+[node name="Words_Cloud_Line" type="Label3D" parent="Decor/Build" unique_id=1623455392]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -18, 16, 15.75)
 pixel_size = 0.017
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "Cloud Line"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="@Label3D@99" type="Label3D" parent="Decor/Build" unique_id=235713842]
+[node name="@Label3D@99" type="Label3D" parent="Decor/Build" unique_id=1171946582]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 12, 16, 15.75)
 pixel_size = 0.017
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "Cloud Line"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="@Label3D@100" type="Label3D" parent="Decor/Build" unique_id=1134247399]
+[node name="@Label3D@100" type="Label3D" parent="Decor/Build" unique_id=556704233]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 40, 16, 15.75)
 pixel_size = 0.017
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "Cloud Line"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="Words_Nimbus" type="Label3D" parent="Decor/Build" unique_id=244254483]
+[node name="Words_Nimbus" type="Label3D" parent="Decor/Build" unique_id=968232168]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -26.6, 2.6000001, -11.969999)
 pixel_size = 0.011875
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "Nimbus"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="@Label3D@101" type="Label3D" parent="Decor/Build" unique_id=460781165]
+[node name="@Label3D@101" type="Label3D" parent="Decor/Build" unique_id=586525134]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2.6, 2.6000001, -11.969999)
 pixel_size = 0.011875
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "Nimbus"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="@Label3D@102" type="Label3D" parent="Decor/Build" unique_id=958901550]
+[node name="@Label3D@102" type="Label3D" parent="Decor/Build" unique_id=418169394]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 13.4, 2.6000001, -11.969999)
 pixel_size = 0.011875
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "Nimbus"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="@Label3D@104" type="Label3D" parent="Decor/Build" unique_id=1123128390]
+[node name="@Label3D@104" type="Label3D" parent="Decor/Build" unique_id=899192789]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -23.4, 2.6000001, 11.969999)
 pixel_size = 0.011875
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "Nimbus"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="@Label3D@106" type="Label3D" parent="Decor/Build" unique_id=259167385]
+[node name="@Label3D@106" type="Label3D" parent="Decor/Build" unique_id=1701353573]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 4.6, 2.6000001, 11.969999)
 pixel_size = 0.011875
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "Nimbus"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="@Label3D@108" type="Label3D" parent="Decor/Build" unique_id=521426253]
+[node name="@Label3D@108" type="Label3D" parent="Decor/Build" unique_id=112560118]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 32.6, 2.6000001, 11.969999)
 pixel_size = 0.011875
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "Nimbus"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="@Label3D@112" type="Label3D" parent="Decor/Build" unique_id=1219393922]
+[node name="@Label3D@112" type="Label3D" parent="Decor/Build" unique_id=649614909]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -17, 14.6, -15.95)
 pixel_size = 0.011875
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "Nimbus"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="@Label3D@116" type="Label3D" parent="Decor/Build" unique_id=1866026038]
+[node name="@Label3D@116" type="Label3D" parent="Decor/Build" unique_id=495691129]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -2, 12.6, 15.95)
 pixel_size = 0.011875
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "Nimbus"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="Words_2" type="Label3D" parent="Decor/Build" unique_id=457027383]
+[node name="Words_2" type="Label3D" parent="Decor/Build" unique_id=756973492]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -25.764, 3.3, 1.6)
 pixel_size = 0.01375
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "2"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="Words_1" type="Label3D" parent="Decor/Build" unique_id=250820523]
+[node name="Words_1" type="Label3D" parent="Decor/Build" unique_id=1674951927]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -25.844, 3.45, -9)
 pixel_size = 0.01375
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "1"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="Words_3" type="Label3D" parent="Decor/Build" unique_id=931532257]
+[node name="Words_3" type="Label3D" parent="Decor/Build" unique_id=1188941671]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -25.844, 3.45, 9)
 pixel_size = 0.01375
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "3"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="@Label3D@117" type="Label3D" parent="Decor/Build" unique_id=1680906316]
+[node name="@Label3D@117" type="Label3D" parent="Decor/Build" unique_id=436722627]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -34.236, 3.3, 1.6)
 pixel_size = 0.01375
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "2"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="@Label3D@118" type="Label3D" parent="Decor/Build" unique_id=391849629]
+[node name="@Label3D@118" type="Label3D" parent="Decor/Build" unique_id=1231752974]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -34.156, 3.45, -9)
 pixel_size = 0.01375
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "1"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="@Label3D@119" type="Label3D" parent="Decor/Build" unique_id=146164075]
+[node name="@Label3D@119" type="Label3D" parent="Decor/Build" unique_id=875581618]
 transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, -34.156, 3.45, 9)
 pixel_size = 0.01375
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "3"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="Words_C_L" type="Label3D" parent="Decor/Build" unique_id=1074823723]
+[node name="Words_C_L" type="Label3D" parent="Decor/Build" unique_id=1498953246]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -35, 1.3, -10.018001)
 pixel_size = 0.01125
 shaded = true
@@ -1061,10 +1173,10 @@ double_sided = false
 texture_filter = 0
 modulate = Color(0.95, 0.9, 0.76, 1)
 text = "C L"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="@Label3D@120" type="Label3D" parent="Decor/Build" unique_id=898400727]
+[node name="@Label3D@120" type="Label3D" parent="Decor/Build" unique_id=452883217]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -35, 1.3, -7.982)
 pixel_size = 0.01125
 shaded = true
@@ -1072,10 +1184,10 @@ double_sided = false
 texture_filter = 0
 modulate = Color(0.95, 0.9, 0.76, 1)
 text = "C L"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="@Label3D@121" type="Label3D" parent="Decor/Build" unique_id=922529049]
+[node name="@Label3D@121" type="Label3D" parent="Decor/Build" unique_id=1661677316]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -25, 1.3, 7.982)
 pixel_size = 0.01125
 shaded = true
@@ -1083,10 +1195,10 @@ double_sided = false
 texture_filter = 0
 modulate = Color(0.95, 0.9, 0.76, 1)
 text = "C L"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="@Label3D@122" type="Label3D" parent="Decor/Build" unique_id=973808005]
+[node name="@Label3D@122" type="Label3D" parent="Decor/Build" unique_id=1372111712]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -25, 1.3, 10.018001)
 pixel_size = 0.01125
 shaded = true
@@ -1094,10 +1206,10 @@ double_sided = false
 texture_filter = 0
 modulate = Color(0.95, 0.9, 0.76, 1)
 text = "C L"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="Words_Left_luggage" type="Label3D" parent="Decor/Build" unique_id=252899950]
+[node name="Words_Left_luggage" type="Label3D" parent="Decor/Build" unique_id=1472874244]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -45.9, 2.6, -4)
 pixel_size = 0.00625
 shaded = true
@@ -1105,10 +1217,10 @@ double_sided = false
 texture_filter = 0
 modulate = Color(0.95, 0.9, 0.76, 1)
 text = "Left luggage"
-font = ExtResource("20_jqltb")
+font = ExtResource("21_paf4x")
 outline_size = 0
 
-[node name="Words_Tickets" type="Label3D" parent="Decor/Build" unique_id=1710774128]
+[node name="Words_Tickets" type="Label3D" parent="Decor/Build" unique_id=266953431]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -12, 2.3, 3.969)
 pixel_size = 0.008125
 shaded = true
@@ -1116,10 +1228,10 @@ double_sided = false
 texture_filter = 0
 modulate = Color(0.45, 0.07, 0.1, 1)
 text = "Tickets"
-font = ExtResource("21_1wsup")
+font = ExtResource("22_bhp6t")
 outline_size = 0
 
-[node name="@Label3D@123" type="Label3D" parent="Decor/Build" unique_id=222016830]
+[node name="@Label3D@123" type="Label3D" parent="Decor/Build" unique_id=71805140]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -12, 2.3, 8.031)
 pixel_size = 0.008125
 shaded = true
@@ -1127,10 +1239,10 @@ double_sided = false
 texture_filter = 0
 modulate = Color(0.45, 0.07, 0.1, 1)
 text = "Tickets"
-font = ExtResource("21_1wsup")
+font = ExtResource("22_bhp6t")
 outline_size = 0
 
-[node name="Words_Waiting_Room" type="Label3D" parent="Decor/Build" unique_id=185890183]
+[node name="Words_Waiting_Room" type="Label3D" parent="Decor/Build" unique_id=62378678]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 18, 3.2, -8.031)
 pixel_size = 0.006875
 shaded = true
@@ -1138,10 +1250,10 @@ double_sided = false
 texture_filter = 0
 modulate = Color(0.12, 0.14, 0.3, 1)
 text = "Waiting Room"
-font = ExtResource("21_1wsup")
+font = ExtResource("22_bhp6t")
 outline_size = 0
 
-[node name="@Label3D@124" type="Label3D" parent="Decor/Build" unique_id=328502868]
+[node name="@Label3D@124" type="Label3D" parent="Decor/Build" unique_id=1829712558]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 18, 3.2, -3.969)
 pixel_size = 0.006875
 shaded = true
@@ -1149,310 +1261,573 @@ double_sided = false
 texture_filter = 0
 modulate = Color(0.12, 0.14, 0.3, 1)
 text = "Waiting Room"
-font = ExtResource("21_1wsup")
+font = ExtResource("22_bhp6t")
 outline_size = 0
 
-[node name="Words_Meet_me_under_the_clock" type="Label3D" parent="Decor/Build" unique_id=1475785825]
+[node name="Words_Meet_me_under_the_clock" type="Label3D" parent="Decor/Build" unique_id=1700507245]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 0, 1.08, -3.018)
 shaded = true
 double_sided = false
 texture_filter = 0
 modulate = Color(0.9, 0.78, 0.45, 1)
 text = "Meet me under the clock"
-font = ExtResource("20_jqltb")
+font = ExtResource("21_paf4x")
 outline_size = 0
 
-[node name="@Label3D@125" type="Label3D" parent="Decor/Build" unique_id=564316349]
+[node name="@Label3D@125" type="Label3D" parent="Decor/Build" unique_id=313863623]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.08, 3.018)
 shaded = true
 double_sided = false
 texture_filter = 0
 modulate = Color(0.9, 0.78, 0.45, 1)
 text = "Meet me under the clock"
-font = ExtResource("20_jqltb")
+font = ExtResource("21_paf4x")
 outline_size = 0
 
-[node name="Words_Nimbus_North_Box" type="Label3D" parent="Decor/Build" unique_id=572551431]
+[node name="Words_Nimbus_North_Box" type="Label3D" parent="Decor/Build" unique_id=27419259]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 32.55, -28.994)
 pixel_size = 0.009375
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "Nimbus North Box"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="Words_Nimbus_South_Box" type="Label3D" parent="Decor/Build" unique_id=155326278]
+[node name="Words_Nimbus_South_Box" type="Label3D" parent="Decor/Build" unique_id=2241621]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 60, 24.55, 28.994)
 pixel_size = 0.009375
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "Nimbus South Box"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="Words_Cumulus__→__4_km" type="Label3D" parent="Decor/Build" unique_id=1311539876]
+[node name="Cliffs" type="MeshInstance3D" parent="Decor/Build" unique_id=1420433810]
+material_override = ExtResource("23_6qmjq")
+cast_shadow = 0
+mesh = ExtResource("24_lih4g")
+
+[node name="Words_Cumulus__→__4_km" type="Label3D" parent="Decor/Build" unique_id=287346236]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -98, 23.4, -15.95)
 pixel_size = 0.010625
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "Cumulus  →  4 km"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="Words_Stratus__→__6_km" type="Label3D" parent="Decor/Build" unique_id=1379553656]
+[node name="Words_Stratus__→__6_km" type="Label3D" parent="Decor/Build" unique_id=402287425]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 98, 27, 15.95)
 pixel_size = 0.010625
 shaded = true
 double_sided = false
 texture_filter = 0
 text = "Stratus  →  6 km"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="rail_1" type="MeshInstance3D" parent="Decor/Build" unique_id=897648077]
-material_override = ExtResource("22_dawhu")
+[node name="Words_Platform_1" type="Label3D" parent="Decor/Build" unique_id=625405944]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 10.04, 9.65, -9)
+pixel_size = 0.006875
+shaded = true
+double_sided = false
+texture_filter = 0
+text = "Platform 1"
+font = ExtResource("20_bifrx")
+outline_size = 0
+
+[node name="@Label3D@126" type="Label3D" parent="Decor/Build" unique_id=19931907]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 9.96, 9.65, -9)
+pixel_size = 0.006875
+shaded = true
+double_sided = false
+texture_filter = 0
+text = "Platform 1"
+font = ExtResource("20_bifrx")
+outline_size = 0
+
+[node name="Words_Platform_2" type="Label3D" parent="Decor/Build" unique_id=898137323]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 10.04, 8.9, 0)
+pixel_size = 0.006875
+shaded = true
+double_sided = false
+texture_filter = 0
+text = "Platform 2"
+font = ExtResource("20_bifrx")
+outline_size = 0
+
+[node name="@Label3D@127" type="Label3D" parent="Decor/Build" unique_id=1833877006]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 9.96, 8.9, 0)
+pixel_size = 0.006875
+shaded = true
+double_sided = false
+texture_filter = 0
+text = "Platform 2"
+font = ExtResource("20_bifrx")
+outline_size = 0
+
+[node name="Words_Platform_3" type="Label3D" parent="Decor/Build" unique_id=1036339789]
+transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, 10.04, 8.15, 9)
+pixel_size = 0.006875
+shaded = true
+double_sided = false
+texture_filter = 0
+text = "Platform 3"
+font = ExtResource("20_bifrx")
+outline_size = 0
+
+[node name="@Label3D@128" type="Label3D" parent="Decor/Build" unique_id=1202047909]
+transform = Transform3D(0, 0, -1, 0, 1, 0, 1, 0, 0, 9.96, 8.15, 9)
+pixel_size = 0.006875
+shaded = true
+double_sided = false
+texture_filter = 0
+text = "Platform 3"
+font = ExtResource("20_bifrx")
+outline_size = 0
+
+[node name="@Label3D@131" type="Label3D" parent="Decor/Build" unique_id=2104621671]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 14.04, -15.92)
+pixel_size = 0.00375
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(0.45, 0.07, 0.1, 1)
+text = "Cloud Line"
+font = ExtResource("22_bhp6t")
+outline_size = 0
+
+[node name="Words_Cumulus___06_14__07_40\nStratus___0" type="Label3D" parent="Decor/Build" unique_id=170620450]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 13.62, -15.92)
+pixel_size = 0.0021875
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(0.1, 0.1, 0.14, 1)
+text = "Cumulus   06:14  07:40
+Stratus   06:22  08:05
+Cirrus    06:40  09:10
+Nowhere   --:--  --:--"
+font = ExtResource("25_xvar3")
+outline_size = 0
+
+[node name="@Label3D@133" type="Label3D" parent="Decor/Build" unique_id=1833169068]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 32, 12.04, 15.92)
+pixel_size = 0.00375
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(0.45, 0.07, 0.1, 1)
+text = "Cloud Line"
+font = ExtResource("22_bhp6t")
+outline_size = 0
+
+[node name="@Label3D@134" type="Label3D" parent="Decor/Build" unique_id=130466165]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 32, 11.62, 15.92)
+pixel_size = 0.0021875
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(0.1, 0.1, 0.14, 1)
+text = "Cumulus   06:14  07:40
+Stratus   06:22  08:05
+Cirrus    06:40  09:10
+Nowhere   --:--  --:--"
+font = ExtResource("25_xvar3")
+outline_size = 0
+
+[node name="Words_Way_out__↑" type="Label3D" parent="Decor/Build" unique_id=1263161142]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 57.5, 2.4, -15.929999)
+pixel_size = 0.00625
+shaded = true
+double_sided = false
+texture_filter = 0
+text = "Way out  ↑"
+font = ExtResource("20_bifrx")
+outline_size = 0
+
+[node name="@Label3D@151" type="Label3D" parent="Decor/Build" unique_id=652687302]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -57.5, 2.4, 15.929999)
+pixel_size = 0.00625
+shaded = true
+double_sided = false
+texture_filter = 0
+text = "Way out  ↑"
+font = ExtResource("20_bifrx")
+outline_size = 0
+
+[node name="rail_1" type="MeshInstance3D" parent="Decor/Build" unique_id=1848174727]
+material_override = ExtResource("26_wb67g")
 cast_shadow = 0
-mesh = ExtResource("23_fv4vv")
+mesh = ExtResource("27_4wyfa")
 
-[node name="dark_metal_2" type="MeshInstance3D" parent="Decor/Build" unique_id=1969938224]
-material_override = ExtResource("24_dya3g")
+[node name="dark_metal_2" type="MeshInstance3D" parent="Decor/Build" unique_id=19663660]
+material_override = ExtResource("28_wbh02")
 cast_shadow = 0
-mesh = ExtResource("25_hcivb")
+mesh = ExtResource("29_cf3tu")
 
-[node name="hazard_3" type="MeshInstance3D" parent="Decor/Build" unique_id=1086941569]
-material_override = ExtResource("26_kvrfb")
+[node name="hazard_3" type="MeshInstance3D" parent="Decor/Build" unique_id=1143489185]
+material_override = ExtResource("30_2n8j4")
 cast_shadow = 0
-mesh = ExtResource("27_kd0cd")
+mesh = ExtResource("31_54jta")
 
-[node name="tile_maroon_4" type="MeshInstance3D" parent="Decor/Build" unique_id=1797264432]
-material_override = ExtResource("28_81e7q")
+[node name="tile_maroon_4" type="MeshInstance3D" parent="Decor/Build" unique_id=497477722]
+material_override = ExtResource("32_kuduy")
 cast_shadow = 0
-mesh = ExtResource("29_2ng1k")
+mesh = ExtResource("33_uupnf")
 
-[node name="tile_cream_5" type="MeshInstance3D" parent="Decor/Build" unique_id=1347004652]
-material_override = ExtResource("30_x2fne")
+[node name="tile_cream_5" type="MeshInstance3D" parent="Decor/Build" unique_id=1878821595]
+material_override = ExtResource("34_22oak")
 cast_shadow = 0
-mesh = ExtResource("31_j1yx3")
+mesh = ExtResource("35_m83q2")
 
-[node name="brass_8" type="MeshInstance3D" parent="Decor/Build" unique_id=1581573766]
-material_override = ExtResource("32_fkiwb")
+[node name="brass_9" type="MeshInstance3D" parent="Decor/Build" unique_id=1717006913]
+material_override = ExtResource("36_ed7t8")
 cast_shadow = 0
-mesh = ExtResource("33_kwtft")
+mesh = ExtResource("37_n17cq")
 
-[node name="navy_9" type="MeshInstance3D" parent="Decor/Build" unique_id=1354541932]
-material_override = ExtResource("34_v56us")
+[node name="navy_10" type="MeshInstance3D" parent="Decor/Build" unique_id=800968692]
+material_override = ExtResource("38_htap0")
 cast_shadow = 0
-mesh = ExtResource("35_ocufh")
+mesh = ExtResource("39_30qm1")
 
-[node name="letters_10" type="MeshInstance3D" parent="Decor/Build" unique_id=1785799898]
-material_override = ExtResource("36_hv1he")
+[node name="letters_11" type="MeshInstance3D" parent="Decor/Build" unique_id=159353980]
+material_override = ExtResource("40_mexb3")
 cast_shadow = 0
-mesh = ExtResource("37_x1kl8")
+mesh = ExtResource("41_4f1qj")
 
-[node name="maroon_11" type="MeshInstance3D" parent="Decor/Build" unique_id=1047443918]
-material_override = ExtResource("38_jdrro")
+[node name="maroon_12" type="MeshInstance3D" parent="Decor/Build" unique_id=2045527901]
+material_override = ExtResource("42_1bph2")
 cast_shadow = 0
-mesh = ExtResource("39_0vqui")
+mesh = ExtResource("43_85l21")
 
-[node name="white_13" type="MeshInstance3D" parent="Decor/Build" unique_id=835605116]
-material_override = ExtResource("40_1nkq4")
+[node name="white_14" type="MeshInstance3D" parent="Decor/Build" unique_id=1777834377]
+material_override = ExtResource("44_qogou")
 cast_shadow = 0
-mesh = ExtResource("41_42071")
+mesh = ExtResource("45_2ehj0")
 
-[node name="paint_yellow_16" type="MeshInstance3D" parent="Decor/Build" unique_id=1208570887]
-material_override = ExtResource("42_db2yd")
+[node name="paint_yellow_17" type="MeshInstance3D" parent="Decor/Build" unique_id=2129646201]
+material_override = ExtResource("46_1ajqp")
 cast_shadow = 0
-mesh = ExtResource("43_rq7nl")
+mesh = ExtResource("47_6b32s")
 
-[node name="paint_white_17" type="MeshInstance3D" parent="Decor/Build" unique_id=467629354]
-material_override = ExtResource("44_t4tfj")
+[node name="paint_white_18" type="MeshInstance3D" parent="Decor/Build" unique_id=951254284]
+material_override = ExtResource("48_73lcw")
 cast_shadow = 0
-mesh = ExtResource("45_1n1im")
+mesh = ExtResource("49_8na8g")
 
-[node name="black_20" type="MeshInstance3D" parent="Decor/Build" unique_id=329022773]
-material_override = ExtResource("46_010lh")
+[node name="black_21" type="MeshInstance3D" parent="Decor/Build" unique_id=1493610959]
+material_override = ExtResource("50_3jfgr")
 cast_shadow = 0
-mesh = ExtResource("47_uaa6b")
+mesh = ExtResource("51_irl8q")
 
-[node name="iron_21" type="MeshInstance3D" parent="Decor/Build" unique_id=1624788129]
-material_override = ExtResource("48_lb4bd")
+[node name="iron_22" type="MeshInstance3D" parent="Decor/Build" unique_id=422002651]
+material_override = ExtResource("52_n1rdp")
 cast_shadow = 0
-mesh = ExtResource("49_db3oc")
+mesh = ExtResource("53_apiis")
 
-[node name="stone_23" type="MeshInstance3D" parent="Decor/Build" unique_id=1553958133]
-material_override = ExtResource("13_hobdl")
+[node name="stone_24" type="MeshInstance3D" parent="Decor/Build" unique_id=691991877]
+material_override = ExtResource("14_kstsx")
 cast_shadow = 0
-mesh = ExtResource("50_kstsx")
+mesh = ExtResource("54_ruikb")
 
-[node name="brick_dark_24" type="MeshInstance3D" parent="Decor/Build" unique_id=1924217555]
-material_override = ExtResource("51_k640n")
+[node name="brick_dark_25" type="MeshInstance3D" parent="Decor/Build" unique_id=1614676766]
+material_override = ExtResource("55_jwu75")
 cast_shadow = 0
-mesh = ExtResource("52_1ebgx")
+mesh = ExtResource("56_xatib")
 
-[node name="glass_dark_25" type="MeshInstance3D" parent="Decor/Build" unique_id=2145093159]
-material_override = ExtResource("53_crmwn")
+[node name="glass_dark_26" type="MeshInstance3D" parent="Decor/Build" unique_id=1360448185]
+material_override = ExtResource("57_dru7o")
 cast_shadow = 0
-mesh = ExtResource("54_c2pgf")
+mesh = ExtResource("58_7agey")
 
-[node name="trunk_navy_26" type="MeshInstance3D" parent="Decor/Build" unique_id=2058749949]
-material_override = ExtResource("55_ntj0a")
+[node name="trunk_navy_27" type="MeshInstance3D" parent="Decor/Build" unique_id=249837224]
+material_override = ExtResource("59_hwf5s")
 cast_shadow = 0
-mesh = ExtResource("56_bifrx")
+mesh = ExtResource("60_7r03n")
 
-[node name="trunk_green_27" type="MeshInstance3D" parent="Decor/Build" unique_id=1885321091]
-material_override = ExtResource("57_paf4x")
+[node name="trunk_green_28" type="MeshInstance3D" parent="Decor/Build" unique_id=1884715624]
+material_override = ExtResource("61_ka0gl")
 cast_shadow = 0
-mesh = ExtResource("58_bhp6t")
+mesh = ExtResource("62_ojcn8")
 
-[node name="leather_28" type="MeshInstance3D" parent="Decor/Build" unique_id=1105242733]
-material_override = ExtResource("59_6qmjq")
+[node name="leather_29" type="MeshInstance3D" parent="Decor/Build" unique_id=166679198]
+material_override = ExtResource("63_vrhkr")
 cast_shadow = 0
-mesh = ExtResource("60_lih4g")
+mesh = ExtResource("64_bb6m0")
 
-[node name="canvas_29" type="MeshInstance3D" parent="Decor/Build" unique_id=401024015]
-material_override = ExtResource("61_xvar3")
+[node name="canvas_30" type="MeshInstance3D" parent="Decor/Build" unique_id=1216870141]
+material_override = ExtResource("65_dche7")
 cast_shadow = 0
-mesh = ExtResource("62_wb67g")
+mesh = ExtResource("66_7dyof")
 
-[node name="window_warm_30" type="MeshInstance3D" parent="Decor/Build" unique_id=1157260971]
-material_override = ExtResource("63_4wyfa")
+[node name="window_warm_31" type="MeshInstance3D" parent="Decor/Build" unique_id=867792626]
+material_override = ExtResource("67_ujf0b")
 cast_shadow = 0
-mesh = ExtResource("64_wbh02")
+mesh = ExtResource("68_sexof")
 
-[node name="cream_31" type="MeshInstance3D" parent="Decor/Build" unique_id=126427907]
-material_override = ExtResource("65_cf3tu")
+[node name="cream_32" type="MeshInstance3D" parent="Decor/Build" unique_id=1268965790]
+material_override = ExtResource("69_yisdo")
 cast_shadow = 0
-mesh = ExtResource("66_2n8j4")
+mesh = ExtResource("70_84g06")
 
-[node name="wood_32" type="MeshInstance3D" parent="Decor/Build" unique_id=846534641]
-material_override = ExtResource("67_54jta")
+[node name="wood_33" type="MeshInstance3D" parent="Decor/Build" unique_id=807910841]
+material_override = ExtResource("71_4u5ty")
 cast_shadow = 0
-mesh = ExtResource("68_kuduy")
+mesh = ExtResource("72_f8f36")
 
-[node name="red_33" type="MeshInstance3D" parent="Decor/Build" unique_id=1400613344]
-material_override = ExtResource("69_uupnf")
+[node name="red_34" type="MeshInstance3D" parent="Decor/Build" unique_id=1226188955]
+material_override = ExtResource("73_wp471")
 cast_shadow = 0
-mesh = ExtResource("70_22oak")
+mesh = ExtResource("74_13fv1")
 
-[node name="cliff_face_36" type="MeshInstance3D" parent="Decor/Build" unique_id=1930463072]
-material_override = ExtResource("71_m83q2")
+[node name="paper_46" type="MeshInstance3D" parent="Decor/Build" unique_id=381688426]
+material_override = ExtResource("75_p7aaw")
 cast_shadow = 0
-mesh = ExtResource("72_ed7t8")
+mesh = ExtResource("76_oje8c")
 
-[node name="Solid" type="Node3D" parent="Decor" unique_id=1521043079 groups=["decor_solid"]]
+[node name="Solid" type="Node3D" parent="Decor" unique_id=950201976 groups=["decor_solid"]]
 
-[node name="Solid_0" type="StaticBody3D" parent="Decor/Solid" unique_id=692503925]
+[node name="Solid_0" type="StaticBody3D" parent="Decor/Solid" unique_id=807513943]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -32, 12.45, -15.679999)
 
-[node name="@CollisionShape3D@109" type="CollisionShape3D" parent="Decor/Solid/Solid_0" unique_id=1005437586]
-shape = SubResource("BoxShape3D_qd8g7")
+[node name="@CollisionShape3D@109" type="CollisionShape3D" parent="Decor/Solid/Solid_0" unique_id=2118966557]
+shape = SubResource("BoxShape3D_1qjxj")
 
-[node name="Solid_1" type="StaticBody3D" parent="Decor/Solid" unique_id=1997880146]
+[node name="Solid_1" type="StaticBody3D" parent="Decor/Solid" unique_id=1364675207]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 1, 12.45, -15.679999)
 
-[node name="@CollisionShape3D@110" type="CollisionShape3D" parent="Decor/Solid/Solid_1" unique_id=1239477984]
-shape = SubResource("BoxShape3D_7h4np")
+[node name="@CollisionShape3D@110" type="CollisionShape3D" parent="Decor/Solid/Solid_1" unique_id=1861908488]
+shape = SubResource("BoxShape3D_ll3oh")
 
-[node name="Solid_2" type="StaticBody3D" parent="Decor/Solid" unique_id=839963407]
+[node name="Solid_2" type="StaticBody3D" parent="Decor/Solid" unique_id=2054361326]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 12.45, -15.679999)
 
-[node name="@CollisionShape3D@111" type="CollisionShape3D" parent="Decor/Solid/Solid_2" unique_id=1964050047]
-shape = SubResource("BoxShape3D_wga2v")
+[node name="@CollisionShape3D@111" type="CollisionShape3D" parent="Decor/Solid/Solid_2" unique_id=442241990]
+shape = SubResource("BoxShape3D_rfycy")
 
-[node name="Solid_3" type="StaticBody3D" parent="Decor/Solid" unique_id=59175584]
+[node name="Solid_3" type="StaticBody3D" parent="Decor/Solid" unique_id=2125379335]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -22, 10.45, 15.679999)
 
-[node name="@CollisionShape3D@113" type="CollisionShape3D" parent="Decor/Solid/Solid_3" unique_id=287681798]
-shape = SubResource("BoxShape3D_kf76l")
+[node name="@CollisionShape3D@113" type="CollisionShape3D" parent="Decor/Solid/Solid_3" unique_id=639134949]
+shape = SubResource("BoxShape3D_hitoq")
 
-[node name="Solid_4" type="StaticBody3D" parent="Decor/Solid" unique_id=338504602]
+[node name="Solid_4" type="StaticBody3D" parent="Decor/Solid" unique_id=328349984]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 16, 10.45, 15.679999)
 
-[node name="@CollisionShape3D@114" type="CollisionShape3D" parent="Decor/Solid/Solid_4" unique_id=538889268]
-shape = SubResource("BoxShape3D_cvtsi")
+[node name="@CollisionShape3D@114" type="CollisionShape3D" parent="Decor/Solid/Solid_4" unique_id=1721652561]
+shape = SubResource("BoxShape3D_ukhpu")
 
-[node name="Solid_5" type="StaticBody3D" parent="Decor/Solid" unique_id=898769040]
+[node name="Solid_5" type="StaticBody3D" parent="Decor/Solid" unique_id=1985137829]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 42, 10.45, 15.679999)
 
-[node name="@CollisionShape3D@115" type="CollisionShape3D" parent="Decor/Solid/Solid_5" unique_id=1565428311]
-shape = SubResource("BoxShape3D_oe02i")
+[node name="@CollisionShape3D@115" type="CollisionShape3D" parent="Decor/Solid/Solid_5" unique_id=1228213151]
+shape = SubResource("BoxShape3D_ppqr7")
 
-[node name="iron_18" type="MeshInstance3D" parent="Decor/Solid" unique_id=1178555394]
-material_override = ExtResource("48_lb4bd")
+[node name="Solid_6" type="StaticBody3D" parent="Decor/Solid" unique_id=217966769]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 5.2, -15.2)
+
+[node name="@CollisionShape3D@129" type="CollisionShape3D" parent="Decor/Solid/Solid_6" unique_id=623904294]
+shape = SubResource("BoxShape3D_8rw7u")
+
+[node name="Solid_7" type="StaticBody3D" parent="Decor/Solid" unique_id=699335841]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 5.2, 15.2)
+
+[node name="@CollisionShape3D@130" type="CollisionShape3D" parent="Decor/Solid/Solid_7" unique_id=678601173]
+shape = SubResource("BoxShape3D_75ayw")
+
+[node name="Solid_8" type="StaticBody3D" parent="Decor/Solid" unique_id=1349837189]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -40, 28.45, -41.82)
+
+[node name="@CollisionShape3D@135" type="CollisionShape3D" parent="Decor/Solid/Solid_8" unique_id=190658213]
+shape = SubResource("BoxShape3D_3015u")
+
+[node name="Solid_9" type="StaticBody3D" parent="Decor/Solid" unique_id=1098293331]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 28.45, -41.82)
+
+[node name="@CollisionShape3D@136" type="CollisionShape3D" parent="Decor/Solid/Solid_9" unique_id=1688740947]
+shape = SubResource("BoxShape3D_gxuff")
+
+[node name="Solid_10" type="StaticBody3D" parent="Decor/Solid" unique_id=1366153048]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 60, 28.45, -41.82)
+
+[node name="@CollisionShape3D@137" type="CollisionShape3D" parent="Decor/Solid/Solid_10" unique_id=1977763281]
+shape = SubResource("BoxShape3D_1f2sd")
+
+[node name="Solid_11" type="StaticBody3D" parent="Decor/Solid" unique_id=378827571]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -60, 20.45, 41.82)
+
+[node name="@CollisionShape3D@138" type="CollisionShape3D" parent="Decor/Solid/Solid_11" unique_id=1717215228]
+shape = SubResource("BoxShape3D_jraxx")
+
+[node name="Solid_12" type="StaticBody3D" parent="Decor/Solid" unique_id=1619267919]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -10, 20.45, 41.82)
+
+[node name="@CollisionShape3D@139" type="CollisionShape3D" parent="Decor/Solid/Solid_12" unique_id=1716364672]
+shape = SubResource("BoxShape3D_xn1ep")
+
+[node name="Solid_13" type="StaticBody3D" parent="Decor/Solid" unique_id=1293339812]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 40, 20.45, 41.82)
+
+[node name="@CollisionShape3D@140" type="CollisionShape3D" parent="Decor/Solid/Solid_13" unique_id=803671809]
+shape = SubResource("BoxShape3D_2oixy")
+
+[node name="Solid_14" type="StaticBody3D" parent="Decor/Solid" unique_id=859071481]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 46.5, 10.75, 15.55)
+
+[node name="@CollisionShape3D@147" type="CollisionShape3D" parent="Decor/Solid/Solid_14" unique_id=829845534]
+shape = SubResource("BoxShape3D_qlanm")
+
+[node name="Solid_15" type="StaticBody3D" parent="Decor/Solid" unique_id=881375766]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 12.9, -15.6)
+
+[node name="@CollisionShape3D@148" type="CollisionShape3D" parent="Decor/Solid/Solid_15" unique_id=344660153]
+shape = SubResource("BoxShape3D_86l3j")
+
+[node name="Words_Chocolate" type="Label3D" parent="Decor/Solid" unique_id=1323905523]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -2, 13.72, -15.34)
+pixel_size = 0.003125
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(1, 0.95, 0.8, 1)
+text = "Chocolate"
+font = ExtResource("77_w80s8")
+outline_size = 0
+
+[node name="Solid_17" type="StaticBody3D" parent="Decor/Solid" unique_id=1816191828]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 22, 10.95, 15.6)
+
+[node name="@CollisionShape3D@149" type="CollisionShape3D" parent="Decor/Solid/Solid_17" unique_id=1353857574]
+shape = SubResource("BoxShape3D_rdjdy")
+
+[node name="Solid_18" type="StaticBody3D" parent="Decor/Solid" unique_id=281753266]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -58.5, 0.33, -15.2)
+
+[node name="@CollisionShape3D@150" type="CollisionShape3D" parent="Decor/Solid/Solid_18" unique_id=343979740]
+shape = SubResource("BoxShape3D_gq0wr")
+
+[node name="iron_19" type="MeshInstance3D" parent="Decor/Solid" unique_id=1879058004]
+material_override = ExtResource("52_n1rdp")
 cast_shadow = 0
-mesh = ExtResource("73_n17cq")
+mesh = ExtResource("78_jh7tp")
 
-[node name="wood_19" type="MeshInstance3D" parent="Decor/Solid" unique_id=377308475]
-material_override = ExtResource("67_54jta")
+[node name="wood_20" type="MeshInstance3D" parent="Decor/Solid" unique_id=1560281602]
+material_override = ExtResource("71_4u5ty")
 cast_shadow = 0
-mesh = ExtResource("74_htap0")
+mesh = ExtResource("79_0ue6u")
 
-[node name="Fixtures" type="Node3D" parent="Decor" unique_id=844220499 groups=["decor_fixtures"]]
+[node name="brick_38" type="MeshInstance3D" parent="Decor/Solid" unique_id=52126836]
+material_override = ExtResource("10_010lh")
+cast_shadow = 0
+mesh = ExtResource("80_ie63o")
 
-[node name="Words_Nimbus" type="Label3D" parent="Decor/Fixtures" unique_id=1330489780]
+[node name="stone_39" type="MeshInstance3D" parent="Decor/Solid" unique_id=263651756]
+material_override = ExtResource("14_kstsx")
+cast_shadow = 0
+mesh = ExtResource("81_map4x")
+
+[node name="brick_dark_40" type="MeshInstance3D" parent="Decor/Solid" unique_id=1848263588]
+material_override = ExtResource("55_jwu75")
+cast_shadow = 0
+mesh = ExtResource("82_ogxu6")
+
+[node name="red_61" type="MeshInstance3D" parent="Decor/Solid" unique_id=1449143525]
+material_override = ExtResource("73_wp471")
+cast_shadow = 0
+mesh = ExtResource("83_3v4kh")
+
+[node name="black_62" type="MeshInstance3D" parent="Decor/Solid" unique_id=1006636404]
+material_override = ExtResource("50_3jfgr")
+cast_shadow = 0
+mesh = ExtResource("84_c51wd")
+
+[node name="enamel_red_63" type="MeshInstance3D" parent="Decor/Solid" unique_id=1783758366]
+material_override = ExtResource("85_7r6gp")
+cast_shadow = 0
+mesh = ExtResource("86_vvwah")
+
+[node name="enamel_green_65" type="MeshInstance3D" parent="Decor/Solid" unique_id=1963102901]
+material_override = ExtResource("87_7slqf")
+cast_shadow = 0
+mesh = ExtResource("88_7xrgx")
+
+[node name="dark_metal_66" type="MeshInstance3D" parent="Decor/Solid" unique_id=1707566569]
+material_override = ExtResource("28_wbh02")
+cast_shadow = 0
+mesh = ExtResource("89_wkg4y")
+
+[node name="sleeper_67" type="MeshInstance3D" parent="Decor/Solid" unique_id=1610706281]
+material_override = ExtResource("90_ud5a8")
+cast_shadow = 0
+mesh = ExtResource("91_3mki0")
+
+[node name="Fixtures" type="Node3D" parent="Decor" unique_id=2079369301 groups=["decor_fixtures"]]
+
+[node name="Words_Nimbus" type="Label3D" parent="Decor/Fixtures" unique_id=1582078671]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 1.48, -11.981999)
 shaded = true
 double_sided = false
 texture_filter = 0
 modulate = Color(0.95, 0.9, 0.76, 1)
 text = "Nimbus"
-font = ExtResource("21_1wsup")
+font = ExtResource("22_bhp6t")
 outline_size = 0
 
-[node name="Words_The_Cloud_Line" type="Label3D" parent="Decor/Fixtures" unique_id=602386347]
+[node name="Words_The_Cloud_Line" type="Label3D" parent="Decor/Fixtures" unique_id=2111840106]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -6, 1.48, -11.981999)
 shaded = true
 double_sided = false
 texture_filter = 0
 modulate = Color(0.95, 0.9, 0.76, 1)
 text = "The Cloud Line"
-font = ExtResource("21_1wsup")
+font = ExtResource("22_bhp6t")
 outline_size = 0
 
-[node name="Words_Cirrus" type="Label3D" parent="Decor/Fixtures" unique_id=2018930210]
+[node name="Words_Cirrus" type="Label3D" parent="Decor/Fixtures" unique_id=1613161941]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 10, 1.48, -11.981999)
 shaded = true
 double_sided = false
 texture_filter = 0
 modulate = Color(0.95, 0.9, 0.76, 1)
 text = "Cirrus"
-font = ExtResource("21_1wsup")
+font = ExtResource("22_bhp6t")
 outline_size = 0
 
-[node name="@Label3D@103" type="Label3D" parent="Decor/Fixtures" unique_id=1535622921]
+[node name="@Label3D@103" type="Label3D" parent="Decor/Fixtures" unique_id=1820664446]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -20, 1.48, 11.981999)
 shaded = true
 double_sided = false
 texture_filter = 0
 modulate = Color(0.95, 0.9, 0.76, 1)
 text = "Nimbus"
-font = ExtResource("21_1wsup")
+font = ExtResource("22_bhp6t")
 outline_size = 0
 
-[node name="@Label3D@105" type="Label3D" parent="Decor/Fixtures" unique_id=1737935131]
+[node name="@Label3D@105" type="Label3D" parent="Decor/Fixtures" unique_id=1611479432]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 8, 1.48, 11.981999)
 shaded = true
 double_sided = false
 texture_filter = 0
 modulate = Color(0.95, 0.9, 0.76, 1)
 text = "The Cloud Line"
-font = ExtResource("21_1wsup")
+font = ExtResource("22_bhp6t")
 outline_size = 0
 
-[node name="@Label3D@107" type="Label3D" parent="Decor/Fixtures" unique_id=2012588079]
+[node name="@Label3D@107" type="Label3D" parent="Decor/Fixtures" unique_id=508468752]
 transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 36, 1.48, 11.981999)
 shaded = true
 double_sided = false
 texture_filter = 0
 modulate = Color(0.95, 0.9, 0.76, 1)
 text = "Cirrus"
-font = ExtResource("21_1wsup")
+font = ExtResource("22_bhp6t")
 outline_size = 0
 
-[node name="Words_Departures" type="Label3D" parent="Decor/Fixtures" unique_id=1800519382]
+[node name="Words_Departures" type="Label3D" parent="Decor/Fixtures" unique_id=197492192]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -25.75, 2.8799999, 6.2)
 pixel_size = 0.004375
 shaded = true
@@ -1460,183 +1835,429 @@ double_sided = false
 texture_filter = 0
 modulate = Color(0.95, 0.9, 0.76, 1)
 text = "Departures"
-font = ExtResource("19_uqd4t")
+font = ExtResource("20_bifrx")
 outline_size = 0
 
-[node name="Words_10_14__Cumulus_____On_time" type="Label3D" parent="Decor/Fixtures" unique_id=541635137]
+[node name="Words_10_14__Cumulus_____On_time" type="Label3D" parent="Decor/Fixtures" unique_id=2062185862]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -25.78, 2.52, 6.2)
 pixel_size = 0.0053125
 double_sided = false
 texture_filter = 0
 modulate = Color(1.6, 1.12, 0.32000002, 1)
 text = "10:14  Cumulus     On time"
-font = ExtResource("75_30qm1")
+font = ExtResource("25_xvar3")
 outline_size = 0
 
-[node name="Words_10_22__Stratus_____Delayed" type="Label3D" parent="Decor/Fixtures" unique_id=981366598]
+[node name="Words_10_22__Stratus_____Delayed" type="Label3D" parent="Decor/Fixtures" unique_id=1988057877]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -25.78, 2.24, 6.2)
 pixel_size = 0.0053125
 double_sided = false
 texture_filter = 0
 modulate = Color(1.6, 1.12, 0.32000002, 1)
 text = "10:22  Stratus     Delayed"
-font = ExtResource("75_30qm1")
+font = ExtResource("25_xvar3")
 outline_size = 0
 
-[node name="Words_10_40__Cirrus______Boarding" type="Label3D" parent="Decor/Fixtures" unique_id=347556075]
+[node name="Words_10_40__Cirrus______Boarding" type="Label3D" parent="Decor/Fixtures" unique_id=811003000]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -25.78, 1.9599999, 6.2)
 pixel_size = 0.0053125
 double_sided = false
 texture_filter = 0
 modulate = Color(1.6, 1.12, 0.32000002, 1)
 text = "10:40  Cirrus      Boarding"
-font = ExtResource("75_30qm1")
+font = ExtResource("25_xvar3")
 outline_size = 0
 
-[node name="Words_--_--__Nowhere_____Cancelled" type="Label3D" parent="Decor/Fixtures" unique_id=1637634636]
+[node name="Words_--_--__Nowhere_____Cancelled" type="Label3D" parent="Decor/Fixtures" unique_id=155068739]
 transform = Transform3D(0, 0, 1, 0, 1, 0, -1, 0, 0, -25.78, 1.68, 6.2)
 pixel_size = 0.0053125
 double_sided = false
 texture_filter = 0
 modulate = Color(1.6, 1.12, 0.32000002, 1)
 text = "--:--  Nowhere     Cancelled"
-font = ExtResource("75_30qm1")
+font = ExtResource("25_xvar3")
 outline_size = 0
 
-[node name="dark_metal_6" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=75865359]
-material_override = ExtResource("24_dya3g")
+[node name="dark_metal_6" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=1958791222]
+material_override = ExtResource("28_wbh02")
 cast_shadow = 0
-mesh = ExtResource("76_mexb3")
+mesh = ExtResource("92_qd8g7")
 
-[node name="lamp_7" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=1658319149]
-material_override = ExtResource("77_4f1qj")
+[node name="lamp_7" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=1279209249]
+material_override = ExtResource("93_7h4np")
 cast_shadow = 0
-mesh = ExtResource("78_1bph2")
+mesh = ExtResource("94_wga2v")
 
-[node name="poster_peak_12" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=2095703307]
-material_override = ExtResource("79_85l21")
+[node name="poster_peak_13" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=1308503902]
+material_override = ExtResource("95_kf76l")
 cast_shadow = 0
-mesh = ExtResource("80_qogou")
+mesh = ExtResource("96_cvtsi")
 
-[node name="poster_viaduct_14" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=962001231]
-material_override = ExtResource("81_2ehj0")
+[node name="poster_viaduct_15" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=1993357580]
+material_override = ExtResource("97_oe02i")
 cast_shadow = 0
-mesh = ExtResource("82_1ajqp")
+mesh = ExtResource("98_ni4wh")
 
-[node name="poster_balloon_15" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=465944655]
-material_override = ExtResource("83_6b32s")
+[node name="poster_balloon_16" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=118907705]
+material_override = ExtResource("99_0h5rx")
 cast_shadow = 0
-mesh = ExtResource("84_73lcw")
+mesh = ExtResource("100_ypc21")
 
-[node name="iron_22" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=1267543671]
-material_override = ExtResource("48_lb4bd")
+[node name="iron_23" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=1860104535]
+material_override = ExtResource("52_n1rdp")
 cast_shadow = 0
-mesh = ExtResource("85_8na8g")
+mesh = ExtResource("101_vah31")
 
-[node name="signal_green_34" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=487177956]
-material_override = ExtResource("86_3jfgr")
+[node name="signal_green_35" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=2115392025]
+material_override = ExtResource("102_115ac")
 cast_shadow = 0
-mesh = ExtResource("87_irl8q")
+mesh = ExtResource("103_tnd0i")
 
-[node name="signal_red_35" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=1427175934]
-material_override = ExtResource("88_n1rdp")
+[node name="signal_red_36" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=2103470366]
+material_override = ExtResource("104_blqcv")
 cast_shadow = 0
-mesh = ExtResource("89_apiis")
+mesh = ExtResource("105_nir44")
 
-[node name="Detail" type="Node3D" parent="Decor" unique_id=1109368144 groups=["decor_detail"]]
-
-[node name="sleeper_0" type="MeshInstance3D" parent="Decor/Detail" unique_id=1354639480]
-material_override = ExtResource("90_ruikb")
+[node name="black_37" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=718568731]
+material_override = ExtResource("50_3jfgr")
 cast_shadow = 0
-mesh = ExtResource("91_jwu75")
+mesh = ExtResource("106_2uriv")
 
-[node name="Effects" type="Node3D" parent="Decor" unique_id=96896595 groups=["decor_effects"]]
-
-[node name="Far" type="Node3D" parent="Decor" unique_id=1611013787 groups=["decor_far"]]
-
-[node name="far_cliff_shade_37" type="MeshInstance3D" parent="Decor/Far" unique_id=1688311376]
-material_override = ExtResource("92_xatib")
+[node name="window_warm_64" type="MeshInstance3D" parent="Decor/Fixtures" unique_id=1223197340]
+material_override = ExtResource("67_ujf0b")
 cast_shadow = 0
-mesh = ExtResource("93_dru7o")
+mesh = ExtResource("107_j7n1v")
 
-[node name="far_cliff_lit_38" type="MeshInstance3D" parent="Decor/Far" unique_id=749821692]
-material_override = ExtResource("94_7agey")
+[node name="Detail" type="Node3D" parent="Decor" unique_id=141083645 groups=["decor_detail"]]
+
+[node name="Words_FIRE" type="Label3D" parent="Decor/Detail" unique_id=639702546]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -28, 13.5, -15.945)
+pixel_size = 0.005625
+shaded = true
+double_sided = false
+texture_filter = 0
+text = "FIRE"
+font = ExtResource("20_bifrx")
+outline_size = 0
+
+[node name="@Label3D@132" type="Label3D" parent="Decor/Detail" unique_id=115031930]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -16, 11.5, 15.945)
+pixel_size = 0.005625
+shaded = true
+double_sided = false
+texture_filter = 0
+text = "FIRE"
+font = ExtResource("20_bifrx")
+outline_size = 0
+
+[node name="Words_Summit__↑" type="Label3D" parent="Decor/Detail" unique_id=958762455]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -51.55, 30.1, -25.97)
+pixel_size = 0.003125
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(0.2, 0.1, 0.1, 1)
+text = "Summit  ↑"
+font = ExtResource("22_bhp6t")
+outline_size = 0
+
+[node name="@Label3D@141" type="Label3D" parent="Decor/Detail" unique_id=880913321]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -51.55, 30.1, -26.03)
+pixel_size = 0.003125
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(0.2, 0.1, 0.1, 1)
+text = "Summit  ↑"
+font = ExtResource("22_bhp6t")
+outline_size = 0
+
+[node name="Words_Station__↓" type="Label3D" parent="Decor/Detail" unique_id=164348810]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -52.45, 29.75, -25.97)
+pixel_size = 0.003125
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(0.2, 0.1, 0.1, 1)
+text = "Station  ↓"
+font = ExtResource("22_bhp6t")
+outline_size = 0
+
+[node name="@Label3D@142" type="Label3D" parent="Decor/Detail" unique_id=1103734404]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -52.45, 29.75, -26.03)
+pixel_size = 0.003125
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(0.2, 0.1, 0.1, 1)
+text = "Station  ↓"
+font = ExtResource("22_bhp6t")
+outline_size = 0
+
+[node name="@Label3D@143" type="Label3D" parent="Decor/Detail" unique_id=1015462661]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 52.45, 22.1, 26.03)
+pixel_size = 0.003125
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(0.2, 0.1, 0.1, 1)
+text = "Summit  ↑"
+font = ExtResource("22_bhp6t")
+outline_size = 0
+
+[node name="@Label3D@144" type="Label3D" parent="Decor/Detail" unique_id=1549729572]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 52.45, 22.1, 25.97)
+pixel_size = 0.003125
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(0.2, 0.1, 0.1, 1)
+text = "Summit  ↑"
+font = ExtResource("22_bhp6t")
+outline_size = 0
+
+[node name="@Label3D@145" type="Label3D" parent="Decor/Detail" unique_id=1262547903]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 51.55, 21.75, 26.03)
+pixel_size = 0.003125
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(0.2, 0.1, 0.1, 1)
+text = "Station  ↓"
+font = ExtResource("22_bhp6t")
+outline_size = 0
+
+[node name="@Label3D@146" type="Label3D" parent="Decor/Detail" unique_id=253590962]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 51.55, 21.75, 25.97)
+pixel_size = 0.003125
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(0.2, 0.1, 0.1, 1)
+text = "Station  ↓"
+font = ExtResource("22_bhp6t")
+outline_size = 0
+
+[node name="Grass" type="MeshInstance3D" parent="Decor/Detail" unique_id=50713194]
+material_override = ExtResource("108_g348h")
 cast_shadow = 0
-mesh = ExtResource("95_hwf5s")
+mesh = ExtResource("109_jonaa")
 
-[node name="far_cliff_mid_39" type="MeshInstance3D" parent="Decor/Far" unique_id=2114133001]
-material_override = ExtResource("96_7r03n")
+[node name="Weeds" type="MeshInstance3D" parent="Decor/Detail" unique_id=267664553]
+material_override = ExtResource("108_g348h")
 cast_shadow = 0
-mesh = ExtResource("97_ka0gl")
+mesh = ExtResource("110_6euhd")
 
-[node name="far_scree_shade_40" type="MeshInstance3D" parent="Decor/Far" unique_id=53715589]
-material_override = ExtResource("98_ojcn8")
+[node name="Words_Nimbus_Cocoa" type="Label3D" parent="Decor/Detail" unique_id=174489054]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -16, 13.7, -15.92)
+pixel_size = 0.006875
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(1, 0.9, 0.7, 1)
+text = "Nimbus Cocoa"
+font = ExtResource("77_w80s8")
+outline_size = 0
+
+[node name="Words_Summit_Mints" type="Label3D" parent="Decor/Detail" unique_id=79977177]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 9, 13.7, -15.92)
+pixel_size = 0.006875
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(0.2, 0.12, 0.05, 1)
+text = "Summit Mints"
+font = ExtResource("77_w80s8")
+outline_size = 0
+
+[node name="Words_Cirrus_Soap" type="Label3D" parent="Decor/Detail" unique_id=741086179]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, -4, 11.7, 15.92)
+pixel_size = 0.006875
+shaded = true
+double_sided = false
+texture_filter = 0
+text = "Cirrus Soap"
+font = ExtResource("77_w80s8")
+outline_size = 0
+
+[node name="Words_Drink_Stratus_Tonic" type="Label3D" parent="Decor/Detail" unique_id=984743164]
+transform = Transform3D(-1, 0, 0, 0, 1, 0, 0, 0, -1, 44, 11.7, 15.92)
+pixel_size = 0.006875
+shaded = true
+double_sided = false
+texture_filter = 0
+modulate = Color(1, 0.92, 0.6, 1)
+text = "Drink Stratus Tonic"
+font = ExtResource("77_w80s8")
+outline_size = 0
+
+[node name="sleeper_0" type="MeshInstance3D" parent="Decor/Detail" unique_id=2065624764]
+material_override = ExtResource("90_ud5a8")
 cast_shadow = 0
-mesh = ExtResource("99_vrhkr")
+mesh = ExtResource("111_b4bm5")
 
-[node name="far_scree_lit_41" type="MeshInstance3D" parent="Decor/Far" unique_id=281828281]
-material_override = ExtResource("100_bb6m0")
+[node name="white_41" type="MeshInstance3D" parent="Decor/Detail" unique_id=818108665]
+material_override = ExtResource("44_qogou")
 cast_shadow = 0
-mesh = ExtResource("101_dche7")
+mesh = ExtResource("112_1l1yx")
 
-[node name="far_scree_mid_42" type="MeshInstance3D" parent="Decor/Far" unique_id=1787448135]
-material_override = ExtResource("102_7dyof")
+[node name="black_42" type="MeshInstance3D" parent="Decor/Detail" unique_id=279891551]
+material_override = ExtResource("50_3jfgr")
 cast_shadow = 0
-mesh = ExtResource("103_ujf0b")
+mesh = ExtResource("113_ru7n3")
 
-[node name="far_cloud_43" type="MeshInstance3D" parent="Decor/Far" unique_id=203947698]
-material_override = ExtResource("104_sexof")
+[node name="signal_red_43" type="MeshInstance3D" parent="Decor/Detail" unique_id=2042837258]
+material_override = ExtResource("104_blqcv")
 cast_shadow = 0
-mesh = ExtResource("105_yisdo")
+mesh = ExtResource("114_nolpb")
 
-[node name="far_snow_lit_44" type="MeshInstance3D" parent="Decor/Far" unique_id=1743667881]
-material_override = ExtResource("106_84g06")
+[node name="signal_green_44" type="MeshInstance3D" parent="Decor/Detail" unique_id=1908932806]
+material_override = ExtResource("102_115ac")
 cast_shadow = 0
-mesh = ExtResource("107_4u5ty")
+mesh = ExtResource("115_gegjd")
 
-[node name="far_snow_shade_45" type="MeshInstance3D" parent="Decor/Far" unique_id=1170865050]
-material_override = ExtResource("108_f8f36")
+[node name="red_45" type="MeshInstance3D" parent="Decor/Detail" unique_id=1344292588]
+material_override = ExtResource("73_wp471")
 cast_shadow = 0
-mesh = ExtResource("109_wp471")
+mesh = ExtResource("116_ex4sa")
 
-[node name="far_snow_mid_46" type="MeshInstance3D" parent="Decor/Far" unique_id=929618521]
-material_override = ExtResource("110_13fv1")
+[node name="iron_47" type="MeshInstance3D" parent="Decor/Detail" unique_id=745411102]
+material_override = ExtResource("52_n1rdp")
 cast_shadow = 0
-mesh = ExtResource("111_p7aaw")
+mesh = ExtResource("117_agj3t")
 
-[node name="far_stone_47" type="MeshInstance3D" parent="Decor/Far" unique_id=1266114784]
-material_override = ExtResource("112_oje8c")
+[node name="maroon_48" type="MeshInstance3D" parent="Decor/Detail" unique_id=1614328666]
+material_override = ExtResource("42_1bph2")
 cast_shadow = 0
-mesh = ExtResource("113_w80s8")
+mesh = ExtResource("118_71i6e")
 
-[node name="far_maroon_48" type="MeshInstance3D" parent="Decor/Far" unique_id=1337796112]
-material_override = ExtResource("114_jh7tp")
+[node name="brass_49" type="MeshInstance3D" parent="Decor/Detail" unique_id=2144940360]
+material_override = ExtResource("36_ed7t8")
 cast_shadow = 0
-mesh = ExtResource("115_0ue6u")
+mesh = ExtResource("119_mc1er")
 
-[node name="far_cream_49" type="MeshInstance3D" parent="Decor/Far" unique_id=1430461885]
-material_override = ExtResource("116_ie63o")
+[node name="wood_50" type="MeshInstance3D" parent="Decor/Detail" unique_id=546755538]
+material_override = ExtResource("71_4u5ty")
 cast_shadow = 0
-mesh = ExtResource("117_map4x")
+mesh = ExtResource("120_3pcbt")
 
-[node name="Tunnel" type="Node3D" parent="." unique_id=306440598]
+[node name="cream_51" type="MeshInstance3D" parent="Decor/Detail" unique_id=918587997]
+material_override = ExtResource("69_yisdo")
+cast_shadow = 0
+mesh = ExtResource("121_qe0ck")
+
+[node name="boulder_52" type="MeshInstance3D" parent="Decor/Detail" unique_id=648966698]
+material_override = ExtResource("122_0c16g")
+cast_shadow = 0
+mesh = ExtResource("123_y6udy")
+
+[node name="paper_53" type="MeshInstance3D" parent="Decor/Detail" unique_id=1526173150]
+material_override = ExtResource("75_p7aaw")
+cast_shadow = 0
+mesh = ExtResource("124_w2kn2")
+
+[node name="dark_metal_56" type="MeshInstance3D" parent="Decor/Detail" unique_id=34335333]
+material_override = ExtResource("28_wbh02")
+cast_shadow = 0
+mesh = ExtResource("125_yju5b")
+
+[node name="enamel_red_57" type="MeshInstance3D" parent="Decor/Detail" unique_id=251288559]
+material_override = ExtResource("85_7r6gp")
+cast_shadow = 0
+mesh = ExtResource("126_nmphw")
+
+[node name="enamel_yellow_58" type="MeshInstance3D" parent="Decor/Detail" unique_id=2001790940]
+material_override = ExtResource("127_sqa84")
+cast_shadow = 0
+mesh = ExtResource("128_l5wp7")
+
+[node name="enamel_blue_59" type="MeshInstance3D" parent="Decor/Detail" unique_id=1661866674]
+material_override = ExtResource("129_vip45")
+cast_shadow = 0
+mesh = ExtResource("130_ep528")
+
+[node name="enamel_green_60" type="MeshInstance3D" parent="Decor/Detail" unique_id=1777988233]
+material_override = ExtResource("87_7slqf")
+cast_shadow = 0
+mesh = ExtResource("131_nv1i1")
+
+[node name="snow_drift_68" type="MeshInstance3D" parent="Decor/Detail" unique_id=811150045]
+material_override = ExtResource("132_7h3bh")
+cast_shadow = 0
+mesh = ExtResource("133_265uc")
+
+[node name="Effects" type="Node3D" parent="Decor" unique_id=385455335 groups=["decor_effects"]]
+
+[node name="pool_8" type="MeshInstance3D" parent="Decor/Effects" unique_id=489075137]
+material_override = ExtResource("134_ej5fb")
+cast_shadow = 0
+mesh = ExtResource("135_5386x")
+
+[node name="puddle_54" type="MeshInstance3D" parent="Decor/Effects" unique_id=645331233]
+material_override = ExtResource("136_n2bpr")
+cast_shadow = 0
+mesh = ExtResource("137_fpnxb")
+
+[node name="oil_55" type="MeshInstance3D" parent="Decor/Effects" unique_id=297595345]
+material_override = ExtResource("138_2eqww")
+cast_shadow = 0
+mesh = ExtResource("139_dkkct")
+
+[node name="sunbeam_69" type="MeshInstance3D" parent="Decor/Effects" unique_id=872689861]
+material_override = ExtResource("140_ugyvt")
+cast_shadow = 0
+mesh = ExtResource("141_pghd1")
+
+[node name="Far" type="Node3D" parent="Decor" unique_id=1956180885 groups=["decor_far"]]
+
+[node name="Range" type="MeshInstance3D" parent="Decor/Far" unique_id=1086844601]
+material_override = ExtResource("142_foj52")
+cast_shadow = 0
+mesh = ExtResource("143_p628s")
+
+[node name="CloudSea" type="MeshInstance3D" parent="Decor/Far" unique_id=1055697876]
+material_override = ExtResource("144_7tiya")
+cast_shadow = 0
+mesh = ExtResource("145_wvq34")
+
+[node name="CloudDeck" type="MeshInstance3D" parent="Decor/Far" unique_id=737153370]
+material_override = ExtResource("146_qgwe2")
+cast_shadow = 0
+mesh = ExtResource("147_di1ad")
+
+[node name="far_stone_70" type="MeshInstance3D" parent="Decor/Far" unique_id=393583282]
+material_override = ExtResource("148_mbpfd")
+cast_shadow = 0
+mesh = ExtResource("149_mnnby")
+
+[node name="far_maroon_71" type="MeshInstance3D" parent="Decor/Far" unique_id=1129929319]
+material_override = ExtResource("150_0pt22")
+cast_shadow = 0
+mesh = ExtResource("151_el20y")
+
+[node name="far_cream_72" type="MeshInstance3D" parent="Decor/Far" unique_id=879312557]
+material_override = ExtResource("152_g26ur")
+cast_shadow = 0
+mesh = ExtResource("153_6an7n")
+
+[node name="Tunnel" type="Node3D" parent="." unique_id=202107293]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, -30, 1.5, 0)
-script = ExtResource("118_ogxu6")
+script = ExtResource("154_mjdjq")
 size = Vector3(8, 3, 5)
 ambient = 0.35
 
-[node name="Player" type="CharacterBody3D" parent="." unique_id=267757309 instance=ExtResource("119_3v4kh")]
+[node name="Player" type="CharacterBody3D" parent="." unique_id=804334208 instance=ExtResource("155_1nqn4")]
 transform = Transform3D(-4.371139e-08, 0, 1, 0, 1, 0, -1, 0, -4.371139e-08, 30, 28, -30)
-script = ExtResource("120_c51wd")
+script = ExtResource("156_1k7au")
 
-[node name="GameUI" type="Node" parent="." unique_id=2038430704]
-script = ExtResource("121_7r6gp")
+[node name="GameUI" type="Node" parent="." unique_id=1523663044]
+script = ExtResource("157_mxc34")
 
-[node name="RetroScreen" type="CanvasLayer" parent="." unique_id=929972634]
-script = ExtResource("122_vvwah")
+[node name="RetroScreen" type="CanvasLayer" parent="." unique_id=1439989993]
+script = ExtResource("158_2tn4b")
 
-[node name="DebugHUD" type="CanvasLayer" parent="." unique_id=2096356769]
-script = ExtResource("123_7slqf")
+[node name="DebugHUD" type="CanvasLayer" parent="." unique_id=907035331]
+script = ExtResource("159_2mv8k")
 
-[node name="TuningPanel" type="CanvasLayer" parent="." unique_id=1623925494]
-script = ExtResource("124_7xrgx")
+[node name="TuningPanel" type="CanvasLayer" parent="." unique_id=726402112]
+script = ExtResource("160_5oryb")

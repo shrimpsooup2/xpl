@@ -1,31 +1,33 @@
 extends RefCounted
 ## RIFT, dressed (GDD §9.3): Nimbus, the last station of the Cloud Line,
-## cut into a mountain above a sea of cloud, at dawn, waiting for the
-## first train.
+## cut into a mountain above a sea of cloud, on a cloudy dawn, waiting for
+## the first train.
 ##
-## The canyon is the station's cutting, its walls glazed tile (the
-## wall-ride tiles, as on every map) in bays between cream pilasters, banded
-## in the line's maroon and cream, lamps set flush along them still lit,
-## and the station's name in big lit letters across the north wall. Three
+## The canyon is the station's cutting, its walls dressed limestone
+## carrying the wall-ride band (the ride tiles' stripes, as on every map),
+## banded in the line's maroon and cream, lamps set flush along them still
+## lit, and the station's name in lit letters across the north wall. Three
 ## tracks run down the floor on ballast and up both end ramps, which are
 ## the inclines of a rack railway (a toothed rail between the running
 ## rails): the line climbs out of the cutting at each end to buffers at
-## the edge; far off it strides between the peaks on viaducts. The shelves are
-## galleries along the walls; the ramps up the walls are the passenger
-## ramps; the High Bridge and the Mid Bridge are iron footbridges, and the
-## station clock hangs under the high one over the island in the middle
-## (Meet me under the clock). The Arch is the station building across the
-## tracks, the middle one running through it (the shotgun waits in the
-## tunnel), the others ending at portals bricked up long ago, the
-## departures on its front. The colonnade is what's left of a train shed:
-## brick piers, iron arches, the glass gone. The Arch's crates are two
-## goods wagons; the ruins a stack of left luggage, the ticket kiosk and the
-## waiting room. The rims are the mountain's shoulders either side of the
-## cutting: turf, rock, old snow in the hollows, dry-stone walls, and a
-## signal box with its semaphore on each for the snipers. The sun is just
-## up in the east, straight down the cutting; the peaks all round stand
-## pink out of the cloud, their shadows blue. The gameplay blocks are
-## untouched, only dressed.
+## the edge; far off it crosses the notches in the mountains on viaducts.
+## The shelves are galleries along the walls, lanterns along them; the
+## ramps up the walls are the passenger ramps; the High Bridge and the Mid
+## Bridge are iron footbridges, and the station clock hangs under the high
+## one over the island in the middle (Meet me under the clock). The Arch
+## is the station building across the tracks, the middle one running
+## through it (the shotgun waits in the tunnel), the others ending at
+## portals bricked up long ago, the departures on its front. The colonnade
+## is what's left of a train shed: brick piers, iron arches, the glass
+## gone. The Arch's crates are two goods wagons; the ruins a stack of left
+## luggage, the ticket kiosk and the waiting room. The rims are the
+## mountain's shoulders either side of the cutting: turf and grass, rock,
+## old snow against the dry-stone walls, and a signal box with its
+## semaphore on each for the snipers; at their edges rocks on the brink
+## and a jagged cliff below. Small things all over. A ring of snowy
+## mountains stands round it all across the cloud, lower in the east where
+## the sun is just up, straight down the cutting, breaking through the
+## overcast. The gameplay blocks are untouched, only dressed.
 
 const DecoKit := preload("res://tools/deco_kit.gd")
 const Signs := preload("res://tools/sign_kit.gd")
@@ -50,7 +52,7 @@ const SOUTH := Rift.SOUTH
 ## The tracks' middles (z): 1 north, 2 through the station building, 3 south.
 const TRACKS := [-9.0, 0.0, 9.0]
 ## The sun's rotation: low in the east, a little south of it.
-const SUN := Vector3(-18, 70, 0)
+const SUN := Vector3(-22, 70, 0)
 ## Standard gauge, half of it.
 const GAUGE := 0.7175
 
@@ -70,41 +72,52 @@ static func dress(kit, d) -> void:
 	_train_shed(d)
 	_signal_boxes(d)
 	_shoulders(d)
+	_cliffs(d)
 	_ends(d)
-	_mountain(d)
+	_lanterns(d)
+	_hanging(d)
+	_odds(d)
+	_grass(d)
+	_details(d)
+	_range(d)
 	_cloud_sea(d)
+	_cloud_deck(d)
+	_sunbeams(d)
 	_viaducts(d)
 
 
 # --- Morning -----------------------------------------------------------------------------
 
-## Dawn: the sun just up in the east, low, looking straight down the
-## cutting; the sky deep blue overhead and pink and gold low down, the
-## cloud lit from above; blue in every shadow.
+## Dawn under a cloud deck: the overcast grey-lavender overhead, the sun
+## just up in the east shining through where it thins, gold round it and
+## along the deck's edge, and under the deck a band of clear dawn sky over
+## the sea of cloud. Soft light everywhere, the sun raking in from the east.
 static func _dawn(kit) -> void:
 	var e: Environment = kit.environment
 	var sky: ShaderMaterial = e.sky.sky_material
-	sky.set_shader_parameter(&"top_color", Color(0.10, 0.17, 0.40))
-	sky.set_shader_parameter(&"upper_color", Color(0.34, 0.40, 0.66))
-	sky.set_shader_parameter(&"horizon_color", Color(1.0, 0.70, 0.52))
-	sky.set_shader_parameter(&"ground_color", Color(0.94, 0.80, 0.74))
-	sky.set_shader_parameter(&"sun_color", Color(1.0, 0.84, 0.62))
-	sky.set_shader_parameter(&"sun_size", 0.04)
-	sky.set_shader_parameter(&"halo", 0.55)
+	sky.set_shader_parameter(&"top_color", Color(0.36, 0.38, 0.50))
+	sky.set_shader_parameter(&"upper_color", Color(0.56, 0.54, 0.64))
+	sky.set_shader_parameter(&"horizon_color", Color(1.0, 0.74, 0.54))
+	sky.set_shader_parameter(&"ground_color", Color(0.86, 0.78, 0.78))
+	sky.set_shader_parameter(&"sun_color", Color(1.0, 0.86, 0.66))
+	sky.set_shader_parameter(&"sun_size", 0.035)
+	sky.set_shader_parameter(&"halo", 0.9)
 	sky.set_shader_parameter(&"stars", 0.0)
-	e.ambient_light_color = Color(0.46, 0.52, 0.76)
-	e.ambient_light_energy = 0.55
-	e.fog_light_color = Color(0.86, 0.72, 0.72)
-	e.fog_density = 0.0018
+	sky.set_shader_parameter(&"cloud_map", load("res://assets/textures/rift/billows.png"))
+	sky.set_shader_parameter(&"clouds", 0.8)
+	e.ambient_light_color = Color(0.58, 0.58, 0.70)
+	e.ambient_light_energy = 0.66
+	e.fog_light_color = Color(0.64, 0.64, 0.72)
+	e.fog_density = 0.0013
 	e.fog_sky_affect = 0.0
 	e.glow_intensity = 0.6
 	e.glow_hdr_threshold = 1.0
 	e.glow_bloom = 0.0
 	var sun: DirectionalLight3D = kit.sun
 	sun.rotation_degrees = SUN
-	sun.light_color = Color(1.0, 0.74, 0.52)
-	sun.light_energy = 1.15
-	sun.light_specular = 0.25
+	sun.light_color = Color(1.0, 0.78, 0.56)
+	sun.light_energy = 0.85
+	sun.light_specular = 0.2
 
 
 # --- Materials --------------------------------------------------------------------------------
@@ -112,16 +125,16 @@ static func _dawn(kit) -> void:
 static func _materials(d) -> void:
 	d.reflection = load("res://assets/textures/rift/reflection_day.png")
 	# The gameplay blocks.
-	d.surface("trackbed", {"side": "rift/rock", "meters": 12.0, "top": "rift/ballast", "top_meters": 2.0,
+	d.surface("trackbed", {"side": "rift/rock", "meters": 6.0, "top": "rift/ballast", "top_meters": 1.0,
 			"gloss": 0.02, "grazing": 0.2, "roughness": 0.9})
-	d.surface("gallery", {"side": "ride_tiles", "meters": 2.0, "top": "rift/flags", "top_meters": 3.0, "top_tint": Color(0.74, 0.72, 0.68),
+	d.surface("gallery", {"side": "rift/ride_stone", "meters": 4.0, "top": "rift/flags", "top_meters": 3.0, "top_tint": Color(0.74, 0.72, 0.68),
 			"gloss": 0.2, "grazing": 0.5, "roughness": 0.35, "specular": 0.2})
-	# Tiles below, turf on top: one material, so a gloss between the two.
-	d.surface("wall", {"side": "ride_tiles", "meters": 2.0, "top": "rift/meadow", "top_meters": 12.0,
+	# Stone below, turf on top: one material, so a gloss between the two.
+	d.surface("wall", {"side": "rift/ride_stone", "meters": 4.0, "top": "rift/meadow", "top_meters": 8.0,
 			"gloss": 0.14, "grazing": 0.4, "roughness": 0.5, "specular": 0.15})
-	d.surface("overhang", {"side": "ride_tiles", "meters": 2.0, "top": "rift/flags", "top_meters": 3.0, "top_tint": Color(0.74, 0.72, 0.68),
+	d.surface("overhang", {"side": "rift/ride_stone", "meters": 4.0, "top": "rift/flags", "top_meters": 3.0, "top_tint": Color(0.74, 0.72, 0.68),
 			"bottom": "stack/ceiling", "bottom_meters": 3.0, "gloss": 0.35, "grazing": 0.75, "roughness": 0.15})
-	d.surface("incline", {"side": "rift/rock", "meters": 12.0, "top": "rift/ballast", "top_meters": 2.0,
+	d.surface("incline", {"side": "rift/rock", "meters": 6.0, "top": "rift/ballast", "top_meters": 1.0,
 			"gloss": 0.02, "grazing": 0.2, "roughness": 0.9})
 	d.surface("passage", {"side": "rift/flags", "meters": 3.0, "tint": Color(0.7, 0.68, 0.66), "top": "rift/flags", "top_meters": 3.0,
 			"top_tint": Color(0.74, 0.72, 0.68),
@@ -137,9 +150,8 @@ static func _materials(d) -> void:
 			"roughness": 0.7})
 	d.surface("drystone", {"side": "rift/scree", "meters": 4.0, "top": "rift/scree", "top_meters": 4.0, "top_tint": Color(0.9, 0.9, 0.92),
 			"gloss": 0.03, "grazing": 0.2, "roughness": 0.85})
-	d.surface("cliff_face", {"side": "rift/cliff", "meters": 16.0, "top": "rift/meadow", "top_meters": 24.0, "gloss": 0.04,
-			"grazing": 0.25, "roughness": 0.8, "uv": true})
-	d.surface("rockery", {"side": "rift/cliff", "meters": 8.0, "top": "rift/alpine", "top_meters": 8.0, "gloss": 0.04, "grazing": 0.25,
+
+	d.surface("rockery", {"side": "rift/cliff", "meters": 4.0, "top": "rift/alpine", "top_meters": 4.0, "gloss": 0.04, "grazing": 0.25,
 			"roughness": 0.8})
 	d.surface("wagon", {"side": "terrace/wood", "meters": 1.0, "tint": Color(0.62, 0.42, 0.34), "top": "terrace/wood", "top_meters": 1.0,
 			"top_tint": Color(0.45, 0.36, 0.3), "gloss": 0.05, "grazing": 0.3, "roughness": 0.7})
@@ -190,16 +202,29 @@ static func _materials(d) -> void:
 	for p: String in ["peak", "viaduct", "balloon"]:
 		d.shaded("poster_" + p, LIGHTBOX, {"picture": "rift/poster_%s.png" % p, "size": Vector2(1.2, 1.8), "energy": 0.85})
 	# Far off.
-	# The mountains' faces aren't lit (far off, flat), so each comes lit,
-	# half-lit and shaded, picked by how the face turns to the sun.
-	# The dawn on them: pink and gold where the sun's on them, blue in shade.
-	for k: Array in [["cliff", 24.0, Color(1.1, 0.84, 0.72), Color(0.74, 0.72, 0.84), Color(0.44, 0.50, 0.72)],
-			["scree", 20.0, Color(1.1, 0.84, 0.72), Color(0.74, 0.72, 0.84), Color(0.44, 0.50, 0.72)],
-			["snow", 48.0, Color(1.18, 0.9, 0.8), Color(0.86, 0.84, 0.94), Color(0.56, 0.64, 0.88)]]:
-		for i in 3:
-			d.shaded("far_%s_%s" % [k[0], ["lit", "mid", "shade"][i]], FAR, {"albedo_texture": "rift/%s.png" % k[0],
-					"meters_per_repeat": k[1], "tint": k[2 + i]})
-	d.shaded("far_cloud", FAR, {"albedo_texture": "rift/clouds.png", "meters_per_repeat": 160.0, "tint": Color(1.02, 0.93, 0.92)})
+	var to_sun := _to_sun()
+	d.shaded("range", "res://src/render/deco/mountain.gdshader", {"rock": "rift/far_rock.png", "snow": "rift/snow.png",
+			"scree": "rift/scree.png", "rock_meters": 60.0, "snowline": -25.0, "snow_fade": 90.0, "scree_line": -135.0,
+			"rock_tint": Color(0.56, 0.54, 0.58)})
+	d.shaded("cliff_rock", "res://src/render/deco/mountain.gdshader", {"rock": "rift/cliff.png", "snow": "rift/snow.png",
+			"scree": "rift/scree.png", "rock_meters": 14.0, "snow_meters": 16.0, "snowline": 60.0, "snow_fade": 30.0, "scree_line": -170.0,
+			"rock_tint": Color(0.86, 0.84, 0.84), "sky_light": 0.9})
+	d.shaded("cloud_sea", "res://src/render/deco/cloud_sea.gdshader", {"billows": "rift/billows.png", "to_sun": to_sun})
+	d.shaded("cloud_deck", "res://src/render/deco/cloud_deck.gdshader", {"billows": "rift/billows.png", "to_sun": to_sun})
+	d.shaded("sunbeam", "res://src/render/deco/sunbeam.gdshader", {"color": Color(1.0, 0.8, 0.55), "strength": 0.06,
+			"size": Vector2(24.0, 320.0)})
+	d.shaded("pool", "res://src/render/deco/light_pool.gdshader", {"color": WARM, "strength": 0.3, "size": Vector2(4.0, 4.0)})
+	d.shaded("pool_wide", "res://src/render/deco/light_pool.gdshader", {"color": WARM, "strength": 0.22, "size": Vector2(8.0, 8.0)})
+	d.shaded("grass", "res://src/render/deco/grass.gdshader", {})
+	d.shaded("puddle", "res://src/render/deco/puddle.gdshader", {"reflection_map": "rift/reflection_day.png", "noise": "terrace/grime.png",
+			"size": Vector2(2.4, 1.6)})
+	d.shaded("oil", "res://src/render/deco/puddle.gdshader", {"reflection_map": "rift/reflection_day.png", "noise": "terrace/grime.png",
+			"size": Vector2(1.2, 0.8), "color": Color(0.06, 0.05, 0.04), "opacity": 0.6})
+	for m: Array in [["enamel_red", Color(0.72, 0.12, 0.12)], ["enamel_green", Color(0.10, 0.36, 0.22)], ["enamel_yellow", Color(1.1, 0.82, 0.18)],
+			["enamel_blue", Color(0.14, 0.30, 0.62)], ["snow_drift", Color(1.2, 1.2, 1.25)]]:
+		d.surface(m[0], {"side": "stack/steel" if m[0] != "snow_drift" else "rift/snow", "meters": 1.0, "tint": m[1], "gloss": 0.5,
+				"grazing": 0.85, "roughness": 0.2, "uv": true})
+	d.surface("boulder", {"side": "rift/cliff", "meters": 1.0, "gloss": 0.03, "grazing": 0.2, "roughness": 0.85, "uv": true})
 	d.shaded("far_stone", FAR, {"albedo_texture": "rift/flags.png", "meters_per_repeat": 12.0, "tint": Color(0.82, 0.78, 0.74)})
 	d.shaded("far_maroon", FAR, {"albedo_texture": "stack/steel.png", "meters_per_repeat": 4.0, "tint": Color(0.5, 0.1, 0.14)})
 	d.shaded("far_cream", FAR, {"albedo_texture": "stack/steel.png", "meters_per_repeat": 4.0, "tint": Color(1.1, 1.05, 0.88)})
@@ -294,18 +319,7 @@ static func _walls(d) -> void:
 		var u := Vector3((x1 - x0) * 0.5 * f[1], 0, 0)
 		d.face("tile_maroon", c + Vector3(0, foot + 2.95, 0), u, Vector3(0, 0.22, 0), "Build", BOTH)
 		d.face("tile_cream", c + Vector3(0, foot + 3.27, 0), u, Vector3(0, 0.08, 0), "Build", BOTH)
-	# Pilasters: cream tile strips up the walls every bay, floor to top.
-	for f: Array in [[-16.0, 1.0, NORTH], [16.0, -1.0, SOUTH], [-12.0, 1.0, Rift.NORTH_SHELF], [12.0, -1.0, Rift.SOUTH_SHELF]]:
-		var z: float = f[0] + f[1] * 0.008
-		var top: float = f[2]
-		var x := -93.75
-		while x < 100.0:
-			var shelf_face := absf(f[0]) < 13.0
-			var on_shelf := (x > -40.0 and x < 30.0) if f[0] < 0.0 else (x > -30.0 and x < 50.0)
-			if not shelf_face or on_shelf:
-				d.face("tile_cream", Vector3(x, top * 0.5, z), Vector3(0.45 * f[1], 0, 0), Vector3(0, top * 0.5, 0), "Build", BOTH)
-			x += 12.5
-	# Lamps set flush in the walls between the pilasters, still lit: along
+	# Lamps set flush in the walls, still lit: along
 	# the floor, and along the galleries.
 	var lamps := 0
 	for row: Array in [[-16.0, 1.0, 5.0, -60.0, 60.0], [16.0, -1.0, 5.0, -60.0, 60.0], [-16.0, 1.0, Rift.NORTH_SHELF + 4.4, -40.0, 30.0],
@@ -319,7 +333,12 @@ static func _walls(d) -> void:
 					var at := Vector3(x, row[2], z)
 					d.face("dark_metal", at, Vector3(0.5 * row[1], 0, 0), Vector3(0, 0.2, 0), "Fixtures", BOTH)
 					d.face("lamp", at + Vector3(0, 0, row[1] * 0.004), Vector3(0.4 * row[1], 0, 0), Vector3(0, 0.12, 0), "Fixtures", BOTH)
-					if int((x + 87.5) / 12.5) % 2 == 0:
+					var floor_row := float(row[2]) < 6.0
+					if floor_row:
+						# Its light on the wall under it and the ballast in front.
+						d.face("pool", Vector3(x, 3.4, z + row[1] * 0.006), Vector3(2.0 * row[1], 0, 0), Vector3(0, 2.0, 0), "Effects", BOTH)
+						d.face("pool", Vector3(x, 0.03, z + row[1] * 1.8), Vector3(2.0, 0, 0), Vector3(0, 0, -2.0), "Effects", BOTH)
+					if floor_row and int((x + 87.5) / 12.5) % 2 == 0:
 						d.omni("WallLamp_%d" % lamps, at + Vector3(0, -0.6, row[1] * 1.2), WARM, 9.0, 1.0, BOTH, true)
 						lamps += 1
 			x += 12.5
@@ -661,12 +680,13 @@ static func _signal_boxes(d) -> void:
 		for n: Vector3 in [Vector3(1, 0, 0), Vector3(-1, 0, 0), Vector3(0, 0, 1), Vector3(0, 0, -1)]:
 			var b := DecoKit.facing(n)
 			var f := c + n * 3.006
-			d.face("glass_dark", f + Vector3(0, 6.0, 0), b.x * 2.7, Vector3(0, 0.9, 0), "Build", BOTH)
+			d.face("window_warm", f + Vector3(0, 6.0, 0), b.x * 2.7, Vector3(0, 0.9, 0), "Build", BOTH)
 			for k in 7:
 				d.box("cream", f + b.x * (-2.7 + k * 0.9) + Vector3(0, 6.0, 0), Vector3(0.08, 1.9, 0.04), "Build", BOTH, b)
 			for e: float in [4.95, 7.05]:
 				d.box("cream", f + Vector3(0, e, 0), Vector3(5.6, 0.14, 0.04), "Build", BOTH, b)
 			d.box("stone", f + Vector3(0, 7.85, 0) + n * 0.06, Vector3(6.1, 0.3, 0.12), "Build", BOTH, b)
+		d.omni("Box_%d" % int(c.x), c + Vector3(0, 6.0, 3.8 * signf(-c.z)), Color(1.0, 0.8, 0.55), 10.0, 0.9, BOTH)
 		var front := c + Vector3(0, 0, 3.006 * signf(-c.z))
 		d.words(t[1], front + Vector3(0, 4.55, 0), DecoKit.facing(Vector3(0, 0, signf(-c.z))), 0.3, Color(1, 1, 1), 0.0, "Build", BOTH, SANS)
 		d.box("navy", front + Vector3(0, 4.55, 0) - Vector3(0, 0, 0.01 * signf(-c.z)), Vector3(4.0, 0.44, 0.02), "Build", BOTH)
@@ -685,9 +705,8 @@ static func _signal_boxes(d) -> void:
 # --- The roofs --------------------------------------------------------------------------------
 
 ## The rims are the mountain's shoulders (turf, rock, old snow: the
-## blocks' own tops): a stone coping along the top of the cutting's walls,
-## and outside, where they drop to the void, cliffs going down to the rock
-## under everything.
+## blocks' own tops): a stone coping along the top of the cutting's walls.
+## (Where they drop to the void, _cliffs().)
 static func _shoulders(d) -> void:
 	for r: Array in [[NORTH, -16.0, 1.0], [SOUTH, 16.0, -1.0]]:
 		var y: float = r[0]
@@ -695,13 +714,147 @@ static func _shoulders(d) -> void:
 		var s: float = r[2]
 		d.box("stone", Vector3(0, y + 0.03, z - s * 0.6), Vector3(200.0, 0.06, 1.2), "Build", BOTH)
 		d.face("tile_maroon", Vector3(0, y - 0.35, z + s * 0.009), Vector3(100.0 * s, 0, 0), Vector3(0, 0.35, 0), "Build", BOTH)
-	# The outer faces: cliff over the tiles (nothing rides out there but
-	# the fall), from the tops down to the rock.
-	for f: Array in [[Vector3(0, 8.0, -44.01), Vector3(-100, 0, 0), Vector3(0, 20.0, 0)], [Vector3(0, 4.0, 44.01), Vector3(100, 0, 0), Vector3(0, 16.0, 0)],
-			[Vector3(-100.01, 8.0, -30), Vector3(0, 0, 14), Vector3(0, 20.0, 0)], [Vector3(100.01, 8.0, -30), Vector3(0, 0, -14), Vector3(0, 20.0, 0)],
-			[Vector3(-100.01, 4.0, 30), Vector3(0, 0, 14), Vector3(0, 16.0, 0)], [Vector3(100.01, 4.0, 30), Vector3(0, 0, -14), Vector3(0, 16.0, 0)],
-			[Vector3(-100.01, -6.0, 0), Vector3(0, 0, 16), Vector3(0, 6.0, 0)], [Vector3(100.01, -6.0, 0), Vector3(0, 0, -16), Vector3(0, 6.0, 0)]]:
-		d.face("cliff_face", f[0], f[1], f[2], "Build", BOTH)
+
+
+## The drop all round: rock, jagged and broken, from the edge of the
+## shoulders and the ends of the line down to the mountain below, and
+## rocks astride the edge so it isn't a straight corner. No collision:
+## it's only what you'd fall past.
+static func _cliffs(d) -> void:
+	var noise := FastNoiseLite.new()
+	noise.seed = 404
+	noise.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	noise.frequency = 1.0 / 16.0
+	noise.fractal_octaves = 3
+	# The edge walked round: [x, z, the top there, which way is out]. At
+	# each corner the rock fans round it, so the cliff below bulges out
+	# round the corner as a buttress.
+	var edge := []
+	var corners := [Vector2(-100, -44), Vector2(100, -44), Vector2(100, 44), Vector2(-100, 44)]
+	for c in 4:
+		var a: Vector2 = corners[c]
+		var b: Vector2 = corners[(c + 1) % 4]
+		var n := int(a.distance_to(b) / 2.5)
+		var side := (b - a).normalized()
+		var out := Vector3(side.y, 0, -side.x)
+		var prev_side: Vector2 = (a - (corners[(c + 3) % 4] as Vector2)).normalized()
+		var prev_out := Vector3(prev_side.y, 0, -prev_side.x)
+		for f in 4:
+			edge.append([a, _edge_top(a), prev_out.slerp(out, (f + 0.5) / 4.0), true])
+		for k in range(1, n):
+			var p := a.lerp(b, float(k) / n)
+			edge.append([p, _edge_top(p), out, false])
+	# Each point's column, from the lip down: [below the top, out].
+	# The last reaches down to the mountainside under it (_height()).
+	var levels := [[0.0, -0.9], [-1.4, 0.6], [-4.5, 2.2], [-9.0, 4.0], [-16.0, 6.5], [-26.0, 10.0], [-40.0, 14.0], [-62.0, 20.0],
+			[-104.0, 31.0]]
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 404
+	var columns := []
+	var t := 0.0
+	for i in edge.size():
+		var e: Array = edge[i]
+		var p: Vector2 = e[0]
+		var top: float = e[1]
+		var out: Vector3 = e[2]
+		var corner: bool = e[3]
+		t += 1.2 if corner else 2.5
+		var line_end := absf(p.x) > 99.0 and absf(p.y) < 16.5
+		var col := []
+		for k in levels.size():
+			var lv: Array = levels[k]
+			var depth := minf(float(k), 4.0) / 4.0
+			var jag := noise.get_noise_2d(t, k * 9.0)
+			# Spurs and gullies running down, ledges across.
+			var spur := noise.get_noise_2d(t * 0.3, 500.0) * 5.0 + noise.get_noise_2d(t * 0.9, 700.0) * 2.0
+			var ledge := noise.get_noise_2d(t * 0.15, k * 31.0) * 1.8
+			# Broken: every point a little in or out, up or down.
+			var y: float = top + float(lv[0]) + jag * (0.3 if k == 1 else 2.6) + rng.randf_range(-1.0, 1.0) * (0.3 if k == 1 else 1.4)
+			var reach: float = float(lv[1]) + jag * (0.5 + depth * 1.8) + (spur + ledge) * depth + (6.0 * depth if corner else 0.0)
+			reach += rng.randf_range(-0.7, 0.7) * (0.4 + depth)
+			if k == 0:
+				# The top: flush with the turf, just outside the edge.
+				y = top - 0.02
+				reach = 0.05
+			col.append(Vector3(p.x, 0, p.y) + out * reach + Vector3(0, y, 0))
+		columns.append(col)
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	st.set_smooth_group(-1)
+	for i in columns.size():
+		var a: Array = columns[i]
+		var b: Array = columns[(i + 1) % columns.size()]
+		var out: Vector3 = (edge[i][2] as Vector3)
+		for k in levels.size() - 1:
+			for tri: Array in [[a[k], b[k], b[k + 1]], [a[k], b[k + 1], a[k + 1]]]:
+				var n: Vector3 = (tri[1] - tri[0]).cross(tri[2] - tri[0])
+				if n.dot(out) > 0.0:
+					tri = [tri[0], tri[2], tri[1]]
+				for v: Vector3 in tri:
+					st.add_vertex(v)
+	# Rocks astride the edge, so it isn't a straight line: most small, some
+	# big outcrops; clear of the pads and the benches, and of the line's
+	# ends.
+	var keep_out := _rim_keep_out().map(func(r: Rect2) -> Rect2: return r.grow(1.5))
+	for i in edge.size():
+		var e: Array = edge[i]
+		var p: Vector2 = e[0]
+		var out: Vector3 = e[2]
+		var line_end := absf(p.x) > 98.0 and absf(p.y) < 17.5
+		if line_end or rng.randf() > (0.9 if e[3] else 0.55) or _kept_out(p, keep_out):
+			continue
+		var big := rng.randf() < 0.12 or bool(e[3])
+		var size := Vector3(rng.randf_range(2.0, 3.4), rng.randf_range(1.2, 2.2), rng.randf_range(1.8, 3.0)) if big \
+				else Vector3(rng.randf_range(0.6, 1.7), rng.randf_range(0.4, 1.1), rng.randf_range(0.6, 1.5))
+		var at := Vector3(p.x, float(e[1]) - size.y * 0.3, p.y) + out * rng.randf_range(-0.7, 0.5) \
+				+ Vector3(out.z, 0, -out.x) * rng.randf_range(-1.0, 1.0)
+		_rock(st, at, size, rng.randf() * TAU, rng)
+	st.generate_normals()
+	var mesh := st.commit()
+	ResourceSaver.save(mesh, d.dir + "meshes/cliffs.res")
+	d.own_mesh("Cliffs", load(d.dir + "meshes/cliffs.res"), d.mat("cliff_rock"), Transform3D.IDENTITY, "Build")
+
+
+## A rock: a lump of flat facets, `size` across, turned `yaw` round,
+## every corner a little in or out.
+static func _rock(st: SurfaceTool, at: Vector3, size: Vector3, yaw: float, rng: RandomNumberGenerator) -> void:
+	var rings := 4
+	var segs := 7
+	var basis := Basis(Vector3.UP, yaw)
+	var pts := []
+	for j in rings + 1:
+		var lat := PI * float(j) / rings
+		var row := []
+		for i in segs:
+			var lon := TAU * (float(i) + (0.5 if j % 2 == 1 else 0.0)) / segs
+			var dir := Vector3(sin(lat) * cos(lon), cos(lat), sin(lat) * sin(lon))
+			var bump := 1.0 if j == 0 or j == rings else rng.randf_range(0.72, 1.18)
+			row.append(at + basis * (dir * size * 0.5 * bump))
+		pts.append(row)
+	for j in rings:
+		for i in segs:
+			var a: Vector3 = pts[j][i]
+			var b: Vector3 = pts[j][(i + 1) % segs]
+			var c: Vector3 = pts[j + 1][(i + 1) % segs]
+			var e: Vector3 = pts[j + 1][i]
+			for tri: Array in [[a, b, c], [a, c, e]]:
+				var n: Vector3 = (tri[1] - tri[0]).cross(tri[2] - tri[0])
+				if n.length_squared() < 1e-8:
+					continue
+				if n.dot((tri[0] + tri[1] + tri[2]) / 3.0 - at) > 0.0:
+					tri = [tri[0], tri[2], tri[1]]
+				for v: Vector3 in tri:
+					st.add_vertex(v)
+
+
+## How high the ground is at a point on the edge: the shoulders, or the
+## top of the incline where the line ends.
+static func _edge_top(p: Vector2) -> float:
+	if p.y <= -16.0:
+		return NORTH
+	if p.y >= 16.0:
+		return SOUTH
+	return SOUTH if p.x < 0.0 else NORTH
 
 
 ## The ends of the line: where each incline tops out at the edge the
@@ -727,6 +880,342 @@ static func _ends(d) -> void:
 		d.words(e[2], at + b.z * 0.04, b, 0.34, Color(1, 1, 1), 0.0, "Build", BOTH, SANS)
 
 
+# --- Lamps, signs, odds ------------------------------------------------------------------
+
+## Lanterns along the galleries: an iron post at the edge, a swan neck
+## reaching back over the walk, a glass lantern still lit, its light on the
+## flags (a real light at every other one).
+static func _lanterns(d) -> void:
+	var k := 0
+	for g: Array in [[Rift.NORTH_SHELF, -12.0, 1.0, [-34.0, -21.5, -9.0, 3.5, 16.0, 28.5]],
+			[Rift.SOUTH_SHELF, 12.0, -1.0, [-24.0, -11.5, 1.0, 14.0, 26.0, 38.5]]]:
+		var y: float = g[0]
+		var edge: float = g[1]
+		var n: float = g[2]
+		for x: float in g[3]:
+			var foot := Vector3(x, y, edge - n * 0.3)
+			d.box("iron", foot + Vector3(0, 0.25, 0), Vector3(0.26, 0.5, 0.26), "Build", BOTH)
+			d.tube("iron", foot, foot + Vector3(0, 3.7, 0), 0.055, 6, "Build", BOTH)
+			var neck := PackedVector3Array([foot + Vector3(0, 3.7, 0), foot + Vector3(0, 4.0, -n * 0.25), foot + Vector3(0, 3.95, -n * 0.7),
+					foot + Vector3(0, 3.8, -n * 0.95)])
+			d.path_tube("iron", neck, 0.035, 5, "Build", BOTH)
+			var lamp := foot + Vector3(0, 3.45, -n * 0.95)
+			d.box("black", lamp + Vector3(0, 0.25, 0), Vector3(0.34, 0.08, 0.34), "Fixtures", BOTH)
+			d.box("lamp", lamp, Vector3(0.24, 0.38, 0.24), "Fixtures", BOTH)
+			d.box("black", lamp - Vector3(0, 0.22, 0), Vector3(0.28, 0.05, 0.28), "Fixtures", BOTH)
+			d.face("pool", Vector3(x, y + 0.03, lamp.z - n * 0.6), Vector3(2.0, 0, 0), Vector3(0, 0, -2.0), "Effects", BOTH)
+			if k % 2 == 0:
+				d.omni("Lantern_%d" % k, lamp - Vector3(0, 0.3, 0), WARM, 8.0, 1.0, BOTH, true)
+			k += 1
+
+
+## Hanging over the tracks: pendant lamps under both footbridges, and
+## under the Mid Bridge an enamel board over each track with its number.
+static func _hanging(d) -> void:
+	var k := 0
+	for p: Array in [[0.0, -8.0, 24.0 - (-8.0) * 0.25 - 0.6], [0.0, 8.0, 24.0 - 8.0 * 0.25 - 0.6],
+			[10.0, -5.0, 11.0 + 5.0 / 12.0 - 0.6], [10.0, 5.0, 11.0 - 5.0 / 12.0 - 0.6]]:
+		var top := Vector3(p[0], p[2], p[1])
+		var drop := 3.4 if p[0] == 0.0 else 2.2
+		var lamp := top - Vector3(0, drop, 0)
+		d.tube("iron", top, lamp + Vector3(0, 0.3, 0), 0.02, 4, "Fixtures", BOTH)
+		d.ball("iron", lamp + Vector3(0, 0.2, 0), Vector3(0.5, 0.22, 0.5), 3, 10, "Fixtures", BOTH)
+		d.ball("lamp", lamp, Vector3(0.2, 0.2, 0.2), 3, 8, "Fixtures", BOTH)
+		if k % 2 == 1:
+			d.omni("Pendant_%d" % k, lamp - Vector3(0, 0.4, 0), WARM, 12.0, 1.0, BOTH, true)
+		k += 1
+	for z: float in TRACKS:
+		var under := 11.0 - z / 12.0 - 0.6
+		var board := Vector3(10, under - 1.5, z)
+		for e: float in [-0.5, 0.5]:
+			d.tube("iron", Vector3(10, under, z + e), board + Vector3(0, 0.3, e), 0.012, 3, "Fixtures", BOTH)
+		for s: float in [1.0, -1.0]:
+			var b := DecoKit.facing(Vector3(s, 0, 0))
+			d.box("white", board, Vector3(0.05, 0.62, 1.5), "Build", BOTH)
+			d.box("navy", board + Vector3(s * 0.02, 0, 0), Vector3(0.03, 0.54, 1.42), "Build", BOTH)
+			d.words("Platform %d" % (TRACKS.find(z) + 1), board + Vector3(s * 0.04, 0, 0), b, 0.22, Color(1, 1, 1), 0.0, "Build", BOTH, SANS)
+
+
+## Odds and ends: chimney stacks on the station building, dwarf signals by
+## the tracks, fire buckets and timetables on the galleries' walls, benches
+## looking out from the shoulders, a telescope, finger posts, a flag.
+static func _odds(d) -> void:
+	# Chimneys at either end of the station building's roof, against the walls.
+	for z: float in [-15.2, 15.2]:
+		var c := Vector3(-30, 4.0, z)
+		d.solid(c + Vector3(0, 1.2, 0), Vector3(1.4, 2.4, 1.2))
+		d.box("brick", c + Vector3(0, 1.2, 0), Vector3(1.4, 2.4, 1.2), "Solid", BOTH)
+		d.box("stone", c + Vector3(0, 2.45, 0), Vector3(1.6, 0.14, 1.4), "Solid", BOTH)
+		for e: float in [-0.35, 0.35]:
+			d.tube("brick_dark", c + Vector3(e, 2.5, 0), c + Vector3(e, 3.0, 0), 0.16, 8, "Solid", BOTH)
+	# Dwarf signals either side of the station building, by the tracks.
+	for p: Array in [[Vector3(-23.5, 0, -6.6), "signal_red"], [Vector3(-23.5, 0, 6.6), "signal_green"],
+			[Vector3(-36.5, 0, -6.6), "signal_green"], [Vector3(-36.5, 0, 6.6), "signal_red"], [Vector3(22.0, 0, 2.2), "signal_red"]]:
+		var at: Vector3 = p[0]
+		d.box("white", at + Vector3(0, 0.35, 0), Vector3(0.3, 0.7, 0.2), "Detail", BOTH)
+		d.tube("black", at + Vector3(0, 0.5, 0), at + Vector3(0, 0.5, 0.12 * signf(at.x)), 0.1, 10, "Detail", BOTH)
+		d.ball(p[1], at + Vector3(0, 0.5, 0.13 * signf(at.x)), Vector3(0.06, 0.06, 0.02), 2, 8, "Detail", BOTH)
+	# Fire buckets and timetables on the galleries' back walls.
+	for g: Array in [[Rift.NORTH_SHELF, -15.99, 1.0, [-28.0, 22.0]], [Rift.SOUTH_SHELF, 15.99, -1.0, [-16.0, 32.0]]]:
+		var y: float = g[0]
+		var z: float = g[1]
+		var n := Vector3(0, 0, g[2])
+		var b := DecoKit.facing(n)
+		var xs: Array = g[3]
+		var board := Vector3(xs[0], y + 1.5, z)
+		d.box("red", board + n * 0.02, Vector3(1.4, 0.3, 0.04), "Detail", BOTH, b)
+		d.words("FIRE", board + n * 0.045, b, 0.18, Color(1, 1, 1), 0.0, "Detail", BOTH, SANS)
+		for k in 3:
+			var bucket := board + b.x * (-0.45 + k * 0.45) + Vector3(0, -0.4, 0) + n * 0.14
+			d.tube("red", bucket - Vector3(0, 0.15, 0), bucket + Vector3(0, 0.15, 0), 0.13, 8, "Detail", BOTH)
+		var tt := Vector3(xs[1], y + 1.7, z)
+		d.box("dark_metal", tt + n * 0.03, Vector3(1.3, 1.0, 0.06), "Build", BOTH, b)
+		d.face("paper", tt + n * 0.065, b.x * 0.58, b.y * 0.44, "Build", BOTH)
+		d.words("Cloud Line", tt + n * 0.07 + Vector3(0, 0.34, 0), b, 0.12, Color(0.45, 0.07, 0.1), 0.0, "Build", BOTH, SERIF)
+		var times := "Cumulus   06:14  07:40\nStratus   06:22  08:05\nCirrus    06:40  09:10\nNowhere   --:--  --:--"
+		d.words(times, tt + n * 0.07 - Vector3(0, 0.08, 0), b, 0.07, Color(0.1, 0.1, 0.14), 0.0, "Build", BOTH, MONO)
+	# Benches on the shoulders looking out over the cloud, at the edge.
+	for p: Array in [[Vector3(-40, NORTH, -41.8), -1.0], [Vector3(10, NORTH, -41.8), -1.0], [Vector3(60, NORTH, -41.8), -1.0],
+			[Vector3(-60, SOUTH, 41.8), 1.0], [Vector3(-10, SOUTH, 41.8), 1.0], [Vector3(40, SOUTH, 41.8), 1.0]]:
+		_bench(d, p[0], DecoKit.facing(Vector3(0, 0, float(p[1]))))
+	# A telescope on the north shoulder, pointed at the far viaduct.
+	var scope := Vector3(46, NORTH, -41.4)
+	d.tube("iron", scope, scope + Vector3(0, 1.1, 0), 0.05, 6, "Detail", BOTH)
+	d.tube("maroon", scope + Vector3(0, 1.25, 0.25), scope + Vector3(0, 1.35, -0.35), 0.1, 10, "Detail", BOTH)
+	d.box("brass", scope + Vector3(0, 1.15, 0), Vector3(0.2, 0.1, 0.2), "Detail", BOTH)
+	# Finger posts by the signal boxes.
+	for f: Array in [[Vector3(-52, NORTH, -26), "Summit  ↑", "Station  ↓"], [Vector3(52, SOUTH, 26), "Summit  ↑", "Station  ↓"]]:
+		var at: Vector3 = f[0]
+		d.tube("wood", at, at + Vector3(0, 2.4, 0), 0.05, 6, "Detail", BOTH)
+		for k in 2:
+			var arm := at + Vector3(0.45 - k * 0.9, 2.1 - k * 0.35, 0)
+			d.box("cream", arm, Vector3(0.9, 0.2, 0.04), "Detail", BOTH)
+			for s: float in [1.0, -1.0]:
+				d.words(f[1 + k], arm + Vector3(0, 0, s * 0.03), DecoKit.facing(Vector3(0, 0, s)), 0.1, Color(0.2, 0.1, 0.1), 0.0, "Detail", BOTH, SERIF)
+	# The line's flag by the north box.
+	var pole := Vector3(-66, NORTH, -37)
+	d.tube("white", pole, pole + Vector3(0, 8.0, 0), 0.06, 6, "Detail", BOTH)
+	d.quad("maroon", pole + Vector3(0, 7.9, 0), pole + Vector3(2.2, 7.5, 0.2), pole + Vector3(2.2, 7.5, 0.2), pole + Vector3(0, 7.0, 0), "Detail", BOTH)
+	d.quad("maroon", pole + Vector3(2.2, 7.5, 0.2), pole + Vector3(0, 7.9, 0), pole + Vector3(0, 7.0, 0), pole + Vector3(0, 7.0, 0), "Detail", BOTH)
+
+
+## Grass on the shoulders: a tuft wherever the turf is turf (not snow or
+## rock, going by the turf's own texture), swaying; stones here and there.
+## Out of the way of the towers, the rocks, the walls and the pads.
+static func _grass(d) -> void:
+	var tex: Texture2D = load("res://assets/textures/rift/meadow.png")
+	var img := tex.get_image()
+	if img.is_compressed():
+		img.decompress()
+	var keep_out := _rim_keep_out()
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 5150
+	for rim: Array in [[NORTH, -43.4, -17.5], [SOUTH, 17.5, 43.4]]:
+		var z: float = rim[1]
+		while z < float(rim[2]):
+			var x := -99.4
+			while x < 99.4:
+				var p := Vector2(x + rng.randf_range(-0.5, 0.5), z + rng.randf_range(-0.5, 0.5))
+				if absf(p.y) > 17.4 and absf(p.y) < 43.5 and absf(p.x) < 99.6 and _turf(img, p) and not _kept_out(p, keep_out):
+					_tuft(st, Vector3(p.x, rim[0], p.y), rng)
+				x += 1.1
+			z += 1.1
+	var mesh := st.commit()
+	ResourceSaver.save(mesh, d.dir + "meshes/grass.res")
+	d.own_mesh("Grass", load(d.dir + "meshes/grass.res"), d.mat("grass"), Transform3D.IDENTITY, "Detail")
+	# Stones, half sunk.
+	for i in 110:
+		var north := i % 2 == 0
+		var p := Vector2(rng.randf_range(-98.0, 98.0), rng.randf_range(18.0, 43.0) * (-1.0 if north else 1.0))
+		if _kept_out(p, keep_out):
+			continue
+		var r := rng.randf_range(0.12, 0.4)
+		var y := NORTH if north else SOUTH
+		d.ball("boulder", Vector3(p.x, y + r * 0.15, p.y), Vector3(r, r * 0.6, r * rng.randf_range(0.7, 1.1)), 3, 7, "Detail", BOTH)
+
+
+## Small things all over: telegraph poles and their wires along the
+## shoulders, weeds at the foot of the walls and in the ballast, litter,
+## puddles and oil between the rails, fishplates at the rail joints,
+## enamel adverts, a pillar box and machines on the galleries, spare
+## sleepers stacked at the end, signs for the way out, snow drifted
+## against the dry-stone walls.
+static func _details(d) -> void:
+	var rng := RandomNumberGenerator.new()
+	rng.seed = 777
+	# Telegraph poles along each shoulder, the wires sagging between.
+	for rim: Array in [[NORTH, -19.6], [SOUTH, 19.6]]:
+		var y: float = rim[0]
+		var z: float = rim[1]
+		var tops := []
+		var x := -90.0
+		while x <= 90.0:
+			var foot := Vector3(x, y, z)
+			d.tube("wood", foot, foot + Vector3(0, 7.0, 0), 0.11, 6, "Detail", BOTH)
+			d.box("wood", foot + Vector3(0, 6.5, 0), Vector3(0.1, 0.12, 1.6), "Detail", BOTH)
+			for e: float in [-0.65, 0.0, 0.65]:
+				d.tube("white", foot + Vector3(0, 6.56, e), foot + Vector3(0, 6.78, e), 0.04, 6, "Detail", BOTH)
+			tops.append(foot + Vector3(0, 6.78, 0))
+			x += 20.0
+		for i in tops.size() - 1:
+			for e: float in [-0.65, 0.0, 0.65]:
+				var a: Vector3 = tops[i] + Vector3(0, 0, e)
+				var b: Vector3 = tops[i + 1] + Vector3(0, 0, e)
+				var pts := PackedVector3Array()
+				for k in 9:
+					var t := k / 8.0
+					pts.append(a.lerp(b, t) - Vector3(0, sin(t * PI) * 0.7, 0))
+				d.path_tube("black", pts, 0.012, 3, "Detail", BOTH)
+	# Weeds: along the foot of the walls on the floor and the galleries,
+	# and here and there in the ballast.
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for run: Array in [[0.0, -15.7, -60.0, -40.0], [0.0, -15.7, 30.0, 58.0], [0.0, -11.7, -40.0, 30.0], [0.0, 15.7, -58.0, -30.0],
+			[0.0, 15.7, 50.0, 60.0], [0.0, 11.7, -30.0, 50.0], [Rift.NORTH_SHELF, -15.7, -40.0, 30.0], [Rift.SOUTH_SHELF, 15.7, -30.0, 50.0]]:
+		var x: float = run[2]
+		while x < float(run[3]):
+			if rng.randf() < 0.55:
+				_tuft(st, Vector3(x + rng.randf_range(-0.3, 0.3), run[0], float(run[1]) + rng.randf_range(-0.15, 0.15)), rng)
+			x += 0.8
+	for i in 90:
+		var p := Vector3(rng.randf_range(-58.0, 58.0), 0.0, rng.randf_range(-14.0, 14.0))
+		if absf(p.x + 30.0) > 5.0 and not (absf(p.x) < 5.0 and absf(p.z) < 4.0):
+			_tuft(st, p, rng)
+	var mesh := st.commit()
+	ResourceSaver.save(mesh, d.dir + "meshes/weeds.res")
+	d.own_mesh("Weeds", load(d.dir + "meshes/weeds.res"), d.mat("grass"), Transform3D.IDENTITY, "Detail")
+	# Litter: tickets and a newspaper or two, on the floor and the galleries.
+	for i in 40:
+		var gallery := i % 4
+		var p: Vector3
+		if gallery == 0:
+			p = Vector3(rng.randf_range(-38.0, 28.0), Rift.NORTH_SHELF, rng.randf_range(-15.6, -12.4))
+		elif gallery == 1:
+			p = Vector3(rng.randf_range(-28.0, 48.0), Rift.SOUTH_SHELF, rng.randf_range(12.4, 15.6))
+		else:
+			p = Vector3(rng.randf_range(-58.0, 58.0), 0.0, rng.randf_range(-15.0, 15.0))
+		var big := i % 9 == 0
+		d.box("paper", p + Vector3(0, 0.006, 0), Vector3(0.45 if big else 0.07, 0.008, 0.32 if big else 0.13), "Detail", BOTH,
+				Basis(Vector3.UP, rng.randf() * TAU))
+	# Puddles and oil in the ballast.
+	for p: Vector3 in [Vector3(-44, 0, 4.5), Vector3(-6, 0, -4.6), Vector3(38, 0, 4.3), Vector3(-52, 0, -13.2), Vector3(12, 0, 13.0)]:
+		var r := Basis(Vector3.UP, rng.randf() * TAU)
+		d.face("puddle", p + Vector3(0, 0.03, 0), r * Vector3(1.2, 0, 0), r * Vector3(0, 0, -0.8), "Effects", BOTH)
+	for z: float in TRACKS:
+		for k in 6:
+			var p := Vector3(rng.randf_range(-56.0, 56.0), 0.02, z)
+			var r := Basis(Vector3.UP, rng.randf_range(-0.3, 0.3))
+			d.face("oil", p, r * Vector3(0.6, 0, 0), r * Vector3(0, 0, -0.4), "Effects", BOTH)
+	# Fishplates where the rails join, about every 18 m.
+	for z: float in TRACKS:
+		var x := -57.0
+		while x < 58.0:
+			var inside_arch := x > -34.5 and x < -25.5 and z != 0.0
+			var on_island := absf(x) < 4.7 and z == 0.0
+			if not inside_arch and not on_island:
+				for s: float in [-GAUGE, GAUGE]:
+					for e: float in [-0.06, 0.06]:
+						d.box("dark_metal", Vector3(x, 0.2, z + s + e), Vector3(0.6, 0.1, 0.02), "Detail", BOTH)
+			x += 18.3
+	# Enamel adverts on the galleries' back walls.
+	for a: Array in [[Vector3(-16, Rift.NORTH_SHELF + 1.7, -15.97), 1.0, "enamel_red", "Nimbus Cocoa", Color(1.0, 0.9, 0.7)],
+			[Vector3(9, Rift.NORTH_SHELF + 1.7, -15.97), 1.0, "enamel_yellow", "Summit Mints", Color(0.2, 0.12, 0.05)],
+			[Vector3(-4, Rift.SOUTH_SHELF + 1.7, 15.97), -1.0, "enamel_blue", "Cirrus Soap", Color(1, 1, 1)],
+			[Vector3(44, Rift.SOUTH_SHELF + 1.7, 15.97), -1.0, "enamel_green", "Drink Stratus Tonic", Color(1.0, 0.92, 0.6)]]:
+		var n := Vector3(0, 0, a[1])
+		var b := DecoKit.facing(n)
+		d.box("white", (a[0] as Vector3) + n * 0.015, Vector3(2.3, 0.8, 0.03), "Detail", BOTH, b)
+		d.box(a[2], (a[0] as Vector3) + n * 0.03, Vector3(2.2, 0.7, 0.03), "Detail", BOTH, b)
+		d.words(a[3], (a[0] as Vector3) + n * 0.05, b, 0.22, a[4], 0.0, "Detail", BOTH, SWASH)
+	# A pillar box, a chocolate machine, a weighing machine: against the walls.
+	var box_at := Vector3(46.5, Rift.SOUTH_SHELF, 15.55)
+	d.solid(box_at + Vector3(0, 0.75, 0), Vector3(0.56, 1.5, 0.56))
+	d.tube("red", box_at, box_at + Vector3(0, 1.35, 0), 0.26, 12, "Solid", BOTH)
+	d.ball("red", box_at + Vector3(0, 1.35, 0), Vector3(0.3, 0.16, 0.3), 3, 12, "Solid", BOTH)
+	d.box("black", box_at + Vector3(0, 1.1, -0.26), Vector3(0.24, 0.04, 0.02), "Solid", BOTH)
+	var choc := Vector3(-2.0, Rift.NORTH_SHELF, -15.6)
+	d.solid(choc + Vector3(0, 0.9, 0), Vector3(0.8, 1.8, 0.5))
+	d.box("enamel_red", choc + Vector3(0, 0.9, 0), Vector3(0.8, 1.8, 0.5), "Solid", BOTH)
+	d.face("window_warm", choc + Vector3(0, 1.2, 0.252), Vector3(0.28, 0, 0), Vector3(0, 0.4, 0), "Fixtures", BOTH)
+	d.words("Chocolate", choc + Vector3(0, 1.72, 0.26), DecoKit.facing(Vector3(0, 0, 1)), 0.1, Color(1, 0.95, 0.8), 0.0, "Solid", BOTH, SWASH)
+	var scale_at := Vector3(22.0, Rift.SOUTH_SHELF, 15.6)
+	d.solid(scale_at + Vector3(0, 0.95, 0), Vector3(0.6, 1.9, 0.5))
+	d.box("enamel_green", scale_at + Vector3(0, 1.3, 0), Vector3(0.5, 1.1, 0.4), "Solid", BOTH)
+	d.box("dark_metal", scale_at + Vector3(0, 0.1, -0.1), Vector3(0.6, 0.2, 0.7), "Solid", BOTH)
+	_clock(d, scale_at + Vector3(0, 1.5, -0.21), Vector3(0, 0, -1), 0.18, 0.0, 12.0)
+	# Spare sleepers stacked against the north wall at the west end.
+	var pile := Vector3(-58.5, 0.0, -15.2)
+	d.solid(pile + Vector3(0, 0.33, 0), Vector3(2.6, 0.66, 1.1))
+	for layer in 3:
+		for k in 4:
+			d.box("sleeper", pile + Vector3(0, 0.11 + layer * 0.22, -0.4 + k * 0.27 + (0.1 if layer % 2 == 1 else 0.0)), Vector3(2.5, 0.2, 0.24),
+					"Solid", BOTH)
+	# The way out, where the passenger ramps start.
+	for w: Array in [[Vector3(57.5, 2.4, -15.98), 1.0], [Vector3(-57.5, 2.4, 15.98), -1.0]]:
+		var n := Vector3(0, 0, w[1])
+		var b := DecoKit.facing(n)
+		d.box("white", (w[0] as Vector3) + n * 0.015, Vector3(1.6, 0.46, 0.03), "Build", BOTH, b)
+		d.box("navy", (w[0] as Vector3) + n * 0.03, Vector3(1.52, 0.38, 0.03), "Build", BOTH, b)
+		d.words("Way out  ↑", (w[0] as Vector3) + n * 0.05, b, 0.2, Color(1, 1, 1), 0.0, "Build", BOTH, SANS)
+	# Snow drifted against the dry-stone walls, on the weather side.
+	for x: float in [-80.0, -20.0, 20.0, 80.0]:
+		for rim: Array in [[NORTH, -21.0, -1.0], [SOUTH, 19.0, -1.0]]:
+			var c := Vector3(x if rim[0] == NORTH else -x, float(rim[0]), float(rim[1]) + float(rim[2]) * 0.2)
+			d.ball("snow_drift", c, Vector3(2.2, 0.35, 0.5), 3, 10, "Detail", BOTH)
+
+
+## Whether the turf's texture at (x, z) is grass (not snow, not rock).
+static func _turf(img: Image, p: Vector2) -> bool:
+	var u := fposmod(p.x / 8.0, 1.0)
+	var v := fposmod(p.y / 8.0, 1.0)
+	var c := img.get_pixel(mini(int(u * img.get_width()), img.get_width() - 1), mini(int(v * img.get_height()), img.get_height() - 1))
+	return c.v < 0.7 and c.s > 0.2
+
+
+## Where nothing grows or lies on the shoulders: the towers, the rocks,
+## the pads, the walls' ends, the benches.
+static func _rim_keep_out() -> Array:
+	var keep_out := [Rect2(-64.5, -36.5, 23, 9), Rect2(41.5, 27.5, 23, 9), Rect2(-6.5, -38.5, 9, 7), Rect2(-2.5, 31.5, 9, 7),
+			Rect2(18.8, -35.2, 2.4, 2.4), Rect2(32.8, -31.2, 2.4, 2.4), Rect2(-21.2, 32.8, 2.4, 2.4), Rect2(-35.2, 28.8, 2.4, 2.4),
+			Rect2(-68, -39, 4, 4)]
+	for x: float in [-80.0, -20.0, 20.0, 80.0]:
+		keep_out.append(Rect2(x - 2.4, -21.4, 4.8, 2.8))
+		keep_out.append(Rect2(-x - 2.4, 18.6, 4.8, 2.8))
+	for x: float in [-40.0, 10.0, 60.0]:
+		keep_out.append(Rect2(x - 1.2, -42.6, 2.4, 1.4))
+	for x: float in [-60.0, -10.0, 40.0]:
+		keep_out.append(Rect2(x - 1.2, 41.2, 2.4, 1.4))
+	return keep_out
+
+
+static func _kept_out(p: Vector2, rects: Array) -> bool:
+	for r: Rect2 in rects:
+		if r.has_point(p):
+			return true
+	return false
+
+
+## A tuft: a handful of blades leaning out from a point, dark at the root,
+## tawny or green at the tips.
+static func _tuft(st: SurfaceTool, at: Vector3, rng: RandomNumberGenerator) -> void:
+	var blades := rng.randi_range(8, 13)
+	var tip_colour := Color(0.86, 0.78, 0.50).lerp(Color(0.58, 0.70, 0.34), rng.randf())
+	for k in blades:
+		var a := rng.randf() * TAU
+		var out := Vector3(cos(a), 0, sin(a))
+		var base := at + out * rng.randf_range(0.0, 0.14)
+		var height := rng.randf_range(0.12, 0.32)
+		var tip := base + out * rng.randf_range(0.04, 0.14) + Vector3(0, height, 0)
+		var across := Vector3(-out.z, 0, out.x) * rng.randf_range(0.012, 0.022)
+		for v: Array in [[base - across, 0.0], [base + across, 0.0], [tip, 1.0]]:
+			st.set_color(Color(0.40, 0.42, 0.22).lerp(tip_colour, v[1]))
+			st.set_uv(Vector2(0, v[1]))
+			st.set_normal((Vector3.UP * 2.0 + out).normalized())
+			st.add_vertex(v[0])
+
+
 # --- Far off ----------------------------------------------------------------------------------
 
 ## Which way the sun is (from its light's rotation).
@@ -734,101 +1223,225 @@ static func _to_sun() -> Vector3:
 	return Basis.from_euler(SUN * (PI / 180.0)).z
 
 
-## A far face of `kind` (cliff, scree, snow) through `pts` (four
-## corners round it, or three and the last again), turned to face away
-## from `inside`, in its lit, half-lit or shaded material.
-static func _far_face(d, kind: String, pts: Array, inside: Vector3) -> void:
-	var p: Array = pts.duplicate()
-	var n: Vector3 = (p[3] - p[0]).cross(p[1] - p[0])
-	if n.length_squared() < 1e-8:
-		n = (p[2] - p[0]).cross(p[1] - p[0])
-	var centre: Vector3 = (p[0] + p[1] + p[2] + p[3]) * 0.25
-	if n.dot(centre - inside) < 0.0:
-		p = [p[0], p[3], p[2], p[1]]
-		n = -n
-	var light := n.normalized().dot(_to_sun())
-	var shade := "lit" if light > 0.45 else "mid" if light > 0.05 else "shade"
-	d.quad("far_%s_%s" % [kind, shade], p[0], p[1], p[2], p[3], "Far", BOTH)
+# The mountains: a range all round, walling in the sea of cloud a few
+# hundred metres out. Its crest runs round an ellipse (RING, its
+# half-widths), wandering in and out; ridged noise makes the peaks and
+# cols along it, the massifs of a few PEAKS [bearing, how much higher]
+# standing over the rest.
+# Lower toward the sun, which comes up through the gap; broken by two
+# deep NOTCHES [bearing] the line crosses on its viaducts. (Bearings in
+# degrees, atan2(z, x).)
+const RING := Vector2(370.0, 345.0)
+const NOTCHES := [-117.0, 63.0]
+const PEAKS := [[-158.0, 0.3], [-82.0, 0.4], [-36.0, 0.2], [112.0, 0.38], [168.0, 0.26]]
 
 
-## Bands of faces between rings of points (each ring the same count, round
-## the same way): `kinds` one per band.
-static func _rings(d, rings: Array, kinds: Array, inside: Vector3) -> void:
-	for r in rings.size() - 1:
-		var a: Array = rings[r]
-		var b: Array = rings[r + 1]
-		for i in a.size():
-			var j := (i + 1) % a.size()
-			_far_face(d, kinds[r], [a[i], a[j], b[j], b[i]], inside)
+## The ground at (x, z): under the station flat (hidden by it); round it
+## the station's peak falling away in cliffs, the ridge it's on running on
+## east and west to the range; the range round it all; all of it made
+## rugged by ridged noise where it's high.
+static func _height(x: float, z: float, n: Array) -> float:
+	var ridges: FastNoiseLite = n[0]
+	var detail: FastNoiseLite = n[1]
+	var crest: FastNoiseLite = n[2]
+	var dx := maxf(absf(x) - 100.0, 0.0)
+	var dz := maxf(absf(z) - 44.0, 0.0)
+	var d := sqrt(dx * dx + dz * dz)
+	if d <= 0.0:
+		return -12.5
+	var h := -12.5 - pow(d, 1.12) * 1.5
+	if absf(x) > 100.0:
+		h = maxf(h, -12.5 - (absf(x) - 100.0) * 0.28 - pow(dz, 1.1) * 1.4)
+	# How far out from the crest (metres, inside negative), the crest
+	# wandering; the range falls steeper to the inside.
+	var a := atan2(z, x)
+	var wander := sin(3.0 * a + 1.0) * 0.6 + sin(5.0 * a + 2.0) * 0.4
+	var off := (sqrt(pow(x / RING.x, 2.0) + pow(z / RING.y, 2.0)) - 1.0 - 0.05 * wander) * 355.0
+	var band := exp(-pow(off / (105.0 if off < 0.0 else 130.0), 2.0))
+	var sun := _to_sun()
+	var tall := lerpf(0.72, 1.0, smoothstep(0.3, 1.1, absf(angle_difference(a, atan2(sun.z, sun.x)))))
+	for notch: float in NOTCHES:
+		tall *= 1.0 - 0.8 * exp(-pow(angle_difference(a, deg_to_rad(notch)) / 0.15, 2.0))
+	var ridge := crest.get_noise_2d(x, z) * 0.5 + 0.5
+	var massif := 1.0
+	for pk: Array in PEAKS:
+		var b := deg_to_rad(float(pk[0]))
+		var far := Vector2(x - cos(b) * RING.x * 1.04, z - sin(b) * RING.y * 1.04).length()
+		massif += float(pk[1]) * exp(-pow(far / 95.0, 2.0))
+	h = maxf(h, -165.0 + band * tall * massif * 240.0 * (0.3 + 0.8 * ridge))
+	var rugged := 1.0 - absf(ridges.get_noise_2d(x, z))
+	var rough := clampf((h + 150.0) / 250.0, 0.0, 1.0)
+	h += (rugged * rugged - 0.45) * 50.0 * rough + detail.get_noise_2d(x, z) * 7.0 * rough
+	# Meet the station's footprint exactly.
+	return lerpf(-12.5, maxf(h, -250.0), clampf(d / 12.0, 0.0, 1.0))
 
 
-## The peak under the station: from under the roofs its cliffs go down,
-## broken and spreading, into scree and the cloud.
-static func _mountain(d) -> void:
-	var rng := RandomNumberGenerator.new()
-	rng.seed = 808
-	var edge := []
-	var outs := []
-	var corners := [Vector3(-100, -12, -44), Vector3(100, -12, -44), Vector3(100, -12, 44), Vector3(-100, -12, 44)]
-	for c in 4:
-		var a: Vector3 = corners[c]
-		var b: Vector3 = corners[(c + 1) % 4]
-		var steps := int(a.distance_to(b) / 20.0)
-		var out := (b - a).normalized().cross(Vector3.UP)
-		for k in steps:
-			edge.append(a.lerp(b, float(k) / steps))
-			outs.append((out + ((corners[c] - corners[(c + 3) % 4]).normalized().cross(Vector3.UP) if k == 0 else Vector3.ZERO)).normalized())
-	var rings := [edge]
-	for band: Array in [[-48.0, 8.0, 16.0], [-95.0, 26.0, 40.0], [-165.0, 60.0, 90.0]]:
-		var ring := []
-		for i in edge.size():
-			var o: Vector3 = outs[i]
-			ring.append((edge[i] as Vector3) + o * rng.randf_range(band[1], band[2]) + Vector3(0, float(band[0]) + 12.0 + rng.randf_range(-6.0, 6.0), 0))
-		rings.append(ring)
-	_rings(d, rings, ["cliff", "cliff", "scree"], Vector3(0, -60, 0))
+static func _noises() -> Array:
+	var ridges := FastNoiseLite.new()
+	ridges.seed = 31
+	ridges.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	ridges.frequency = 1.0 / 90.0
+	ridges.fractal_type = FastNoiseLite.FRACTAL_FBM
+	ridges.fractal_octaves = 3
+	var detail := FastNoiseLite.new()
+	detail.seed = 77
+	detail.frequency = 1.0 / 22.0
+	var crest := FastNoiseLite.new()
+	crest.seed = 4410
+	crest.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	crest.frequency = 1.0 / 240.0
+	crest.fractal_type = FastNoiseLite.FRACTAL_RIDGED
+	crest.fractal_octaves = 4
+	crest.domain_warp_enabled = true
+	crest.domain_warp_amplitude = 45.0
+	crest.domain_warp_frequency = 1.0 / 300.0
+	return [ridges, detail, crest]
 
 
-## The sea of cloud far below, and other peaks standing out of it.
+## The range round the station: one mesh of ground (a grid of heights,
+## the parts sunk in the cloud left out), rock and snow by its shader.
+static func _range(d) -> void:
+	var n := _noises()
+	var step := 8.0
+	var x0 := -640.0
+	var z0 := -560.0
+	var cols := 161
+	var rows := 141
+	var heights := PackedFloat32Array()
+	heights.resize(cols * rows)
+	for j in rows:
+		for i in cols:
+			heights[j * cols + i] = _height(x0 + i * step, z0 + j * step, n)
+	var verts := PackedVector3Array()
+	var normals := PackedVector3Array()
+	verts.resize(cols * rows)
+	normals.resize(cols * rows)
+	for j in rows:
+		for i in cols:
+			var hl := heights[j * cols + maxi(i - 1, 0)]
+			var hr := heights[j * cols + mini(i + 1, cols - 1)]
+			var hd := heights[maxi(j - 1, 0) * cols + i]
+			var hu := heights[mini(j + 1, rows - 1) * cols + i]
+			verts[j * cols + i] = Vector3(x0 + i * step, heights[j * cols + i], z0 + j * step)
+			normals[j * cols + i] = Vector3(hl - hr, 2.0 * step, hd - hu).normalized()
+	var indices := PackedInt32Array()
+	for j in rows - 1:
+		for i in cols - 1:
+			var a := j * cols + i
+			var q := [a, a + 1, a + cols + 1, a + cols]
+			var top := -INF
+			var under := true
+			for k: int in q:
+				top = maxf(top, heights[k])
+				var v := verts[k]
+				if absf(v.x) > 100.5 or absf(v.z) > 44.5:
+					under = false
+			if top < -180.0 or under:
+				continue
+			indices.append_array([q[0], q[1], q[2], q[0], q[2], q[3]])
+	var arrays := []
+	arrays.resize(Mesh.ARRAY_MAX)
+	arrays[Mesh.ARRAY_VERTEX] = verts
+	arrays[Mesh.ARRAY_NORMAL] = normals
+	arrays[Mesh.ARRAY_INDEX] = indices
+	var mesh := ArrayMesh.new()
+	mesh.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	ResourceSaver.save(mesh, d.dir + "meshes/range.res")
+	d.own_mesh("Range", load(d.dir + "meshes/range.res"), d.mat("range"), Transform3D.IDENTITY, "Far")
+
+
+## The sea of cloud: a surface heaped in soft billows, lit on the sun's
+## side (its shader), drifting.
 static func _cloud_sea(d) -> void:
-	d.face("far_cloud", Vector3(0, -150, 0), Vector3(700, 0, 0), Vector3(0, 0, -700), "Far", BOTH)
-	var k := 0
-	for p: Array in [[Vector2(-360, -180), 240.0, 110.0], [Vector2(-120, -380), 330.0, 140.0], [Vector2(240, -330), 280.0, 130.0],
-			[Vector2(400, -40), 210.0, 100.0], [Vector2(330, 250), 300.0, 130.0], [Vector2(-60, 400), 240.0, 115.0],
-			[Vector2(-380, 200), 260.0, 120.0]]:
-		_peak(d, Vector3(p[0].x, -160, p[0].y), p[1], p[2], 900 + k)
-		k += 1
+	var billows := FastNoiseLite.new()
+	billows.seed = 9
+	billows.noise_type = FastNoiseLite.TYPE_SIMPLEX_SMOOTH
+	billows.frequency = 1.0 / 150.0
+	billows.fractal_octaves = 3
+	var step := 16.0
+	var cols := 81
+	var rows := 71
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var at := func(i: int, j: int) -> Vector3:
+		var x := -640.0 + i * step
+		var z := -560.0 + j * step
+		var b := clampf(billows.get_noise_2d(x, z) * 0.5 + 0.5, 0.0, 1.0)
+		return Vector3(x, -152.0 + pow(b, 1.6) * 34.0, z)
+	for j in rows - 1:
+		for i in cols - 1:
+			var q := [at.call(i, j), at.call(i + 1, j), at.call(i + 1, j + 1), at.call(i, j + 1)]
+			for k: int in [0, 1, 2, 0, 2, 3]:
+				st.add_vertex(q[k])
+	st.index()
+	st.generate_normals()
+	var mesh := st.commit()
+	ResourceSaver.save(mesh, d.dir + "meshes/cloud_sea.res")
+	d.own_mesh("CloudSea", load(d.dir + "meshes/cloud_sea.res"), d.mat("cloud_sea"), Transform3D.IDENTITY, "Far")
 
 
-## A peak rising `height` out of the cloud from a foot `radius` across:
-## rings of jagged points narrowing up it to a summit, cliff and scree low
-## down, snow and rock higher, snow on top.
-static func _peak(d, base: Vector3, height: float, radius: float, seed_n: int) -> void:
+## The overcast overhead: a deck of cloud 170 m up, fading out toward the
+## horizon, thinning and lit gold where the sun shines through.
+static func _cloud_deck(d) -> void:
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	var step := 40.0
+	for j in 26:
+		for i in 26:
+			var p := Vector3(-520.0 + i * step, 170.0, -520.0 + j * step)
+			var q := [p, p + Vector3(step, 0, 0), p + Vector3(step, 0, step), p + Vector3(0, 0, step)]
+			for k: int in [0, 1, 2, 0, 2, 3]:
+				st.set_normal(Vector3.DOWN)
+				st.add_vertex(q[k])
+	st.index()
+	var mesh := st.commit()
+	ResourceSaver.save(mesh, d.dir + "meshes/cloud_deck.res")
+	d.own_mesh("CloudDeck", load(d.dir + "meshes/cloud_deck.res"), d.mat("cloud_deck"), Transform3D.IDENTITY, "Far")
+
+
+## Shafts of sun slanting down out of the break toward the station, faint
+## in the haze, each a crossed pair of sheets.
+static func _sunbeams(d) -> void:
+	var to_sun := _to_sun()
 	var rng := RandomNumberGenerator.new()
-	rng.seed = seed_n
-	var sides := 7
-	var tip := base + Vector3(rng.randf_range(-0.15, 0.15) * radius, height, rng.randf_range(-0.15, 0.15) * radius)
-	var rings := []
-	for level: Array in [[0.0, 1.0], [0.34, 0.62], [0.58, 0.4], [0.78, 0.2], [0.92, 0.08]]:
-		var ring := []
-		for i in sides:
-			var a := TAU * i / sides + rng.randf_range(-0.25, 0.25)
-			var r: float = radius * float(level[1]) * rng.randf_range(0.82, 1.15)
-			var c := base.lerp(tip, float(level[0]))
-			ring.append(c + Vector3(cos(a) * r, rng.randf_range(-0.06, 0.06) * height, sin(a) * r))
-		rings.append(ring)
-	var top := []
-	for i in sides:
-		top.append(tip)
-	rings.append(top)
-	_rings(d, rings, ["cliff", "cliff", "cliff", "snow", "snow"], base + Vector3(0, height * 0.3, 0))
+	rng.seed = 2210
+	for i in 6:
+		var aim := Vector3(rng.randf_range(20.0, 260.0), rng.randf_range(-40.0, -10.0), rng.randf_range(-160.0, 160.0))
+		var top := aim + to_sun * 320.0
+		var down := (aim - top).normalized()
+		for k in 2:
+			var across := down.cross(Vector3.UP if k == 0 else Vector3(0, 0, 1)).normalized() * 12.0
+			d.quad("sunbeam", top - across, top + across, aim + across, aim - across, "Effects", BOTH)
 
 
 ## The line out across the cloud, far off: a stone viaduct of arches on
-## tall piers striding between the peaks north and south, rails on it, a
-## train stopped out on the north one. (At the ends of the cutting the
-## tracks stop at buffers at the edge.)
+## tall piers across each notch in the ring, from one mountainside to the
+## next, coming out of the rock at each end; a train stopped out on the
+## north one. (At the ends of the cutting the tracks stop at buffers at the
+## edge.) Each is [one end, the other], found by walking out from the
+## middle of the notch both ways until the ground comes up to the deck.
+static func _viaduct_ends() -> Array:
+	var n := _noises()
+	var ends := []
+	for i in NOTCHES.size():
+		var a := deg_to_rad(float(NOTCHES[i]))
+		var deck := -30.0 - i * 10.0
+		var mid := Vector3(cos(a) * RING.x, deck, sin(a) * RING.y)
+		var along := Vector3(-sin(a) * RING.x, 0.0, cos(a) * RING.y).normalized()
+		var pair := []
+		for way: float in [-1.0, 1.0]:
+			var s := 0.0
+			while s < 260.0 and _height(mid.x + along.x * way * s, mid.z + along.z * way * s, n) < deck + 2.0:
+				s += 4.0
+			pair.append(mid + along * way * (s + 6.0))
+		ends.append(pair)
+	return ends
+
+
 static func _viaducts(d) -> void:
-	for v: Array in [[Vector3(-300, 52, -330), Vector3(300, 52, -300)], [Vector3(-300, 38, 330), Vector3(300, 38, 300)]]:
+	var n := _noises()
+	var viaducts := _viaduct_ends()
+	for v: Array in viaducts:
 		var a: Vector3 = v[0]
 		var b: Vector3 = v[1]
 		var dir := (b - a).normalized()
@@ -837,20 +1450,26 @@ static func _viaducts(d) -> void:
 		var basis := Basis(dir, Vector3.UP, side)
 		var mid := (a + b) * 0.5
 		d.box("far_stone", mid + Vector3(0, -1.0, 0), Vector3(length, 2.0, 6.0), "Far", BOTH, basis)
-		var span := 30.0
+		for s: float in [-GAUGE, GAUGE]:
+			d.box("far_stone", mid + side * s + Vector3(0, 0.1, 0), Vector3(length, 0.2, 0.12), "Far", BOTH, basis)
+		var span := 26.0
 		var piers := int(length / span)
 		for i in piers + 1:
 			var p := a + dir * (i * span)
-			var depth := p.y + 150.0
-			d.box("far_stone", p + Vector3(0, -2.0 - depth * 0.5, 0), Vector3(4.0, depth, 6.0), "Far", BOTH, basis)
+			var ground := maxf(_height(p.x, p.z, n), -175.0)
+			var depth := p.y - 2.0 - ground
+			if depth > 1.0:
+				d.box("far_stone", p + Vector3(0, -2.0 - depth * 0.5, 0), Vector3(4.0, depth, 6.0), "Far", BOTH, basis)
 			if i < piers:
 				var q := p + dir * span * 0.5
-				d.box("far_stone", q + Vector3(0, -4.0, 0), Vector3(span, 4.0, 5.6), "Far", BOTH, basis)
+				d.box("far_stone", q + Vector3(0, -3.5, 0), Vector3(span, 3.0, 5.6), "Far", BOTH, basis)
 				for e: float in [-1.0, 1.0]:
-					d.box("far_stone", q + dir * e * (span * 0.5 - 4.0) + Vector3(0, -8.5, 0), Vector3(5.0, 5.0, 5.6), "Far", BOTH, basis)
-	var dir := (Vector3(300, 52, -300) - Vector3(-300, 52, -330)).normalized()
+					d.box("far_stone", q + dir * e * (span * 0.5 - 3.5) + Vector3(0, -7.5, 0), Vector3(4.2, 5.0, 5.6), "Far", BOTH, basis)
+	var a0: Vector3 = viaducts[0][0]
+	var dir := ((viaducts[0][1] as Vector3) - a0).normalized()
+	var middle := (a0 + (viaducts[0][1] as Vector3)) * 0.5
 	var basis := Basis(dir, Vector3.UP, dir.cross(Vector3.UP).normalized())
 	for k in 4:
-		var c := Vector3(-300, 52, -330) + dir * (240.0 + k * 14.0) + Vector3(0, 1.8, 0)
+		var c := middle + dir * (k * 14.0 - 30.0) + Vector3(0, 1.8, 0)
 		d.box("far_maroon", c + Vector3(0, -0.2, 0), Vector3(13.0, 2.6, 3.2), "Far", BOTH, basis)
 		d.box("far_cream", c + Vector3(0, 1.4, 0), Vector3(13.0, 0.8, 3.22), "Far", BOTH, basis)

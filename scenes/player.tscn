@@ -16,7 +16,7 @@ shape = SubResource("CapsuleShape3D_dqkch")
 
 [node name="Camera" type="Camera3D" parent="." unique_id=1415163055]
 transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1.6, 0)
-far = 500.0
+far = 600.0
 
 [node name="Model" type="Node3D" parent="." unique_id=1379723352]
 script = ExtResource("2_qhqgy")

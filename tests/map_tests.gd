@@ -539,17 +539,19 @@ func test_rift_is_a_station_above_the_clouds_at_dawn() -> void:
 	check(zone != null and zone.ambient < 0.5, "the tunnel through the station keeps the sky out")
 	var lamps := level.find_children("*", "Light3D", true, false)
 	check(lamps.size() >= 12, "the station's lamps still lit (%d)" % lamps.size())
-	# The solid props stand against walls: benches on the galleries.
+	# The solid props stand against walls (benches on the galleries, the
+	# station's chimneys) or at the shoulders' outer edges (benches).
 	for s: StaticBody3D in level.find_children("Solid_*", "StaticBody3D", true, false):
 		var z := absf(s.global_position.z)
-		check(z > 14.5 and z < 16.0, "%s is against a gallery wall (at %s)" % [s.name, s.global_position])
-	# The line goes on far off, not from the edge: nothing to step onto.
+		check((z > 14.5 and z < 16.0) or z > 41.0, "%s is against a wall or at the edge (at %s)" % [s.name, s.global_position])
+	# The line goes on far off, across the notches in the mountains round
+	# the station, not from the edge: nothing to step onto.
 	var far := level.find_children("far_stone*", "MeshInstance3D", true, false)
 	check(not far.is_empty(), "viaducts across the cloud")
 	var near := 0
 	for m: MeshInstance3D in far:
 		for v: Vector3 in m.mesh.get_faces():
-			if absf(v.z) < 250.0:
+			if Vector2(v.x, v.z).length() < 250.0:
 				near += 1
 	check(near == 0, "they're far off (%d points nearer)" % near)
 
@@ -567,6 +569,34 @@ func test_rift_bridges_cross_the_canyon() -> void:
 
 
 # --- Team maps ----------------------------------------------------------------------
+
+func test_boulevard_is_a_village_in_an_ice_cave() -> void:
+	await load_map(BOULEVARD)
+	var front := level.find_child("ArcadeFront_Blue_0", true, false) as GreyBox
+	check(front != null and front.surface != null, "the blocks wear the village's surfaces")
+	# The boundary is the shelf's edge: not drawn (the cave and a fence
+	# are), still there to stop you.
+	var edge := level.find_child("BoundaryN", true, false) as GreyBox
+	check(edge != null and edge.layers == 0 and edge.get_child_count(true) > 0, "the boundary is hidden but solid")
+	# No sun under the ice: the ice glows, and the village is full of warm
+	# lamps, none of them wasted on the vault.
+	var sun := level.get_node("Sun") as DirectionalLight3D
+	var lamps := level.find_children("*", "OmniLight3D", true, false)
+	check(not sun.visible and lamps.size() >= 40, "the sun off, the village's lamps lit (%d)" % lamps.size())
+	check(lamps.all(func(l: OmniLight3D) -> bool: return l.light_cull_mask & 8 == 0), "the lamps leave the cave's ice alone")
+	# Every solid prop has its twin on the other half, and none stands on a
+	# spawn or a pad.
+	var solids := level.find_children("Solid_*", "StaticBody3D", true, false)
+	check(not solids.is_empty(), "solid props")
+	var marks := get_tree().get_nodes_in_group(&"spawn") + level.find_children("Pad_*", "Node3D", true, false)
+	for s: StaticBody3D in solids:
+		var p := s.global_position
+		check(solids.any(func(o: StaticBody3D) -> bool: return o.global_position.distance_to(Vector3(-p.x, p.y, p.z)) < 0.05),
+				"%s has a twin across the middle (at %s)" % [s.name, p])
+		for m: Node3D in marks:
+			var flat := Vector2(m.global_position.x - p.x, m.global_position.z - p.z)
+			check(flat.length() > 1.5 or absf(m.global_position.y - p.y) > 2.5, "%s is clear of %s" % [s.name, m.name])
+
 
 func test_team_maps_are_the_same_for_both_teams() -> void:
 	for path: String in TEAM_MAPS:

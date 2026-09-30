@@ -14,14 +14,15 @@ func _initialize() -> void:
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path(OUT))
 	_save(_ballast(), "ballast")
 	_save(_flags(), "flags")
+	_save(_ride_stone(), "ride_stone")
 	_save(_rock(), "rock")
 	_save(_cliff(), "cliff")
+	_save(_far_rock(), "far_rock")
 	_save(_scree(), "scree")
 	_save(_snow(), "snow")
-	_save(_snow_rock(), "snow_rock")
 	_save(_alpine(), "alpine")
 	_save(_meadow(), "meadow")
-	_save(_clouds(), "clouds")
+	_save(_billows(), "billows")
 	_save(_reflection_day(), "reflection_day")
 	_save(_poster_peak(), "poster_peak")
 	_save(_poster_viaduct(), "poster_viaduct")
@@ -31,53 +32,95 @@ func _initialize() -> void:
 
 # --- The ground ------------------------------------------------------------------------
 
-## Track ballast: grey stone chippings, rust-brown where the rails shed, oil
-## darker in places. Two metres a repeat.
+## Track ballast: chunky grey chippings, each its own shade and lit on
+## top, dark gaps between, rust-brown here and there where the rails shed.
+## A metre a repeat.
 func _ballast() -> Image:
 	var img := _canvas(64, 64, "ballast")
 	_paint(img, func(tx: float, ty: float) -> Color:
-		# Chips about 5 cm: a jittered grid, each chip its own shade, lit
-		# on its upper side.
-		var gx := tx * 40.0 + _noise(tx * 40.0, ty * 40.0, 40) * 0.6
-		var gy := ty * 40.0 + _noise(ty * 40.0 + 7.0, tx * 40.0, 40) * 0.6
-		var stone := _hash(floori(gx), floori(gy), 40)
-		var c := Color(0.56, 0.54, 0.51).lightened((stone - 0.5) * 0.3)
-		var f := Vector2(fmod(gx, 1.0), fmod(gy, 1.0))
-		c = c.darkened(smoothstep(0.35, 0.5, (f - Vector2(0.5, 0.5)).length()) * 0.35)
-		c = c.lightened(smoothstep(0.3, 0.0, f.y) * 0.08)
-		c = _dirty(c, smoothstep(0.55, 0.8, _fbm(tx, ty, 4, 4)) * 0.45, Color(0.40, 0.28, 0.20))
-		return _dirty(c, smoothstep(0.7, 0.9, _fbm(tx + 0.5, ty, 3, 4)) * 0.4, Color(0.2, 0.19, 0.18)))
+		var chip := _blocks(tx, ty, Vector2(12, 12), 40)
+		var id: Vector2i = chip[0]
+		var rel: Vector2 = chip[1]
+		var c := Color(0.56, 0.55, 0.53).lerp(Color(0.40, 0.40, 0.42), _hash(id.x, id.y, 12))
+		c = c.lerp(Color(0.52, 0.40, 0.30), smoothstep(0.8, 0.9, _hash(id.x + 5, id.y, 12)) * 0.7)
+		c = c.lightened(smoothstep(-0.1, -0.35, rel.y) * 0.1).darkened(smoothstep(0.1, 0.35, rel.y) * 0.1)
+		c = c.lightened((_hash(floori(tx * 256.0), floori(ty * 256.0), 256) - 0.5) * 0.08)
+		return Color(0.20, 0.19, 0.18).lerp(c, smoothstep(0.03, 0.08, chip[2])))
+	return _finish(img, 64, 64)
+
+
+## The cutting's walls: dressed limestone in courses half a metre tall,
+## blocks of a metre or more, staggered course to course, each its own
+## shade, clean dark joints, lit along the top. Every two metres the
+## wall-ride band, as on the ride tiles every map's rideable walls wear:
+## dark diagonal stripes between yellow lines. Four metres a repeat.
+func _ride_stone() -> Image:
+	var img := _canvas(64, 64, "ride_stone")
+	_paint(img, func(tx: float, ty: float) -> Color:
+		var px := tx * 64.0
+		var py := ty * 64.0
+		var course := floori(py / 8.0)
+		var in_y := py - course * 8.0
+		if course % 4 == 3:
+			if in_y < 1.0 or in_y >= 7.0:
+				return Color(0.9, 0.95, 0.4)
+			var stripe := posmod(floori(px) + floori(py), 8) < 4
+			return Color(0.08, 0.18, 0.24) if stripe else Color(0.12, 0.26, 0.32)
+		# Blocks 16 to 24 px (1 to 1.5 m), each course its own stagger.
+		var span := _span(fposmod(px + _hash(course, 7, 8) * 16.0, 64.0), course, 16.0, 24.0)
+		var k: int = span[0]
+		var in_x: float = span[1]
+		var c := Color(0.70, 0.66, 0.58).darkened((_hash(course, k + 20, 8) - 0.5) * 0.14)
+		c = c.lerp(Color(0.64, 0.64, 0.64), _hash(course + 3, k, 8) * 0.3)
+		c = c.lightened((_hash(floori(tx * 256.0), floori(ty * 256.0), 256) - 0.5) * 0.08)
+		c = c.darkened((_fbm(tx, ty, 4) - 0.5) * 0.12)
+		# Bevel: light along the top and left, dark along the bottom.
+		if in_y < 2.0 or in_x < 2.0:
+			c = c.lightened(0.08)
+		elif in_y >= 7.0:
+			c = c.darkened(0.12)
+		if in_y < 1.0 or in_x < 1.0:
+			return Color(0.30, 0.28, 0.26)
+		# Rain streaks down from the band.
+		return _dirty(c, smoothstep(0.62, 0.85, _stretched(tx, ty, 16, 2)) * 0.18, Color(0.42, 0.41, 0.40)))
 	return _finish(img, 64, 64)
 
 
 ## Pale limestone flags on the roofs and the galleries, a metre and a half
-## square, worn at the middle, lichen in the joints, rain-darkened edges.
+## square, each its own shade, clean dark joints, lit along the top.
 ## Three metres a repeat.
 func _flags() -> Image:
 	var img := _canvas(64, 64, "flags")
 	_paint(img, func(tx: float, ty: float) -> Color:
-		var cell := _cell(tx, ty, 2, 2)
-		var base := Color(0.80, 0.77, 0.70).darkened(_hash(cell[0], cell[1], 2) * 0.08)
-		base = base.darkened((_fbm(tx, ty, 6, 4) - 0.5) * 0.14)
-		base = base.darkened((1.0 - smoothstep(0.0, 0.12, cell[2])) * 0.12)
-		var lichen := smoothstep(0.62, 0.8, _fbm(tx + 0.3, ty, 8, 3)) * (1.0 - smoothstep(0.0, 0.1, cell[2]))
-		base = _dirty(base, lichen * 0.6, Color(0.62, 0.66, 0.42))
-		return Color(0.40, 0.38, 0.34).lerp(base, _grout_mask(cell[2], 0.012)))
+		var px := fposmod(tx * 64.0, 32.0)
+		var py := fposmod(ty * 64.0, 32.0)
+		var ix := floori(tx * 2.0)
+		var iy := floori(ty * 2.0)
+		var c := Color(0.80, 0.77, 0.70).darkened(_hash(ix, iy, 2) * 0.08)
+		c = c.lightened((_hash(floori(tx * 256.0), floori(ty * 256.0), 256) - 0.5) * 0.07)
+		c = c.darkened((_fbm(tx, ty, 4) - 0.5) * 0.12)
+		if py < 2.0 or px < 2.0:
+			c = c.lightened(0.06)
+		elif py >= 30.0 or px >= 30.0:
+			c = c.darkened(0.08)
+		if py < 1.0 or px < 1.0:
+			return Color(0.38, 0.36, 0.32)
+		return c)
 	return _finish(img, 64, 64)
 
 
-## The mountain's rock under the station: grey granite in slabs, cracks
-## running down, pale where it's weathered, darker streaks. Twelve metres a
+## The mountain's rock under the tracks: grey granite in big slabs, each
+## its own shade and lit along the top, clean dark joints. Six metres a
 ## repeat.
 func _rock() -> Image:
 	var img := _canvas(64, 64, "rock")
 	_paint(img, func(tx: float, ty: float) -> Color:
-		var c := Color(0.50, 0.50, 0.53).darkened((_fbm(tx, ty, 3, 5) - 0.5) * 0.4)
-		var joint := absf(fmod(tx * 3.0 + _fbm(tx, ty, 2, 3) * 0.8, 1.0) - 0.5)
-		c = c.darkened((1.0 - smoothstep(0.0, 0.03, joint)) * 0.35)
-		var ledge := absf(fmod(ty * 4.0 + _fbm(tx, ty, 3, 2) * 0.5, 1.0) - 0.5)
-		c = c.lightened((1.0 - smoothstep(0.0, 0.05, ledge)) * 0.15)
-		return _dirty(c, smoothstep(0.55, 0.8, _fbm(tx, ty * 0.2, 12, 3)) * 0.3, Color(0.3, 0.3, 0.33)))
+		var b := _slabs(tx, ty, 4, 3, 50)
+		var c := Color(0.52, 0.52, 0.55).lerp(Color(0.40, 0.40, 0.44), b[0])
+		c = c.lightened((_hash(floori(tx * 256.0), floori(ty * 256.0), 256) - 0.5) * 0.08)
+		c = c.darkened((_fbm(tx, ty, 4) - 0.5) * 0.14)
+		c = c.lightened(smoothstep(2.0, 0.0, b[2]) * 0.08).darkened(smoothstep(2.5, 0.0, b[3]) * 0.12)
+		return Color(0.20, 0.20, 0.22).lerp(c, smoothstep(0.5, 1.2, b[1])))
 	return _finish(img, 64, 64)
 
 
@@ -114,50 +157,101 @@ func _facet(id: Vector2i, salt: int, period: int) -> Array:
 	return [n, clampf(n.dot(Vector3(-0.45, -0.55, 0.7).normalized()), 0.0, 1.0)]
 
 
-## The cliff under the station, close: granite broken into big angular
-## facets, each catching the light its own way, split again into smaller
-## ones, soft dark cracks between; snow on the facets that face up,
-## lichen, wet streaks. Sixteen metres a repeat.
+## Rock close up (rockeries, boulders): granite broken into big angular
+## facets, each flat and catching the light its own way, clean dark
+## cracks between, a few spots of lichen. Four metres a repeat.
 func _cliff() -> Image:
-	var img := _canvas(128, 128, "cliff")
+	var img := _canvas(64, 64, "cliff")
 	_paint(img, func(tx: float, ty: float) -> Color:
-		var wx := tx + (_fbm(tx, ty, 3, 3) - 0.5) * 0.12
-		var wy := ty + (_fbm(tx + 0.5, ty, 3, 3) - 0.5) * 0.08
-		var big := _blocks(wx, wy, Vector2(6, 3), 11)
-		var small := _blocks(wx, wy, Vector2(14, 7), 29)
-		var f1 := _facet(big[0], 3, 6)
-		var f2 := _facet(small[0], 9, 14)
-		var light: float = float(f1[1]) * 0.65 + float(f2[1]) * 0.35
-		var c := Color(0.30, 0.30, 0.33).lerp(Color(0.72, 0.70, 0.70), light)
-		c = c.darkened((_fbm(tx, ty, 10, 3) - 0.5) * 0.12)
-		c = c.darkened((1.0 - smoothstep(0.0, 0.1, big[2])) * 0.28 + (1.0 - smoothstep(0.0, 0.05, small[2])) * 0.08)
-		var streak := smoothstep(0.64, 0.86, _fbm(tx, ty * 0.12, 20, 3))
-		c = _dirty(c, streak * 0.3, Color(0.26, 0.25, 0.27))
-		c = _dirty(c, smoothstep(0.72, 0.82, _fbm(tx + 0.4, ty + 0.1, 10, 3)) * 0.45, Color(0.74, 0.52, 0.28))
-		c = _dirty(c, smoothstep(0.74, 0.84, _fbm(tx + 0.1, ty + 0.6, 12, 3)) * 0.35, Color(0.60, 0.66, 0.52))
-		var up: float = -(f1[0] as Vector3).y
-		var rel: Vector2 = big[1]
-		var snow := smoothstep(0.18, 0.3, up) * smoothstep(0.0, -0.35, rel.y) * smoothstep(0.06, 0.14, big[2]) * smoothstep(0.45, 0.65, _fbm(tx, ty, 6, 3))
-		return c.lerp(Color(0.93, 0.95, 1.0), snow))
-	return _finish(img, 128, 128)
+		var b := _blocks(tx, ty, Vector2(5, 4), 11)
+		var f := _facet(b[0], 3, 5)
+		var c := Color(0.30, 0.30, 0.33).lerp(Color(0.66, 0.65, 0.66), float(f[1]))
+		c = c.lightened((_hash(floori(tx * 256.0), floori(ty * 256.0), 256) - 0.5) * 0.08)
+		c = c.darkened((_fbm(tx, ty, 4) - 0.5) * 0.1)
+		var lichen := smoothstep(0.7, 0.74, _fbm(tx + 0.4, ty + 0.1, 8, 3))
+		c = c.lerp(Color(0.72, 0.62, 0.34), lichen * 0.7)
+		return Color(0.18, 0.18, 0.20).lerp(c, smoothstep(0.02, 0.05, b[2])))
+	return _finish(img, 64, 64)
 
 
-## Scree below the cliffs: angular broken stones of every size, grey and
-## rust, each facet catching the light its own way, dark gaps and grit
-## between. Twelve metres a repeat.
+## The mountains far off: grey rock in soft gullies and buttresses running
+## down, faint ledges across, warmer and cooler by turns; soft, like
+## everything far off. Seen with world y up. Sixty metres a repeat.
+func _far_rock() -> Image:
+	var img := _canvas(64, 64, "far_rock")
+	_paint(img, func(tx: float, ty: float) -> Color:
+		var c := Color(0.50, 0.49, 0.51).darkened((_fbm(tx, ty, 3, 4) - 0.5) * 0.3)
+		c = c.lerp(Color(0.54, 0.47, 0.42), smoothstep(0.5, 0.75, _fbm(tx + 0.4, ty, 2, 3)) * 0.5)
+		var gully := _stretched(tx, ty, 10, 2) * 0.7 + _stretched(tx + 0.13, ty, 20, 3) * 0.3
+		c = c.darkened(smoothstep(0.5, 0.85, gully) * 0.32).lightened(smoothstep(0.35, 0.1, gully) * 0.12)
+		var ledge := _stretched(tx, ty, 2, 9)
+		return c.lightened(smoothstep(0.7, 0.9, ledge) * 0.1).darkened(smoothstep(0.3, 0.1, ledge) * 0.08))
+	return _finish(img, 64, 64)
+
+
+## Slabs: `rows` courses, each broken into `cols`-ish slabs of uneven
+## length by joints running down: how dark the slab is (0..1), how far
+## (px) from the nearest joint, from the slab's top, and from its bottom.
+func _slabs(tx: float, ty: float, cols: int, rows: int, salt: int) -> Array:
+	var py := ty * 64.0
+	var row_h := 64.0 / rows
+	var row := floori(py / row_h)
+	var in_y := py - row * row_h
+	var span := _span(fposmod(tx * 64.0 + _hash(row, salt, rows) * 64.0, 64.0), row + salt, 64.0 / cols * 0.7, 64.0 / cols * 1.3)
+	var k: int = span[0]
+	var in_x: float = span[1]
+	var length: float = span[2]
+	var joint := minf(minf(in_x, length - in_x), minf(in_y, row_h - in_y))
+	return [_hash(row + 11, k, 64), joint, in_y, row_h - in_y]
+
+
+## Where `x` (0..64 px) falls along a run of pieces `lo` to `hi` px long
+## that fill the 64 exactly (so it wraps), laid out by `salt`: the
+## piece's index, how far into it, and its length.
+func _span(x: float, salt: int, lo: float, hi: float) -> Array:
+	var lengths := []
+	var total := 0.0
+	while total < 64.0:
+		var l := lerpf(lo, hi, _hash(salt, lengths.size() + 31, 1 << 16))
+		lengths.append(l)
+		total += l
+	# Squeeze the run to fit.
+	var scale := 64.0 / total
+	var start := 0.0
+	for i in lengths.size():
+		var l: float = lengths[i] * scale
+		if x < start + l or i == lengths.size() - 1:
+			return [i, x - start, l]
+		start += l
+	return [0, x, lo]
+
+
+## Value noise stretched down the picture, `cols` cells across and `rows`
+## down, wrapping both ways: streaks.
+func _stretched(tx: float, ty: float, cols: int, rows: int) -> float:
+	var x := tx * cols
+	var y := ty * rows
+	var xi := floori(x)
+	var yi := floori(y)
+	var u := (x - xi) * (x - xi) * (3.0 - 2.0 * (x - xi))
+	var v := (y - yi) * (y - yi) * (3.0 - 2.0 * (y - yi))
+	var at := func(i: int, j: int) -> float: return _hash(posmod(i, cols) * 97 + posmod(j, rows), 5, 1 << 20)
+	return lerpf(lerpf(at.call(xi, yi), at.call(xi + 1, yi), u), lerpf(at.call(xi, yi + 1), at.call(xi + 1, yi + 1), u), v)
+
+
+## Scree below the cliffs: angular broken stones, grey and rust, each flat
+## and catching the light its own way, dark gaps between. Twelve metres a
+## repeat.
 func _scree() -> Image:
 	var img := _canvas(64, 64, "scree")
 	_paint(img, func(tx: float, ty: float) -> Color:
-		var big := _blocks(tx, ty, Vector2(9, 9), 5)
-		var small := _blocks(tx, ty, Vector2(24, 24), 17)
-		var use_big: bool = _hash((big[0] as Vector2i).x, (big[0] as Vector2i).y + 40, 9) > 0.72
-		var b: Array = big if use_big else small
+		var b := _blocks(tx, ty, Vector2(10, 10), 5)
 		var id: Vector2i = b[0]
-		var f := _facet(id, 21, 24)
-		var base := Color(0.52, 0.51, 0.50).lerp(Color(0.55, 0.42, 0.32), _hash(id.x + 2, id.y, 24) * 0.8)
-		var c := base.darkened(0.35).lerp(base.lightened(0.2), float(f[1]))
-		c = c.lerp(Color(0.22, 0.20, 0.19), (1.0 - smoothstep(0.0, 0.12, b[2])) * 0.7)
-		return c.darkened((_fbm(tx, ty, 4, 3) - 0.5) * 0.15))
+		var f := _facet(id, 21, 10)
+		var base := Color(0.54, 0.53, 0.52).lerp(Color(0.56, 0.44, 0.34), _hash(id.x + 2, id.y, 10) * 0.8)
+		var c := base.darkened(0.3).lerp(base.lightened(0.15), float(f[1]))
+		c = c.lightened((_hash(floori(tx * 256.0), floori(ty * 256.0), 256) - 0.5) * 0.08)
+		return Color(0.22, 0.20, 0.19).lerp(c, smoothstep(0.03, 0.07, b[2])))
 	return _finish(img, 64, 64)
 
 
@@ -175,77 +269,50 @@ func _snow() -> Image:
 	return _finish(img, 64, 64)
 
 
-## Rock high up under snow: angular facets, the ones facing up buried
-## in snow, the steep ones bare rock, a soft blue in the snow's shadows.
-## Sixteen metres a repeat.
-func _snow_rock() -> Image:
-	var img := _canvas(64, 64, "snow_rock")
-	_paint(img, func(tx: float, ty: float) -> Color:
-		var wx := tx + (_fbm(tx, ty, 3, 3) - 0.5) * 0.12
-		var b := _blocks(wx, ty, Vector2(5, 6), 23)
-		var f := _facet(b[0], 13, 6)
-		var n: Vector3 = f[0]
-		var rock := Color(0.28, 0.28, 0.32).lerp(Color(0.62, 0.62, 0.66), float(f[1]))
-		rock = rock.darkened((1.0 - smoothstep(0.0, 0.08, b[2])) * 0.4)
-		var cover := smoothstep(-0.05, 0.2, -n.y + (_fbm(tx, ty, 10, 3) - 0.5) * 0.4)
-		var snow := Color(0.78, 0.84, 0.96).lerp(Color(1, 1, 1), float(f[1]))
-		return rock.lerp(snow, cover))
-	return _finish(img, 64, 64)
-
-
-## Alpine turf on the rockeries: short tawny-green grass, cushions of moss,
-## white and yellow and violet flowers dotted in, grey stones. Eight
-## metres a repeat.
+## Alpine turf on the rockeries: short tawny grass in bold patches of
+## green moss, grey stones, a few flowers, white and yellow and violet.
+## Four metres a repeat.
 func _alpine() -> Image:
 	var img := _canvas(64, 64, "alpine")
 	_paint(img, func(tx: float, ty: float) -> Color:
-		var c := Color(0.44, 0.52, 0.28).lerp(Color(0.62, 0.58, 0.34), _fbm(tx, ty, 5, 4))
-		c = c.darkened((_hash(floori(tx * 200.0), floori(ty * 200.0), 200) - 0.5) * 0.18)
-		var moss := smoothstep(0.6, 0.75, _fbm(tx + 0.3, ty, 8, 3))
-		c = c.lerp(Color(0.30, 0.46, 0.22), moss * 0.6)
-		var stone := smoothstep(0.74, 0.8, _fbm(tx + 0.7, ty + 0.4, 6, 3))
-		c = c.lerp(Color(0.62, 0.61, 0.6), stone)
-		var h := _hash(floori(tx * 90.0), floori(ty * 90.0), 90)
-		if h > 0.965 and stone < 0.5:
+		var moss := smoothstep(0.5, 0.56, _fbm(tx, ty, 4, 4))
+		var c := Color(0.62, 0.56, 0.32).lerp(Color(0.38, 0.50, 0.24), moss)
+		c = c.lightened((_hash(floori(tx * 256.0), floori(ty * 256.0), 256) - 0.5) * 0.1)
+		var stone := smoothstep(0.72, 0.75, _fbm(tx + 0.7, ty + 0.4, 4, 3))
+		c = c.lerp(Color(0.60, 0.60, 0.60), stone)
+		var h := _hash(floori(tx * 32.0), floori(ty * 32.0), 32)
+		if h > 0.94 and stone < 0.5:
 			c = [Color(1, 1, 0.95), Color(1.0, 0.85, 0.2), Color(0.62, 0.42, 0.9)][int(h * 1000.0) % 3]
 		return c)
 	return _finish(img, 64, 64)
 
 
-## The mountain's shoulders either side of the cutting, in big soft
-## patches: tawny turf, grey rock breaking through, old snow lying in the
-## hollows, frost on the grass round it. Twenty-four metres a repeat.
+## The mountain's shoulders either side of the cutting: tawny turf in
+## bold patches of greener grass, a few grey stones showing through.
+## Eight metres a repeat.
 func _meadow() -> Image:
 	var img := _canvas(128, 128, "meadow")
 	_paint(img, func(tx: float, ty: float) -> Color:
-		var c := Color(0.50, 0.50, 0.30).lerp(Color(0.64, 0.56, 0.36), _fbm(tx, ty, 6, 4))
-		c = c.darkened((_hash(floori(tx * 320.0), floori(ty * 320.0), 320) - 0.5) * 0.14)
-		c = c.lerp(Color(0.36, 0.44, 0.26), smoothstep(0.58, 0.75, _fbm(tx + 0.3, ty, 10, 3)) * 0.5)
-		var rock := smoothstep(0.64, 0.7, _fbm(tx + 0.7, ty + 0.4, 5, 4))
-		var stone := Color(0.52, 0.52, 0.55).darkened((_fbm(tx, ty, 24, 3) - 0.5) * 0.4)
-		c = c.lerp(stone, rock)
-		# Old snow in a few small hollows, frost round it.
-		var drift := _fbm(tx + 0.2, ty + 0.9, 4, 5) - (_fbm(tx, ty, 16, 2) - 0.5) * 0.12
-		c = c.lerp(Color(0.72, 0.74, 0.70), smoothstep(0.62, 0.68, drift) * 0.5 * (1.0 - rock))
-		var snow := smoothstep(0.69, 0.72, drift)
-		# Tufts: fine dark and light flecks.
-		var tuft := _hash(floori(tx * 256.0), floori(ty * 256.0), 256)
-		c = c.darkened(maxf(0.0, 0.3 - tuft) * 0.4).lightened(maxf(0.0, tuft - 0.85) * 0.6)
-		return c.lerp(Color(0.86, 0.88, 0.92).darkened((_fbm(tx, ty, 12, 2) - 0.5) * 0.15), snow))
+		var green := smoothstep(0.52, 0.58, _fbm(tx, ty, 6, 4))
+		var c := Color(0.62, 0.56, 0.32).lerp(Color(0.50, 0.52, 0.28), green)
+		c = c.lightened(smoothstep(0.66, 0.72, _fbm(tx + 0.5, ty, 6, 3)) * 0.06)
+		c = c.lightened((_hash(floori(tx * 512.0), floori(ty * 512.0), 512) - 0.5) * 0.1)
+		var stone := smoothstep(0.76, 0.78, _fbm(tx + 0.7, ty + 0.4, 5, 3))
+		var s := Color(0.56, 0.56, 0.58).lightened((_hash(floori(tx * 512.0), floori(ty * 512.0), 512) - 0.5) * 0.08)
+		return c.lerp(s, stone))
 	return _finish(img, 128, 128)
 
 
-## The sea of cloud seen from above: soft white billows, shaded blue-grey
-## in their hollows. A hundred and sixty metres a repeat.
-func _clouds() -> Image:
-	var img := _canvas(128, 128, "clouds")
+## Billows for the cloud shaders: soft round heaps, the full range from
+## the hollows (dark) to the tops (light), in grey. Tiles.
+func _billows() -> Image:
+	var img := _canvas(128, 128, "billows")
 	_paint(img, func(tx: float, ty: float) -> Color:
-		var b := _fbm(tx, ty, 4, 5)
-		var billow := smoothstep(0.35, 0.75, b)
-		var c := Color(0.76, 0.81, 0.90).lerp(Color(1.0, 0.99, 0.97), billow)
-		# The sunny side of each billow.
-		var lit := _fbm(tx + 0.02, ty - 0.02, 4, 5) - b
-		return c.lightened(clampf(lit * 3.0, 0.0, 0.1)))
+		var v := _fbm(tx, ty, 4, 5)
+		# Rounded tops: the noise pushed through a soft curve.
+		v = smoothstep(0.25, 0.75, v)
+		v = sqrt(v)
+		return Color(v, v, v))
 	return _finish(img, 128, 128)
 
 

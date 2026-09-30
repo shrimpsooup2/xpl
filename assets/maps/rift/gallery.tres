@@ -1,7 +1,7 @@
 [gd_resource type="ShaderMaterial" format=3]
 
 [ext_resource type="Shader" path="res://src/render/retro_surface.gdshader" id="1_76aji"]
-[ext_resource type="Texture2D" path="res://assets/textures/ride_tiles.png" id="2_pnqon"]
+[ext_resource type="Texture2D" path="res://assets/textures/rift/ride_stone.png" id="2_pnqon"]
 [ext_resource type="Texture2D" path="res://assets/textures/rift/reflection_day.png" id="3_12dpg"]
 [ext_resource type="Texture2D" path="res://assets/textures/rift/flags.png" id="4_xqd33"]
 
@@ -11,7 +11,7 @@ shader = ExtResource("1_76aji")
 shader_parameter/albedo_texture = ExtResource("2_pnqon")
 shader_parameter/reflection_map = ExtResource("3_12dpg")
 shader_parameter/tint = Color(1, 1, 1, 1)
-shader_parameter/meters_per_repeat = 2.0
+shader_parameter/meters_per_repeat = 4.0
 shader_parameter/gloss = 0.2
 shader_parameter/gloss_grazing = 0.5
 shader_parameter/roughness_value = 0.35

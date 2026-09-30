@@ -1,0 +1,30 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/retro_surface.gdshader" id="1_mmriq"]
+[ext_resource type="Texture2D" path="res://assets/textures/boulevard/canvas.png" id="2_wfo5a"]
+[ext_resource type="Texture2D" path="res://assets/textures/boulevard/reflection_ice.png" id="3_g3bph"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_mmriq")
+shader_parameter/albedo_texture = ExtResource("2_wfo5a")
+shader_parameter/reflection_map = ExtResource("3_g3bph")
+shader_parameter/tint = Color(1.8, 0.5, 0.4, 1)
+shader_parameter/meters_per_repeat = 1.0
+shader_parameter/gloss = 0.0
+shader_parameter/gloss_grazing = 0.1
+shader_parameter/roughness_value = 0.5
+shader_parameter/specular_value = 0.35
+shader_parameter/use_top = null
+shader_parameter/top_tint = null
+shader_parameter/top_meters = null
+shader_parameter/use_bottom = null
+shader_parameter/bottom_meters = null
+shader_parameter/use_uv = null
+shader_parameter/lane_color = null
+shader_parameter/lane_period = null
+shader_parameter/lane_width = null
+shader_parameter/lane_length = null
+shader_parameter/caustics = null
+shader_parameter/caustics_color = null
+shader_parameter/caustics_meters = null

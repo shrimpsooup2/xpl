@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/puddle.gdshader" id="1_p0k47"]
+[ext_resource type="Texture2D" path="res://assets/textures/terrace/grime.png" id="2_wxbfj"]
+[ext_resource type="Texture2D" path="res://assets/textures/rift/reflection_day.png" id="3_eu0m2"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_p0k47")
+shader_parameter/reflection_map = ExtResource("3_eu0m2")
+shader_parameter/noise = ExtResource("2_wxbfj")
+shader_parameter/size = Vector2(2.4, 1.6)
+shader_parameter/color = null
+shader_parameter/opacity = null

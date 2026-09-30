@@ -41,6 +41,12 @@ static var _materials: Dictionary = {}
 	set(value):
 		layers = value
 		_rebuild()
+## Whether it casts shadows. A dressed map with many blocks can turn it off
+## where the shadows add little, to save drawing them all again.
+@export var shadows := true:
+	set(value):
+		shadows = value
+		_rebuild()
 
 var _mesh_instance: MeshInstance3D
 var _collision: CollisionShape3D
@@ -64,6 +70,7 @@ func _rebuild() -> void:
 	_mesh_instance.mesh = mesh
 	_mesh_instance.material_override = surface if surface else material_for(kind)
 	_mesh_instance.layers = layers
+	_mesh_instance.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_ON if shadows else GeometryInstance3D.SHADOW_CASTING_SETTING_OFF
 	var shape := BoxShape3D.new()
 	shape.size = size
 	_collision.shape = shape

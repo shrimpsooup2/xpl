@@ -6,7 +6,9 @@ extends SceneTree
 ## Re-running overwrites scenes/player.tscn, scenes/test_course.tscn and the
 ## input map. Data resources in data/ are only created if missing, so tuned
 ## values are never lost. Once you start hand-editing the test course in the
-## editor, stop regenerating it (or pass --skip-course).
+## editor, stop regenerating it (or pass --skip-course). ONLY=<map name> in
+## the environment builds just that map (and the rest as above), to try a
+## map's dressing quickly.
 
 const KEY_ACTIONS := {
 	&"move_forward": [KEY_W],
@@ -65,7 +67,10 @@ func _initialize() -> void:
 	if not "--skip-course" in OS.get_cmdline_user_args():
 		_save_scene(_build_test_course(), "res://scenes/test_course.tscn")
 	DirAccess.make_dir_recursive_absolute(ProjectSettings.globalize_path("res://scenes/maps"))
+	var only := OS.get_environment("ONLY")
 	for map_name: String in MAPS:
+		if only != "" and map_name != only:
+			continue
 		var kit := LevelKit.new(map_name, _make_environment())
 		var spawn: Transform3D = load(MAPS[map_name][0]).build(kit)
 		# A dressed map (GDD §9.3) has its decor in <map>_deco.gd.
@@ -165,7 +170,7 @@ func _build_player() -> Node:
 	cam.name = "Camera"
 	cam.position = Vector3(0, 1.6, 0)
 	cam.near = 0.05
-	cam.far = 500.0
+	cam.far = 600.0
 	player.add_child(cam)
 
 	var model := Node3D.new()

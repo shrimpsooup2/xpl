@@ -1,0 +1,13 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/cloud_sea.gdshader" id="1_j8m7i"]
+[ext_resource type="Texture2D" path="res://assets/textures/rift/billows.png" id="2_np0he"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_j8m7i")
+shader_parameter/billows = ExtResource("2_np0he")
+shader_parameter/to_sun = Vector3(0.87126786, 0.3746066, 0.31711558)
+shader_parameter/lit = null
+shader_parameter/shade = null
+shader_parameter/top = null
