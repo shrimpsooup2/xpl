@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/far_surface.gdshader" id="1_i42e8"]
+[ext_resource type="Texture2D" path="res://assets/textures/stack/facade.png" id="2_s2heb"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_i42e8")
+shader_parameter/albedo_texture = ExtResource("2_s2heb")
+shader_parameter/tint = null
+shader_parameter/meters_per_repeat = 12.0

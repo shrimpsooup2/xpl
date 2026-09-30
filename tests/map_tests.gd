@@ -221,6 +221,39 @@ func test_stack_ramps_are_slides_down() -> void:
 
 # --- Terrace -------------------------------------------------------------------
 
+
+func test_stack_is_dressed_and_the_graphics_settings_switch_it() -> void:
+	await load_map(STACK)
+	var crate := level.find_child("CrateA", true, false) as GreyBox
+	check(crate.surface != null and crate.layers == 2, "the blocks wear the map's own surfaces, the cellar's on its own layer")
+	var zone := level.find_child("Indoors", true, false) as AmbientZone
+	check(zone != null and zone.ambient < 0.5, "the rooms under the pool are indoors: the sky's light stays out")
+	var lamps := level.find_children("*", "Light3D", true, false)
+	check(lamps.size() >= 15, "lamps all over (%d)" % lamps.size())
+	var moon := level.get_node("Sun") as DirectionalLight3D
+	var minor := get_tree().get_nodes_in_group(&"minor_lights")
+	var detail := get_tree().get_nodes_in_group(&"decor_detail")
+	var effects := get_tree().get_nodes_in_group(&"decor_effects")
+	check(not minor.is_empty() and not detail.is_empty() and not effects.is_empty(), "minor lamps, detail and effects to switch")
+	# Low: no shadows, no extra lamps, no detail, no effects, no bloom.
+	Settings.set_graphics_preset("low", false)
+	Graphics.apply(get_tree(), level)
+	check(not moon.shadow_enabled, "low: no shadows")
+	check(moon.light_cull_mask == moon.get_meta(&"cull_mask_unshadowed"), "and the moon keeps out from under the pool without them")
+	check(minor.all(func(l: Node) -> bool: return not (l as Light3D).visible), "the extra lamps are off")
+	check(detail.all(func(n: Node) -> bool: return not (n as Node3D).visible), "the detail's hidden")
+	check(effects.all(func(n: Node) -> bool: return not (n as Node3D).visible), "the effects are off")
+	var env := (level.get_node("WorldEnvironment") as WorldEnvironment).environment
+	check(not env.glow_enabled, "no bloom")
+	check(level.find_child("Fixtures", true, false).visible, "but the lamps' fittings stay: a light always comes from something")
+	# High: all of it back as the level set it up.
+	Settings.set_graphics_preset("high", false)
+	Graphics.apply(get_tree(), level)
+	check(moon.shadow_enabled and moon.light_cull_mask == int(moon.get_meta(&"cull_mask")), "high: the moon's shadows, and its light where the level wanted it")
+	check(minor.all(func(l: Node) -> bool: return (l as Light3D).visible) and env.glow_enabled, "the lamps and the bloom are back")
+	check(detail.all(func(n: Node) -> bool: return (n as Node3D).visible), "and the detail")
+
+
 func test_terrace_climbs_from_the_square_to_the_pulpit() -> void:
 	await load_map(TERRACE)
 	place(Vector3(-2, 0.05, -10), PI)

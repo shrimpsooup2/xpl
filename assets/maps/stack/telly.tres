@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/tv_screen.gdshader" id="1_rxvvo"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_rxvvo")
+shader_parameter/size = Vector2(0.5, 0.38)
+shader_parameter/offset = null
+shader_parameter/energy = null

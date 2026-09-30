@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/puddle.gdshader" id="1_xbnjh"]
+[ext_resource type="Texture2D" path="res://assets/textures/stack/caustics.png" id="2_rv22j"]
+[ext_resource type="Texture2D" path="res://assets/textures/stack/reflection_night.png" id="3_yiaae"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_xbnjh")
+shader_parameter/reflection_map = ExtResource("3_yiaae")
+shader_parameter/noise = ExtResource("2_rv22j")
+shader_parameter/size = Vector2(4.8, 4.8)
+shader_parameter/color = null
+shader_parameter/opacity = null

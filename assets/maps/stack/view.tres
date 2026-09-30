@@ -1,0 +1,15 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/window_view.gdshader" id="1_3737c"]
+[ext_resource type="Texture2D" path="res://assets/textures/stack/caustics.png" id="2_njh65"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_3737c")
+shader_parameter/sky_top = null
+shader_parameter/sky_horizon = null
+shader_parameter/tower = null
+shader_parameter/window_warm = null
+shader_parameter/window_cool = null
+shader_parameter/grime = ExtResource("2_njh65")
+shader_parameter/seed = null

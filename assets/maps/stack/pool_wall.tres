@@ -1,0 +1,34 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/retro_surface.gdshader" id="1_xrcqt"]
+[ext_resource type="Texture2D" path="res://assets/textures/ride_tiles.png" id="2_x4djc"]
+[ext_resource type="Texture2D" path="res://assets/textures/stack/caustics.png" id="3_fnrnb"]
+[ext_resource type="Texture2D" path="res://assets/textures/stack/reflection_night.png" id="4_ttb3n"]
+[ext_resource type="Texture2D" path="res://assets/textures/stack/coping.png" id="5_441ko"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_xrcqt")
+shader_parameter/albedo_texture = ExtResource("2_x4djc")
+shader_parameter/reflection_map = ExtResource("4_ttb3n")
+shader_parameter/tint = Color(1, 1, 1, 1)
+shader_parameter/meters_per_repeat = 2.0
+shader_parameter/gloss = 0.25
+shader_parameter/gloss_grazing = 0.6
+shader_parameter/roughness_value = 0.25
+shader_parameter/specular_value = 0.3
+shader_parameter/use_top = true
+shader_parameter/top_texture = ExtResource("5_441ko")
+shader_parameter/top_tint = Color(1, 1, 1, 1)
+shader_parameter/top_meters = 2.0
+shader_parameter/use_bottom = null
+shader_parameter/bottom_meters = null
+shader_parameter/use_uv = null
+shader_parameter/lane_color = null
+shader_parameter/lane_period = null
+shader_parameter/lane_width = null
+shader_parameter/lane_length = null
+shader_parameter/caustics_texture = ExtResource("3_fnrnb")
+shader_parameter/caustics = 0.5
+shader_parameter/caustics_color = Color(0.55, 0.95, 1, 1)
+shader_parameter/caustics_meters = 3.0

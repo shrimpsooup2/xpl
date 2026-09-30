@@ -153,10 +153,27 @@ debug_next_map={
 lights_and_shadows/directional_shadow/size=2048
 lights_and_shadows/directional_shadow/soft_shadow_filter_quality=0
 lights_and_shadows/positional_shadow/soft_shadow_filter_quality=0
+limits/opengl/max_lights_per_object=16
 
 [shader_globals]
 
 world_light={
+"type": "float",
+"value": 1.0
+}
+indoor_min={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+indoor_max={
+"type": "vec3",
+"value": Vector3(0, 0, 0)
+}
+indoor_ambient={
+"type": "float",
+"value": 1.0
+}
+effects={
 "type": "float",
 "value": 1.0
 }
