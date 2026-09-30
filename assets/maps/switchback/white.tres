@@ -1,0 +1,30 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/retro_surface.gdshader" id="1_aryet"]
+[ext_resource type="Texture2D" path="res://assets/textures/stack/steel.png" id="2_b68ij"]
+[ext_resource type="Texture2D" path="res://assets/textures/switchback/reflection_dusk.png" id="3_v2usa"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_aryet")
+shader_parameter/albedo_texture = ExtResource("2_b68ij")
+shader_parameter/reflection_map = ExtResource("3_v2usa")
+shader_parameter/tint = Color(1.15, 1.15, 1.15, 1)
+shader_parameter/meters_per_repeat = 1.0
+shader_parameter/gloss = 0.3
+shader_parameter/gloss_grazing = 0.6
+shader_parameter/roughness_value = 0.3
+shader_parameter/specular_value = 0.35
+shader_parameter/use_top = null
+shader_parameter/top_tint = null
+shader_parameter/top_meters = null
+shader_parameter/use_bottom = null
+shader_parameter/bottom_meters = null
+shader_parameter/use_uv = true
+shader_parameter/lane_color = null
+shader_parameter/lane_period = null
+shader_parameter/lane_width = null
+shader_parameter/lane_length = null
+shader_parameter/caustics = null
+shader_parameter/caustics_color = null
+shader_parameter/caustics_meters = null

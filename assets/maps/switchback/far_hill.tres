@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/far_surface.gdshader" id="1_cwms0"]
+[ext_resource type="Texture2D" path="res://assets/textures/switchback/far_hill.png" id="2_t0281"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_cwms0")
+shader_parameter/albedo_texture = ExtResource("2_t0281")
+shader_parameter/tint = null
+shader_parameter/meters_per_repeat = 24.0

@@ -1,0 +1,14 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/puddle.gdshader" id="1_own4l"]
+[ext_resource type="Texture2D" path="res://assets/textures/terrace/grime.png" id="2_8uy2i"]
+[ext_resource type="Texture2D" path="res://assets/textures/switchback/reflection_dusk.png" id="3_ft463"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_own4l")
+shader_parameter/reflection_map = ExtResource("3_ft463")
+shader_parameter/noise = ExtResource("2_8uy2i")
+shader_parameter/size = Vector2(2.4, 1.6)
+shader_parameter/color = null
+shader_parameter/opacity = null

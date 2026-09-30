@@ -1,0 +1,15 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/skylight_glass.gdshader" id="1_h0aq5"]
+[ext_resource type="Texture2D" path="res://assets/textures/terrace/grime.png" id="2_kyboi"]
+[ext_resource type="Texture2D" path="res://assets/textures/switchback/reflection_dusk.png" id="3_pceyw"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_h0aq5")
+shader_parameter/reflection_map = ExtResource("3_pceyw")
+shader_parameter/grime = ExtResource("2_kyboi")
+shader_parameter/tint = Color(0.9, 0.92, 0.95, 1)
+shader_parameter/dirt = null
+shader_parameter/opacity = 0.75
+shader_parameter/pane = Vector2(1, 1)
