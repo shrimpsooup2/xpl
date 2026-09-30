@@ -578,10 +578,12 @@ func test_boulevard_is_a_village_in_an_ice_cave() -> void:
 	# are), still there to stop you.
 	var edge := level.find_child("BoundaryN", true, false) as GreyBox
 	check(edge != null and edge.layers == 0 and edge.get_child_count(true) > 0, "the boundary is hidden but solid")
-	# The daylight comes down the openings' shafts, not from the sun.
+	# No sun under the ice: the ice glows, and the village is full of warm
+	# lamps, none of them wasted on the vault.
 	var sun := level.get_node("Sun") as DirectionalLight3D
-	var daylight := level.find_children("Daylight_*", "SpotLight3D", true, false)
-	check(not sun.visible and daylight.size() >= 4, "daylight lamps in the openings (%d), the sun off" % daylight.size())
+	var lamps := level.find_children("*", "OmniLight3D", true, false)
+	check(not sun.visible and lamps.size() >= 40, "the sun off, the village's lamps lit (%d)" % lamps.size())
+	check(lamps.all(func(l: OmniLight3D) -> bool: return l.light_cull_mask & 8 == 0), "the lamps leave the cave's ice alone")
 	# Every solid prop has its twin on the other half, and none stands on a
 	# spawn or a pad.
 	var solids := level.find_children("Solid_*", "StaticBody3D", true, false)

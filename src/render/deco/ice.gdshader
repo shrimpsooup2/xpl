@@ -11,8 +11,8 @@ render_mode diffuse_lambert, specular_schlick_ggx;
 //   at a few depths along the view, so it sits in the ice and slides as you
 //   move.
 // - Lit from behind: daylight coming through the ice (EMISSION), more
-//   where it's thin (`glow_meters` patches) and higher up; the cave glows
-//   with no lamp at all.
+//   where it's thin (`glow_meters` patches) and higher up, a hint of violet
+//   where it's darkest; the cave glows with no lamp at all.
 // - A fake reflection at grazing angles, and glints that flash as the view
 //   moves.
 // Textured from the world (triplanar).
@@ -28,6 +28,9 @@ uniform float inner_meters = 5.0;
 // How bumpy the scallops look (0: smooth, polished ice).
 uniform float bump = 1.0;
 uniform vec3 tint : source_color = vec3(1.0);
+// A hint of violet where the ice is darkest (and deep where it's thick).
+uniform vec3 violet = vec3(1.3, 0.78, 1.28);
+uniform float violet_amount = 0.3;
 // What's inside, seen through.
 uniform vec3 frost : source_color = vec3(0.80, 0.93, 1.0);
 // How much light comes through; how big its thick and thin patches are.
@@ -77,6 +80,8 @@ void fragment() {
 	vec2 uy = world_pos.xz / meters;
 	vec2 uz = vec2(-world_pos.x * sign(n.z), -world_pos.y) / meters;
 	vec3 colour = (texture(ice, ux).rgb * w.x + texture(ice, uy).rgb * w.y + texture(ice, uz).rgb * w.z) * tint;
+	float luma = dot(colour, vec3(0.3, 0.5, 0.2));
+	colour = mix(colour, colour * violet, (1.0 - smoothstep(0.12, 0.4, luma)) * violet_amount);
 	vec2 dx = texture(scallops, ux).rg * 2.0 - 1.0;
 	vec2 dy = texture(scallops, uy).rg * 2.0 - 1.0;
 	vec2 dz = texture(scallops, uz).rg * 2.0 - 1.0;
@@ -91,6 +96,7 @@ void fragment() {
 	float high = mix(glow_low, 1.0, smoothstep(glow_heights.x, glow_heights.y, world_pos.y));
 	float thinness = smoothstep(0.25, 0.8, 1.0 - thick);
 	vec3 through = colour * (0.5 + thinness * 0.9) * high;
+	through = mix(through, through * violet, (1.0 - thinness) * violet_amount * 0.5);
 
 	// Inside: bubbles and fractures at four depths, fading as they go.
 	vec3 into = -to_eye;

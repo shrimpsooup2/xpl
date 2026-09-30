@@ -5,17 +5,19 @@ extends RefCounted
 ## in a glacier, a crevasse all round it; past the crevasse the cave's
 ## floor runs out to its walls, jagged, round in plan, and up into a vault
 ## of ice forty-odd metres up, glowing blue with the daylight coming
-## through, a few openings letting the day in, in shafts. Icicles hang
-## from the vault; columns, spikes and crystals of ice stand about the
-## floor. The village keeps warm under it. The gameplay blocks are
-## untouched, only dressed.
+## through it, a hint of violet in its depths: the only light there is but
+## the village's own. Icicles hang from the vault; columns, spikes and
+## crystals of ice stand about the floor. The village keeps warm under it,
+## lamps and fires everywhere. The gameplay blocks are untouched, only
+## dressed.
 
 const DecoKit := preload("res://tools/deco_kit.gd")
 const LevelKit := preload("res://tools/level_kit.gd")
 const Signs := preload("res://tools/sign_kit.gd")
 const BOTH := DecoKit.LAYER_BOTH
-## The cave is drawn on a layer of its own, which the daylight doesn't
-## light (it only shines through the openings; the ice glows by itself).
+## The cave is drawn on a layer of its own, which the village's lamps
+## don't light: they couldn't reach it, and a lamp that tried would take
+## one of the sixteen each thing can be lit by (the ice glows by itself).
 const CAVE_LAYER := 8
 
 const GLOW := "res://src/render/deco/glow.gdshader"
@@ -50,19 +52,6 @@ const SOUTH := 38.0
 ## The cave round it: its middle, and the half-widths of its walls.
 const MIDDLE := Vector2(0.0, 2.0)
 const CAVE := Vector2(122.0, 74.0)
-## The openings in the vault, by where the day falls through them: [x, z,
-## the height it lands at, radius]. Over the village: through the Atrium's
-## skylight, on the street each side, on the canal; the same on both
-## halves. Out over the cave, on its floor. (The openings themselves are up
-## the sun's slant from there: _openings().)
-const DAYLIGHT := [[0.0, -22.0, 9.5, 5.0], [-38.0, 3.0, 0.0, 4.0], [38.0, 3.0, 0.0, 4.0], [0.0, 25.0, -3.5, 3.5],
-		[-95.0, -40.0, -5.0, 6.0], [95.0, -40.0, -5.0, 6.0], [-72.0, 52.0, -5.0, 5.0], [72.0, 52.0, -5.0, 5.0]]
-## How far north the daylight leans for each metre it comes down (the sun
-## is 78° up, from the south).
-const SUN_PITCH := -78.0
-static var _opening_cache: Array = []
-
-
 static func dress(kit, d) -> void:
 	_light(kit)
 	_materials(d)
@@ -70,24 +59,31 @@ static func dress(kit, d) -> void:
 	_cave(d)
 	_formations(d)
 	_icicles(d)
-	_shafts(kit, d)
 	_edges(d)
 	_indoors(kit)
+	# Each part of each half in meshes of its own, so each is lit by its
+	# own lamps.
 	for side: float in [-1.0, 1.0]:
-		d.zone = "West" if side < 0.0 else "East"
+		var half := "West" if side < 0.0 else "East"
+		d.zone = half + "Arcade"
 		_arcade(kit, d, side)
 		_tower(kit, d, side)
+		d.zone = half + "Kiosks"
 		_kiosks(kit, d, side)
+		d.zone = half + "Street"
 		_sleds(d, side)
+		_festoons(kit, d, side)
+		d.zone = half + "Yard"
 		_gate(kit, d, side)
 		_yard(kit, d, side)
+		d.zone = half + "Canal"
 		_street_lamps(kit, d, side)
-		_festoons(kit, d, side)
 		_canal(kit, d, side)
 	d.zone = "Middle"
 	_hall(kit, d)
 	_plaza(kit, d)
 	d.zone = ""
+	_glow_of_the_village(d)
 	_floors(d)
 	_ground_tiles(d)
 	_drifts(d)
@@ -96,9 +92,8 @@ static func dress(kit, d) -> void:
 
 # --- Light -------------------------------------------------------------------------------
 
-## Under the ice: the daylight comes through the vault, blue, and down
-## through its openings, white; the air is a blue haze. The village's own
-## lamps are warm against it.
+## Under the ice: the daylight comes through the vault, blue, all round;
+## the air is a blue haze. The village's own lamps are warm against it.
 static func _light(kit) -> void:
 	var e: Environment = kit.environment
 	var sky: ShaderMaterial = e.sky.sky_material
@@ -109,22 +104,16 @@ static func _light(kit) -> void:
 	sky.set_shader_parameter(&"ground_color", Color(0.8, 0.86, 0.92))
 	sky.set_shader_parameter(&"halo", 0.0)
 	sky.set_shader_parameter(&"sun_size", 0.0)
-	e.ambient_light_color = Color(0.42, 0.62, 0.82)
-	e.ambient_light_energy = 0.42
-	e.fog_light_color = Color(0.30, 0.52, 0.72)
+	e.ambient_light_color = Color(0.44, 0.6, 0.84)
+	e.ambient_light_energy = 0.46
+	e.fog_light_color = Color(0.32, 0.5, 0.74)
 	e.fog_density = 0.007
 	e.fog_sky_affect = 0.0
 	e.glow_intensity = 0.8
 	e.glow_hdr_threshold = 0.9
 	e.glow_bloom = 0.0
-	# The sun: nearly straight down, a little from the south, so what comes
-	# through the openings falls the same on both halves. It doesn't light
-	# anything itself (its shadows can't be kept to the openings fifty
-	# metres up): each opening has a lamp of daylight of its own shining
-	# down its shaft (_shafts()).
+	# No sun in here: the light is the ice's own, and the village's lamps.
 	var sun: DirectionalLight3D = kit.sun
-	sun.rotation_degrees = Vector3(SUN_PITCH, 0, 0)
-	sun.light_color = Color(0.86, 0.94, 1.0)
 	sun.light_energy = 0.0
 	sun.shadow_enabled = false
 	sun.visible = false
@@ -137,7 +126,7 @@ static func _materials(d) -> void:
 	var ice := {"ice": "boulevard/ice.png", "scallops": "boulevard/ice_scallops.png", "inner": "boulevard/ice_inner.png",
 			"reflection_map": "boulevard/reflection_ice.png", "glow_heights": Vector2(-10.0, 44.0)}
 	# The cave: big scallops, lit through.
-	d.shaded("cave_ice", ICE, ice.merged({"meters": 4.0, "inner_meters": 6.0, "glow": 0.8, "depth": 1.2}))
+	d.shaded("cave_ice", ICE, ice.merged({"meters": 4.0, "inner_meters": 6.0, "glow": 0.9, "depth": 1.2}))
 	# Icicles, spikes, columns: small scallops, thin, bright.
 	d.shaded("icicle", ICE, ice.merged({"meters": 1.5, "inner_meters": 1.6, "bump": 0.6, "glow": 1.15, "depth": 0.3,
 			"glow_low": 0.8, "tint": Color(1.1, 1.15, 1.15)}))
@@ -178,8 +167,8 @@ static func _materials(d) -> void:
 			"roughness": 0.3})
 	d.surface("black", {"side": "stack/steel", "meters": 1.0, "tint": Color(0.02, 0.02, 0.02), "gloss": 0.0, "grazing": 0.05})
 	d.surface("evergreen", weathered.merged({"side": "terrace/foliage", "meters": 1.0, "tint": Color(0.8, 1.0, 0.85)}))
-	d.shaded("lamp_warm", GLOW, {"color": Color(1.0, 0.72, 0.38), "energy": 2.6})
-	d.shaded("bulb", GLOW, {"color": Color(1.0, 0.78, 0.46), "energy": 3.0})
+	d.shaded("lamp_warm", GLOW, {"color": Color(1.0, 0.72, 0.38), "energy": 3.6})
+	d.shaded("bulb", GLOW, {"color": Color(1.0, 0.76, 0.42), "energy": 4.0})
 	d.surface("white_wax", {"side": "boulevard/snow", "meters": 1.0, "tint": Color(1.0, 0.94, 0.82), "gloss": 0.1, "grazing": 0.3})
 	d.surface("floorboards", {"side": "boulevard/planks", "meters": 2.0, "top": "boulevard/planks", "top_meters": 2.0, "gloss": 0.12,
 			"grazing": 0.4, "roughness": 0.5})
@@ -187,11 +176,11 @@ static func _materials(d) -> void:
 	d.surface("red_cloth", {"side": "boulevard/canvas", "meters": 1.0, "tint": Color(2.2, 0.45, 0.4), "gloss": 0.02, "grazing": 0.2})
 	d.surface("blue_cloth", {"side": "boulevard/canvas", "meters": 1.0, "tint": Color(0.5, 0.8, 2.4), "gloss": 0.02, "grazing": 0.2})
 	d.surface("gold_cloth", {"side": "boulevard/canvas", "meters": 1.0, "tint": Color(2.4, 2.0, 0.8), "gloss": 0.02, "grazing": 0.2})
-	d.shaded("window_warm", GLOW, {"color": Color(1.0, 0.64, 0.32), "energy": 1.1})
+	d.shaded("window_warm", GLOW, {"color": Color(1.0, 0.64, 0.32), "energy": 1.5})
 	d.shaded("flame", FLAME, {"size": Vector2(0.5, 0.8)})
 	d.shaded("flame_small", FLAME, {"size": Vector2(0.16, 0.26), "energy": 2.6})
-	d.shaded("pool", POOL, {"color": WARM, "strength": 0.55, "size": Vector2(5.0, 5.0)})
-	d.shaded("pool_big", POOL, {"color": WARM, "strength": 0.45, "size": Vector2(10.0, 10.0)})
+	d.shaded("pool", POOL, {"color": WARM, "strength": 0.9, "size": Vector2(5.0, 5.0)})
+	d.shaded("pool_big", POOL, {"color": WARM, "strength": 0.6, "size": Vector2(10.0, 10.0)})
 
 
 ## Each block's surface, by its name (without the team's tag or its
@@ -265,11 +254,10 @@ static func _round(x: float, z: float) -> float:
 	return Vector2((x - MIDDLE.x) / CAVE.x, (z - MIDDLE.y) / CAVE.y).length()
 
 
-## The vault's underside at (x, z), before the openings: arching up from
-## low on the walls to its crown forty metres over the village and more,
-## in great domes and hollows, ridges and hanging lobes, never low over the
-## village.
-static func _vault_base(x: float, z: float, n: Array) -> float:
+## The vault's underside at (x, z): arching up from low on the walls to
+## its crown forty metres over the village and more, in great domes and
+## hollows, ridges and hanging lobes, never low over the village.
+static func _vault(x: float, z: float, n: Array) -> float:
 	var r := minf(_round(x, z), 1.0)
 	var lumps: FastNoiseLite = n[1]
 	var ridged: FastNoiseLite = n[2]
@@ -281,36 +269,6 @@ static func _vault_base(x: float, z: float, n: Array) -> float:
 	if _off_shelf(x, z) < 6.0:
 		y = maxf(y, 24.0)
 	return y
-
-
-## The vault's underside at (x, z): the ice lifting round an opening like
-## a mouth.
-static func _vault(x: float, z: float, n: Array) -> float:
-	return _vault_base(x, z, n) + maxf(0.0, 4.0 - _from_opening(x, z)) * 1.2
-
-
-## The openings: [x, z, radius], each up the sun's slant from where its
-## daylight lands, where that meets the vault.
-static func _openings() -> Array:
-	if not _opening_cache.is_empty():
-		return _opening_cache
-	var n := _noises()
-	var lean := tan(deg_to_rad(90.0 + SUN_PITCH))
-	for t: Array in DAYLIGHT:
-		var z := float(t[1])
-		for i in 8:
-			z = float(t[1]) + (_vault_base(float(t[0]), z, n) - float(t[2])) * lean
-		_opening_cache.append([float(t[0]), z, float(t[3])])
-	return _opening_cache
-
-
-## How far a point on the vault is from the nearest opening (negative:
-## inside it).
-static func _from_opening(x: float, z: float) -> float:
-	var best := INF
-	for o: Array in _openings():
-		best = minf(best, Vector2(x - float(o[0]), z - float(o[1])).length() - float(o[2]))
-	return best
 
 
 ## How far (x, z) is outside the shelf (0 on or inside it).
@@ -337,8 +295,7 @@ static func _floor(x: float, z: float, n: Array) -> float:
 
 ## The cave: the shelf's edge dropping into the crevasse, the floor past
 ## it, the walls round it all and the vault over it; one mesh of flat
-## facets, jagged, scalloped by its shader, casting the shadow that keeps
-## the daylight to the openings.
+## facets, jagged, scalloped and lit from within by its shader.
 static func _cave(d) -> void:
 	var n := _noises()
 	var wobble: FastNoiseLite = n[0]
@@ -436,7 +393,7 @@ static func _cave(d) -> void:
 			var inward := Vector3(MIDDLE.x, 0, MIDDLE.y) - (a[k] as Vector3) * Vector3(1, 0, 1)
 			_tri(st, [a[k], b[k], b[k + 1]], inward)
 			_tri(st, [a[k], b[k + 1], a[k + 1]], inward)
-	# The vault: a grid over the cave, open at the openings.
+	# The vault: a grid over the cave.
 	var vstep := 3.0
 	var vcols := int((CAVE.x * 2.2) / vstep) + 1
 	var vrows := int((CAVE.y * 2.2) / vstep) + 1
@@ -454,35 +411,16 @@ static func _cave(d) -> void:
 		for i in vcols - 1:
 			var q := [vault_at.call(i, j), vault_at.call(i + 1, j), vault_at.call(i + 1, j + 1), vault_at.call(i, j + 1)]
 			var mid: Vector3 = (q[0] + q[2]) * 0.5
-			# On out past the walls' tops (hidden behind them), so no daylight
-			# gets in between.
-			if _from_opening(mid.x, mid.z) < 0.0 or _round(mid.x, mid.z) > 1.06:
+			# On out past the walls' tops (hidden behind them), so no gap shows
+			# between.
+			if _round(mid.x, mid.z) > 1.06:
 				continue
 			_tri(st, [q[0], q[1], q[2]], Vector3.DOWN)
 			_tri(st, [q[0], q[2], q[3]], Vector3.DOWN)
-	# The openings' throats: ice turned up into the daylight.
-	for o: Array in _openings():
-		var c := Vector3(float(o[0]), 0, float(o[1]))
-		var r: float = o[2]
-		var segs := 14
-		for sgm in segs:
-			var a0 := TAU * sgm / segs
-			var a1 := TAU * (sgm + 1) / segs
-			var p0 := c + Vector3(cos(a0), 0, sin(a0)) * r
-			var p1 := c + Vector3(cos(a1), 0, sin(a1)) * r
-			var y0 := _vault(p0.x, p0.z, n)
-			var y1 := _vault(p1.x, p1.z, n)
-			var lo0 := Vector3(p0.x, y0 - 2.0, p0.z) + (p0 - c).normalized() * 0.8
-			var lo1 := Vector3(p1.x, y1 - 2.0, p1.z) + (p1 - c).normalized() * 0.8
-			var hi0 := Vector3(p0.x, y0 + 5.0, p0.z) + (p0 - c).normalized() * rng.randf_range(-1.2, 0.2)
-			var hi1 := Vector3(p1.x, y1 + 5.0, p1.z) + (p1 - c).normalized() * rng.randf_range(-1.2, 0.2)
-			_tri(st, [lo0, lo1, hi1], (c - (p0 + p1) * 0.5).normalized())
-			_tri(st, [lo0, hi1, hi0], (c - (p0 + p1) * 0.5).normalized())
 	st.generate_normals()
 	var mesh := st.commit()
 	ResourceSaver.save(mesh, d.dir + "meshes/cave.res")
 	var mi: MeshInstance3D = d.own_mesh("Cave", load(d.dir + "meshes/cave.res"), d.mat("cave_ice"), Transform3D.IDENTITY, "Build", CAVE_LAYER)
-	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_DOUBLE_SIDED
 
 
 ## A triangle, turned to face `toward` (Godot's fronts wind clockwise).
@@ -632,9 +570,8 @@ static func _formations(d) -> void:
 	d.own_mesh("Formations", load(d.dir + "meshes/formations.res"), d.mat("icicle"), Transform3D.IDENTITY, "Build", CAVE_LAYER)
 
 
-## Icicles hanging from the vault, all over it: most short, some long,
-## clustered round the openings; over the village never low enough to
-## reach.
+## Icicles hanging from the vault, all over it: most short, some long;
+## over the village never low enough to reach.
 static func _icicles(d) -> void:
 	var n := _noises()
 	var rng := RandomNumberGenerator.new()
@@ -647,15 +584,10 @@ static func _icicles(d) -> void:
 		var z := MIDDLE.y + rng.randf_range(-CAVE.y, CAVE.y)
 		if _round(x, z) > 0.9:
 			continue
-		var o := _from_opening(x, z)
-		if o < 0.5:
-			continue
 		var y := _vault(x, z, n)
 		var length := rng.randf_range(0.8, 3.0)
 		if rng.randf() < 0.15:
 			length *= 3.0
-		if o < 5.0:
-			length *= 1.5
 		var lowest := 18.0 if _off_shelf(x, z) <= 2.0 else _floor(x, z, n) + 8.0
 		length = minf(length, y - lowest)
 		if length < 0.5:
@@ -672,40 +604,6 @@ static func _icicles(d) -> void:
 	var mesh := st.commit()
 	ResourceSaver.save(mesh, d.dir + "meshes/icicles.res")
 	d.own_mesh("Icicles", load(d.dir + "meshes/icicles.res"), d.mat("icicle"), Transform3D.IDENTITY, "Build", CAVE_LAYER)
-
-
-## Where the day falls through each opening: shafts of it slanting down
-## through the blue haze to the ground, faint, each a few sheets crossed.
-static func _shafts(kit, d) -> void:
-	var n := _noises()
-	var down: Vector3 = -(kit.sun as DirectionalLight3D).basis.z
-	for i in _openings().size():
-		var o: Array = _openings()[i]
-		var top := Vector3(float(o[0]), _vault(float(o[0]), float(o[1]), n) + 3.0, float(o[1]))
-		# Down to the ground under it: the village's, or the cave's floor.
-		var length := 0.0
-		var p := top
-		while length < 90.0:
-			p = top + down * length
-			var ground := 0.0 if _off_shelf(p.x, p.z) <= 0.0 else _floor(p.x, p.z, n)
-			if p.y <= ground:
-				break
-			length += 1.0
-		var r: float = o[2]
-		var name := "shaft_%d" % i
-		d.shaded(name, "res://src/render/deco/sunbeam.gdshader", {"color": Color(0.8, 0.92, 1.0), "strength": 0.09,
-				"size": Vector2(r * 2.0, length), "end_fade": Vector2(0.8, 1.05)})
-		_glitter(d, top, down, length, r, i)
-		# The daylight itself: a lamp up in the opening shining down the
-		# shaft, the same all the way down, its cone the opening's width.
-		# (Twice as far as it needs, so it's as bright at the bottom.)
-		var day: SpotLight3D = d.spot("Daylight_%d" % i, top - down * 2.0, down, Color(0.86, 0.94, 1.0), length * 2.0 + 10.0, 1.1,
-				rad_to_deg(atan(r * 1.05 / (length + 2.0))))
-		day.spot_attenuation = 0.0
-		day.spot_angle_attenuation = 0.25
-		for k in 3:
-			var across := down.cross(Basis(Vector3.UP, PI * k / 3.0) * Vector3.RIGHT).normalized() * r
-			d.quad(name, top - across, top + across, top + across + down * length, top - across + down * length, "Effects", BOTH)
 
 
 ## The shelf's edges: the Arcade's and the Atrium's back wall where the
@@ -751,7 +649,7 @@ static func _at(side: float, v: Vector3) -> Vector3:
 
 ## A warm lamp's light, maybe wavering like a flame.
 static func _lamp(kit, d, name: String, at: Vector3, reach: float, energy: float, minor := true, fire := 0.0, seed := 0.0) -> void:
-	var l: OmniLight3D = d.omni(name, at, WARM, reach * 1.15, energy * 1.4, 0xFFFFF, minor)
+	var l: OmniLight3D = d.omni(name, at, WARM, reach, energy * 1.3, 0xFFFFF & ~CAVE_LAYER, minor)
 	if fire > 0.0:
 		var f := Node.new()
 		f.set_script(load("res://src/world/fire_light.gd"))
@@ -875,9 +773,8 @@ static func _arcade(kit, d, side: float) -> void:
 		d.box("dark_metal", _at(side, Vector3(cx + (w * 0.5 + 0.7), 2.95, face + 0.3)), Vector3(0.05, 0.05, 0.6), "Fixtures", BOTH)
 		_lantern(d, lamp_at, 0.26)
 		_pool(d, _at(side, Vector3(cx + 1.0, 0.0, face + 1.6)), 2.6)
-		d.face("pool", _at(side, Vector3(cx + w * 0.5 + 0.7, 2.4, face + 0.02)), Vector3(1.6, 0, 0), Vector3(0, 1.6, 0), "Effects", BOTH)
-		if i == 1:
-			_lamp(kit, d, "Door%s" % ("W" if side < 0.0 else "E"), lamp_at + Vector3(0, 0, 0.3), 9.0, 1.4, true, 0.15, side)
+		d.face("pool", _at(side, Vector3(cx + w * 0.5 + 0.7, 2.4, face + 0.02)), Vector3(2.6, 0, 0), Vector3(0, 2.6, 0), "Effects", BOTH)
+		_lamp(kit, d, "Door%s%d" % ["W" if side < 0.0 else "E", i], lamp_at + Vector3(0, 0, 0.3), 10.0, 2.2, i != 1, 0.15, side + i)
 		Signs.board(d, _at(side, Vector3(cx, 4.2, face + 0.12)), Basis.IDENTITY, Vector2(maxf(2.4, TRADES[i].length() * 0.16), 0.5),
 				"board", TRADES[i], ITALIC, 0.26, Color(1.0, 0.9, 0.7), "wood")
 	# The rooms: a hearth in the inn and the bakery's oven, their fires.
@@ -888,7 +785,7 @@ static func _arcade(kit, d, side: float) -> void:
 		d.box("black", c + Vector3(0, 0.6, 0.46), Vector3(1.4, 1.1, 0.02), "Build", BOTH)
 		d.box("wood", c + Vector3(0, 2.1, 0.5), Vector3(3.2, 0.2, 0.3), "Build", BOTH)
 		_fire(d, c + Vector3(0, 0.1, 0.35), 0.6)
-		_lamp(kit, d, "%s%s" % [hearth[1], "W" if side < 0.0 else "E"], c + Vector3(0, 1.0, 1.5), 11.0, 2.0, false, 0.3, hx * side)
+		_lamp(kit, d, "%s%s" % [hearth[1], "W" if side < 0.0 else "E"], c + Vector3(0, 1.0, 1.5), 14.0, 3.0, false, 0.3, hx * side)
 		d.face("pool", c + Vector3(0, 0.02, 2.2), Vector3(2.4, 0, 0), Vector3(0, 0, -2.4), "Effects", BOTH)
 	# The lamplight falling out of the ground-floor windows onto the snow,
 	# a lantern in the third room.
@@ -900,7 +797,7 @@ static func _arcade(kit, d, side: float) -> void:
 	d.box("dark_metal", room + Vector3(0, 0.6, 0), Vector3(0.02, 0.9, 0.02), "Fixtures", BOTH)
 	_lantern(d, room, 0.3)
 	_pool(d, _at(side, Vector3(49.0, 0.0, -24.0)), 3.0)
-	_lamp(kit, d, "Workshop%s" % ("W" if side < 0.0 else "E"), room + Vector3(0, -0.4, 0), 10.0, 1.4, true, 0.1, side * 2.0)
+	_lamp(kit, d, "Workshop%s" % ("W" if side < 0.0 else "E"), room + Vector3(0, -0.4, 0), 11.0, 2.2, true, 0.1, side * 2.0)
 	# Furniture: the inn's table and benches under its window, the
 	# bakery's counter, a workbench in the workshop.
 	_table(d, _at(side, Vector3(26.5, 0, -17.2)), side)
@@ -919,7 +816,8 @@ static func _arcade(kit, d, side: float) -> void:
 		d.box("dark_metal", at + Vector3(0, 0.8, 0), Vector3(0.02, 1.1, 0.02), "Fixtures", BOTH)
 		_lantern(d, at, 0.3)
 		_pool(d, _at(side, Vector3(gx, 5.0, -24.0)), 3.0)
-	_lamp(kit, d, "Gallery%s" % ("W" if side < 0.0 else "E"), _at(side, Vector3(36.0, 7.2, -24.0)), 14.0, 1.6, false, 0.1, side * 3.0)
+	for gx: float in [26.0, 46.0]:
+		_lamp(kit, d, "Gallery%s%d" % ["W" if side < 0.0 else "E", int(gx)], _at(side, Vector3(gx, 7.2, -24.0)), 13.0, 2.2, gx > 30.0, 0.1, side * gx)
 	# Chimneys up through the roof at the back, their fires' smoke.
 	for cx: float in [24.0, 44.0]:
 		var at := _at(side, Vector3(cx, 9.5, NORTH + 1.2))
@@ -997,7 +895,10 @@ static func _tower(kit, d, side: float) -> void:
 		var y := -0.12 * k
 		d.tube("brass", bell + Vector3(0, 0.45 + y, 0), bell + Vector3(0, 0.33 + y, 0), 0.22 + 0.07 * k, 12, "Build", BOTH, false)
 	_lantern(d, mid + Vector3(1.2, -0.9, 1.2), 0.3)
-	_lamp(kit, d, "Tower%s" % ("W" if side < 0.0 else "E"), mid + Vector3(1.2, -1.2, 1.2), 12.0, 1.4, true, 0.12, side * 7.0)
+	# The tower's windows lit, down its sides.
+	_lit_window(d, _at(side, Vector3(53.0, 10.8, -13.98)), Vector3(0, 0, 1), 0.7, 1.2)
+	_lit_window(d, _at(side, Vector3(56.02, 10.8, -17.0)), Vector3(side, 0, 0), 0.7, 1.2)
+	_lamp(kit, d, "Tower%s" % ("W" if side < 0.0 else "E"), mid + Vector3(1.2, -1.2, 1.2), 14.0, 2.4, true, 0.12, side * 7.0)
 
 
 ## Icicles along the eaves: under the parapets' front edges and the
@@ -1067,7 +968,7 @@ static func _hall(kit, d) -> void:
 	d.box("stone", h + Vector3(0, 3.35, 0.1), Vector3(5.6, 0.3, 1.5), "Build", BOTH)
 	d.box("black", h + Vector3(0, 0.9, 0.61), Vector3(3.0, 1.6, 0.02), "Build", BOTH)
 	_fire(d, h + Vector3(0, 0.1, 0.4), 1.0)
-	_lamp(kit, d, "HallHearth", h + Vector3(0, 1.2, 2.0), 16.0, 2.4, false, 0.3, 11.0)
+	_lamp(kit, d, "HallHearth", h + Vector3(0, 1.2, 2.0), 18.0, 3.4, false, 0.3, 11.0)
 	d.face("pool", h + Vector3(0, 0.03, 3.4), Vector3(3.4, 0, 0), Vector3(0, 0, -3.4), "Effects", BOTH)
 	# Rings of candles hanging from the roof either side of the skylight.
 	for rx: float in [-10.0, 10.0]:
@@ -1085,7 +986,8 @@ static func _hall(kit, d) -> void:
 			d.quad("flame_small", f + Vector3(-0.08, 0.26, 0), f + Vector3(0.08, 0.26, 0), f + Vector3(0.08, 0, 0), f + Vector3(-0.08, 0, 0), "Effects", BOTH)
 			d.quad("flame_small", f + Vector3(0, 0.26, -0.08), f + Vector3(0, 0.26, 0.08), f + Vector3(0, 0, 0.08), f + Vector3(0, 0, -0.08), "Effects", BOTH)
 		_pool(d, Vector3(rx, 0.0, -22.0), 4.0, true)
-	_lamp(kit, d, "HallCandles", Vector3(0, 6.6, -22.0), 14.0, 1.2, true, 0.1, 5.0)
+	for rx: float in [-10.0, 10.0]:
+		_lamp(kit, d, "HallCandles%d" % int(rx), Vector3(rx, 6.6, -22.0), 12.0, 2.0, true, 0.1, rx)
 	# The long rug down the middle, banners on the walls.
 	d.box("rug", Vector3(0, 0.03, -21.0), Vector3(3.0, 0.01, 12.0), "Detail", BOTH)
 	for x: float in [-12.0, 12.0]:
@@ -1162,20 +1064,19 @@ static func _plaza(kit, d) -> void:
 	ResourceSaver.save(mesh, d.dir + "meshes/fountain.res")
 	d.own_mesh("Fountain", load(d.dir + "meshes/fountain.res"), d.mat("icicle"), Transform3D.IDENTITY, "Build")
 	for c: Vector2 in [Vector2(-6.4, -3.4), Vector2(6.4, -3.4), Vector2(-6.4, 9.4), Vector2(6.4, 9.4)]:
-		_lamp_post(d, Vector3(c.x, 0, c.y))
-	_lamp(kit, d, "PlazaN", Vector3(0, 3.6, -3.4), 12.0, 1.2, true)
-	_lamp(kit, d, "PlazaS", Vector3(0, 3.6, 9.4), 12.0, 1.2, true)
+		_lamp_post(kit, d, Vector3(c.x, 0, c.y), "Plaza%d%d" % [int(c.x), int(c.y)])
 
 
 ## A lamp post: an iron post on a stone foot, a lantern on top, snow on
 ## its hat, its pool on the ground.
-static func _lamp_post(d, at: Vector3, height := 3.4) -> void:
+static func _lamp_post(kit, d, at: Vector3, name: String, height := 3.4) -> void:
 	d.box("stone", at + Vector3(0, 0.2, 0), Vector3(0.5, 0.4, 0.5), "Detail", BOTH)
 	d.tube("dark_metal", at + Vector3(0, 0.4, 0), at + Vector3(0, height, 0), 0.07, 8, "Detail", BOTH)
 	d.torus("dark_metal", at + Vector3(0, height - 0.1, 0), 0.12, 0.03, Basis.IDENTITY, 10, 4, "Detail", BOTH)
 	_lantern(d, at + Vector3(0, height + 0.3, 0), 0.34)
 	d.ball("snow_cap", at + Vector3(0, height + 0.66, 0), Vector3(0.2, 0.08, 0.2), 2, 6, "Detail", BOTH)
-	_pool(d, at, 3.0)
+	_pool(d, at, 3.8)
+	_lamp(kit, d, name, at + Vector3(0, height + 0.1, 0), 10.0, 2.0, true, 0.08, at.x + at.z)
 
 
 ## Lamp posts along the street's south side, at the bridges and along the
@@ -1183,11 +1084,7 @@ static func _lamp_post(d, at: Vector3, height := 3.4) -> void:
 static func _street_lamps(kit, d, side: float) -> void:
 	for c: Vector2 in [Vector2(15.0, 13.2), Vector2(46.0, 13.2), Vector2(4.0, 19.6), Vector2(33.0, 19.6), Vector2(39.0, 30.4),
 			Vector2(12.0, 37.2), Vector2(30.0, 37.2), Vector2(54.0, 37.2)]:
-		_lamp_post(d, _at(side, Vector3(c.x, 0, c.y)))
-	var tag := "W" if side < 0.0 else "E"
-	_lamp(kit, d, "Street" + tag, _at(side, Vector3(46.0, 3.6, 13.2)), 11.0, 1.2, true)
-	_lamp(kit, d, "Walkway" + tag, _at(side, Vector3(30.0, 3.6, 37.2)), 12.0, 1.2, true)
-	_lamp(kit, d, "Bridge" + tag, _at(side, Vector3(33.0, 3.6, 19.6)), 11.0, 1.2, true)
+		_lamp_post(kit, d, _at(side, Vector3(c.x, 0, c.y)), "Post%s%d%d" % ["W" if side < 0.0 else "E", int(c.x), int(c.y)])
 
 
 ## Strings of bulbs slung across the street, from the Arcade's eaves to
@@ -1207,8 +1104,8 @@ static func _festoons(kit, d, side: float) -> void:
 		d.path_tube("dark_metal", pts, 0.012, 3, "Fixtures", BOTH)
 		for k in range(1, count):
 			d.ball("bulb", pts[k] + Vector3(0, -0.08, 0), Vector3(0.06, 0.08, 0.06), 2, 5, "Fixtures", BOTH)
-		if i % 2 == 0:
-			_lamp(kit, d, "Festoon%s%d" % [tag, i], pts[count / 2] + Vector3(0, -0.4, 0), 10.0, 0.9, true)
+		_lamp(kit, d, "Festoon%s%d" % [tag, i], pts[count / 2] + Vector3(0, -0.4, 0), 12.0, 1.8, true)
+		_pool(d, Vector3(pts[count / 2].x, 0.0, pts[count / 2].z), 4.0, true)
 
 
 ## The kiosks: A the woodshed, C the boathouse where the skates and the
@@ -1240,8 +1137,13 @@ static func _kiosks(kit, d, side: float) -> void:
 		var at := _at(side, Vector3(lx, 2.6, face - 0.35))
 		d.box("dark_metal", _at(side, Vector3(lx, 2.95, face - 0.18)), Vector3(0.05, 0.05, 0.36), "Fixtures", BOTH)
 		_lantern(d, at, 0.24)
-		_pool(d, _at(side, Vector3(lx, 0, face - 1.4)), 2.2)
-		d.face("pool", _at(side, Vector3(lx, 2.4, face - 0.01)), Vector3(1.4, 0, 0), Vector3(0, 1.4, 0), "Effects", BOTH)
+		_pool(d, _at(side, Vector3(lx, 0, face - 1.4)), 3.0)
+		d.face("pool", _at(side, Vector3(lx, 2.4, face - 0.01)), Vector3(2.2, 0, 0), Vector3(0, 2.2, 0), "Effects", BOTH)
+		if lx in [17.2, 36.5, 54.8]:
+			_lamp(kit, d, "Kiosk%s%d" % [tag, int(lx)], at + Vector3(0, 0, -0.3), 9.0, 1.8, true, 0.12, lx * side)
+	# The sheds' windows lit.
+	for wx: float in [18.6, 25.4, 52.0]:
+		_lit_window(d, _at(side, Vector3(wx, 1.9, face - 0.02)), n, 1.4, 1.0)
 	# The café: lamps inside, a counter at the back, its windows lit.
 	d.box("board", _at(side, Vector3(38.0, 0.55, 19.2)), Vector3(8.0, 1.1, 0.8), "Build", BOTH)
 	d.box("wood", _at(side, Vector3(38.0, 1.12, 19.1)), Vector3(8.2, 0.06, 1.0), "Build", BOTH)
@@ -1252,7 +1154,7 @@ static func _kiosks(kit, d, side: float) -> void:
 		d.box("dark_metal", at + Vector3(0, 0.45, 0), Vector3(0.02, 0.7, 0.02), "Fixtures", BOTH)
 		_lantern(d, at, 0.26)
 		_pool(d, _at(side, Vector3(x, 0.0, 17.0)), 2.6)
-	_lamp(kit, d, "Cafe" + tag, _at(side, Vector3(38.0, 2.6, 17.0)), 9.0, 1.6, false, 0.1, side * 5.0)
+	_lamp(kit, d, "Cafe" + tag, _at(side, Vector3(38.0, 2.6, 17.0)), 11.0, 2.8, false, 0.1, side * 5.0)
 	for wx: float in [34.75, 41.75]:
 		d.box("wood", _at(side, Vector3(wx, 2.52, face - 0.04)), Vector3(2.8, 0.14, 0.1), "Build", BOTH)
 		d.box("snow_cap", _at(side, Vector3(wx, 1.14, face - 0.1)), Vector3(2.7, 0.06, 0.2), "Detail", BOTH)
@@ -1277,8 +1179,8 @@ static func _brazier(kit, d, at: Vector3, name: String, size := 0.9, solid := tr
 				0.03, 4, "Solid" if solid else "Detail", BOTH)
 	d.ball("dark_metal", at + Vector3(0, 0.95, 0), Vector3(size * 0.5, size * 0.25, size * 0.5), 3, 10, "Solid" if solid else "Detail", BOTH)
 	_fire(d, at + Vector3(0, 1.05, 0), size * 0.7)
-	_lamp(kit, d, name, at + Vector3(0, 1.8, 0), 9.0 + size * 3.0, 1.6, false, 0.35, at.x + at.z)
-	_pool(d, at, 2.0 + size * 2.0)
+	_lamp(kit, d, name, at + Vector3(0, 1.8, 0), 10.0 + size * 3.0, 2.8, false, 0.35, at.x + at.z)
+	_pool(d, at, 3.0 + size * 2.5, true)
 
 
 ## The sleds on the street: a load under canvas lashed down, runners
@@ -1334,8 +1236,11 @@ static func _gate(kit, d, side: float) -> void:
 			d.box("dark_metal", _at(side, Vector3(x + e * 0.6, 3.75, z)), Vector3(0.6, 0.05, 0.05), "Fixtures", BOTH)
 			_lantern(d, at, 0.32)
 			_pool(d, _at(side, Vector3(x + e * 2.0, 0, z)), 2.8)
-	_lamp(kit, d, "Gate" + tag, _at(side, Vector3(x - 1.2, 3.4, 0)), 12.0, 1.4, false, 0.12, side * 9.0)
-	_lamp(kit, d, "GateYard" + tag, _at(side, Vector3(x + 1.2, 3.4, 0)), 12.0, 1.2, true, 0.12, side * 13.0)
+	_lamp(kit, d, "Gate" + tag, _at(side, Vector3(x - 1.2, 3.4, 0)), 13.0, 2.4, false, 0.12, side * 9.0)
+	_lamp(kit, d, "GateYard" + tag, _at(side, Vector3(x + 1.2, 3.4, 0)), 13.0, 2.2, true, 0.12, side * 13.0)
+	# Its windows lit, up over the way through, on the street side.
+	for z: float in [-9.0, 9.0]:
+		_lit_window(d, _at(side, Vector3(x - 0.42, 5.6, z)), Vector3(-side, 0, 0), 1.2, 1.1)
 
 
 ## The team's yard: braziers burning, banners on poles along the back, the
@@ -1444,27 +1349,7 @@ static func _smoke(d, at: Vector3, seed_value: float) -> void:
 	d.group("Effects").add_child(p)
 
 
-## Ice dust glittering in the shafts of daylight: tiny specks drifting
-## down, catching the light.
-static func _glitter(d, top: Vector3, down: Vector3, length: float, radius: float, index: int) -> void:
-	var p := CPUParticles3D.new()
-	p.name = "Glitter_%d" % index
-	p.position = top + down * length * 0.5
-	p.amount = int(clampf(length * radius * 2.0, 40.0, 220.0))
-	p.lifetime = 12.0
-	p.preprocess = 12.0
-	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_BOX
-	p.emission_box_extents = Vector3(radius * 0.7, length * 0.5, radius * 0.7)
-	p.gravity = down * 0.12
-	p.initial_velocity_min = 0.02
-	p.initial_velocity_max = 0.1
-	p.spread = 180.0
-	p.scale_amount_min = 0.03
-	p.scale_amount_max = 0.07
-	var q := QuadMesh.new()
-	q.material = d.shaded("glitter", "res://src/render/deco/spark.gdshader", {"color": Color(0.85, 0.95, 1.0), "energy": 1.8})
-	p.mesh = q
-	d.group("Effects").add_child(p)
+
 
 
 ## A table with a bench each side (solid), a candle and mugs on it.
@@ -1519,3 +1404,33 @@ static func _ground_tiles(d) -> void:
 			d.zone = "Walkway%d" % i
 			d.box("walkway", Vector3((from + to) * 0.5, -1.9, 30.15), Vector3(to - from, 3.2, 0.3), "Build", BOTH)
 	d.zone = ""
+
+
+
+## A window lit from inside on a wall facing `n`: the glow, a frame, the
+## glazing bars, a sill with snow on it, its light on the ground.
+static func _lit_window(d, c: Vector3, n: Vector3, w: float, h: float) -> void:
+	var b := DecoKit.facing(n)
+	d.box("window_warm", c, Vector3(w, h, 0.02), "Fixtures", BOTH, b)
+	for e: float in [-1.0, 1.0]:
+		d.box("wood", c + b.x * e * (w * 0.5 + 0.05) + n * 0.03, Vector3(0.1, h + 0.2, 0.08), "Build", BOTH, b)
+		d.box("wood", c + b.y * e * (h * 0.5 + 0.05) + n * 0.03, Vector3(w + 0.2, 0.1, 0.08), "Build", BOTH, b)
+	d.box("wood", c + n * 0.03, Vector3(0.05, h, 0.04), "Build", BOTH, b)
+	d.box("wood", c + n * 0.03, Vector3(w, 0.05, 0.04), "Build", BOTH, b)
+	d.box("snow_cap", c - b.y * (h * 0.5 + 0.12) + n * 0.12, Vector3(w + 0.3, 0.08, 0.22), "Detail", BOTH, b)
+	d.face("pool", Vector3(c.x, 0.03, c.z) + n * 1.8, Vector3(1.8, 0, 0), Vector3(0, 0, -1.6), "Effects", BOTH)
+
+
+## The glow of all the village's lamps and fires together, filling the
+## street, the yards and the canal with a soft warm light under the blue:
+## wide lamps, gentle, high up.
+static func _glow_of_the_village(d) -> void:
+	var spots := [Vector3(0, 7.0, 2.0), Vector3(0, 6.0, 26.0)]
+	for side: float in [-1.0, 1.0]:
+		for p: Vector3 in [Vector3(22.0, 7.0, -3.0), Vector3(44.0, 7.0, 3.0), Vector3(65.0, 7.0, 2.0), Vector3(36.0, 6.0, 26.0),
+				Vector3(62.0, 6.0, 28.0)]:
+			spots.append(_at(side, p))
+	for i in spots.size():
+		var l: OmniLight3D = d.omni("VillageGlow_%d" % i, spots[i], Color(1.0, 0.64, 0.34), 24.0, 0.9, 0xFFFFF & ~CAVE_LAYER, true)
+		l.omni_attenuation = 0.5
+		l.light_specular = 0.0
