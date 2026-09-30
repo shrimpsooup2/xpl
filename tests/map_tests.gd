@@ -527,6 +527,33 @@ func test_rift_smash_from_the_rim_bounces_up_to_the_shelf() -> void:
 	check(on_floor_at(Rift.NORTH_SHELF) and player.global_position.z < -12.0, "up on the north shelf (at %s)" % player.global_position)
 
 
+func test_rift_is_a_station_above_the_clouds_at_dawn() -> void:
+	await load_map(RIFT)
+	var wall := level.find_child("NorthRim", true, false) as GreyBox
+	var arch := level.find_child("ArchN", true, false) as GreyBox
+	check(wall.surface != null and arch.surface != null, "the blocks wear the map's own surfaces")
+	var sun := level.get_node("Sun") as DirectionalLight3D
+	var toward := sun.global_transform.basis.z
+	check(toward.x > 0.8 and toward.y > 0.1 and toward.y < 0.4, "the sun's just up in the east (%s)" % toward)
+	var zone := level.find_child("Tunnel", true, false) as AmbientZone
+	check(zone != null and zone.ambient < 0.5, "the tunnel through the station keeps the sky out")
+	var lamps := level.find_children("*", "Light3D", true, false)
+	check(lamps.size() >= 12, "the station's lamps still lit (%d)" % lamps.size())
+	# The solid props stand against walls: benches on the galleries.
+	for s: StaticBody3D in level.find_children("Solid_*", "StaticBody3D", true, false):
+		var z := absf(s.global_position.z)
+		check(z > 14.5 and z < 16.0, "%s is against a gallery wall (at %s)" % [s.name, s.global_position])
+	# The line goes on far off, not from the edge: nothing to step onto.
+	var far := level.find_children("far_stone*", "MeshInstance3D", true, false)
+	check(not far.is_empty(), "viaducts across the cloud")
+	var near := 0
+	for m: MeshInstance3D in far:
+		for v: Vector3 in m.mesh.get_faces():
+			if absf(v.z) < 250.0:
+				near += 1
+	check(near == 0, "they're far off (%d points nearer)" % near)
+
+
 func test_rift_bridges_cross_the_canyon() -> void:
 	await load_map(RIFT)
 	place(Vector3(0, Rift.SOUTH + 0.05, 20), 0.0)

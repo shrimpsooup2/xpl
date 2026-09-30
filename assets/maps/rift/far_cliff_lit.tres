@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/far_surface.gdshader" id="1_o4118"]
+[ext_resource type="Texture2D" path="res://assets/textures/rift/cliff.png" id="2_qpn1x"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_o4118")
+shader_parameter/albedo_texture = ExtResource("2_qpn1x")
+shader_parameter/tint = Color(1.1, 0.84, 0.72, 1)
+shader_parameter/meters_per_repeat = 24.0

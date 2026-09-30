@@ -98,11 +98,6 @@ static func build(kit) -> Transform3D:
 	kit.pad("Pad_PistolC", Weapons.PISTOL, Vector3(-50, 0, 10))
 	kit.pad("Pad_PistolD", Weapons.PISTOL, Vector3(54, 0, 10))
 
-	kit.light("ArchGlow", Vector3(-30, 2.5, 0), Color(1.0, 0.7, 0.3), 9.0)
-	kit.light("UnderOverhang", Vector3(45, 6, -12), Color(0.3, 0.85, 1.0), 16.0)
-	kit.light("Colonnade", Vector3(38, 4, 0), Color(1.0, 0.4, 0.6), 14.0)
-	kit.light("WestFloor", Vector3(-50, 4, 0), Color(0.6, 0.4, 1.0), 14.0)
-
 	kit.label("NORTH RIM", Vector3(40, NORTH + 4, -30))
 	kit.label("SOUTH RIM", Vector3(-40, SOUTH + 4, 30))
 	kit.label("HIGH BRIDGE", Vector3(0, NORTH + 3, 0))

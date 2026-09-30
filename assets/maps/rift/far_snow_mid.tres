@@ -1,0 +1,11 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/far_surface.gdshader" id="1_notav"]
+[ext_resource type="Texture2D" path="res://assets/textures/rift/snow.png" id="2_fw78l"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_notav")
+shader_parameter/albedo_texture = ExtResource("2_fw78l")
+shader_parameter/tint = Color(0.86, 0.84, 0.94, 1)
+shader_parameter/meters_per_repeat = 48.0
