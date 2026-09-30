@@ -12,7 +12,7 @@ A round-based, movement-first arena FPS. Two players duel through short rounds o
 
 1. Install **Godot 4.7.2**, the standard build (not .NET): <https://godotengine.org/download>
 2. Clone this repo, open Godot, choose **Import**, and select `project.godot`.
-3. Press **F5** to play. The main menu opens: **free-for-all** starts a practice game of short rounds against three bots, **teams** a long four-against-four game with bots (pick your gun with 1–6 in the countdown or while you're down; ammo boxes stand where the guns would be; kills close together chain into combos), **online** hosts or joins a game over the network (below), and **sandbox** the movement test course. In the bottom-right corner you type your name and pick your hat and your free-for-all colour; they're saved and worn in every game. In the sandbox the gun pads are just to your left, and the shooting range is beyond them; its dummies play for blue. Press **F9** to step through the maps: Stack, Terrace, Switchback, Archipelago and Rift, then the team maps Boulevard, Holdfast and Depot ([GDD §9.3](docs/GDD.md#93-built-maps)). Stack and Terrace are dressed: Stack as the drained rooftop pool of a hotel at night, Terrace as a dead mall's food court under a glass roof, in a total eclipse. The others are still greybox.
+3. Press **F5** to play. The main menu opens: **free-for-all** starts a practice game of short rounds against three bots, **teams** a long four-against-four game with bots (pick your gun with 1–6 in the countdown or while you're down; ammo boxes stand where the guns would be; kills close together chain into combos), **online** hosts or joins a game over the network (below), and **sandbox** the movement test course. In the bottom-right corner you type your name and pick your hat and your free-for-all colour; they're saved and worn in every game, and can be changed in a game from the pause menu (Esc). In the sandbox the gun pads are just to your left, and the shooting range is beyond them; its dummies play for blue. Press **F9** to step through the maps: Stack, Terrace, Switchback, Archipelago and Rift, then the team maps Boulevard, Holdfast and Depot ([GDD §9.3](docs/GDD.md#93-built-maps)). Stack and Terrace are dressed: Stack as the drained rooftop pool of a hotel at night, Terrace as a dead mall's food court under a glass roof, in a total eclipse. The others are still greybox.
 
 ### Controls
 
@@ -62,7 +62,7 @@ Press **F1** in-game to edit every movement value live. **Save** writes them to 
 Both ways run the same server-authoritative game ([how it works, and its safety model](docs/NETWORKING.md)):
 
 - **Host from the menu.** *online → host a game*: pick the style, the port (27960 by default) and optionally a password. Friends on your network join at the address the lobby shows. To play over the internet, forward that UDP port on your router to your machine, or turn on *open the port* to ask the router to do it (UPnP, when the router allows it). Add bots in the lobby, then *start*. Everyone comes back to the lobby when the game ends.
-- **Join.** *online → join a game*: the host's address (`192.168.1.20`, or `example.com:27961` for another port) and the password if there is one.
+- **Join.** *online → join a game*: the host's address (`192.168.1.20`, or `example.com:27961` for another port) and the password if there is one. If you leave a game, *rejoin* takes you back to it with your score, within 10 minutes. Your name, hat and colour can be changed in the pause menu mid-game, and everyone sees it.
 - **Run a dedicated server.** No window, no player, games back to back while anyone's connected:
 
   ```sh
@@ -83,7 +83,7 @@ Both ways run the same server-authoritative game ([how it works, and its safety 
 | `src/combat/` | The roster (`Weapons`, `WeaponDef`), gun models (`WeaponModel`), a player's hands (`WeaponHolder`: firing, pickups, throwing), shots in flight (`Ballistics`), hit zones (`HitShapes`), pickups and pads, ammo boxes (`AmmoBox`, teams), `TargetDummy`, and shooting effects |
 | `src/ui/` | The UI: style and motion kit (`LofiUI`, `LofiSlider`), low-res canvas (`LofiLayer`), HUD and its ammo column, crosshair and ammo ring, overlays, pause and main menus, the online page and lobby (`OnlineMenu`), the settings page (`SettingsMenu`) and what it saves (`Settings`), scene wipe |
 | `src/game/` | Games: `GameRules` (the free-for-all and teams presets), `Match` (runs a game across maps), `Game` (starts and ends one), `PlayerInfo` (each player's name, side and score), `BotBrain` (practice bots) |
-| `src/net/` | Online play: `NetSession` (host, join, handshake, roster), `DedicatedServer`, `MatchSync` (a networked game's messages), `Prediction` and `Puppet` (your player and everyone else on a client), `NetCodec` (the wire format, checked) |
+| `src/net/` | Online play: `NetSession` (host, join, handshake, roster), `DedicatedServer`, `MatchSync` (a networked game's messages), `Prediction` and `Puppet` (your player and everyone else on a client), `Rewind` (lag compensation), `NetCodec` (the wire format, checked) |
 | `src/world/` | `GreyBox` blocks (size, surface kind, or a dressed map's own surface), `Maps` (the map list F9 steps through), `AmbientZone` (an indoor zone the sky's light stays out of), `Graphics` (the graphics settings, applied to a level) and `Flicker` (a failing lamp) |
 | `src/render/` | Surface, sky, screen, prop and viewmodel shaders, `RetroScreen` (low-res rendering), and the decor's shaders in `deco/` (glowing fittings, water, puddles, light shafts, city windows, a telly, the skyline, floating props) |
 | `assets/` | Pixel textures, the reflection map, the logo, the generated body and chunk meshes, and third-party assets |
@@ -122,7 +122,7 @@ tools/build_site.sh && python3 -m http.server -d _site
 ## Known issues
 
 - **The OpenGL fallback runs out of per-object colour slots on the big maps.** Surfaces, props and guns set their colour and gloss per object (instance shader parameters). Godot's Forward+ renderer (Vulkan, the default) has room for thousands of them; the Compatibility renderer (OpenGL, used when Vulkan isn't available, or with `--rendering-driver opengl3`) fits about 256 objects (4096 slots), and a full eight-player team game on Depot or Holdfast goes past that: some objects lose their colours and Godot prints "Too many instances using shader instance variables". Use Forward+ for now; the fix is to move those colours into shared materials.
-- **Online play hasn't been tested over a real network yet**, only on one machine. See [NETWORKING.md](docs/NETWORKING.md#known-limits) for what's not done (lag compensation, reconnecting).
+- **Online play hasn't been tested over a real network yet**, only on one machine. See [NETWORKING.md](docs/NETWORKING.md#known-limits) for what's not done and what to expect.
 
 ## Credits
 

@@ -159,8 +159,9 @@ func _check_throw_hit(delta: float) -> void:
 	# it) before its centre gets there.
 	var dir := _last_velocity.normalized()
 	var reach := _last_velocity.length() * delta + _half_length + 0.4
+	# A thrown gun flies here and now: nothing to rewind.
 	var hit := ballistics.trace(_last_position, _last_position + dir * reach, exclude,
-			holder if is_instance_valid(holder) else null)
+			holder if is_instance_valid(holder) else null, Ballistics.NOW)
 	if hit.is_empty() or hit.target == null:
 		return
 	_flying = false

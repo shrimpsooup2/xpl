@@ -87,6 +87,23 @@ static func can_damage(attacker: Player, victim: Player) -> bool:
 	return current.can_damage(attacker, victim)
 
 
+## Your name, hat or colour changed (Cosmetics): the game you're in shows it
+## now, and online everyone sees it (through the server).
+static func update_look() -> void:
+	if NetSession.active():
+		NetSession.current.send_look()
+		return
+	var m := current
+	if m == null or not is_instance_valid(m):
+		return
+	var me := m.local_info()
+	if me:
+		me.player_name = Cosmetics.player_name
+		me.hat = Cosmetics.hat
+		me.color = Cosmetics.color
+		m.restyle(me)
+
+
 ## You pick gun `id` (for games where you pick, GameRules.loadout): it's
 ## saved, and the game you're in hears about it (the server, online).
 static func choose_gun(id: StringName) -> void:

@@ -20,6 +20,7 @@ func cmd_with(move: Vector2, yaw: float, pitch: float, pressed: Array, switch_to
 func test_inputs_go_over_the_wire_and_come_back() -> void:
 	var a := cmd_with(Vector2(0.5, -1.0).limit_length(1.0), 12.25, -0.7, [&"jump_pressed", &"jump_held", &"fire_held"], 3)
 	var b := cmd_with(Vector2(-0.2, 0.9), -3.0, 1.2, [&"crouch_held", &"dash_pressed", &"throw_pressed", &"interact_pressed"])
+	a.view_tick = 1234.5625
 	var bytes := NetCodec.encode_inputs([[41, a], [42, b]])
 	check(bytes.size() == 1 + 2 * NetCodec.INPUT_SIZE, "two commands in %d bytes" % bytes.size())
 	var back := NetCodec.decode_inputs(bytes)
@@ -30,6 +31,7 @@ func test_inputs_go_over_the_wire_and_come_back() -> void:
 	check(absf(a2.yaw - a.yaw) < 1e-5 and absf(a2.pitch - a.pitch) < 1e-6 and absf(b2.yaw - b.yaw) < 1e-6, "view angles at float precision")
 	check(a2.jump_pressed and a2.jump_held and a2.fire_held and not a2.fire_pressed and a2.switch_to == 3, "buttons and the switch")
 	check(b2.crouch_held and b2.dash_pressed and b2.throw_pressed and b2.interact_pressed and not b2.jump_held, "the other buttons")
+	check(a2.view_tick == 1234.5625 and b2.view_tick == -1.0, "the tick they saw everyone at (to 1/16), or none: %s, %s" % [a2.view_tick, b2.view_tick])
 
 
 func test_bad_inputs_are_refused() -> void:
@@ -84,6 +86,110 @@ func test_random_junk_never_gets_through_or_breaks_anything() -> void:
 		for e: Dictionary in loose.get("pickups", []):
 			check(e.position.is_finite() and e.rotation.is_normalized() and e.ammo <= 1000, "any loose weapon let through is sane")
 	check(true, "2000 random packets decoded without breaking (%d commands passed the checks)" % accepted)
+
+
+# --- Stalls and lag ---------------------------------------------------------------------
+
+## MatchSync on the server: a client whose commands stop coming waits a few
+## ticks, then carries on with its last command (its presses and trigger let
+## go) for a moment rather than freezing on everyone's screen, then stops.
+## The commands for the ticks it was guessed through are too late when they
+## come; it picks up after them.
+func test_a_stalled_player_carries_on_a_moment_then_stops() -> void:
+	var sync := MatchSync.new()
+	sync._inputs[5] = {"queue": {}, "next": -1, "ran": -1, "last": null, "waited": 0, "guessed": 0}
+	check(sync._commands_for(5).is_empty(), "nothing to run before anything came")
+	var walk := cmd_with(Vector2(0.3, 0.9), 0.5, 0.1, [&"fire_pressed", &"fire_held", &"alt_held", &"jump_pressed", &"crouch_held"], 2)
+	sync.queue_commands(5, [[10, walk], [11, walk]])
+	var first := sync._commands_for(5)
+	var second := sync._commands_for(5)
+	check(first.size() == 1 and second.size() == 1 and first[0] == walk, "its commands run, one a tick")
+	var waited := 0
+	while sync._commands_for(5).is_empty() and waited < 100:
+		waited += 1
+	check(waited == MatchSync.WAIT_TICKS, "it waits %d ticks for the next (%d)" % [MatchSync.WAIT_TICKS, waited])
+	var guesses := [null]  # The one that ended the wait.
+	for i in 60:
+		guesses.append_array(sync._commands_for(5))
+	check(guesses.size() == MatchSync.GUESS_TICKS, "then carries on for %d ticks and stops (%d)" % [MatchSync.GUESS_TICKS, guesses.size()])
+	var g: InputCommand = guesses[1]
+	check(g != walk and g.move == walk.move and g.yaw == walk.yaw and g.pitch == walk.pitch and g.crouch_held,
+			"on the last command: the same move, view and holds")
+	check(not g.fire_pressed and not g.fire_held and not g.alt_held and not g.jump_pressed and g.switch_to == 0,
+			"its presses and trigger let go")
+	var late := []
+	for t in range(12, 12 + MatchSync.GUESS_TICKS + 2):
+		late.append([t, walk])
+	sync.queue_commands(5, late)
+	var after := sync._commands_for(5)
+	check(after.size() == 1 and sync._inputs[5].ran == 12 + MatchSync.GUESS_TICKS,
+			"the late commands for the guessed ticks are dropped, and it picks up after them (ran %d)" % sync._inputs[5].ran)
+	check(sync._commands_for(5).size() == 1 and sync._commands_for(5).is_empty(), "then waits again")
+	sync.free()
+
+
+## Rewind (lag compensation): a shot is tested against the target where the
+## shooter's screen showed it, a few ticks back, not where it is now; never
+## further back than MAX_TICKS; and not at all where it was down.
+func test_shots_are_tested_where_the_shooter_saw_the_target() -> void:
+	var world := Node3D.new()
+	add_child(world)
+	var bodies: Array[Player] = []
+	for at: Vector3 in [Vector3(0, 0.05, 0), Vector3(-2, 0.05, -8)]:
+		var p: Player = load("res://scenes/player.tscn").instantiate()
+		p.human_controlled = false
+		p.movement_params = MovementParams.new()
+		p.view_settings = ViewSettings.new()
+		world.add_child(p)
+		p.set_process(false)
+		p.set_physics_process(false)
+		p.spawn_at(Transform3D(Basis.IDENTITY, at))
+		bodies.append(p)
+	await get_tree().physics_frame
+	var shooter := bodies[0]
+	var target := bodies[1]
+	var chest := target.model.global_transform.affine_inverse() * target.model.heart.global_position
+	var rewind := Rewind.new()
+	# The target strafes 0.2 m a tick: x = -2 at tick 100, 0 at 110, 1.8 now (119).
+	for t in range(100, 120):
+		target.global_position.x = -2.0 + 0.2 * (t - 100)
+		target.model.follow(target.global_position, target.yaw)
+		target.is_dead = t == 101
+		rewind.record(t, [shooter, target])
+	var eye := shooter.weapons.eye_position()
+	var at_x := func(x: float) -> Vector3:
+		var point := target.model.global_transform * chest + Vector3(x - target.global_position.x, 0, 0)
+		return eye + (point - eye).normalized() * 30.0
+	check(target.ray_test(eye, at_x.call(0.0)).is_empty(), "now, it isn't where the shooter saw it")
+	var hit := rewind.ray_test(target, eye, at_x.call(0.0), 110.0)
+	check(not hit.is_empty(), "but it's hit where the shooter saw it, 9 ticks back")
+	check(rewind.ray_test(target, eye, at_x.call(1.8), 110.0).is_empty(), "and not where it is now")
+	var between := rewind.ray_test(target, eye, at_x.call(0.1), 110.5)
+	check(not between.is_empty() and absf(between.get("point", Vector3.ZERO).x - 0.1) < 0.2,
+			"between ticks, in between, and the hit is where it was seen: %s" % between.get("point"))
+	check(rewind.ray_test(target, eye, at_x.call(-2.0), 100.0).is_empty()
+			and not rewind.ray_test(target, eye, at_x.call(1.8 - 0.2 * Rewind.MAX_TICKS), 100.0).is_empty(),
+			"no further back than %d ticks" % Rewind.MAX_TICKS)
+	var down_at := rewind.clamp_tick(101.0)
+	check(down_at == 104.0, "a view that old is tested %d ticks back" % Rewind.MAX_TICKS)
+	# A shooter online (its view_tick from its commands), through Ballistics.
+	var ballistics := Ballistics.of(world)
+	Rewind.active = rewind
+	shooter.view_tick = 110.0
+	var shot := ballistics.trace(eye, at_x.call(0.0), [], shooter.weapons)
+	check(shot.get("target") == target, "a shot from someone online hits where they saw it")
+	var now := ballistics.trace(eye, at_x.call(0.0), [], shooter.weapons, Ballistics.NOW)
+	check(now.get("target") != target, "and a thrown gun (NOW) doesn't")
+	shooter.view_tick = -1.0
+	check(ballistics.trace(eye, at_x.call(1.8), [], shooter.weapons).get("target") == target, "someone playing here is tested against now")
+	Rewind.active = null
+	var gone := Rewind.new()
+	for t in range(100, 104):
+		target.is_dead = t < 102
+		gone.record(t, [target])
+	check(gone.ray_test(target, eye, at_x.call(1.8), 100.0).is_empty() and not gone.ray_test(target, eye, at_x.call(1.8), 103.0).is_empty(),
+			"not where it was down")
+	world.queue_free()
 
 
 # --- Loose weapons ---------------------------------------------------------------------

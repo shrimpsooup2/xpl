@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Version** | 2.9 (draft) |
+| **Version** | 3.0 (draft) |
 | **Date** | 2026-09-30 |
 | **Status** | Pre-production: structure and direction, all numbers are starting values to tune |
 | **Genre** | Round-based, movement-first arena FPS with weapon pickups |
@@ -42,6 +42,7 @@
 | 2.7 | Guns do about a third less damage (§7.4), so you last longer: at 100 health the TR-30 and SX-50 kill in about a second instead of two thirds of one, the SP-12 in 1.8 s, the Marshal in four shots; a Heron headshot still kills outright. Hits show where they came from (§13.3): a red arc round the crosshair points at the shooter. Esc opens the menu while you're down watching someone (§13.4). |
 | 2.8 | The first map is dressed (§9.3): Stack is the drained rooftop pool of a hotel tower at night, over its changing rooms. Lighting is reworked (§11.2): every lamp has a fixture to come from, rooms keep the sky's light out (indoor zones), each floor's lamps light only that floor, and highlights no longer bloom into blobs. Textures for dressed maps are soft and gritty rather than clean pixel art (§11.2). Graphics settings trade looks for speed (§13.4): a quality preset, shadows, extra lamps, detail, effects, bloom. |
 | 2.9 | Terrace is dressed (§9.3): the food court of a dead mall at noon in a total eclipse, under a glass barrel vault: food stalls, a restaurant, the restrooms, the directory, vending machines, shops along both levels (an arcade and a cinema still lit), a stage for the eclipse party, an escalator and a travelator, festoon bulbs strung over it all. The sky can show an eclipse (§11.2). |
+| 3.0 | Online play (§15.2, [NETWORKING.md](NETWORKING.md)): shots are lag compensated (the server tests them against where the shooter saw everyone, as far back as 250 ms); a player whose connection stalls carries on the way they were going for a moment instead of freezing; you can leave a game and come back to it with your score (*rejoin*); and your name, hat and colour can be changed mid-game from the pause menu, and everyone sees it. |
 
 ---
 
@@ -999,7 +1000,7 @@ Movement is a custom kinematic controller on top of `CharacterBody3D`, with our 
 
 ### 15.2 Simulation and netcode
 
-The plan, the choices behind it, what's built and the security model are in [NETWORKING.md](NETWORKING.md). In short: both a listen server (a player hosts from the menu) and a headless dedicated server run the same server-authoritative code over Godot's own ENet networking. Built so far: the authority, tick, local player, remote player, pickup and validation rows below (interpolation is 100 ms, with no extrapolation yet); lag compensation and projectiles are next.
+The plan, the choices behind it, what's built and the security model are in [NETWORKING.md](NETWORKING.md). In short: both a listen server (a player hosts from the menu) and a headless dedicated server run the same server-authoritative code over Godot's own ENet networking. Built so far: the authority, tick, local player, remote player, hit, pickup and validation rows below (interpolation is 100 ms, with no extrapolation yet, but a stalled player carries on with their last command for up to 300 ms). Projectiles are lag compensated differently from the plan: the server's projectile flies in present time from the muzzle, and is tested against the players as the shooter saw them all along its flight.
 
 | Topic | Plan |
 |---|---|
@@ -1007,7 +1008,7 @@ The plan, the choices behind it, what's built and the security model are in [NET
 | Tick rate | 60 Hz fixed simulation and send rate (configurable to 120 Hz) |
 | Local player | Client-side prediction of movement, firing, pickups, and throws, with server reconciliation (rewind and replay unacknowledged inputs) |
 | Remote players | Interpolated about 2 ticks behind, with extrapolation capped at 100 ms on packet loss |
-| Hitscan hits | Server-side lag compensation: rewind hitboxes to what the shooter saw, capped at 150 ms |
+| Hitscan hits | Server-side lag compensation: rewind hitboxes to what the shooter saw, capped at 150 ms of latency (250 ms back in all, with the interpolation) |
 | Projectile hits | The server spawns the authoritative projectile fast-forwarded by the shooter's latency (capped at 100 ms) and tests that segment against rewound hitboxes. After that, the projectile simulates in present time. The client shows its own predicted projectile immediately. |
 | Hitboxes | Body, head, and heart are attached to the simulated capsule and pose state, not to client-side animation. This keeps the tiny heart consistent between server and clients. |
 | Pickups | Predicted on the client, confirmed by the server. If both players grab the same weapon on the same tick, the earlier input timestamp wins and the loser's prediction rolls back cleanly. |

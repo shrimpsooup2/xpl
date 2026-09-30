@@ -41,6 +41,8 @@ func _ready() -> void:
 func record(cmd: InputCommand) -> void:
 	tick += 1
 	var c := cmd.copy()
+	# Where you saw everyone else as you did it (lag compensation).
+	c.view_tick = sync.view_clock if sync else -1.0
 	_history.append([tick, c, player.global_position, player.state.mode])
 	if _history.size() > HISTORY:
 		_history.pop_front()

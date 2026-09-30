@@ -37,9 +37,11 @@ Godot's high-level multiplayer (`SceneMultiplayer`) over **ENet** (UDP, reliable
 
 `Net` (`src/net/`) owns the connection: hosting (with optional UPnP), joining, and the dedicated server's loop. Before a client is let in, it passes a **handshake** (Godot's `SceneMultiplayer` authentication step, before any game message is accepted): the protocol version must match, the name is cleaned (as on the title screen), the look (hat, colour) must be from the known lists, the server's password if it has one, and the server must have room. Then the server adds them to the **roster** (a `PlayerInfo` per player, the same one the offline match uses), picks their team, and tells everyone.
 
+The hello also carries a **token** saying who you are: a random id your game makes once and saves (`Cosmetics.identity`), hashed with the server's name, so each server sees a different one and none can pass itself off as you to another. When someone leaves a game in progress, the server keeps their score and side under their token for 10 minutes; if they come back to the same game, they get them back (a new game, or the end of this one, forgets them). **Your look can change any time**: the name field and the hat and colour arrows in the pause menu (and on the title screen, in a lobby) send it to the server, which checks it like the one you joined with and tells everyone.
+
 Games start on the server: it picks the style and map, and every client loads that map **by name from the game's own list** (never a path or file from the network). Each player's body in every level has the same name on every machine (`Player_<id>`), so messages about it find it. The round waits until every client says it has the map loaded (at most 8 s, then it starts without the slow ones), and a client that loads late, or joins mid-game, is sent where everyone is, what they hold, the pads and the loose weapons.
 
-In the menu, **online** opens a page with *host a game* (style, port, an optional password, and whether to ask the router to open the port with UPnP) and *join a game* (an address like `192.168.1.20` or `example.com:27960`, and the password). Then the **lobby**: who's in, where friends can reach you (your address on the local network, and your internet address if UPnP worked), and for the host the style, the number of bots, and *start*. Everyone goes back to the lobby when a game ends. On a dedicated server the lobby just waits: the server starts the next game itself a few seconds after someone's there.
+In the menu, **online** opens a page with *host a game* (style, port, an optional password, and whether to ask the router to open the port with UPnP) and *join a game* (an address like `192.168.1.20` or `example.com:27960`, and the password; after you've left a server, *rejoin* goes back to it). Then the **lobby**: who's in, where friends can reach you (your address on the local network, and your internet address if UPnP worked), and for the host the style, the number of bots, and *start*. Everyone goes back to the lobby when a game ends. On a dedicated server the lobby just waits: the server starts the next game itself a few seconds after someone's there.
 
 ### Netcode
 
@@ -48,11 +50,11 @@ In the menu, **online** opens a page with *host a game* (style, port, an optiona
 | Tick | 60 Hz fixed, the same `Player.tick()` offline, on the server and in prediction |
 | Client → server | Input commands, numbered by tick, the last few repeated in each packet so one lost packet costs nothing (unreliable, ordered) |
 | Server → clients | Snapshots at 30 Hz: every player's position, velocity, view, movement mode and flags, health (unreliable, ordered), and the loose weapons that moved; events when they happen (reliable): maps, spawns, damage, deaths, kills, shots fired, what everyone holds, pads, loose weapons appearing and going, match state, scores |
-| The server running your player | It runs your commands in order, one a tick, never guessing: if the next one hasn't arrived, your player waits for it; if several are queued (a burst after a hitch), it runs two a tick until it's caught up. So prediction and the server always run exactly the same commands |
+| The server running your player | It runs your commands in order, one a tick; if several are queued (a burst after a hitch), it runs two a tick until it's caught up. If the next one hasn't arrived, your player waits for it, for 3 ticks (50 ms); then it carries on with your last command (the same move and view, its presses and trigger let go) for up to 18 more (300 ms) rather than freezing on everyone's screen, then stops. Commands that arrive for ticks it guessed are too late and are dropped, and your prediction is put right. Otherwise prediction and the server run exactly the same commands |
 | Your player | Predicted: moves at once on your input. When a snapshot says where the server had you after a command, the client goes back there and replays the commands since (reconciliation) at the next physics tick; when prediction was right (within 5 cm), nothing moves, and when it wasn't, the difference is eased away on screen |
-| Other players | Interpolated about 100 ms behind between snapshots, so they move smoothly; not simulated on the client |
+| Other players | Interpolated about 100 ms behind between snapshots, so they move smoothly; not simulated on the client. They're all shown at one clock (a server tick, to a fraction), and every command you send says which tick that was |
 | Your shots | Shown at once (tracer, muzzle flash, sound); damage, hit markers and kills only when the server confirms them |
-| Hit registration | Server-side. Next: lag compensation, rewinding the other players' hit shapes to what the shooter saw (capped at 150 ms, GDD §15.2) |
+| Hit registration | Server-side, with **lag compensation**: the server remembers where every player stood and faced, tick by tick, and tests a shot (or a punch) against the other players where the shooter's screen showed them, at the tick their command says. A projectile is tested that far back all along its flight. At most 15 ticks back (250 ms: the 100 ms interpolation and 150 ms of latency, GDD §15.2); further behind than that, you lead a little. Only where they stood is rewound, not their pose; a thrown gun hits where players are now |
 | Pickups | Granted by the server; the client asks (its commands carry the button), the server decides (and settles two players grabbing at once). Loose weapons (dropped on death, swapped out, thrown) exist on the server; clients have copies it places, smoothed between updates |
 
 ### How it's built
@@ -64,6 +66,7 @@ In the menu, **online** opens a page with *host a game* (style, port, an optiona
 | `src/net/match_sync.gd` | `MatchSync`: under the `Match` on every machine; the server's inputs queue per player, snapshots and events, and the client's side of each |
 | `src/net/prediction.gd` | `Prediction`: your own player on a client (history, sending commands, reconciliation) |
 | `src/net/puppet.gd` | `Puppet`: everyone else on a client, interpolated between snapshots |
+| `src/net/rewind.gd` | `Rewind`: lag compensation on the server (where everyone stood, tick by tick, and shots tested against the past) |
 | `src/net/net_codec.gd` | `NetCodec`: every packed message, and checking what comes off the wire |
 | `src/ui/online_menu.gd` | The menu's online page and lobby |
 | `src/game/match.gd`, `game.gd` | The same match offline and online: `authority` says whether this machine decides it or follows the server |
@@ -118,24 +121,23 @@ These are inherent to online games, and especially to one anyone can host. They'
 5. Combat online: shots, hits, damage, deaths, kills, pads, and loose weapons, decided by the server and shown on every client.
 6. The menu: host and join, a lobby before the game and between games; leaving and ending games from the pause menu.
 7. Tests (`tools/run_tests.sh`): codecs, validation and prediction in-process; then, in real time, a dedicated server in another process that this one joins (a wrong password refused, the game followed, movement predicted, a round played out, a latecomer joining mid-game, junk getting you kicked), and this one hosting a game a friend's process joins (their player driven by what they send, a thrown gun seen landing where it landed).
+8. Lag compensation for shots, punches and projectiles; a stalling player carrying on for a moment instead of freezing; coming back to a game you left with your score; changing your name, hat and colour mid-game. Tested in-process (a shot hitting where the shooter saw the target and not where it is now, the stall's wait, guesses and late commands) and in real time (a new look seen by the server and another client; leaving, rejoining and getting your score back).
 
 **Next**
-- Lag compensation (rewinding hit shapes to the shooter's view).
 - Interest management: don't send what a player can't see (fewer wallhacks, less bandwidth).
 - A relay: GodotSteam for the Steam build, noray otherwise (NAT without port forwarding, hidden addresses).
 - A server browser (a small master server listing public dedicated servers).
 - Optional DTLS encryption for dedicated servers.
-- Reconnecting to a game in progress, spectators, chat with moderation.
+- Spectators, chat with moderation.
 - The GDD §15.2 test matrix: 50–150 ms latency, jitter and packet loss.
 
 ### Known limits
 
-- **Only tested on one machine** (loopback, no latency or loss). Expect tuning once it's played over real networks: the interpolation delay, how long the server waits for a client's commands, and the correction tolerance are first guesses.
-- **No lag compensation yet**: the server tests shots against where players are now, so at 100 ms you have to lead moving targets a little.
-- **A stalling client stands still.** The server waits for a player's commands rather than guessing, so on everyone else's screens a player with a bad connection freezes, then catches up.
+- **Only tested on one machine** (loopback, no latency or loss). Expect tuning once it's played over real networks: the interpolation delay, how long the server waits for a client's commands before carrying on without them, how long it carries on, and the correction tolerance are first guesses.
+- **Lag compensation has its costs.** Past 250 ms behind you have to lead a little. The other side of it: with a high ping you can be hit a moment after you've stepped behind a wall, as the shooter saw you. Only where a body stood and faced is rewound, not its pose (a crouch or a flinch is tested as it is now).
+- **A stall is guessed through, then it freezes.** A player whose connection stalls keeps going the way they were for 300 ms, then stands still until their commands come; they snap back if they'd done something else.
 - **Hits wait for the server.** Your own shots, tracers and muzzle flash show at once, but hit markers and damage numbers come back a round trip later.
-- **Your look is sent when you join**: changing your name, hat or colour means rejoining. Teams are balanced by the server; nobody picks a side yet.
-- **No reconnecting**: leaving and coming back is a new player with a fresh score.
+- **Coming back only counts in the same game**, within 10 minutes, and *rejoin* remembers the last server only until you quit. Teams are balanced by the server; nobody picks a side yet.
 
 ## Running a server
 

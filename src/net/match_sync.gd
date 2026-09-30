@@ -5,8 +5,10 @@ extends Node
 ##
 ## On the server it:
 ##   runs every remote player's body on the inputs that player's client
-##     sends (a queue per player, one command per tick; a missing one is
-##     replaced by the last, its presses let go);
+##     sends (a queue per player, one command per tick; when they stop
+##     coming, the last one carries on a moment, its presses let go);
+##   remembers where everyone was each tick, so shots are tested against
+##     where their shooter saw them (Rewind: lag compensation);
 ##   sends every client a snapshot of every player 30 times a second, and
 ##     each client its own player's full movement state and the last input
 ##     the server ran, to reconcile with;
@@ -17,7 +19,8 @@ extends Node
 ##     death, swapped out, thrown): each one's arrival, where it is while it
 ##     moves (with the snapshots), and when it's gone.
 ## On a client it applies all of that: its own player is predicted
-## (Prediction), everyone else is a puppet (Puppet), and the Match follows
+## (Prediction), everyone else is a puppet (Puppet), all shown at one clock
+## (view_clock), and the Match follows
 ## the server's state and fires the same signals, so the UI works the same
 ## as offline. Nothing a client sends does more than ask; everything it's
 ## sent is checked.
@@ -30,7 +33,8 @@ const MAX_QUEUE := 12
 var match_ref: Match
 var server_tick := 0
 
-## Server: peer id → {queue: {tick: InputCommand}, next: int, ran: int}.
+## Server: peer id → {queue: {tick: InputCommand}, next: int, ran: int,
+## last: the command it last ran, waited / guessed: ticks stalled / carried on}.
 var _inputs := {}
 ## Server: peer id → the level (serial) it last said it had loaded.
 var _loaded := {}
@@ -44,6 +48,21 @@ var _pickup_targets := {}
 ## A player whose queue has more than this runs two commands a tick until
 ## it's caught up (a burst after a hitch shouldn't turn into lasting lag).
 const CATCH_UP_ABOVE := 3
+## A player whose next command is this many ticks late carries on with the
+## last one it ran (its presses and trigger let go) for up to GUESS_TICKS
+## more, rather than stopping dead on everyone's screen. The commands for
+## those ticks are too late if they come, and are dropped; its client is put
+## right, as after any correction.
+const WAIT_TICKS := 3
+const GUESS_TICKS := 18
+
+## Server: where everyone was, tick by tick (lag compensation).
+var rewind := Rewind.new()
+## Client: the server tick everyone else is shown at (fractional), which
+## every Puppet plays back by and every command carries (-1 before the first
+## snapshot).
+var view_clock := -1.0
+var _newest_tick := -1
 
 
 func _ready() -> void:
@@ -93,7 +112,7 @@ func on_body_added(info: PlayerInfo) -> void:
 	body.weapons.equipped.connect(func(_d: WeaponDef, _a: int) -> void: _send_loadout(info))
 	body.weapons.ammo_changed.connect(func(_a: int, _c: int) -> void: _on_ammo(info))
 	if info.id > 1:  # A client's player: run it on what that client sends.
-		_inputs[info.id] = {"queue": {}, "next": -1, "ran": -1}
+		_inputs[info.id] = {"queue": {}, "next": -1, "ran": -1, "last": null, "waited": 0, "guessed": 0}
 		body.drive_with(_commands_for.bind(info.id))
 
 
@@ -107,11 +126,16 @@ func _client_inputs(bytes: PackedByteArray) -> void:
 	if entries.is_empty():
 		NetSession.current.strike(id, "bad input packet")
 		return
+	queue_commands(id, entries)
+
+
+## Takes client `id`'s commands ([[tick, InputCommand], ...]) into its queue.
+func queue_commands(id: int, entries: Array) -> void:
 	var q: Dictionary = _inputs[id]
 	for e: Array in entries:
 		var tick: int = e[0]
 		if tick <= q.ran or q.queue.has(tick):
-			continue  # Already run, or a repeat.
+			continue  # Already run (or guessed), or a repeat.
 		q.queue[tick] = e[1]
 	while q.queue.size() > MAX_QUEUE:
 		var oldest: int = q.queue.keys().min()
@@ -120,25 +144,46 @@ func _client_inputs(bytes: PackedByteArray) -> void:
 
 
 ## The commands to run client `id`'s player on this tick, in order: its
-## next one, two while it's catching up, or none while the next hasn't come
-## (the player waits for it rather than the server guessing: prediction and
-## the server then run exactly the same commands). A command that never came
-## (no later packet carried it) is skipped.
+## next one, two while it's catching up. While the next hasn't come the
+## player waits (prediction and the server then run exactly the same
+## commands), but not for long: after WAIT_TICKS it carries on with the last
+## one it ran, its presses and trigger let go, for up to GUESS_TICKS (so a
+## stalling connection doesn't freeze it on everyone's screen). A command
+## that never came (a later one did) is skipped.
 func _commands_for(id: int) -> Array:
 	var q: Dictionary = _inputs.get(id, {})
-	if q.is_empty() or q.queue.is_empty():
+	if q.is_empty():
 		return []
-	var first: int = q.queue.keys().min()
-	if q.next < 0 or first > q.next:
-		q.next = first
+	if not q.queue.is_empty():
+		var first: int = q.queue.keys().min()
+		if q.next < 0 or first > q.next:
+			q.next = first
 	var out := []
-	for i in (2 if q.queue.size() > CATCH_UP_ABOVE else 1):
-		if not q.queue.has(q.next):
-			break
-		out.append(q.queue[q.next])
-		q.queue.erase(q.next)
-		q.ran = q.next
-		q.next += 1
+	if q.queue.has(q.next):
+		for i in (2 if q.queue.size() > CATCH_UP_ABOVE else 1):
+			if not q.queue.has(q.next):
+				break
+			out.append(q.queue[q.next])
+			q.last = q.queue[q.next]
+			q.queue.erase(q.next)
+			q.ran = q.next
+			q.next += 1
+		q.waited = 0
+		q.guessed = 0
+		return out
+	q.waited += 1
+	var info := match_ref.info_by_id(id) if match_ref else null
+	var down := info != null and not info.alive()
+	if q.last == null or q.next < 0 or down or q.waited <= WAIT_TICKS or q.guessed >= GUESS_TICKS:
+		return out  # Nothing to go on, or down (it sends nothing then), or not yet, or too long.
+	var guess := (q.last as InputCommand).copy()
+	guess.clear_presses()
+	guess.fire_held = false
+	guess.alt_held = false
+	q.guessed += 1
+	q.ran = q.next  # That tick's taken now.
+	q.next += 1
+	out.append(guess)
 	return out
 
 
@@ -146,6 +191,12 @@ func _physics_process(_delta: float) -> void:
 	if not _is_server() or match_ref.level == null or match_ref.state == Match.State.LOADING:
 		return
 	server_tick += 1
+	Rewind.active = rewind
+	var bodies := []
+	for info in match_ref.infos:
+		if info.player and is_instance_valid(info.player):
+			bodies.append(info.player)
+	rewind.record(server_tick, bodies)
 	if server_tick % SNAPSHOT_EVERY != 0:
 		return
 	var entries := []
@@ -375,6 +426,9 @@ func _snapshot(players: PackedByteArray, owner: PackedByteArray) -> void:
 	var snap := NetCodec.decode_players(players)
 	if snap.is_empty() or snap.serial != (match_ref.serial & 0xFFFF):
 		return
+	_newest_tick = maxi(_newest_tick, snap.tick)
+	if view_clock < 0.0:
+		view_clock = _newest_tick - Puppet.DELAY_TICKS
 	for e: Dictionary in snap.players:
 		var info := match_ref.info_by_id(e.id)
 		if info == null or info.player == null or not is_instance_valid(info.player):
@@ -388,6 +442,7 @@ func _snapshot(players: PackedByteArray, owner: PackedByteArray) -> void:
 		else:
 			var puppet := info.player.get_node_or_null(^"Puppet") as Puppet
 			if puppet:
+				puppet.sync = self
 				puppet.push(snap.tick, e)
 
 
@@ -564,9 +619,19 @@ func _pickup_gone(serial: int, id: int) -> void:
 		pickup.queue_free()
 
 
-## Client: loose weapons glide to where the server last had them.
+func _exit_tree() -> void:
+	if Rewind.active == rewind:
+		Rewind.active = null
+
+
+## Client: the clock everyone else is shown by moves on, and loose weapons
+## glide to where the server last had them.
 func _process(delta: float) -> void:
-	if match_ref.authority or _pickup_targets.is_empty():
+	if match_ref.authority:
+		return
+	if view_clock >= 0.0:
+		view_clock = Puppet.follow(view_clock, _newest_tick - Puppet.DELAY_TICKS, delta)
+	if _pickup_targets.is_empty():
 		return
 	var k := minf(delta * 20.0, 1.0)
 	for id: int in _pickup_targets:

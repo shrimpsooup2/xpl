@@ -11,9 +11,15 @@ extends Node
 ##
 ## The handshake uses Godot's authentication step: the server sends a random
 ## challenge, the client answers with the protocol version, its name and look,
-## and a hash of the challenge and the server's password (the password itself
-## never crosses the wire). The server checks all of it, and that there's
-## room, then lets the client in and tells everyone the new roster.
+## a token saying who it is (its saved identity, hashed with the server's
+## name, so no two servers see the same one), and a hash of the challenge and
+## the server's password (the password itself never crosses the wire). The
+## server checks all of it, and that there's room, then lets the client in
+## and tells everyone the new roster.
+##
+## Someone who leaves a game in progress and comes back to it (the same
+## token) gets their score and side back. Your look can change any time
+## (send_look): the server checks it and tells everyone.
 
 signal roster_changed
 ## A client's join finished: in (ok), or refused or failed (reason).
@@ -37,12 +43,17 @@ const PLAYER_LIMIT := 16
 ## how many times it can go over before it's kicked.
 const REQUESTS_PER_SECOND := 10
 const STRIKES_TO_KICK := 20
+## How long a score waits for someone who left a game to come back.
+const KEEP_DEPARTED_MS := 600000
 
 ## The session in progress, or null (offline).
 static var current: NetSession
 ## Why the last client session ended, when it wasn't by choice (the menu
 ## shows it once: take_reason).
 static var last_reason := ""
+## The last server joined, to rejoin it (the menu offers to): {address, port,
+## password}, kept while the program runs (never saved).
+static var last_join := {}
 
 var role := Role.OFFLINE
 var peer: ENetMultiplayerPeer
@@ -62,6 +73,10 @@ var public_address := ""
 
 var _password := ""
 var _challenges := {}
+## Server: peer id → its token; token → the score and side of someone who
+## left the game in progress ({team, kills, deaths, heartshots, round_wins, at}).
+var _tokens := {}
+var _departed := {}
 var _requests := {}
 var _strikes := {}
 var _upnp: UPNP
@@ -110,6 +125,7 @@ static func serve(tree: SceneTree, port: int, game_rules: GameRules, players := 
 static func join(tree: SceneTree, address: String, port: int, password := "") -> Error:
 	var s := _make(tree, Role.CLIENT)
 	s._password = password
+	last_join = {"address": address, "port": port, "password": password}
 	s.address = "%s:%d" % [address, port] if not ":" in address else "[%s]:%d" % [address, port]
 	s.peer = ENetMultiplayerPeer.new()
 	var err := s.peer.create_client(address, port)
@@ -240,12 +256,13 @@ func _on_auth(id: int, data: PackedByteArray) -> void:
 	# Client side: the challenge, then the verdict.
 	if d.get("challenge") is String and (d.challenge as String).length() == 32:
 		Cosmetics.load_saved()
-		mp.send_auth(1, var_to_bytes({
-			"protocol": NetCodec.PROTOCOL, "name": Cosmetics.player_name, "hat": String(Cosmetics.hat),
-			"color": String(Cosmetics.color), "proof": proof(d.challenge, _password)}))
 		if d.get("server") is String:
 			server_name = Cosmetics.clean_name(d.server, 32)
 		dedicated = is_same(d.get("dedicated"), true)
+		mp.send_auth(1, var_to_bytes({
+			"protocol": NetCodec.PROTOCOL, "name": Cosmetics.player_name, "hat": String(Cosmetics.hat),
+			"color": String(Cosmetics.color), "token": token(Cosmetics.identity, server_name),
+			"proof": proof(d.challenge, _password)}))
 	elif is_same(d.get("ok"), true):
 		mp.complete_auth(1)
 	else:
@@ -266,16 +283,43 @@ func _check_hello(id: int, d: Dictionary) -> void:
 	info.id = id
 	info.team = _smaller_team()
 	info.player_name = _unique_name(info.player_name)
+	var back := false
+	var t: Variant = d.get("token")
+	if t is String and (t as String).length() == 64 and (t as String).is_valid_hex_number():
+		_tokens[id] = t
+		back = _restore(info, t)
 	roster[id] = info
 	_challenges.erase(id)
 	_mp().send_auth(id, var_to_bytes({"ok": true}))
 	_mp().complete_auth(id)
-	_log("%s joined (#%d)" % [info.player_name, id])
+	if back:
+		_log("%s is back (#%d, %d kills, %d deaths)" % [info.player_name, id, info.kills, info.deaths])
+	else:
+		_log("%s joined (#%d)" % [info.player_name, id])
 
 
 ## The proof a client knows the password: sha256 of challenge and password.
 static func proof(challenge: String, password: String) -> String:
 	return (challenge + ":" + password).sha256_text()
+
+
+## Who a client is to the server named `server`: its identity hashed with
+## the name, so a server can't pass it off as you anywhere else.
+static func token(identity: String, server: String) -> String:
+	return (identity + ":" + server).sha256_text()
+
+
+## Someone who left the game in progress is back (`t`, their token): their
+## score and side, as they left them. Whether they were.
+func _restore(info: PlayerInfo, t: String) -> bool:
+	var was: Dictionary = _departed.get(t, {})
+	_departed.erase(t)
+	if was.is_empty() or Time.get_ticks_msec() - int(was.at) > KEEP_DEPARTED_MS:
+		return false
+	info.team = was.team
+	for key: String in ["kills", "deaths", "heartshots", "round_wins"]:
+		info.set(key, was[key])
+	return true
 
 
 func _refuse(id: int, reason: String) -> void:
@@ -336,7 +380,14 @@ func _on_peer_disconnected(id: int) -> void:
 	_challenges.erase(id)
 	_requests.erase(id)
 	_strikes.erase(id)
+	var t: String = _tokens.get(id, "")
+	_tokens.erase(id)
 	if roster.has(id):
+		var info: PlayerInfo = roster[id]
+		if t != "" and Game.current and is_instance_valid(Game.current):
+			# Kept for a while, in case they come back to this game.
+			_departed[t] = {"team": info.team, "kills": info.kills, "deaths": info.deaths, "heartshots": info.heartshots,
+					"round_wins": info.round_wins, "at": Time.get_ticks_msec()}
 		_log("%s left" % roster[id].player_name)
 		roster.erase(id)
 		Game.on_peer_left(id)
@@ -380,8 +431,11 @@ func _roster(data: Array, style: String) -> void:
 			if Game.current and not Game.current.authority:
 				Game.current.add_body_for(info)
 		else:
+			var look := [info.player_name, info.team, info.color, info.hat]
 			for key in ["player_name", "team", "color", "hat", "bot", "kills", "deaths", "heartshots", "round_wins"]:
 				info.set(key, fresh.get(key))
+			if look != [info.player_name, info.team, info.color, info.hat] and Game.current and is_instance_valid(Game.current):
+				Game.current.restyle(info)
 		info.local = info.id == mine
 	for id: int in roster.keys():
 		if not seen.has(id):
@@ -402,6 +456,7 @@ func announce_game(game_rules: GameRules, only := 0) -> void:
 	if only != 0:
 		_game_started.rpc_id(only, game_rules.to_dict())
 	else:
+		_departed.clear()  # A new game: nobody's score to come back to.
 		_game_started.rpc(game_rules.to_dict())
 
 
@@ -418,6 +473,7 @@ func _game_started(d: Dictionary) -> void:
 func game_over() -> void:
 	if not is_server():
 		return
+	_departed.clear()
 	_game_ended.rpc()
 	Game.end(get_tree(), role == Role.HOST)
 	game_finished.emit()
@@ -525,8 +581,10 @@ func _smaller_team() -> Hats.Team:
 	return Hats.Team.BLUE if blue < red else Hats.Team.RED
 
 
-func _unique_name(want: String) -> String:
-	var taken := roster.values().map(func(i: PlayerInfo) -> String: return i.player_name)
+## `want`, or with a number after it if someone else (not `self_id`) has it.
+func _unique_name(want: String, self_id := 0) -> String:
+	var taken := roster.values().filter(func(i: PlayerInfo) -> bool: return i.id != self_id).map(
+			func(i: PlayerInfo) -> String: return i.player_name)
 	if not want in taken:
 		return want
 	for n in range(2, 100):
@@ -534,6 +592,46 @@ func _unique_name(want: String) -> String:
 		if not candidate in taken:
 			return candidate
 	return want
+
+
+# --- Your look ------------------------------------------------------------------------------
+
+## Your name, hat or colour changed (Cosmetics): the server hears it and
+## tells everyone. Hosting, you're the server.
+func send_look() -> void:
+	if is_server():
+		var me: PlayerInfo = roster.get(1)
+		if me:
+			_apply_look(me, Cosmetics.player_name, Cosmetics.hat, Cosmetics.color)
+			send_roster()
+	elif role == Role.CLIENT and _joined:
+		_set_look.rpc_id(1, Cosmetics.player_name, String(Cosmetics.hat), String(Cosmetics.color))
+
+
+## A client's new look (the server): checked like the one it joined with,
+## then everyone's told.
+@rpc("any_peer", "call_remote", "reliable")
+func _set_look(new_name: String, hat: String, color: String) -> void:
+	var id := multiplayer.get_remote_sender_id()
+	if not is_server() or not roster.has(id) or not allow_request(id):
+		return
+	if new_name.length() > 64 or hat.length() > 32 or color.length() > 32:
+		strike(id, "a bad look")
+		return
+	var fresh := PlayerInfo.from_dict({"name": new_name, "hat": hat, "color": color})
+	_apply_look(roster[id], fresh.player_name, fresh.hat, fresh.color)
+	send_roster()
+
+
+func _apply_look(info: PlayerInfo, new_name: String, hat: StringName, color: StringName) -> void:
+	if new_name != info.player_name:
+		var was := info.player_name
+		info.player_name = _unique_name(new_name, info.id)
+		_log("%s is now %s" % [was, info.player_name])
+	info.hat = hat
+	info.color = color
+	if Game.current and is_instance_valid(Game.current):
+		Game.current.restyle(info)
 
 
 # --- Limits -------------------------------------------------------------------------------

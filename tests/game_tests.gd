@@ -505,6 +505,32 @@ func test_nametags_float_over_everyone_but_you_teammates_through_walls() -> void
 	check(not enemy.model.nametag.visible, "no tag over a body in pieces")
 
 
+func test_your_look_changes_mid_game_at_once() -> void:
+	var rules := quick(GameRules.free_for_all(), "boulevard")
+	var infos := people(2)
+	infos[0].local = true
+	var m := Game.start(get_tree(), rules, infos)
+	check(await until_state(m, Match.State.LIVE), "live")
+	var mine := infos[0].player
+	var hat: StringName = Hats.ALL[(Hats.ALL.find(infos[0].hat) + 1) % Hats.ALL.size()]
+	# What the pause menu's name field and arrows do.
+	Cosmetics.set_player_name("new me")
+	Cosmetics.set_hat(hat)
+	Cosmetics.set_color(&"pink")
+	Game.update_look()
+	check(infos[0].player_name == "new me" and infos[0].hat == hat and infos[0].color == &"pink", "the game has it")
+	check(mine.hat == hat and mine.player_name == "new me" and mine.model.tint == Hats.PALETTE[&"pink"], "and I'm wearing it")
+	check(infos[1].player.model.tint != Hats.PALETTE[&"pink"] or infos[1].color == &"pink", "nobody else changed")
+	var menus := get_tree().root.find_children("*", "PauseMenu", true, false)
+	check(menus.size() == 1 and menus[0]._look != null, "the pause menu has them to change")
+	if menus.size() == 1 and menus[0]._look:
+		var hat_row: Control = menus[0]._hat_label.get_parent()
+		(hat_row.get_child(2) as Button).pressed.emit()  # [>]
+		var next: StringName = Hats.ALL[(Hats.ALL.find(hat) + 1) % Hats.ALL.size()]
+		check(Cosmetics.hat == next and mine.hat == next, "its arrows step the hat, and I wear it")
+		check(LofiUI.label_of(menus[0]._hat_label).text == "hat: " + Hats.NAMES[next], "and it says which")
+
+
 # --- Bots -----------------------------------------------------------------------------
 
 func test_bots_arm_themselves_and_fight() -> void:
