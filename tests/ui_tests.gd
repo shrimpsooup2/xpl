@@ -215,7 +215,7 @@ func test_pause_opens_and_closes() -> void:
 func fresh_settings() -> void:
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(Settings.path))
 	InputMap.load_from_project_settings()
-	Settings.reload()
+	Settings.forget()
 
 
 func saved() -> ConfigFile:
@@ -242,7 +242,7 @@ func test_settings_save_only_what_you_changed() -> void:
 	var cfg := saved()
 	check(cfg.get_section_keys("view").size() == 2 and cfg.get_value("view", "fov_horizontal") == 110.0,
 			"only the two changed are saved (%s)" % cfg.get_section_keys("view"))
-	Settings.reload()
+	Settings.forget()
 	check(Settings.view().fov_horizontal == 110.0 and Settings.view().impact_frames, "and read back next time")
 	Settings.reset_view(["fov_horizontal"])
 	check(not saved().has_section_key("view", "fov_horizontal") and Settings.view().fov_horizontal == Settings.defaults().fov_horizontal,
@@ -253,7 +253,7 @@ func test_settings_save_only_what_you_changed() -> void:
 	cfg.set_value("view", "no_such_setting", 3)
 	cfg.set_value("view", "sensitivity", 2)
 	cfg.save(Settings.path)
-	Settings.reload()
+	Settings.forget()
 	check(Settings.view().fov_horizontal == Settings.defaults().fov_horizontal and Settings.view().sensitivity == 2.0,
 			"wrong types and unknown names are skipped; a whole number is fine for a decimal")
 	fresh_settings()
@@ -275,7 +275,7 @@ func test_keys_rebind_take_over_and_come_back() -> void:
 	check(saved().get_value("keys", "dash")[0] == "key:%d" % KEY_F, "saved as the physical key")
 	# Next run: the saved keys come back.
 	InputMap.load_from_project_settings()
-	Settings.reload()
+	Settings.forget()
 	Settings.apply_saved()
 	check(InputMap.action_has_event(&"dash", key(KEY_F)) and not InputMap.action_has_event(&"jump", key(KEY_F)),
 			"read back and put into effect")
@@ -293,11 +293,32 @@ func test_display_and_volume_apply_and_save() -> void:
 	Settings.set_volume(0.0)
 	check(AudioServer.is_bus_mute(0), "silent at 0")
 	Engine.max_fps = 0
-	Settings.reload()
+	Settings.forget()
 	Settings.apply_saved()
 	check(Engine.max_fps == 144 and AudioServer.is_bus_mute(0), "put back into effect next run")
 	Settings.set_fps_cap(0)
 	Settings.set_volume(1.0)
+	fresh_settings()
+
+
+
+func test_graphics_settings_save_and_the_presets_set_them_all() -> void:
+	fresh_settings()
+	check(Graphics.preset() == "high", "out of the box: high")
+	Settings.set_graphics_preset("low")
+	check(Graphics.shadows == Graphics.Shadows.OFF and not Graphics.extra_lamps and not Graphics.detail
+			and not Graphics.effects and not Graphics.bloom, "low turns it all down")
+	Settings.set_graphics("bloom", true)
+	check(Graphics.bloom and Graphics.preset() == "", "one changed on its own: a custom mix")
+	Settings.set_shadows(Graphics.Shadows.LOW)
+	var cfg := saved()
+	check(int(cfg.get_value("graphics", "shadows")) == Graphics.Shadows.LOW and cfg.get_value("graphics", "bloom") == true
+			and cfg.get_value("graphics", "detail") == false, "saved as they change")
+	Settings.forget()
+	check(Graphics.preset() == "high", "(reloaded: the defaults again)")
+	Settings.apply_saved()
+	check(Graphics.shadows == Graphics.Shadows.LOW and Graphics.bloom and not Graphics.detail, "and read back next time")
+	Settings.set_graphics_preset("high")
 	fresh_settings()
 
 

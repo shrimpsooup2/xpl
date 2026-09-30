@@ -20,6 +20,9 @@ const WINDOW_NAMES := ["windowed", "fullscreen", "exclusive"]
 ## The 3D picture's height in pixels (0: the screen's own), and colours.
 const PIXELS := [180, 240, 270, 360, 480, 540, 720, 0]
 const COLOURS := [0, 64, 32, 16, 8]
+## The graphics presets (Graphics.PRESETS), and "custom" for a mix.
+const QUALITY := ["low", "medium", "high", "custom"]
+const SHADOW_NAMES := ["off", "low", "high"]
 ## The settings each tab's *defaults* puts back.
 const CONTROL_KEYS := ["sensitivity", "aim_sensitivity", "invert_y", "toggle_aim"]
 const VIDEO_KEYS := ["pixel_height", "color_levels"]
@@ -151,6 +154,7 @@ func reset_tab() -> void:
 			Settings.set_vsync(true)
 			Settings.set_fps_cap(0)
 			Settings.reset_view(VIDEO_KEYS)
+			Settings.set_graphics_preset("high")
 		"camera":
 			Settings.reset_view(CAMERA_KEYS)
 		_:
@@ -203,17 +207,37 @@ func _video() -> Control:
 	var fps_names: Array = Settings.FPS_CAPS.map(func(f: int) -> String: return "no cap" if f == 0 else str(f))
 	var pixel_names: Array = PIXELS.map(func(p: int) -> String: return "screen" if p == 0 else "%dp" % p)
 	var colour_names: Array = COLOURS.map(func(c: int) -> String: return "full" if c == 0 else "%d levels" % c)
+	var preset := Graphics.preset()
 	return _columns([
 		_row("window", _choice(WINDOW_NAMES, Settings.window_mode(), Settings.set_window_mode)),
 		_row("vsync", _choice(["off", "on"], 1 if Settings.vsync() else 0, func(i: int) -> void: Settings.set_vsync(i == 1))),
 		_row("frame cap", _choice(fps_names, maxi(Settings.FPS_CAPS.find(Settings.fps_cap()), 0),
 				func(i: int) -> void: Settings.set_fps_cap(Settings.FPS_CAPS[i]))),
-	], [
 		_row("pixels", _choice(pixel_names, maxi(PIXELS.find(view.pixel_height), 0),
 				func(i: int) -> void: _set_view("pixel_height", PIXELS[i]))),
 		_row("colours", _choice(colour_names, maxi(COLOURS.find(view.color_levels), 0),
 				func(i: int) -> void: _set_view("color_levels", COLOURS[i]))),
+	], [
+		# Quicker or prettier: a preset for them all, then each on its own.
+		_row("quality", _choice(QUALITY, QUALITY.find(preset) if preset != "" else QUALITY.size() - 1, func(i: int) -> void:
+			if QUALITY[i] != "custom":
+				Settings.set_graphics_preset(QUALITY[i])
+				show_tab(tab))),
+		_row("shadows", _choice(SHADOW_NAMES, Graphics.shadows, func(i: int) -> void:
+			Settings.set_shadows(i as Graphics.Shadows)
+			show_tab(tab))),
+		_row("extra lamps", _graphics_toggle("extra_lamps")),
+		_row("detail", _graphics_toggle("detail")),
+		_row("effects", _graphics_toggle("effects")),
+		_row("bloom", _graphics_toggle("bloom")),
 	])
+
+
+## [<] off/on [>] for one of the graphics settings (Graphics).
+func _graphics_toggle(key: String) -> HBoxContainer:
+	return _choice(["off", "on"], 1 if Graphics.toggle(key) else 0, func(i: int) -> void:
+		Settings.set_graphics(key, i == 1)
+		show_tab(tab))
 
 
 func _camera() -> Control:

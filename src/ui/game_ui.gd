@@ -43,6 +43,8 @@ var _prompt := ""
 
 
 func _ready() -> void:
+	# The graphics settings, on this level (once it's all in).
+	Graphics.apply.call_deferred(get_tree(), get_parent())
 	var sharp := CanvasLayer.new()
 	sharp.name = "CrosshairLayer"
 	sharp.layer = 3

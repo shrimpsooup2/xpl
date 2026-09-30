@@ -25,7 +25,7 @@ func _initialize() -> void:
 func _run_all() -> void:
 	Settings.path = TEST_SETTINGS
 	DirAccess.remove_absolute(ProjectSettings.globalize_path(TEST_SETTINGS))
-	Settings.reload()
+	Settings.forget()
 	var failures: PackedStringArray = []
 	var checks := 0
 	var count := 0
