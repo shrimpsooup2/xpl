@@ -130,6 +130,10 @@ var _last_hit := {}
 ## Prediction about every tick it ran (`after_tick`).
 var input_source: Callable
 var after_tick: Callable
+## On a server, for a client's player: the server tick its client showed
+## everyone else at when it made the command running now (lag compensation,
+## Rewind); -1 otherwise.
+var view_tick := -1.0
 ## Replaces the keyboard and mouse for the person's own player (tests drive
 ## a networked client's player with it): returns this tick's command.
 var input_override: Callable
@@ -283,6 +287,7 @@ func _physics_process(delta: float) -> void:
 		for cmd: InputCommand in input_source.call():
 			yaw = cmd.yaw  # Where they look and aim, as their client had it.
 			pitch = cmd.pitch
+			view_tick = cmd.view_tick  # And what they saw, for their shots.
 			tick(cmd, delta)
 		return
 	var cmd: InputCommand = input_override.call() if input_override.is_valid() else _sample_command()
@@ -360,6 +365,13 @@ func tick(cmd: InputCommand, delta: float) -> void:
 	model.follow(global_position, yaw)
 	if global_position.y < KILL_Y:
 		die()
+
+
+## Where it stands and which way it faces this tick: what the model (and
+## its hit shapes) follows, and what everyone else is sent. Rewind remembers
+## it tick by tick.
+func stance() -> Transform3D:
+	return Transform3D(Basis(Vector3.UP, yaw), global_position)
 
 
 ## The first body part the segment hits, or {} (Ballistics).

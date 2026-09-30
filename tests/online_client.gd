@@ -1,8 +1,9 @@
 extends SceneTree
 ## Another client for tests/online_tests.gd, run in its own process: joins
 ## the server named on the command line (as "latecomer", or --name), says
-## what it sees, stays a while (walking about, with --walk) and leaves. With
-## --gun it's picked that gun for teams.
+## what it sees (the game, and everyone's name and look), stays a while
+## (walking about, with --walk) and leaves. With --gun it's picked that gun
+## for teams.
 ##
 ##   godot --headless --path . --script res://tests/online_client.gd --
 ##       --port 27990 --password x --stay 5 --name friend --walk --gun sniper
@@ -48,6 +49,13 @@ func _initialize() -> void:
 		print("joined" if ok else "refused: " + reason)
 		if not ok:
 			quit(1))
+	var roster := [""]
+	NetSession.current.roster_changed.connect(func() -> void:
+		var line := "roster: " + ", ".join(NetSession.current.players().map(func(i: PlayerInfo) -> String:
+				return "%s (%s, %s)" % [i.player_name, i.hat, i.color]))
+		if line != roster[0]:
+			roster[0] = line
+			print(line))
 	_started = Time.get_ticks_msec()
 
 

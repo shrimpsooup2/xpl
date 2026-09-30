@@ -8,7 +8,8 @@ extends RefCounted
 ## the network is dropped before the game sees it.
 ##
 ##   inputs (client → server, every tick): the last few commands, each
-##     tick u32 · move 2×s16 · yaw, pitch f32 · buttons u16 · switch u8
+##     tick u32 · move 2×s16 · yaw, pitch f32 · buttons u16 · switch u8 ·
+##     view tick u32 (sixteenths of a server tick; all ones for none)
 ##   players (server → clients, 30 Hz): level serial u16 · server tick u32 ·
 ##     count u8, then per player
 ##     id s32 · position 3×f32 · velocity 3×f32 · yaw, pitch f32 ·
@@ -23,8 +24,11 @@ extends RefCounted
 
 ## Bumped whenever any message changes shape: old and new builds refuse each
 ## other at the handshake.
-const PROTOCOL := 3
-const INPUT_SIZE := 19
+const PROTOCOL := 4
+const INPUT_SIZE := 23
+## View ticks go in sixteenths of a tick; this means "none" (now).
+const VIEW_STEPS := 16.0
+const NO_VIEW := 0xFFFFFFFF
 ## Commands per input packet: the newest and the few before it, so one lost
 ## packet loses nothing.
 const INPUT_REDUNDANCY := 3
@@ -95,6 +99,8 @@ static func _put_input(buf: StreamPeerBuffer, tick: int, cmd: InputCommand) -> v
 			bits |= 1 << i
 	buf.put_u16(bits)
 	buf.put_u8(clampi(cmd.switch_to, 0, 3))
+	var view := roundi(cmd.view_tick * VIEW_STEPS) if cmd.view_tick >= 0.0 and is_finite(cmd.view_tick) else NO_VIEW
+	buf.put_u32(clampi(view, 0, NO_VIEW))
 
 
 static func _get_input(buf: StreamPeerBuffer) -> Array:
@@ -104,6 +110,7 @@ static func _get_input(buf: StreamPeerBuffer) -> Array:
 	var pitch := buf.get_float()
 	var bits := buf.get_u16()
 	var switch_to := buf.get_u8()
+	var view := buf.get_u32()
 	if not is_finite(yaw) or not is_finite(pitch) or absf(yaw) > MAX_YAW or absf(pitch) > MAX_PITCH:
 		return []
 	if bits >> BUTTONS.size() != 0 or switch_to > 3 or move.length() > 1.001:
@@ -115,6 +122,7 @@ static func _get_input(buf: StreamPeerBuffer) -> Array:
 	for i in BUTTONS.size():
 		cmd.set(BUTTONS[i], bits & (1 << i) != 0)
 	cmd.switch_to = switch_to
+	cmd.view_tick = -1.0 if view == NO_VIEW else view / VIEW_STEPS
 	return [tick, cmd]
 
 

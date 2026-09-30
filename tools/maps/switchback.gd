@@ -78,11 +78,6 @@ static func build(kit) -> Transform3D:
 	kit.pad("Pad_PistolA", Weapons.PISTOL, Vector3(22, 4, -6))
 	kit.pad("Pad_PistolB", Weapons.PISTOL, Vector3(-22, 8, -10))
 
-	kit.light("Hairpin1Glow", Vector3(26, 11, -13), Color(1.0, 0.4, 0.6), 12.0)
-	kit.light("Hairpin2Glow", Vector3(-26, 7, -3), Color(0.3, 0.85, 1.0), 12.0)
-	kit.light("Hairpin3Glow", Vector3(26, 3, 7), Color(1.0, 0.7, 0.3), 12.0)
-	kit.light("BottomWest", Vector3(-24, 3, 7), Color(0.6, 0.4, 1.0), 10.0)
-
 	kit.label("OVERLOOK", Vector3(6, 16.5, -20))
 	kit.label("LADDER", Vector3(0, 8, -6))
 	for i in 3:

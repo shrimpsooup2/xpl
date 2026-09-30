@@ -80,7 +80,13 @@ func show_connect(message := "") -> void:
 	_join_password.placeholder_text = "none"
 	_join_password.text_submitted.connect(func(_t: String) -> void: _join())
 	join.add_child(_labelled("password", _join_password))
-	join.add_child(_menu_button("join", _join))
+	var join_row := HBoxContainer.new()
+	join_row.add_theme_constant_override(&"separation", 3)
+	join_row.add_child(_menu_button("join", _join))
+	if not NetSession.last_join.is_empty():
+		# Back to the last game: your score and side are kept for you.
+		join_row.add_child(_menu_button("rejoin", _rejoin))
+	join.add_child(join_row)
 	cols.add_child(join)
 
 	var bottom := HBoxContainer.new()
@@ -133,6 +139,16 @@ func _join() -> void:
 		return
 	_watch(NetSession.current)
 	say("joining %s..." % _address)
+
+
+## Back to the last server joined (NetSession.last_join), with its password.
+func _rejoin() -> void:
+	var last := NetSession.last_join
+	if NetSession.join(get_tree(), last.address, last.port, last.password) != OK:
+		say("couldn't start connecting", true)
+		return
+	_watch(NetSession.current)
+	say("rejoining %s..." % last.address)
 
 
 func _step_style(by: int) -> void:

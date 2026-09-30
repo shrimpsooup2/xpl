@@ -23,6 +23,10 @@ var interact_pressed: bool = false
 var throw_pressed: bool = false
 ## 1: switch to the primary, 2: to fists, 3: toggle, 0: stay.
 var switch_to: int = 0
+## Online: the server tick everyone else was shown at on this player's
+## screen when the command was made (the shots it fires are tested against
+## where they were then: lag compensation, Rewind); -1: now.
+var view_tick: float = -1.0
 
 
 func copy() -> InputCommand:

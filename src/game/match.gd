@@ -197,17 +197,12 @@ func _add_body(info: PlayerInfo, use: Player = null) -> Player:
 	else:
 		body.name = body_name(info)
 	info.player = body
-	body.team = info.team
-	body.hat = info.hat
-	body.player_name = info.player_name
-	body.tint = info.tint(rules.is_teams())
+	restyle(info)
 	body.max_health = rules.max_health
 	body.regen_delay = rules.regen_delay
 	body.regen_rate = rules.regen_rate
 	body.auto_respawn = false
 	body.weapons.drops_on_death = not rules.loadout  # Picked guns aren't left lying about.
-	var me := local_info()
-	body.refresh_look(rules.is_teams() and me != null and info.team == me.team and not info.local)
 	if authority:
 		body.killed.connect(_on_killed.bind(info))
 		if info.bot:
@@ -231,6 +226,20 @@ func _add_body(info: PlayerInfo, use: Player = null) -> Player:
 			puppet.player = body
 			body.add_child(puppet)
 	return body
+
+
+## `info`'s name, hat, colour or side changed (or it's new): its body
+## wears them now. A teammate's name shows through walls.
+func restyle(info: PlayerInfo) -> void:
+	var body := info.player
+	if body == null or not is_instance_valid(body):
+		return
+	body.team = info.team
+	body.hat = info.hat
+	body.player_name = info.player_name
+	body.tint = info.tint(rules.is_teams())
+	var me := local_info()
+	body.refresh_look(rules.is_teams() and me != null and info.team == me.team and not info.local)
 
 
 ## Every machine names a player's body the same, so messages find it.

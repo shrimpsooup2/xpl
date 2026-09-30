@@ -342,6 +342,32 @@ func test_terrace_overpass_links_block_a_to_the_terrace() -> void:
 
 # --- Switchback ------------------------------------------------------------------
 
+func test_switchback_is_a_car_park_at_dusk() -> void:
+	await load_map(SWITCHBACK)
+	var overlook := level.find_child("Overlook", true, false) as GreyBox
+	var cliff := level.find_child("Level2", true, false) as GreyBox
+	check(overlook.surface != null and cliff.surface != null, "the blocks wear the map's own surfaces")
+	var lamps := level.find_children("*", "Light3D", true, false)
+	check(lamps.size() >= 20, "lamps on every level (%d)" % lamps.size())
+	# A light reaching the whole map draws it all again: only the floods do.
+	var far_reaching := lamps.filter(func(l: Light3D) -> bool:
+			return (l is SpotLight3D and (l as SpotLight3D).spot_range > 20.0) or (l is OmniLight3D and (l as OmniLight3D).omni_range > 20.0))
+	check(far_reaching.size() <= 4, "no more than four floods (%d)" % far_reaching.size())
+	# The solid props stand against the walls or on roofs, out of the routes.
+	var solids := level.find_children("Solid_*", "StaticBody3D", true, false)
+	check(not solids.is_empty(), "a few solid props")
+	for s: StaticBody3D in solids:
+		var box := ((s.get_child(0) as CollisionShape3D).shape as BoxShape3D).size
+		var p := s.global_position
+		var to_wall := minf(minf(32.0 - (absf(p.x) + box.x * 0.5), (p.z - box.z * 0.5) + 28.0), 12.0 - (p.z + box.z * 0.5))
+		check(to_wall < 0.6 or p.y - box.y * 0.5 > 14.9, "%s is against a wall or on a roof (at %s)" % [s.name, p])
+	# The car park carries on up out of sight.
+	var tower := level.find_children("far_decks*", "MeshInstance3D", true, false)
+	check(tower.any(func(m: MeshInstance3D) -> bool: return m.get_aabb().end.y > 200.0), "the spiral tower climbs into the sky")
+	var build := get_tree().get_nodes_in_group(&"decor_build")
+	check(not build.is_empty(), "the huts and signs built on")
+
+
 func test_switchback_ladder_climbs_bottom_to_overlook() -> void:
 	await load_map(SWITCHBACK)
 	place(Vector3(-6, 0.05, 9), 0.0)

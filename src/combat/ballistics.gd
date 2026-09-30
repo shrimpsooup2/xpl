@@ -8,6 +8,11 @@ extends Node
 ##
 ## Hittables implement ray_test(from, to) -> Dictionary (see HitShapes) and
 ## take_hit(hit) -> Dictionary.
+##
+## Online, on the server, a shot is tested against the players where its
+## shooter saw them (lag compensation, Rewind): a hitscan shot or a punch at
+## the tick the shooter's screen showed, a projectile that far behind all the
+## way along its flight.
 
 const GROUP := &"hittable"
 const WORLD_MASK := 1
@@ -17,6 +22,9 @@ const TRACER_WIDTH := 0.022
 ## Longest a tracer streak gets (seconds of flight it covers).
 const TRACER_TIME := 0.018
 const BEAM_TIME := 0.3
+## trace()'s `rewind`: from the shooter's view (lag compensation), or now.
+const FROM_SHOOTER := -2.0
+const NOW := -1.0
 
 
 class Shot:
@@ -29,6 +37,9 @@ class Shot:
 	var can_heartshot := false
 	var travelled := 0.0
 	var exclude: Array[RID] = []
+	## Ticks behind now it's tested against the players (lag compensation),
+	## or -1 for now.
+	var behind := -1.0
 	var visual_offset := Vector3.ZERO
 	var tracer: MeshInstance3D
 
@@ -60,6 +71,9 @@ func fire_projectile(holder: WeaponHolder, def: WeaponDef, origin: Vector3, dire
 	s.damage = damage
 	s.can_heartshot = can_heartshot
 	s.exclude = exclude
+	var view := _view_of(holder)
+	if view >= 0.0:
+		s.behind = Rewind.active.tick - view
 	s.visual_offset = visual_origin - origin
 	s.tracer = MeshInstance3D.new()
 	s.tracer.mesh = CombatFx.unit_box()
@@ -84,8 +98,12 @@ func fire_hitscan(holder: WeaponHolder, def: WeaponDef, origin: Vector3, directi
 
 
 ## The first thing the segment hits: the world or a hittable body. Returns
-## {} or {point, normal, target (null for the world), part, zone}.
-func trace(from: Vector3, to: Vector3, exclude: Array[RID], holder: WeaponHolder = null) -> Dictionary:
+## {} or {point, normal, target (null for the world), part, zone}. `rewind`:
+## the server tick to test the players at (lag compensation), NOW, or
+## FROM_SHOOTER (the tick the holder's player saw, if it's someone's online).
+func trace(from: Vector3, to: Vector3, exclude: Array[RID], holder: WeaponHolder = null, rewind := FROM_SHOOTER) -> Dictionary:
+	if rewind == FROM_SHOOTER:
+		rewind = _view_of(holder)
 	var best := {}
 	var best_distance := from.distance_to(to)
 	var space := get_viewport().world_3d.direct_space_state if is_inside_tree() else null
@@ -99,7 +117,11 @@ func trace(from: Vector3, to: Vector3, exclude: Array[RID], holder: WeaponHolder
 	for target: Node in get_tree().get_nodes_in_group(GROUP):
 		if target == shooter or not target.has_method(&"ray_test"):
 			continue
-		var h: Dictionary = target.ray_test(from, to)
+		var h: Dictionary
+		if rewind >= 0.0 and target is Player and Rewind.active:
+			h = Rewind.active.ray_test(target, from, to, rewind)
+		else:
+			h = target.ray_test(from, to)
 		if not h.is_empty() and h.distance < best_distance:
 			best_distance = h.distance
 			best = h.duplicate()
@@ -113,7 +135,8 @@ func _physics_process(delta: float) -> void:
 		s.velocity += Vector3.DOWN * s.def.projectile_gravity * delta
 		var step := s.velocity * delta
 		var next := s.position + step
-		var hit := trace(s.position, next, s.exclude, s.holder)
+		var rewind := Rewind.active.tick - s.behind if s.behind >= 0.0 and Rewind.active else NOW
+		var hit := trace(s.position, next, s.exclude, s.holder, rewind)
 		if not hit.is_empty():
 			s.position = hit.point
 			s.travelled += s.previous.distance_to(s.position)
@@ -156,6 +179,15 @@ func _place_tracer(s: Shot, f: float) -> void:
 	s.tracer.global_transform = Transform3D(Basis.looking_at(along, up).scaled(Vector3(TRACER_WIDTH, TRACER_WIDTH, along.length())),
 			(head + tail) * 0.5)
 	s.tracer.visible = true
+
+
+## The server tick `holder`'s player saw everyone else at, when it's
+## someone playing online and the server is testing their shot; else -1.
+static func _view_of(holder: WeaponHolder) -> float:
+	if Rewind.active == null or holder == null or not is_instance_valid(holder.player):
+		return NOW
+	var view: float = holder.player.view_tick
+	return Rewind.active.clamp_tick(view) if view >= 0.0 else NOW
 
 
 static func _blend(travelled: float) -> float:

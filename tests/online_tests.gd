@@ -217,6 +217,55 @@ func test_someone_can_join_a_game_in_progress() -> void:
 	check(await until(func() -> bool: return "latecomer left" in _server_log), "the server saw them go")
 
 
+func test_your_look_changes_for_everyone_and_you_can_come_back() -> void:
+	var m := Game.current
+	if m == null:
+		check(false, "no game")
+		return
+	_late_log = ""
+	_late = OS.execute_with_pipe(OS.get_executable_path(), PackedStringArray(["--headless", "--path", ProjectSettings.globalize_path("res://"),
+			"--script", "res://tests/online_client.gd", "--", "--port", str(PORT), "--password", PASSWORD, "--name", "watcher",
+			"--stay", "20"]), false)
+	check(await until(func() -> bool: return "following stack" in _late_log), "someone's watching:\n" + _late_log)
+	var hat := Cosmetics.hat
+	var color := Cosmetics.color
+	var new_hat: StringName = Hats.ALL[(Hats.ALL.find(hat) + 1) % Hats.ALL.size()]
+	var keys := Hats.PALETTE.keys()
+	var new_color: StringName = keys[(keys.find(color) + 1) % keys.size()]
+	# What the pause menu's name field and arrows do.
+	Cosmetics.set_player_name("tester two")
+	Cosmetics.set_hat(new_hat)
+	Cosmetics.set_color(new_color)
+	Game.update_look()
+	check(await until(func() -> bool: return "tester is now tester two" in _server_log), "the server hears it:\n" + _server_log.right(400))
+	var me := _me()
+	check(await until(func() -> bool: return me.player_name == "tester two" and me.hat == new_hat and me.color == new_color),
+			"and tells everyone, me included")
+	check(me.player.player_name == "tester two" and me.player.hat == new_hat, "my body wears it")
+	var seen := "tester two (%s, %s)" % [new_hat, new_color]
+	check(await until(func() -> bool: return seen in _late_log), "and they see it:\n" + _late_log)
+	# Leave and come back: the same score.
+	var kills := me.kills
+	var deaths := me.deaths
+	NetSession.leave(get_tree())
+	check(await until(func() -> bool: return Game.current == null and "tester two left" in _server_log), "I leave")
+	check(NetSession.last_join.get("port") == PORT and NetSession.last_join.get("password") == PASSWORD, "the menu can offer to rejoin")
+	var result: Array = await _join(PASSWORD)
+	check(not result.is_empty() and result[0], "and I rejoin: %s" % [result])
+	check(await until(func() -> bool: return "tester two is back" in _server_log), "the server knows me:\n" + _server_log.right(400))
+	check(await until(func() -> bool: return Game.current != null and Game.current.level != null and _me() != null), "back in the game")
+	me = _me()
+	check(me.kills >= kills and me.deaths >= deaths and ("%d kills, %d deaths" % [kills, deaths]) in _server_log,
+			"with my score: %d kills, %d deaths (%d, %d before)" % [me.kills, me.deaths, kills, deaths])
+	Cosmetics.set_player_name("tester")
+	Cosmetics.set_hat(hat)
+	Cosmetics.set_color(color)
+	Game.update_look()
+	check(await until(func() -> bool: return "tester two is now tester" in _server_log and "tester (%s, %s)" % [hat, color] in _late_log),
+			"and back to how I was, for everyone")
+	check(await until(func() -> bool: return "watcher left" in _server_log, 25.0), "then they go")
+
+
 func test_junk_gets_you_kicked() -> void:
 	var m := Game.current
 	var s := NetSession.current

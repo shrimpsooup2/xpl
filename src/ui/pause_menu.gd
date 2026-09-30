@@ -4,7 +4,8 @@ extends Control
 ## just takes the mouse and the keyboard until it closes. It snaps open: the
 ## dim fades in fast, the title stamps down, the buttons slide in one after
 ## another. Settings opens the settings page in its place (SettingsMenu);
-## esc there comes back to the menu.
+## esc there comes back to the menu. In a game, your name, hat and colour
+## sit in the corner to change (online, everyone sees it at once).
 
 signal opened
 signal closed
@@ -22,6 +23,9 @@ var _settings: SettingsMenu
 var _shade: ColorRect
 var _title: Control
 var _fade: Tween
+var _look: Control
+var _hat_label: PanelContainer
+var _color_label: PanelContainer
 
 
 func _ready() -> void:
@@ -73,6 +77,67 @@ func _ready() -> void:
 			Wipe.change_scene(get_tree(), MAIN_MENU)))
 	col.add_child(LofiUI.button("quit", get_tree().quit))
 	_panel = col
+	if Game.current:
+		var corner := MarginContainer.new()
+		corner.set_anchors_preset(Control.PRESET_FULL_RECT)
+		corner.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		for side in ["left", "top", "right", "bottom"]:
+			corner.add_theme_constant_override("margin_" + side, 18)
+		_look = _build_look()
+		_look.size_flags_horizontal = Control.SIZE_SHRINK_END
+		_look.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+		corner.add_child(_look)
+		add_child(corner)
+
+
+## Your name, then [<] [hat] [>] and [<] [colour] [>], in quiet ghost boxes
+## like on the title screen. A change shows in the game at once (Game.update_look).
+func _build_look() -> VBoxContainer:
+	var col := VBoxContainer.new()
+	col.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	col.add_theme_constant_override(&"separation", 1)
+	col.alignment = BoxContainer.ALIGNMENT_END
+	var name_row := HBoxContainer.new()
+	name_row.alignment = BoxContainer.ALIGNMENT_END
+	name_row.add_theme_constant_override(&"separation", 1)
+	name_row.add_child(LofiUI.box("name:", LofiUI.SMALL, LofiUI.Style.GHOST))
+	var field := LofiUI.field(Cosmetics.player_name, 84, Cosmetics.NAME_LENGTH)
+	var commit := func() -> void:
+		var was := Cosmetics.player_name
+		Cosmetics.set_player_name(field.text)
+		field.text = Cosmetics.player_name
+		if Cosmetics.player_name != was:
+			Game.update_look()
+	field.focus_exited.connect(commit)
+	field.text_submitted.connect(func(_t: String) -> void: field.release_focus())
+	name_row.add_child(field)
+	col.add_child(name_row)
+	var hats: Array = []
+	for id: StringName in Hats.ALL:
+		hats.append("hat: " + Hats.NAMES[id])
+	var hat_row := LofiUI.stepper(hats, func(by: int) -> void:
+		Cosmetics.set_hat(Hats.ALL[posmod(Hats.ALL.find(Cosmetics.hat) + by, Hats.ALL.size())])
+		_show_look()
+		Game.update_look())
+	_hat_label = hat_row.get_child(1)
+	col.add_child(hat_row)
+	var colors: Array = []
+	for key: StringName in Hats.PALETTE:
+		colors.append("colour: " + String(key))
+	var color_row := LofiUI.stepper(colors, func(by: int) -> void:
+		var keys := Hats.PALETTE.keys()
+		Cosmetics.set_color(keys[posmod(keys.find(Cosmetics.color) + by, keys.size())])
+		_show_look()
+		Game.update_look())
+	_color_label = color_row.get_child(1)
+	col.add_child(color_row)
+	_show_look()
+	return col
+
+
+func _show_look() -> void:
+	LofiUI.set_text(_hat_label, "hat: " + Hats.NAMES[Cosmetics.hat])
+	LofiUI.set_text(_color_label, "colour: " + String(Cosmetics.color))
 
 
 ## Esc: opens from gameplay, and while you're down watching someone; closes
@@ -117,6 +182,8 @@ func open_settings() -> void:
 	if _settings:
 		return
 	_panel.visible = false
+	if _look:
+		_look.visible = false
 	_settings = SettingsMenu.new()
 	_settings.back.connect(close_settings)
 	_center.add_child(_settings)
@@ -129,6 +196,8 @@ func close_settings() -> void:
 	_settings.queue_free()
 	_settings = null
 	_panel.visible = true
+	if _look:
+		_look.visible = true
 	var i := 0
 	for b in _panel.get_children():
 		if b is Button:

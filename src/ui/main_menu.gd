@@ -266,8 +266,11 @@ func _build_pickers() -> VBoxContainer:
 	name_row.add_child(name_label)
 	_name_field = LofiUI.field(Cosmetics.player_name, 84, Cosmetics.NAME_LENGTH)
 	_name_field.focus_exited.connect(func() -> void:
+		var was := Cosmetics.player_name
 		Cosmetics.set_player_name(_name_field.text)
-		_name_field.text = Cosmetics.player_name)
+		_name_field.text = Cosmetics.player_name
+		if Cosmetics.player_name != was:
+			Game.update_look())  # In a lobby: everyone sees it.
 	name_row.add_child(_name_field)
 	col.add_child(name_row)
 	var hats: Array = []
@@ -291,6 +294,7 @@ func cycle_hat(by: int) -> void:
 		return
 	var i := Hats.ALL.find(Cosmetics.hat)
 	Cosmetics.set_hat(Hats.ALL[posmod(i + by, Hats.ALL.size())])
+	Game.update_look()
 	_show_hat(true)
 	LofiUI.pop(_hat_name, 1.1, 0.12)
 
@@ -302,6 +306,7 @@ func cycle_color(by: int) -> void:
 		return
 	var keys := Hats.PALETTE.keys()
 	Cosmetics.set_color(keys[posmod(keys.find(Cosmetics.color) + by, keys.size())])
+	Game.update_look()
 	_tint = Cosmetics.tint()
 	_show_hat(true)
 	LofiUI.pop(_color_name, 1.1, 0.12)

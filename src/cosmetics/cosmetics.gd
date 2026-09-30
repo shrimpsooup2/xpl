@@ -2,7 +2,9 @@ class_name Cosmetics
 extends RefCounted
 ## Your look and name, saved between sessions: the hat (see Hats), the colour
 ## you wear in free-for-all (in teams you wear the team's), the name over
-## your head, and the gun you pick for teams (GameRules.loadout).
+## your head, and the gun you pick for teams (GameRules.loadout). Also who
+## you are to servers: a random id made once, so a server you left mid-game
+## knows you when you come back (NetSession).
 
 const DEFAULT_HAT := &"cap"
 const DEFAULT_COLOR := &"teal"
@@ -18,6 +20,8 @@ static var color := DEFAULT_COLOR
 static var player_name := DEFAULT_NAME
 ## A gun id (one of Weapons.GUNS).
 static var gun := DEFAULT_GUN
+## 32 hex digits, made the first time and kept.
+static var identity := ""
 
 
 ## Reads the saved choices; anything missing or unknown is the default.
@@ -38,6 +42,11 @@ static func load_saved() -> void:
 		var saved_gun := StringName(str(cfg.get_value("teams", "gun", String(DEFAULT_GUN))))
 		if saved_gun in Weapons.GUNS:
 			gun = saved_gun
+	var saved_id := str(cfg.get_value("profile", "id", ""))
+	identity = saved_id if saved_id.length() == 32 and saved_id.is_valid_hex_number() else ""
+	if identity == "":
+		identity = Crypto.new().generate_random_bytes(16).hex_encode()
+		_save("profile", "id", identity)
 
 
 ## The free-for-all colour picked.

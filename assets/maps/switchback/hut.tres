@@ -1,0 +1,34 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/retro_surface.gdshader" id="1_qhgnw"]
+[ext_resource type="Texture2D" path="res://assets/textures/stack/concrete.png" id="2_w7pmu"]
+[ext_resource type="Texture2D" path="res://assets/textures/stack/ceiling.png" id="3_53bty"]
+[ext_resource type="Texture2D" path="res://assets/textures/switchback/reflection_dusk.png" id="4_0kn3h"]
+[ext_resource type="Texture2D" path="res://assets/textures/switchback/roof.png" id="5_grm7d"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_qhgnw")
+shader_parameter/albedo_texture = ExtResource("2_w7pmu")
+shader_parameter/reflection_map = ExtResource("4_0kn3h")
+shader_parameter/tint = Color(1.25, 1.2, 1.08, 1)
+shader_parameter/meters_per_repeat = 3.0
+shader_parameter/gloss = 0.05
+shader_parameter/gloss_grazing = 0.3
+shader_parameter/roughness_value = 0.8
+shader_parameter/specular_value = 0.35
+shader_parameter/use_top = true
+shader_parameter/top_texture = ExtResource("5_grm7d")
+shader_parameter/top_tint = Color(1, 1, 1, 1)
+shader_parameter/top_meters = 2.0
+shader_parameter/use_bottom = true
+shader_parameter/bottom_texture = ExtResource("3_53bty")
+shader_parameter/bottom_meters = 2.0
+shader_parameter/use_uv = null
+shader_parameter/lane_color = null
+shader_parameter/lane_period = null
+shader_parameter/lane_width = null
+shader_parameter/lane_length = null
+shader_parameter/caustics = null
+shader_parameter/caustics_color = null
+shader_parameter/caustics_meters = null
