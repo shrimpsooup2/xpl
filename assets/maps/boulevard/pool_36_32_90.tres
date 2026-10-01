@@ -1,0 +1,10 @@
+[gd_resource type="ShaderMaterial" format=3]
+
+[ext_resource type="Shader" path="res://src/render/deco/light_pool.gdshader" id="1_potlq"]
+
+[resource]
+render_priority = 0
+shader = ExtResource("1_potlq")
+shader_parameter/color = Color(1, 0.72, 0.42, 1)
+shader_parameter/strength = 0.9
+shader_parameter/size = Vector2(3.6, 3.2)

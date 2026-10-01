@@ -314,17 +314,7 @@ func _view_toggle(key: String) -> HBoxContainer:
 
 ## [<] name [>] over `names`, starting at `index`; `picked` gets the index.
 func _choice(names: Array, index: int, picked: Callable) -> HBoxContainer:
-	# Held in arrays: a lambda keeps a copy of a plain local.
-	var at := [clampi(index, 0, names.size() - 1)]
-	var shown := [null]
-	var row := LofiUI.stepper(names, func(by: int) -> void:
-		at[0] = posmod(at[0] + by, names.size())
-		LofiUI.set_text(shown[0], names[at[0]])
-		LofiUI.pop(shown[0], 1.1, 0.12)
-		picked.call(at[0]))
-	shown[0] = row.get_child(1)
-	LofiUI.set_text(shown[0], names[at[0]])
-	return row
+	return LofiUI.choice(names, index, picked)
 
 
 func _note(text: String) -> PanelContainer:

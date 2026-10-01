@@ -3,12 +3,26 @@
 // surfaces (retro_surface.gdshader). With `viewmodel` on it draws as part of
 // the first-person view (viewmodel.gdshaderinc). Included by gloss.gdshader
 // and gloss_double.gdshader (the same, drawn from both sides).
+//
+// With GLOSS_SHARED defined (gloss_shared*.gdshader) the colour and finish
+// are the material's instead of each instance's: the GL Compatibility
+// renderer has room for instance uniforms on only 256 instances in all
+// (16 slots each, of 4096), so the many parts drawn alike (every gun's and
+// hat's) share cached materials instead (src/render/gloss.gd).
 
 #include "res://src/render/viewmodel.gdshaderinc"
 
 global uniform float world_light;
 uniform sampler2D reflection_map : source_color, filter_nearest, repeat_disable;
 uniform bool viewmodel = false;
+#ifdef GLOSS_SHARED
+uniform vec3 color : source_color = vec3(1.0);
+uniform float gloss = 0.3;
+uniform float rim_amount = 0.0;
+uniform float glow = 0.0;
+uniform float roughness_amount = 0.25;
+uniform float fade = 1.0;
+#else
 instance uniform vec3 color : source_color = vec3(1.0);
 // Reflection strength head-on; grazing angles get more.
 instance uniform float gloss = 0.3;
@@ -17,6 +31,7 @@ instance uniform float glow = 0.0;
 instance uniform float roughness_amount = 0.25;
 // 0..1: fades the part out (dissolving pickups).
 instance uniform float fade = 1.0;
+#endif
 
 void vertex() {
 	// Written either way: once a shader writes POSITION, it's always used.

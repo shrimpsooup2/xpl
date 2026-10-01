@@ -9,22 +9,25 @@ extends Node3D
 ## The blob wears your hat, in red or blue at random. Small pickers tucked in
 ## the bottom corner step through the hats (or ← →) and the free-for-all
 ## colours, dropping each onto the blob, and your name is typed in next to
-## them; all saved, and what you wear and go by in a game (GDD §11.4).
-## Hovering free-for-all shows your colour; hovering teams, a team's.
+## them; all saved, and what you wear and go by in a game (GDD §11.4). On
+## the vs bots page it wears the style's: your colour in free-for-all, a
+## team's in teams.
 ##
-## Free-for-all and teams start a practice game against bots (Game); online
-## opens the host/join page and the lobby in place of the buttons
-## (OnlineMenu), and a networked game comes back to that lobby when it ends;
-## the sandbox is the movement course; settings opens the settings page in
-## place of the buttons (SettingsMenu; esc comes back).
+## The buttons: play, sandbox, settings, quit. Play splits into vs bots
+## and online (back, or esc, comes back up): vs bots opens its page in place
+## of the buttons (BotsMenu: the style, the bots, the game's options, and
+## start, a game against bots on this machine, Game); online opens the
+## online page (OnlineMenu: find a public game, host one, or join one by
+## address, then the lobby), and a networked game comes back to that lobby
+## when it ends. The sandbox is the movement course; settings opens the
+## settings page in place of the buttons (SettingsMenu; esc comes back).
 
 const PLAY_SCENE := "res://scenes/test_course.tscn"
-const FFA_BOTS := 3
-const TEAM_BOTS := 7
 const LOGO := preload("res://assets/ui/logo_small.png")
 const LOGO_SCALE := 1.6
-const LOGO_ONLINE := 1.0
+const LOGO_ONLINE := 0.0
 const LOGO_SETTINGS := 0.0
+const LOGO_BOTS := 0.0
 const DANCE_EVERY := Vector2(5.0, 9.0)
 ## Camera lean toward the mouse, in meters at the screen edge.
 const MOUSE_LEAN := Vector2(0.35, 0.18)
@@ -34,7 +37,7 @@ const LOGO_BREATHE := 0.012
 const TICKER_SPEED := 22.0  # Canvas pixels per second.
 const TICKER_HEIGHT := 12.0
 const TICKER := [
-	"welcome to xtrapartial", "aim for the heart", "every round is a new map",
+	"welcome to xtrapartial", "aim for the heart", "every round is a new map", "host your own rules",
 	"smashdown banks your speed", "now loading: food court eclipse", "fists count as a weapon",
 	"slide · hop · dash · repeat", "the map is unloading", "birthday.exe has stopped responding",
 	"pick things up", "you fell apart (it happens)",
@@ -59,7 +62,13 @@ var _color_name: PanelContainer
 var _name_field: LineEdit
 var _team := Hats.Team.RED
 var _buttons: VBoxContainer
+## The first buttons (play, sandbox, settings, quit) and play's (vs bots,
+## online, back): one list shows at a time.
+var _main_list: VBoxContainer
+var _play_list: VBoxContainer
 var _pickers: Control
+var _footer: Control
+var _bots: BotsMenu
 var _online: OnlineMenu
 var _settings: SettingsMenu
 ## What the blob is wearing now: a team's colour or your free-for-all one.
@@ -67,6 +76,12 @@ var _tint := Color.WHITE
 
 
 func _ready() -> void:
+	if MasterServer.requested():
+		# A list server has no menu either: it lists public games.
+		if MasterServer.run(get_tree()) != OK:
+			get_tree().quit(1)
+		queue_free()
+		return
 	if DedicatedServer.requested():
 		# A dedicated server has no menu: it serves games from here on.
 		if DedicatedServer.run(get_tree()) != OK:
@@ -93,6 +108,18 @@ func _unhandled_input(event: InputEvent) -> void:
 			_settings.escape()
 		return
 	if _name_field and _name_field.has_focus():
+		return
+	if event.is_action_pressed(&"ui_cancel"):
+		# Back up a level (not out of a game being hosted or joined).
+		if _bots:
+			get_viewport().set_input_as_handled()
+			close_bots()
+		elif _online and not NetSession.active():
+			get_viewport().set_input_as_handled()
+			close_online()
+		elif _play_list.visible:
+			get_viewport().set_input_as_handled()
+			show_main()
 		return
 	if event.is_action_pressed(&"ui_left"):
 		cycle_hat(-1)
@@ -131,7 +158,9 @@ func _process(delta: float) -> void:
 		if _ticker_label.position.x <= -_ticker_width:
 			_ticker_label.position.x += _ticker_width
 	# Your look is sent when you join: changing it in a lobby wouldn't show.
-	_pickers.visible = not NetSession.active() and _settings == null
+	# (And the vs bots and settings pages need the room.)
+	_pickers.visible = not NetSession.active() and _settings == null and _bots == null
+	_footer.visible = _main_list.visible or _play_list.visible
 
 
 func _build_stage() -> void:
@@ -201,34 +230,23 @@ func _build_menu() -> void:
 	var spacer := Control.new()
 	spacer.custom_minimum_size.y = 12
 	col.add_child(spacer)
-	var ffa := LofiUI.button("free-for-all", _play.bind(&"ffa"))
-	ffa.mouse_entered.connect(func() -> void:
-		_react(&"Punch_Jab", 0.8)
-		_wear(Cosmetics.tint()))
-	col.add_child(ffa)
-	var teams := LofiUI.button("teams", _play.bind(&"teams"))
-	teams.mouse_entered.connect(func() -> void:
-		_react(&"Punch_Cross", 0.8)
-		_wear(Hats.team_color(_team)))
-	col.add_child(teams)
-	var online := LofiUI.button("online", open_online)
-	online.mouse_entered.connect(_react.bind(&"Punch_Cross", 0.8))
-	col.add_child(online)
-	var sandbox := LofiUI.button("sandbox", _play.bind(&"sandbox"))
-	sandbox.mouse_entered.connect(_react.bind(&"Punch_Jab", 0.8))
-	col.add_child(sandbox)
-	var settings := LofiUI.button("settings", open_settings)
-	settings.mouse_entered.connect(_react.bind(&"Punch_Jab", 0.8))
-	col.add_child(settings)
-	var quit := LofiUI.button("quit", get_tree().quit)
-	quit.mouse_entered.connect(_react.bind(&"Hit_Head", 0.42))
-	col.add_child(quit)
-	for b in col.get_children():
-		if b is Button:
-			b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
-			b.custom_minimum_size.x = 70
+	_main_list = _list([
+		_menu_button("play", show_play, &"Punch_Jab"),
+		_menu_button("sandbox", _play.bind(&"sandbox"), &"Punch_Jab"),
+		_menu_button("settings", open_settings, &"Punch_Jab"),
+		_menu_button("quit", get_tree().quit, &"Hit_Head", 0.42),
+	])
+	col.add_child(_main_list)
+	_play_list = _list([
+		_menu_button("vs bots", open_bots, &"Punch_Jab"),
+		_menu_button("online", open_online, &"Punch_Cross"),
+		_menu_button("back", show_main),
+	])
+	_play_list.visible = false
+	col.add_child(_play_list)
 
-	var footer := LofiUI.box("v0.1 · movement prototype", LofiUI.SMALL, LofiUI.Style.GHOST)
+	var footer := LofiUI.box(version_text(), LofiUI.SMALL, LofiUI.Style.GHOST)
+	_footer = footer
 	footer.size_flags_vertical = Control.SIZE_SHRINK_END
 	footer.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
 	var picker := _build_pickers()
@@ -244,13 +262,15 @@ func _build_menu() -> void:
 
 	# Entrance: logo slams down, buttons slide in, the rest follows.
 	LofiUI.stamp(_logo, 0.6, 2.6)
-	var i := 0
-	for b in col.get_children():
-		if b is Button:
-			LofiUI.enter(b, Vector2(-40, 0), 0.25 + i * 0.07, 0.3)
-			i += 1
+	_enter_list(_main_list, 0.25, 0.07)
 	LofiUI.enter(footer, Vector2(0, 10), 0.6, 0.25)
 	LofiUI.enter(picker, Vector2(0, 10), 0.7, 0.25)
+
+
+## The version tag: the game's version (application/config/version in
+## project.godot, the one place it's set; docs/RELEASING.md).
+static func version_text() -> String:
+	return "v%s" % ProjectSettings.get_setting("application/config/version", "0.0.0")
 
 
 ## Quiet rows in small ghost boxes, like the version tag: your name, then
@@ -384,15 +404,87 @@ func _react(clip: StringName, length: float) -> void:
 			_model.anim.play(PlayerModel.ANIM_IDLE, 0.3))
 
 
-## The online page in place of the menu's buttons.
-func open_online() -> void:
-	if _online or _settings or _leaving:
+## A column of menu buttons.
+func _list(buttons: Array) -> VBoxContainer:
+	var list := VBoxContainer.new()
+	list.add_theme_constant_override(&"separation", 3)
+	for b: Button in buttons:
+		list.add_child(b)
+	return list
+
+
+## A menu button; hovering it plays `clip` on the blob.
+func _menu_button(text: String, on_pressed: Callable, clip := &"", length := 0.8) -> Button:
+	var b := LofiUI.button(text, on_pressed)
+	b.size_flags_horizontal = Control.SIZE_SHRINK_BEGIN
+	b.custom_minimum_size.x = 70
+	if clip != &"":
+		b.mouse_entered.connect(_react.bind(clip, length))
+	return b
+
+
+## Slides a list's buttons in, one after another.
+func _enter_list(list: Control, delay := 0.0, stagger := 0.05) -> void:
+	var i := 0
+	for b in list.get_children():
+		LofiUI.enter(b, Vector2(-40, 0), delay + i * stagger, 0.25 if delay == 0.0 else 0.3)
+		i += 1
+
+
+## The first buttons: play, sandbox, settings, quit.
+func show_main() -> void:
+	if _leaving:
 		return
+	_play_list.visible = false
+	_main_list.visible = true
+	_enter_list(_main_list)
+
+
+## Play's buttons: vs bots, online, back.
+func show_play() -> void:
+	if _leaving:
+		return
+	_main_list.visible = false
+	_play_list.visible = true
+	_enter_list(_play_list)
+
+
+## Hides the lists for a page.
+func _hide_lists() -> void:
 	if _name_field:
 		Cosmetics.set_player_name(_name_field.text)
-	for c in _buttons.get_children():
-		if c is Button:
-			c.visible = false
+	_main_list.visible = false
+	_play_list.visible = false
+
+
+## The vs bots page in place of the buttons.
+func open_bots() -> void:
+	if _bots or _online or _settings or _leaving:
+		return
+	_hide_lists()
+	_bots = BotsMenu.new()
+	_bots.back.connect(close_bots)
+	_bots.start.connect(func(rules: GameRules, bots: int) -> void: _play(&"bots", rules, bots))
+	_bots.style_changed.connect(func(teams: bool) -> void: _wear(Hats.team_color(_team) if teams else Cosmetics.tint()))
+	_buttons.add_child(_bots)
+	_size_logo(LOGO_BOTS)
+
+
+## Back from the vs bots page to play's buttons.
+func close_bots() -> void:
+	if _bots == null or _leaving:
+		return
+	_bots.queue_free()
+	_bots = null
+	show_play()
+	_size_logo(LOGO_SCALE)
+
+
+## The online page in place of the buttons.
+func open_online() -> void:
+	if _online or _bots or _settings or _leaving:
+		return
+	_hide_lists()
 	_online = OnlineMenu.new()
 	_online.back.connect(close_online)
 	_buttons.add_child(_online)
@@ -406,25 +498,16 @@ func close_online() -> void:
 	NetSession.leave(get_tree())
 	_online.queue_free()
 	_online = null
-	var i := 0
-	for c in _buttons.get_children():
-		if c is Button:
-			c.visible = true
-			LofiUI.enter(c, Vector2(-40, 0), i * 0.05, 0.25)
-			i += 1
+	show_play()
 	_size_logo(LOGO_SCALE)
 
 
-## The settings page in place of the menu's buttons (the logo steps aside
-## to make room).
+## The settings page in place of the buttons (the logo steps aside to make
+## room).
 func open_settings() -> void:
-	if _settings or _online or _leaving:
+	if _settings or _online or _bots or _leaving:
 		return
-	if _name_field:
-		Cosmetics.set_player_name(_name_field.text)
-	for c in _buttons.get_children():
-		if c is Button:
-			c.visible = false
+	_hide_lists()
 	_settings = SettingsMenu.new()
 	_settings.back.connect(close_settings)
 	_buttons.add_child(_settings)
@@ -437,12 +520,7 @@ func close_settings() -> void:
 		return
 	_settings.queue_free()
 	_settings = null
-	var i := 0
-	for c in _buttons.get_children():
-		if c is Button:
-			c.visible = true
-			LofiUI.enter(c, Vector2(-40, 0), i * 0.05, 0.25)
-			i += 1
+	show_main()
 	_size_logo(LOGO_SCALE)
 
 
@@ -452,9 +530,9 @@ func _size_logo(scale: float) -> void:
 			.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 
 
-## Starts `mode`: a practice game of free-for-all or teams against bots, or
-## the sandbox course.
-func _play(mode: StringName) -> void:
+## Starts `mode`: a game of `rules` against `bots` bots, or the sandbox
+## course.
+func _play(mode: StringName, rules: GameRules = null, bots := 0) -> void:
 	if _leaving:
 		return
 	if _name_field:
@@ -462,15 +540,12 @@ func _play(mode: StringName) -> void:
 	_react(&"Jump_Start", 1.0)
 	_leaving = true
 	LofiUI.kick(_layer, 0.6)
-	get_tree().create_timer(0.2).timeout.connect(_start.bind(mode))
+	get_tree().create_timer(0.2).timeout.connect(_start.bind(mode, rules, bots))
 
 
-func _start(mode: StringName) -> void:
-	match mode:
-		&"ffa":
-			Game.practice(get_tree(), GameRules.free_for_all(), FFA_BOTS)
-		&"teams":
-			Game.practice(get_tree(), GameRules.teams(), TEAM_BOTS)
-		_:
-			Game.end(get_tree(), false)
-			Wipe.change_scene(get_tree(), PLAY_SCENE)
+func _start(mode: StringName, rules: GameRules, bots: int) -> void:
+	if mode == &"bots":
+		Game.practice(get_tree(), rules, bots)
+	else:
+		Game.end(get_tree(), false)
+		Wipe.change_scene(get_tree(), PLAY_SCENE)

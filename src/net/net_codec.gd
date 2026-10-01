@@ -24,7 +24,7 @@ extends RefCounted
 
 ## Bumped whenever any message changes shape: old and new builds refuse each
 ## other at the handshake.
-const PROTOCOL := 4
+const PROTOCOL := 5
 const INPUT_SIZE := 23
 ## View ticks go in sixteenths of a tick; this means "none" (now).
 const VIEW_STEPS := 16.0

@@ -13,6 +13,10 @@ extends Resource
 ##     over it where the pads and crates were, and health comes back out of
 ##     combat.
 ## Everything here is server-side: clients are told the outcome.
+##
+## The host picks what they like of it before a game (RulesEditor): health,
+## round length, the map pool, which guns are in play, and so on, starting
+## from one of the two styles.
 
 enum Kind { FFA, TEAMS }
 
@@ -47,6 +51,9 @@ enum Kind { FFA, TEAMS }
 @export var regen_rate := 25.0
 
 @export_group("Weapons and ammo")
+## The guns in play (Weapons ids): pads for any other gun hand out one of
+## these instead (stand_in), and you can only pick these. None: fists only.
+@export var guns := PackedStringArray(Weapons.GUNS)
 ## What you (re)spawn holding: "" for fists, or a weapon id (Weapons).
 @export var spawn_weapon := &""
 ## Pad respawn times are multiplied by this.
@@ -112,6 +119,34 @@ func is_teams() -> bool:
 	return kind == Kind.TEAMS
 
 
+## Whether gun `id` is in play.
+func allows(id: StringName) -> bool:
+	return String(id) in guns
+
+
+## What a pad for gun `id` hands out: that gun if it's in play, otherwise the
+## next one in play after it (in pad order, so every machine agrees), or ""
+## when no gun is (the pad goes).
+func stand_in(id: StringName) -> StringName:
+	var at := Weapons.GUNS.find(id)
+	for n in Weapons.GUNS.size():
+		var gun: StringName = Weapons.GUNS[posmod(at + n, Weapons.GUNS.size())]
+		if allows(gun):
+			return gun
+	return &""
+
+
+## The gun someone who picked `want` spawns with (games where you pick):
+## theirs if it's in play, otherwise the first that is, or "" for fists.
+func loadout_gun(want: StringName) -> StringName:
+	return want if allows(want) else stand_in(Weapons.GUNS[0])
+
+
+## A gun in play at random ("" when there are none), for bots.
+func random_gun() -> StringName:
+	return StringName(guns[randi() % guns.size()]) if not guns.is_empty() else &""
+
+
 ## Every rule as plain data, for the network.
 func to_dict() -> Dictionary:
 	var d := {}
@@ -141,13 +176,19 @@ static func from_dict(d: Dictionary) -> GameRules:
 			v = (v as String).left(32)
 		if prop.name == "spawn_weapon" and v != &"" and not v in Weapons.GUNS:
 			continue
-		if v is PackedStringArray:
+		if prop.name == "map_pool":
 			var maps := PackedStringArray()
 			for m in v:
-				if Maps.scene_of(m) != "" and maps.size() < 32:
+				if Maps.scene_of(m) != "" and not m in maps and maps.size() < 32:
 					maps.append(m)
 			if maps.is_empty():
 				continue
 			v = maps
+		elif prop.name == "guns":
+			var kept := PackedStringArray()
+			for g in Weapons.GUNS:
+				if String(g) in v:
+					kept.append(String(g))  # None at all is fine: fists only.
+			v = kept
 		r.set(prop.name, v)
 	return r

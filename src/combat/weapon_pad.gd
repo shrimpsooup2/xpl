@@ -54,6 +54,19 @@ func _ready() -> void:
 	_spawn.call_deferred(false)
 
 
+## Hands out gun `id` from now on (a game without its own gun in play:
+## GameRules.stand_in), the one on it now swapped straight away.
+func set_weapon(id: StringName) -> void:
+	weapon = id
+	if _ring:
+		_ring.set_instance_shader_parameter(&"color", Weapons.get_def(id).accent)
+	if pickup:
+		pickup.get_parent().remove_child(pickup)
+		pickup.queue_free()
+		pickup = null
+		_spawn(false)
+
+
 ## Called by its pickup when it's taken.
 func taken(_by: WeaponPickup) -> void:
 	pickup = null

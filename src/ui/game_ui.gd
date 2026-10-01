@@ -335,8 +335,8 @@ func _now() -> float:
 
 ## Picking your gun: in the countdown, and while you're down.
 func _show_gun_picker() -> void:
-	var on := game != null and is_instance_valid(game) and game.rules.loadout and player != null \
-			and (player.is_dead or game.state == Match.State.COUNTDOWN)
+	var on := game != null and is_instance_valid(game) and game.rules.loadout and not game.rules.guns.is_empty() \
+			and player != null and (player.is_dead or game.state == Match.State.COUNTDOWN)
 	if on != gun_picker.visible:
 		gun_picker.visible = on
 		if on:
@@ -344,7 +344,7 @@ func _show_gun_picker() -> void:
 	if not on:
 		return
 	var me := game.local_info()
-	gun_picker.show_pick(me.gun if me else Cosmetics.gun)
+	gun_picker.show_pick(game.rules.loadout_gun(me.gun if me else Cosmetics.gun), game.rules)
 	var view := layer.canvas.size
 	gun_picker.size = gun_picker.get_combined_minimum_size()
 	gun_picker.position = Vector2((view.x - gun_picker.size.x) * 0.5, view.y - gun_picker.size.y - 50.0)

@@ -35,7 +35,7 @@ func _ready() -> void:
 	Cosmetics.set_player_name("tester")
 	var args := PackedStringArray(["--headless", "--path", ProjectSettings.globalize_path("res://"), "--", "--server",
 			"--port", str(PORT), "--mode", "ffa", "--maps", "stack", "--bots", "2", "--password", PASSWORD,
-			"--start-delay", "1", "--name", SERVER_NAME])
+			"--start-delay", "1", "--name", SERVER_NAME, "--public", "--round-time", "60"])
 	_server = OS.execute_with_pipe(OS.get_executable_path(), args, false)
 	super._ready()
 
@@ -108,6 +108,28 @@ func test_the_server_starts() -> void:
 			"with the name and password it was given")
 
 
+func test_the_public_server_can_be_found_on_this_network() -> void:
+	var browser := ServerBrowser.new()
+	add_child(browser)
+	var mine := func() -> Dictionary:
+		for g in browser.found:
+			if g.name == SERVER_NAME:
+				return g
+		return {}
+	var found := {}
+	for attempt in 3:  # It may still be starting up.
+		browser.refresh()
+		await until(func() -> bool: return not browser.searching, 5.0)
+		found = mine.call()
+		if not found.is_empty():
+			break
+	check(not found.is_empty(), "found: %s" % [browser.found])
+	check(found.get("locked") == true and found.get("port") == PORT and found.get("style") == "free-for-all"
+			and found.get("protocol") == NetCodec.PROTOCOL and found.get("lan") == true, "locked, where it is, and what it plays: %s" % found)
+	check(browser.matching("test").has(found) and browser.matching("teams").is_empty(), "and searchable")
+	browser.queue_free()
+
+
 func test_a_wrong_password_is_refused() -> void:
 	var got := await _join("letmein")
 	check(got.size() == 2 and got[0] == false and got[1] == "wrong password", "refused, saying why: %s" % [got])
@@ -122,6 +144,9 @@ func test_the_right_password_gets_you_in() -> void:
 	check(got.size() == 2 and got[0] == true, "joined: %s" % [got])
 	var s := NetSession.current
 	check(s != null and s.server_name == SERVER_NAME and s.dedicated, "the server's name, and that it's dedicated")
+	check(await until(func() -> bool: return s.lobby_rules != null), "the game's options")
+	check(s.lobby_rules != null and s.lobby_rules.round_time == 60.0 and s.lobby_style == "free-for-all",
+			"as the server was told: 60 s rounds")
 	check(await until(func() -> bool: return s.players().size() == 3), "the roster: me and the bots")
 	var names := s.players().map(func(i: PlayerInfo) -> String: return i.player_name)
 	check("tester" in names and "bot 1" in names and "bot 2" in names, "by name: %s" % [names])
@@ -137,6 +162,7 @@ func test_the_server_starts_a_game_and_you_follow_it() -> void:
 		_feed.append([killer.player_name if killer else "", victim.player_name]))
 	m.state_changed.connect(func(st: Match.State) -> void: _states.append(st))
 	check(not m.authority, "following, not deciding")
+	check(m.rules.round_time == 60.0, "by the server's options")
 	check(await until(func() -> bool: return m.level != null and m.state != Match.State.LOADING), "the map loaded and the countdown's on")
 	check(m.map_name == "stack", "the server's map: " + m.map_name)
 	var me := _me()

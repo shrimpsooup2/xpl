@@ -109,8 +109,10 @@ static func update_look() -> void:
 static func choose_gun(id: StringName) -> void:
 	if not id in Weapons.GUNS:
 		return
-	Cosmetics.set_gun(id)
 	var m := current
+	if m and is_instance_valid(m) and not m.rules.allows(id):
+		return  # Not in play this game.
+	Cosmetics.set_gun(id)
 	if m == null or not is_instance_valid(m):
 		return
 	var me := m.local_info()

@@ -184,6 +184,45 @@ static func stepper(texts: Array, step: Callable) -> HBoxContainer:
 	return row
 
 
+## [<] name [>] over `names`, starting at `index`; `picked` gets the index
+## of each new pick.
+static func choice(names: Array, index: int, picked: Callable) -> HBoxContainer:
+	# Held in arrays: a lambda keeps a copy of a plain local.
+	var at := [clampi(index, 0, names.size() - 1)]
+	var shown := [null]
+	var row := stepper(names, func(by: int) -> void:
+		at[0] = posmod(at[0] + by, names.size())
+		set_text(shown[0], names[at[0]])
+		pop(shown[0], 1.1, 0.12)
+		picked.call(at[0]))
+	shown[0] = row.get_child(1)
+	set_text(shown[0], names[at[0]])
+	return row
+
+
+## A small switch in a row of them (a map in the pool, a gun in play): a
+## button that stays pressed (inverted) while it's on. `toggled` gets the
+## new state, and returns false to refuse it (the chip shakes and stays).
+static func chip(text: String, on: bool, toggled: Callable) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.toggle_mode = true
+	b.button_pressed = on
+	b.add_theme_font_size_override(&"font_size", SMALL)
+	var hand := randi()
+	for state: StringName in [&"normal", &"hover", &"pressed", &"hover_pressed", &"disabled"]:
+		b.add_theme_stylebox_override(state, _button_box(state, hand))
+	b.add_theme_stylebox_override(&"normal", stylebox(Style.GHOST, SMALL, hand))
+	b.add_theme_color_override(&"font_color", GREY)
+	b.toggled.connect(func(now: bool) -> void:
+		if not toggled.call(now):
+			b.set_pressed_no_signal(not now)
+			shake(b, 2.0)
+		else:
+			pop(b, 1.1, 0.1))
+	return b
+
+
 ## [<] [a bar] [>] [value]: a LofiSlider between arrows that step it, and
 ## the value after it (`format` turns it into text). `changed` gets each
 ## new value. slider_set() moves it without calling back.

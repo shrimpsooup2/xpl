@@ -1,6 +1,6 @@
 # xtrapartial — Multiplayer
 
-Status: both styles built and tested on one machine: hosting from the menu, joining, dedicated servers, a lobby, and every part of a game played over the network (see [Phases](#phases), and [Known limits](#known-limits) for what isn't done). Not yet tested over a real network with latency and packet loss. Expands GDD §15.2.
+Status: both styles built and tested on one machine: hosting from the menu, joining, dedicated servers, a lobby, the host's own rules, finding public games (on the local network and on a list server), and every part of a game played over the network (see [Phases](#phases), and [Known limits](#known-limits) for what isn't done). Not yet tested over a real network with latency and packet loss. Expands GDD §15.2.
 
 ## Goals
 
@@ -13,10 +13,10 @@ Status: both styles built and tested on one machine: hosting from the menu, join
 | | Player-hosted | Dedicated server |
 |---|---|---|
 | Who runs the game | One player's game (the host) is also the server; the others connect to it | A headless build of the game (`--server`), on any machine or VPS |
-| Starts from | The menu: *host*, pick a style and map pool, share your address | A command line and a config file (see [Running a server](#running-a-server)) |
+| Starts from | The menu: *host a game*, pick a style, share your address or make it public; set the game's options in the lobby | A command line and a config file (see [Running a server](#running-a-server)) |
 | Authority | The host's machine | The server |
 | Players | 2–8 | 2–16 (the team maps are built for 8, 4 a side) |
-| Reaching it | Direct address (LAN, or the host's public address with the port forwarded; the game tries UPnP to forward it automatically). A relay (Steam or noray) later, to get through NAT without port forwarding and to hide addresses | Direct address and port |
+| Reaching it | Direct address (LAN, or the host's public address with the port forwarded; the game tries UPnP to forward it automatically), or found under *find a game* if it's public ([Finding games](#finding-games)). A relay (Steam or noray) later, to get through NAT without port forwarding and to hide addresses | Direct address and port, or found if it's public |
 | Best for | Friends, LAN, quick games | Public games, communities, anything competitive |
 
 "Player-hosted" is often called peer-to-peer, but it's a **listen server**: one machine decides the game and everyone talks to it, never to each other. A true peer-to-peer mesh (everyone simulating and trusting everyone) doesn't suit a fast shooter: there's no one to settle disagreements, and every player can cheat for everyone. Both styles run exactly the same code, the host is simply a server that also has a player at the keyboard.
@@ -41,7 +41,16 @@ The hello also carries a **token** saying who you are: a random id your game mak
 
 Games start on the server: it picks the style and map, and every client loads that map **by name from the game's own list** (never a path or file from the network). Each player's body in every level has the same name on every machine (`Player_<id>`), so messages about it find it. The round waits until every client says it has the map loaded (at most 8 s, then it starts without the slow ones), and a client that loads late, or joins mid-game, is sent where everyone is, what they hold, the pads and the loose weapons.
 
-In the menu, **online** opens a page with *host a game* (style, port, an optional password, and whether to ask the router to open the port with UPnP) and *join a game* (an address like `192.168.1.20` or `example.com:27960`, and the password; after you've left a server, *rejoin* goes back to it). Then the **lobby**: who's in, where friends can reach you (your address on the local network, and your internet address if UPnP worked), and for the host the style, the number of bots, and *start*. Everyone goes back to the lobby when a game ends. On a dedicated server the lobby just waits: the server starts the next game itself a few seconds after someone's there.
+In the menu, **play → online** opens a page with three tabs: *find a game* (the public games, [below](#finding-games): typed words narrow them down by name, style or map; pick one to join it, and a locked one asks for its password first), *host a game* (its name, style, port, an optional password, whether it's **public**, and whether to ask the router to open the port with UPnP) and *join by address* (an address like `192.168.1.20` or `example.com:27960`, and the password; after you've left a server, *rejoin* goes back to it). Then the **lobby**: who's in, where friends can reach you (your address on the local network, and your internet address if UPnP worked), whether it's public, and the game's options on one line. The host picks the style and the number of bots, opens *options* to change the game's rules (health and getting it back, round length and rounds to win or the kill target and time limit, respawn time, friendly fire, the maps, the guns in play, what you spawn with; GDD §8.5), can make the game public or private, and *start*s it. The options come with the roster, so everyone in the lobby sees them change, and they're checked on arrival like everything else (`GameRules.from_dict`: types, ranges, maps and guns from the game's own lists). Everyone goes back to the lobby when a game ends. On a dedicated server the lobby just waits: the server starts the next game itself a few seconds after someone's there.
+
+### Finding games
+
+Only games marked **public** can be found (from the host's page or lobby, or `--public` on a dedicated server); the rest are joined by address. A public game can still have a password: it's listed as locked, and asks for it when you pick it. There are two ways a public game is found, and *find a game* asks both at once:
+
+- **On the local network.** The public game answers on the first free of UDP ports 27940–27943 (so up to four on one machine); the browser broadcasts a query to those ports (to the whole network, each local network's broadcast address, and this machine) and gathers the answers for a second. Each answer says the game's name, style, map (or that it's in the lobby), who's in and how many it takes, whether it's locked, its version and its game port; its address is where the answer came from. A game answers only queries from local addresses (private ranges, link-local, this machine), at most 20 a second, and a query is padded to 512 bytes while no answer is longer, so nobody can use a game to flood someone else.
+- **On a list server** (`MasterServer`, `src/net/master_server.gd`): a small headless program anyone can run (`--list-server`, [below](#running-a-list-server)), whose address players and hosts type in (*list server* under *find a game*, remembered; `--list` on a dedicated server). A public game connects to it over TCP (port 27950 unless its address says otherwise), keeps the connection open and says how it's doing (the same fields) when that changes, at most every 2 s, and every 15 s anyway; the list server lists it at the address the connection comes from and the game port it gives, and drops it when the connection closes or goes quiet for a minute. The browser connects, asks for the list and gets it in one line. Everything is a line of JSON. **No list server is set by default**, so out of the box public games are found on the local network only; point everyone at the same list server to find each other over the internet (and the host still needs its port open: UPnP or a forwarded port).
+
+The same game found both ways is shown once (by its id): the local copy, whose address works from here. Games of another version are shown but greyed, and so are full ones; games you can join come first, busiest first. What anyone says about a game is checked before it's shown (`ServerList.clean`): a real address and port, a cleaned name of at most 32 characters, a known style and map or none, whole numbers in range, at most 200 games.
 
 ### Netcode
 
@@ -62,13 +71,18 @@ In the menu, **online** opens a page with *host a game* (style, port, an optiona
 | File | What it does |
 |---|---|
 | `src/net/net_session.gd` | `NetSession`: hosting, joining, the handshake, the roster, bots in the lobby, rate limits and kicking, UPnP |
-| `src/net/dedicated_server.gd` | `DedicatedServer`: settings from the command line and a config file, and the loop that starts games while anyone's connected |
+| `src/net/dedicated_server.gd` | `DedicatedServer`: settings (and the game's options) from the command line and a config file, and the loop that starts games while anyone's connected |
+| `src/net/server_list.gd` | `ServerList`: what a public game says about itself, and the checks anything said about a game goes through |
+| `src/net/server_advert.gd` | `ServerAdvert`: a public game answering local queries and keeping itself on the list server |
+| `src/net/server_browser.gd` | `ServerBrowser`: *find a game*'s search, on the local network and the list server |
+| `src/net/master_server.gd` | `MasterServer`: the list server |
 | `src/net/match_sync.gd` | `MatchSync`: under the `Match` on every machine; the server's inputs queue per player, snapshots and events, and the client's side of each |
 | `src/net/prediction.gd` | `Prediction`: your own player on a client (history, sending commands, reconciliation) |
 | `src/net/puppet.gd` | `Puppet`: everyone else on a client, interpolated between snapshots |
 | `src/net/rewind.gd` | `Rewind`: lag compensation on the server (where everyone stood, tick by tick, and shots tested against the past) |
 | `src/net/net_codec.gd` | `NetCodec`: every packed message, and checking what comes off the wire |
-| `src/ui/online_menu.gd` | The menu's online page and lobby |
+| `src/ui/online_menu.gd` | The menu's online page (find, host, join) and lobby |
+| `src/ui/rules_editor.gd` | The host's options card (`RulesEditor`), and the one-line summary everyone else sees |
 | `src/game/match.gd`, `game.gd` | The same match offline and online: `authority` says whether this machine decides it or follows the server |
 
 The offline game didn't change shape to go online: the `Match` still decides everything (on the server), the player still runs one fixed tick from an `InputCommand` (on the server from the client's commands, on the client for prediction), and the UI follows the match's signals either way.
@@ -104,12 +118,13 @@ Every message has a fixed, small shape: plain numbers, strings and packed arrays
 These are inherent to online games, and especially to one anyone can host. They're stated plainly so nobody is surprised:
 
 1. **The host or server operator is trusted.** Whoever runs the game decides it. A modified host or server can cheat (invincibility, seeing everyone, deciding hits) and can log what players send. *Play on hosts and servers you trust; public and competitive play belongs on dedicated servers run by people you trust.*
-2. **Addresses are visible.** With direct connections, the host or server sees every player's IP address, and players see the host's or server's. That can be misused (for example to flood someone's connection). *Relays (Steam, noray) hide addresses; until then, host only for people you know, and don't publish a home address.*
+2. **Addresses are visible.** With direct connections, the host or server sees every player's IP address, and players see the host's or server's. That can be misused (for example to flood someone's connection). A **public** game's address is shown to anyone who looks (on the list server, to anyone who asks it). *Relays (Steam, noray) hide addresses; until then, host only for people you know, don't make a game from home public on a list server unless you're happy for its address to be seen, and don't publish a home address.*
 3. **Client cheats exist.** The server stops cheats that change the game's rules (speed, damage, ammo), but not cheats that play better than a person: aim assistance, triggerbots, reading other players' positions from memory or traffic (wallhacks). No anti-cheat is fully effective, and this game is built on an open engine. *Server-side checks and, later, not sending players you can't see reduce this; they don't remove it.*
 4. **Traffic isn't encrypted by default.** ENet sends game packets in the clear: positions, names and inputs can be read by anyone on the network path. *Encryption (DTLS) is planned as an option for dedicated servers. Nothing sensitive is sent: there are no accounts, emails or payment details in the game.*
 5. **Floods and denial of service.** Rate limits and connection caps stop a single misbehaving client, not a large attack on a server's connection. *That's the hosting provider's to mitigate.*
 6. **Engine and library bugs.** A vulnerability in Godot's networking or ENet would affect every game built on it. *We stay on current Godot releases.*
-7. **Names are public and unmoderated.** Anyone can pick any name (cleaned of control characters, 16 characters). *There's no chat yet; when there is, it needs mute, report and server-side filtering.*
+7. **The list server is trusted to list honestly.** Whoever runs one can leave games off, list games that aren't there, or point at addresses that aren't games, and sees the address of everyone who asks it for the list and every game on it. What it says is checked before it's shown (addresses, ports, lengths, ranges), and picking a game only ever connects to it like *join by address* would, through the same handshake. *Use a list server run by people you trust.*
+8. **Names are public and unmoderated.** Anyone can pick any name (cleaned of control characters, 16 characters). *There's no chat yet; when there is, it needs mute, report and server-side filtering.*
 
 ## Phases
 
@@ -122,11 +137,12 @@ These are inherent to online games, and especially to one anyone can host. They'
 6. The menu: host and join, a lobby before the game and between games; leaving and ending games from the pause menu.
 7. Tests (`tools/run_tests.sh`): codecs, validation and prediction in-process; then, in real time, a dedicated server in another process that this one joins (a wrong password refused, the game followed, movement predicted, a round played out, a latecomer joining mid-game, junk getting you kicked), and this one hosting a game a friend's process joins (their player driven by what they send, a thrown gun seen landing where it landed).
 8. Lag compensation for shots, punches and projectiles; a stalling player carrying on for a moment instead of freezing; coming back to a game you left with your score; changing your name, hat and colour mid-game. Tested in-process (a shot hitting where the shooter saw the target and not where it is now, the stall's wait, guesses and late commands) and in real time (a new look seen by the server and another client; leaving, rejoining and getting your score back).
+9. Finding public games: on the local network (a query and answers, never more than asked, only for local addresses) and on a list server anyone can run (`MasterServer`), searched from *find a game*; locked games ask for the password. The host's own rules, set in the lobby and sent with the roster. Tested in-process (what's said about a game is checked, junk hung up on, a game found both ways once, gone when it's private) and in real time (the dedicated server found on the network, its options in the lobby and the game).
 
 **Next**
 - Interest management: don't send what a player can't see (fewer wallhacks, less bandwidth).
 - A relay: GodotSteam for the Steam build, noray otherwise (NAT without port forwarding, hidden addresses).
-- A server browser (a small master server listing public dedicated servers).
+- A list server we run, set by default; pings in *find a game*.
 - Optional DTLS encryption for dedicated servers.
 - Spectators, chat with moderation.
 - The GDD §15.2 test matrix: 50–150 ms latency, jitter and packet loss.
@@ -142,12 +158,20 @@ These are inherent to online games, and especially to one anyone can host. They'
 ## Running a server
 
 ```
-godot --headless --path . -- --server [--port 27960] [--mode ffa|teams] [--maps stack,rift] [--max-players 8] [--bots 0] [--password secret] [--name "my server"] [--start-delay 5] [--config server.cfg]
+godot --headless --path . -- --server [--port 27960] [--mode ffa|teams] [--maps stack,rift] [--max-players 8] [--bots 0] [--password secret] [--name "my server"] [--start-delay 5] [--public] [--list lists.example.com] [--health 150] [--round-time 90] [--rounds 5] [--score 50] [--time-limit 600] [--guns rifle,sniper] [--config server.cfg]
 ```
 
-or an exported server build with the same arguments after `--`. Everything can also go in a config file (see [`docs/server.example.cfg`](server.example.cfg), which explains each setting); command-line arguments win. The server logs to standard output. It runs games of its style back to back, rotating its map pool (bots fill in if you ask for them), and waits for players when there's nobody. Players need UDP on the game port.
+or an exported server build with the same arguments after `--`. Everything can also go in a config file (see [`docs/server.example.cfg`](server.example.cfg), which explains each setting), including any of the game's options in its `[rules]` section; command-line arguments win. The server logs to standard output. It runs games of its style back to back, rotating its map pool (bots fill in if you ask for them), and waits for players when there's nobody. Players need UDP on the game port; with `--public`, UDP 27940–27943 answers players on the local network, and with `--list` it keeps itself on that list server.
 
 Don't run it as root. On Linux, a systemd unit along these lines runs it as its own user with most of the system out of reach:
+
+### Running a list server
+
+```
+godot --headless --path . -- --list-server [--port 27950]
+```
+
+It lists the public games that connect to it and hands the list to anyone who asks (TCP on its port). It keeps nothing on disk and trusts nothing it's told: at most 500 games (4 from one address), 256 connections (16 from one address), lines of 4 KB, 5 s to say something, a minute of quiet before a game is dropped, 30 lists a minute from one address, and it never waits on anyone (what it sends goes out as fast as the other end reads it; a game's connection to it works the same way, so a list server can't stall a game). Tell hosts and players its address (`host` or `host:port`) to put under *list server*. It can run next to a dedicated server, as its own process, under the same kind of unit as below.
 
 ```ini
 [Unit]

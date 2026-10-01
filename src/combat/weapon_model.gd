@@ -179,13 +179,7 @@ func _add_part(p: Array) -> void:
 	var key: StringName = p[5]
 	var mi := MeshInstance3D.new()
 	mi.mesh = _mesh(kind, size)
-	mi.material_override = material(viewmodel)
-	var finish: Array = FINISH.get(key, FINISH[&"dark"])
-	mi.set_instance_shader_parameter(&"color", Weapons.color(def, key))
-	mi.set_instance_shader_parameter(&"gloss", finish[0])
-	mi.set_instance_shader_parameter(&"rim_amount", finish[1])
-	mi.set_instance_shader_parameter(&"glow", finish[2])
-	mi.set_instance_shader_parameter(&"roughness_amount", finish[3])
+	mi.material_override = Gloss.material(Weapons.color(def, key), FINISH.get(key, FINISH[&"dark"]), viewmodel)
 	mi.cast_shadow = GeometryInstance3D.SHADOW_CASTING_SETTING_OFF if viewmodel else GeometryInstance3D.SHADOW_CASTING_SETTING_ON
 	var basis := Basis.from_euler(rot * (PI / 180.0))
 	if kind == "cyl":
@@ -215,7 +209,7 @@ func _marker(marker_name: String, at: Vector3, parent: Node3D = self) -> Node3D:
 ## Sets `fade` (0..1) on every part: a screen-door dissolve.
 func set_fade(amount: float) -> void:
 	for mi: MeshInstance3D in find_children("*", "MeshInstance3D", true, false):
-		mi.set_instance_shader_parameter(&"fade", amount)
+		Gloss.fade(mi, amount)
 
 
 static func material(for_viewmodel: bool) -> ShaderMaterial:

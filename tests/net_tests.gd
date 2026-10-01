@@ -369,3 +369,146 @@ func test_prediction_puts_itself_right_and_then_agrees_with_the_server() -> void
 	check(client.global_position.distance_to(server.global_position) < 0.001,
 			"agreeing with the server: %s and %s" % [client.global_position, server.global_position])
 	world.queue_free()
+
+
+# --- Finding public games -------------------------------------------------------------
+
+## Runs frames until `cond` holds (at most `max_frames`). Whether it did.
+func until_frames(cond: Callable, max_frames := 600) -> bool:
+	for i in max_frames:
+		if cond.call():
+			return true
+		await get_tree().process_frame
+	return cond.call()
+
+
+func test_what_anyone_says_about_a_game_is_checked() -> void:
+	var good := {"id": "abc", "name": "  my\ngame  ", "style": "teams", "map": "depot", "players": 3.0, "bots": 2.0,
+			"max": 8.0, "locked": true, "protocol": float(NetCodec.PROTOCOL), "port": 27960.0}
+	var g := ServerList.clean(good, "192.168.1.5", true)
+	check(g.name == "mygame" and g.style == "teams" and g.map == "depot", "names cleaned, style and map kept: %s" % g)
+	check(g.players == 3 and g.bots == 2 and g.max == 8 and g.locked and g.port == 27960, "numbers made whole")
+	check(g.address == "192.168.1.5" and g.lan and g.id == "abc", "where it is, and that it's on this network")
+	check(ServerList.clean(good, "not an address").is_empty(), "a bad address is refused")
+	for port: Variant in [0.0, 70000.0, "27960", NAN, null]:
+		var bad := good.duplicate()
+		bad.port = port
+		check(ServerList.clean(bad, "10.0.0.1").is_empty(), "so is port %s" % [port])
+	var odd := good.duplicate()
+	odd.merge({"style": "hax", "map": "../../etc/passwd", "players": 1e12, "max": NAN, "locked": "yes", "name": "x".repeat(500),
+			"id": "y".repeat(100)}, true)
+	var o := ServerList.clean(odd, "10.0.0.1")
+	check(o.style == "" and o.map == "" and o.players == NetSession.PLAYER_LIMIT and o.max == 1 and not o.locked,
+			"out of range or unknown: made safe (%s)" % o)
+	check((o.name as String).length() <= 32 and o.id == "10.0.0.1:27960", "long names cut, long ids replaced")
+	check(ServerList.clean([1, 2], "10.0.0.1").is_empty() and ServerList.clean("x", "10.0.0.1").is_empty(), "not a game at all")
+	var survived := 0
+	for i in 2000:
+		var junk := {}
+		for k in randi() % 12:
+			var keys := ["id", "name", "style", "map", "players", "bots", "max", "locked", "protocol", "port", "zzz"]
+			var values: Array = [randf() * 1e6 - 5e5, randi(), "s", true, null, [1], {}, NAN, INF, "teams", "stack", 27960.0]
+			junk[keys.pick_random()] = values.pick_random()
+		var c := ServerList.clean(junk, "10.0.0.2")
+		if c.is_empty() or (c.port >= 1 and c.port <= 65535 and (c.name as String).length() <= 32 and c.max >= 1):
+			survived += 1
+	check(survived == 2000, "random junk never gets through wrong (%d/2000)" % survived)
+	check(ServerList.is_local("192.168.0.9") and ServerList.is_local("127.0.0.1") and ServerList.is_local("172.20.1.1")
+			and not ServerList.is_local("8.8.8.8") and not ServerList.is_local("172.40.0.1"), "local addresses are told apart")
+
+
+func test_the_search_box_and_list_server_addresses() -> void:
+	var g := {"name": "Friday Night Frag", "style": "teams", "map": "depot"}
+	check(ServerList.matches(g, "") and ServerList.matches(g, "friday") and ServerList.matches(g, "TEAMS  depot")
+			and not ServerList.matches(g, "rift") and not ServerList.matches(g, "friday rift"), "every word typed must be in it somewhere")
+	check(ServerList.list_address("") == [] and ServerList.list_address("a b") == [], "no list server, or nonsense")
+	check(ServerList.list_address("lists.example.com") == ["lists.example.com", ServerList.LIST_PORT], "no port: the list server's")
+	check(ServerList.list_address("1.2.3.4:9000") == ["1.2.3.4", 9000], "or the one given")
+	check(ServerList.list_address("::1") == ["::1", ServerList.LIST_PORT] and ServerList.list_address("[::1]:9000") == ["::1", 9000],
+			"IPv6 too")
+	var conn := {"buf": '{"a": 1}\nnot json\n{"b"'.to_utf8_buffer()}
+	var lines := ServerList.take_lines(conn)
+	check(lines.size() == 2 and lines[0] is Dictionary and lines[0].a == 1.0 and lines[1] == null, "whole lines come out, junk as null")
+	check((conn.buf as PackedByteArray).get_string_from_utf8() == '{"b"', "and the rest waits")
+	var long := {"buf": "x".repeat(ServerList.MAX_LINE + 1).to_utf8_buffer()}
+	check(ServerList.take_lines(long) == [false], "a line too long says to hang up")
+
+
+func test_public_games_are_found_on_this_network_and_on_a_list_server() -> void:
+	var list := MasterServer.new()
+	list.port = 27952
+	check(list.start() == OK, "a list server")
+	add_child(list)
+	var rules := GameRules.teams()
+	rules.max_health = 150.0
+	check(NetSession.host(get_tree(), 27983, rules, 8, "secret", false, "find me") == OK, "hosting")
+	await get_tree().process_frame
+	var s := NetSession.current
+	s.advertise(true, "127.0.0.1:27952")
+	check(await until_frames(func() -> bool: return list.games().size() == 1), "it lists itself")
+	var listed: Dictionary = list.games()[0] if not list.games().is_empty() else {}
+	check(listed.get("name") == "find me" and listed.get("locked") == true and listed.get("port") == 27983
+			and listed.get("style") == "teams" and listed.get("players") == 1, "as it is: %s" % listed)
+	check(await until_frames(func() -> bool: return s.advert.listed_as == "127.0.0.1:27983"), "and hears where (%s)" % s.advert.listed_as)
+	var browser := ServerBrowser.new()
+	add_child(browser)
+	# (Only this one counts: any other public game about is found too.)
+	var mine := func() -> Array: return browser.found.filter(func(g: Dictionary) -> bool: return g.name == "find me")
+	browser.refresh("127.0.0.1:27952")
+	check(await until_frames(func() -> bool: return not browser.searching), "the browser looks")
+	check(browser.list_error == "" and mine.call().size() == 1, "and finds it once, from here and from the list (%s)" % [browser.found])
+	var found: Dictionary = mine.call()[0] if not mine.call().is_empty() else {}
+	check(found.get("lan") == true and found.get("locked") == true and found.get("name") == "find me", "on this network, locked")
+	check(browser.matching("FIND").size() == 1 and browser.matching("teams find me").size() == 1
+			and browser.matching("find me rift").is_empty(), "search narrows it down")
+	s.add_bots(2)
+	check(await until_frames(func() -> bool: return list.games().size() == 1 and list.games()[0].bots == 2, 900),
+			"the list hears when things change")
+	# Junk at the list server: hung up on.
+	for junk: String in ["not json\n", '{"op": "host", "port": 0}\n', '{"op": "boom"}\n', "x".repeat(ServerList.MAX_LINE + 10)]:
+		var peer := StreamPeerTCP.new()
+		peer.connect_to_host("127.0.0.1", 27952)
+		await until_frames(func() -> bool:
+			peer.poll()
+			return peer.get_status() == StreamPeerTCP.STATUS_CONNECTED)
+		peer.put_data(junk.to_utf8_buffer())
+		check(await until_frames(func() -> bool:
+			peer.poll()
+			return peer.get_status() != StreamPeerTCP.STATUS_CONNECTED), "hung up on: %s" % junk.left(24))
+	check(list.games().size() == 1, "and the real one's still listed")
+	# Private again: gone from the list, and from this network.
+	s.advertise(false)
+	check(await until_frames(func() -> bool: return list.games().is_empty()), "off the list once it's private")
+	browser.refresh("127.0.0.1:27952")
+	check(await until_frames(func() -> bool: return not browser.searching), "looked again")
+	check(mine.call().is_empty(), "and it's not found (%s)" % [browser.found])
+	browser.refresh("127.0.0.1:27953")
+	check(await until_frames(func() -> bool: return not browser.searching, 900), "a list server that isn't there")
+	check(browser.list_error != "", "says so (%s)" % browser.list_error)
+	NetSession.leave(get_tree())
+	browser.queue_free()
+	list.queue_free()
+	await get_tree().process_frame
+
+
+func test_a_dedicated_servers_options_come_from_its_config_and_command_line() -> void:
+	var path := "user://test_server.cfg"
+	var cfg := ConfigFile.new()
+	cfg.set_value("server", "public", true)
+	cfg.set_value("server", "list", "lists.example.com")
+	cfg.set_value("rules", "max_health", 150)
+	cfg.set_value("rules", "guns", ["rifle", "nuke"])
+	cfg.set_value("rules", "regen_delay", "soon")
+	cfg.set_value("rules", "round_wins", 3)
+	cfg.save(path)
+	var s := DedicatedServer.settings(PackedStringArray(["--config", ProjectSettings.globalize_path(path), "--round-time", "45",
+			"--rounds", "7"]))
+	check(s.public and s.list == "lists.example.com", "public, on the list server it names")
+	var r := DedicatedServer.rules_for(s.mode, s.rules)
+	check(r.max_health == 150.0 and r.guns == PackedStringArray(["rifle"]), "the config's options, checked (%s, %s)" % [r.max_health, r.guns])
+	check(r.round_time == 45.0 and r.round_wins == 7, "the command line's win")
+	check(r.regen_delay == GameRules.free_for_all().regen_delay, "and nonsense is ignored")
+	var teams := DedicatedServer.rules_for("teams", {"score": "x", "score_to_win": "30", "time_limit": "300"})
+	check(teams.is_teams() and teams.score_to_win == 30 and teams.time_limit == 300.0, "teams too")
+	check(not DedicatedServer.settings(PackedStringArray()).public, "private unless it's asked")
+	DirAccess.remove_absolute(ProjectSettings.globalize_path(path))

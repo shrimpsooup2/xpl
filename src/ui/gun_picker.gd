@@ -1,9 +1,10 @@
 class_name GunPicker
 extends VBoxContainer
 ## Picking your gun, in games where you pick (GameRules.loadout: teams): the
-## six guns in a row, numbered 1–6, yours inverted. Shown in the countdown
-## and while you're down; press a number to pick (Game.choose_gun). Yours
-## from your next spawn, or at once in the countdown.
+## six guns in a row, numbered 1–6, yours inverted, any the host left out of
+## the game greyed. Shown in the countdown and while you're down; press a
+## number to pick (Game.choose_gun). Yours from your next spawn, or at once
+## in the countdown.
 
 var _title: PanelContainer
 var _boxes: Array[PanelContainer] = []
@@ -28,11 +29,13 @@ func _ready() -> void:
 	add_child(row)
 
 
-## Shows `id` as the pick (with a pop when it changes).
-func show_pick(id: StringName) -> void:
+## Shows `id` as the pick (with a pop when it changes); guns out of play
+## (`rules`, GameRules.guns) are greyed out.
+func show_pick(id: StringName, rules: GameRules = null) -> void:
 	for i in _boxes.size():
 		var mine: bool = Weapons.GUNS[i] == id
-		LofiUI.restyle(_boxes[i], LofiUI.Style.INVERTED if mine else LofiUI.Style.NORMAL)
+		var out := rules != null and not rules.allows(Weapons.GUNS[i])
+		LofiUI.restyle(_boxes[i], LofiUI.Style.GHOST if out else LofiUI.Style.INVERTED if mine else LofiUI.Style.NORMAL)
 		if mine and id != _shown and _shown != &"":
 			LofiUI.pop(_boxes[i], 1.15, 0.14)
 	_shown = id
