@@ -22,7 +22,7 @@ rm -rf "$OUT"
 mkdir -p "$OUT/assets"
 cp -R "$ROOT/site/." "$OUT/"
 sed -i.bak -e "s/data-version=\"[^\"]*\"/data-version=\"$VERSION\"/" \
-	-e "s/<p class=\"version\">[^<]*<\/p>/<p class=\"version\">v$VERSION<\/p>/" "$OUT/index.html"
+	-e "s/<p class=\"version\">v[0-9.]*/<p class=\"version\">v$VERSION/" "$OUT/index.html"
 rm "$OUT/index.html.bak"
 cp "$ROOT/assets/ui/logo.png" "$ROOT/assets/ui/icon.png" \
 	"$ROOT/assets/fonts/LiberationSans-Regular.ttf" "$ROOT/assets/fonts/LICENSE-LiberationSans.txt" \

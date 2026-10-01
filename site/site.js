@@ -52,6 +52,7 @@
 	const lines = Array.from(infoEl.querySelectorAll("li"), (li) => li.textContent.trim());
 	const caption = picsEl.querySelector(".caption");
 	const version = screen.getAttribute("data-version") || "";
+	const stage = screen.getAttribute("data-stage") || ""; // "beta" while it is one.
 	// The downloads' tooltips: drawn here, so not the browser's as well;
 	// screen readers get them as the links' descriptions.
 	for (const el of infoEl.querySelectorAll(".hit[title]")) {
@@ -440,7 +441,7 @@
 			text(logoText, card.h * 0.35, card.h * 0.64, card.h * 0.38, INK);
 		}
 		if (version) {
-			const label = "v" + version, size = 12;
+			const label = "v" + version + (stage ? " " + stage : ""), size = 12;
 			const w = Math.ceil(textWidth(label, size)) + 18, h = 20;
 			ctx.save();
 			ctx.translate(card.w - w / 2 - 14, card.h + 2);
@@ -474,7 +475,7 @@
 	// button.
 	function drawTip(card, b) {
 		const size = 12, lead = 15, padX = 10, padY = 8;
-		const lines = [b.name + (version ? " · v" + version : ""), ...wrap(b.tip, size, 210)];
+		const lines = [b.name + (version ? " · v" + version + (stage ? " " + stage : "") : ""), ...wrap(b.tip, size, 210)];
 		const w = Math.ceil(Math.max(...lines.map((l) => textWidth(l, size)))) + padX * 2;
 		const h = lines.length * lead + padY * 2 - 2;
 		const cx = b.x + b.w / 2;
