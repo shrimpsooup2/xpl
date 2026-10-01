@@ -123,6 +123,8 @@ func _process(_delta: float) -> void:
 ## (with authority) starts the first round, or the game.
 func setup_level(scene: Node) -> void:
 	level = scene
+	for l in get_tree().get_nodes_in_group(&"debug_labels"):
+		(l as Node3D).visible = false  # The area names are for building maps, not playing them.
 	var baked := scene.get_node_or_null(^"Player") as Player
 	var has_local := infos.any(func(i: PlayerInfo) -> bool: return i.local)
 	for info in infos:
