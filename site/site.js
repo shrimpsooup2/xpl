@@ -11,7 +11,9 @@
 //   (assets/figure.png, rendered from the game by
 //   tools/gen_site_figure.gd). Hover a download and it jolts.
 // - The picture card flips through screenshots (data-shots) with the
-//   game's box wipe, or low-res stand-ins until there are some.
+//   game's box wipe, or low-res stand-ins until there are some. The
+//   screenshots are drawn sharp, at the screen's own resolution, on a layer
+//   over the pixel canvas (the card around them stays in pixels).
 // - A download without an address yet says "soon :)". Pointing at one (or
 //   tabbing to it) shows its tooltip, from its title in the HTML: an
 //   inverted box over the button, the build and the version on top.
@@ -25,6 +27,13 @@
 	const screen = document.getElementById("screen");
 	const canvas = document.getElementById("pixels");
 	const ctx = canvas.getContext("2d");
+	// The sharp layer the screenshots go on, over the canvas.
+	const sharp = document.createElement("canvas");
+	sharp.id = "sharp";
+	sharp.setAttribute("aria-hidden", "true");
+	canvas.after(sharp);
+	const sctx = sharp.getContext("2d");
+	let SK = 1; // Sharp-layer pixels per layout unit.
 	const status = document.getElementById("status");
 	const FONT = 'Arial, "Liberation Sans", Helvetica, sans-serif';
 	const INK = "#0d0d0f";
@@ -243,6 +252,12 @@
 		canvas.height = H;
 		canvas.style.width = W * S + "px";
 		canvas.style.height = H * S + "px";
+		const dpr = window.devicePixelRatio || 1;
+		sharp.width = Math.round(W * S * dpr);
+		sharp.height = Math.round(H * S * dpr);
+		sharp.style.width = W * S + "px";
+		sharp.style.height = H * S + "px";
+		SK = U * S * dpr;
 		screen.style.height = wide ? "100vh" : H * S + "px";
 		background = dither(W, H);
 	}
@@ -415,19 +430,26 @@
 		drawCard(cards.pictures, drawPictures);
 		drawCard(cards.info, drawInfo);
 		drawPops();
+		// The screenshot, sharp, where the picture card has it.
+		sctx.setTransform(1, 0, 0, 1, 0, 0);
+		sctx.clearRect(0, 0, sharp.width, sharp.height);
+		if (shots.length) {
+			sctx.setTransform(SK, 0, 0, SK, 0, 0);
+			drawCard(cards.pictures, drawShot, sctx);
+		}
 	}
 
-	function drawCard(card, inside) {
+	function drawCard(card, inside, c = ctx) {
 		const a = stamp(card);
 		if (a.alpha <= 0) return;
-		ctx.save();
-		ctx.globalAlpha = a.alpha;
-		ctx.translate(card.x + card.w / 2, card.y + card.h / 2);
-		ctx.rotate(card.angle + a.turn);
-		ctx.scale(a.scale, a.scale);
-		ctx.translate(-card.w / 2, -card.h / 2);
-		inside(card);
-		ctx.restore();
+		c.save();
+		c.globalAlpha = a.alpha;
+		c.translate(card.x + card.w / 2, card.y + card.h / 2);
+		c.rotate(card.angle + a.turn);
+		c.scale(a.scale, a.scale);
+		c.translate(-card.w / 2, -card.h / 2);
+		inside(card, c);
+		c.restore();
 	}
 
 	// The game's logo; the words in a box till it's in. The version on a
@@ -511,25 +533,20 @@
 	function drawPictures(card) {
 		paper(0, 0, card.w, card.h, 37, 6);
 		const r = card.image;
-		ctx.save();
-		ctx.beginPath();
-		ctx.rect(r.x, r.y, r.w, r.h);
-		ctx.clip();
-		if (shots.length && shots[shown].ready) {
-			ctx.imageSmoothingEnabled = true;
-			// Cover the frame; drawn small, so it comes out in chunky pixels.
-			const img = shots[shown];
-			const k = Math.max(r.w / img.naturalWidth, r.h / img.naturalHeight);
-			const iw = img.naturalWidth * k, ih = img.naturalHeight * k;
-			ctx.drawImage(img, r.x + (r.w - iw) / 2, r.y + (r.h - ih) / 2, iw, ih);
-		} else {
+		if (!shots.length) {
+			// Stand-ins, in pixels like the rest (the screenshots go on the
+			// sharp layer: drawShot).
+			ctx.save();
+			ctx.beginPath();
+			ctx.rect(r.x, r.y, r.w, r.h);
+			ctx.clip();
 			standIn(shown, r);
+			drawWipe(r, ctx);
+			ctx.restore();
+			ctx.strokeStyle = INK;
+			ctx.lineWidth = 2;
+			ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
 		}
-		drawWipe(r);
-		ctx.restore();
-		ctx.strokeStyle = INK;
-		ctx.lineWidth = 2;
-		ctx.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
 		// A dot for each picture, the one showing filled.
 		const dots = slideCount;
 		const x0 = card.w / 2 - (dots * 10 - 5) / 2;
@@ -560,21 +577,47 @@
 		ctx.stroke();
 	}
 
+	// The screenshot showing (on the sharp layer, `c`), covering the frame,
+	// with its wipe and its border.
+	function drawShot(card, c) {
+		const r = card.image;
+		c.save();
+		c.beginPath();
+		c.rect(r.x, r.y, r.w, r.h);
+		c.clip();
+		const img = shots[shown];
+		if (img.ready) {
+			c.imageSmoothingEnabled = true;
+			c.imageSmoothingQuality = "high";
+			const k = Math.max(r.w / img.naturalWidth, r.h / img.naturalHeight);
+			const iw = img.naturalWidth * k, ih = img.naturalHeight * k;
+			c.drawImage(img, r.x + (r.w - iw) / 2, r.y + (r.h - ih) / 2, iw, ih);
+		} else {
+			c.fillStyle = INK;
+			c.fillRect(r.x, r.y, r.w, r.h);
+		}
+		drawWipe(r, c);
+		c.restore();
+		c.strokeStyle = INK;
+		c.lineWidth = 2;
+		c.strokeRect(r.x + 1, r.y + 1, r.w - 2, r.h - 2);
+	}
+
 	// The game's scene wipe in small: black boxes pop in on a diagonal, the
 	// picture changes behind them, and they clear the same way.
-	function drawWipe(r) {
+	function drawWipe(r, c) {
 		if (wipeAt < 0) return;
 		const p = (now - wipeAt) / WIPE_TIME;
 		const cols = 8, rows = 5;
 		const cw = r.w / cols, ch = r.h / rows;
-		ctx.fillStyle = INK;
+		c.fillStyle = INK;
 		for (let i = 0; i < cols; i++) {
 			for (let j = 0; j < rows; j++) {
 				const d = (i + j) / (cols + rows - 2);
 				const k = p < 0.5 ? Math.max(0, Math.min(1, (p * 2 - d * 0.6) / 0.4)) : Math.max(0, Math.min(1, 1 - ((p - 0.5) * 2 - d * 0.6) / 0.4));
 				if (k <= 0) continue;
 				const sw = cw * k, sh = ch * k;
-				ctx.fillRect(Math.floor(r.x + i * cw + (cw - sw) / 2), Math.floor(r.y + j * ch + (ch - sh) / 2), Math.ceil(sw), Math.ceil(sh));
+				c.fillRect(Math.floor(r.x + i * cw + (cw - sw) / 2), Math.floor(r.y + j * ch + (ch - sh) / 2), Math.ceil(sw), Math.ceil(sh));
 			}
 		}
 	}

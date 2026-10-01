@@ -54,4 +54,4 @@ The same, with the patch number bumped (0.2.0 → 0.2.1) and only the builds tha
 
 ## The website's pictures
 
-When maps are dressed or the game looks different, retake the pictures (`site/shots/`, listed in the pictures card's `data-shots` in `site/index.html`): 640 × 360, as the game draws them, a few players posed in each.
+When maps are dressed or the game looks different, retake the pictures (`site/shots/`, listed in the pictures card's `data-shots` in `site/index.html`): 1280 × 720 JPEGs, the game drawn at its 720p *pixels* setting, a few players posed in each.

@@ -112,7 +112,7 @@ This runs the headless movement, UI, combat, cosmetics, map, game and network te
 
 - **Downloads:** put each build's address in its button's `href` (the latest release's files, set once: [docs/RELEASING.md](docs/RELEASING.md)). Until then they say *soon :)*. Each button's `title` is its tooltip, shown in the site's own box when you point at it, with the build and the version.
 - **The version:** the tag under the logo, stamped in by the build from `project.godot` (`application/config/version`, the one place it's set; the title screen shows it too). Every full release bumps it: [docs/RELEASING.md](docs/RELEASING.md) has the checklist.
-- **Pictures:** list them in the picture card's `data-shots` (files in `site/shots/`: the dressed maps, 640 × 360, as the game draws them, with players posed in them). They're drawn small, so they come out pixelated like everything else. With none it shows stand-ins.
+- **Pictures:** list them in the picture card's `data-shots` (files in `site/shots/`: the dressed maps, 1280 × 720 JPEGs, the game drawn at its 720p pixels setting, with players posed in them). They're drawn sharp, at the screen's own resolution, on a layer over the pixel canvas. With none it shows stand-ins.
 
 `tools/build_site.sh` puts it together in `_site/` with the logo, the icon and the font from `assets/` and the version from `project.godot`; to look at it locally:
 
