@@ -12,3 +12,4 @@ Thumbs.db
 
 # The website, put together (tools/build_site.sh)
 /_site/
+build/
