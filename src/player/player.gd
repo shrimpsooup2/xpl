@@ -403,7 +403,9 @@ func take_hit(hit: Dictionary) -> Dictionary:
 	health_changed.emit(health)
 	hurt.emit(hit, amount)
 	hurt_from.emit(hit_origin(attacker, hit.point, hit.get("direction", Vector3.FORWARD)), amount, attacker)
-	DamageNumber.add(get_parent(), self, hit.point, amount, &"heart" if lethal else hit.zone)
+	if attacker and attacker.is_in_group(&"local_player"):
+		# Only your own hits show a number: not bots' or other players'.
+		DamageNumber.add(get_parent(), self, hit.point, amount, &"heart" if lethal else hit.zone)
 	var killed_now := health <= 0.0
 	if killed_now:
 		die()
