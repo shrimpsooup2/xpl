@@ -31,6 +31,7 @@ html.js #pixels {
 	image-rendering: pixelated;
 	image-rendering: crisp-edges;
 }
+html.js #sharp { position: absolute; left: 0; top: 0; pointer-events: none; }
 html.js .card {
 	position: absolute; left: 0; top: 0;
 	margin: 0; padding: 0; border: 0; background: none;
@@ -46,7 +47,7 @@ html.js .hit {
 
 /* --- Without it ------------------------------------------------------------ */
 
-html:not(.js) #pixels, html:not(.js) [data-button="prev"], html:not(.js) [data-button="next"] { display: none; }
+html:not(.js) #pixels, html:not(.js) #sharp, html:not(.js) [data-button="prev"], html:not(.js) [data-button="next"] { display: none; }
 html:not(.js) body { background: linear-gradient(#000 30%, #72304a); padding: 24px 16px; }
 html:not(.js) .card {
 	max-width: 420px; margin: 0 auto 16px; padding: 18px 20px;
